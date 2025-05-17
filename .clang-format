@@ -1,0 +1,12 @@
+# Format Style Options - Created with Clang Power Tools
+---
+BasedOnStyle: WebKit
+BreakBeforeBraces: Allman
+ColumnLimit: 190
+ContinuationIndentWidth: 2
+MaxEmptyLinesToKeep: 2
+PointerAlignment: Middle
+ReflowComments: false
+SortIncludes: false
+SpacesBeforeTrailingComments: 2
+...
