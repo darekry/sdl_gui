@@ -7,7 +7,7 @@ CXX    = clang++
 FLAGS  = -Wall
 FLAGS += -Wextra
 FLAGS += -Og
-#FLAGS += $(shell sdl2-config --cflags)
+FLAGS += $(shell sdl2-config --cflags)
 FLAGS += -march=native
 FLAGS += -g
 #FLAGS += -flto
@@ -22,9 +22,9 @@ CXXFLAGS  += $(FLAGS)
 CXXFLAGS  += -stdlib=libc++
 
 # define library paths in addition to /usr/lib
-#LFLAGS  = $(shell sdl2-config --libs)
-#LFLAGS += -lSDL2_image
-#LFLAGS += -lSDL2_ttf
+LFLAGS  = $(shell sdl2-config --libs)
+LFLAGS += -lSDL2_image
+LFLAGS += -lSDL2_ttf
 
 # define output directory
 OUTPUT := output
