@@ -1,18 +1,17 @@
 #include "SDL2/SDL.h"
 #include <SDL2/SDL_events.h>
 #include "gui_manager.hpp" // Dodano include dla menedżera GUI
-#include <iostream> // Dodano include dla std::cout
 #include "gui.hpp" // Dodano include dla Panel i Button
+#include "slider.hpp" // Dodano include dla Slider
 #include "texture_manager.hpp" // Dodano include dla TextureManager
 
-// Funkcja zwrotna dla przycisku
-void onButtonClick() {
-    std::cout << "Przycisk został kliknięty!" << std::endl;
-}
-
-// Funkcja zwrotna dla innego przycisku
-void onAnotherButtonClick() {
-    std::cout << "Inny przycisk został kliknięty!" << std::endl;
+// Funkcja zwrotna dla suwaka
+void onSliderValueChanged(GUIElement* element) {
+    // Rzutowanie wskaźnika na Slider* i pobranie wartości
+    Slider* slider = dynamic_cast<Slider*>(element);
+    if (slider) {
+    } else {
+    }
 }
 
 int main(int argc, char const * argv[])
@@ -25,64 +24,17 @@ int main(int argc, char const * argv[])
     GUIManager gui_manager; // Utworzono instancję menedżera GUI bez argumentów
     TextureManager texture_manager(renderer); // Utworzono instancję menedżera tekstur
 
-    // Załadowanie tekstur
-    // Załadowanie tekstur
-    SharedTexture button_texture_1 = texture_manager.loadTexture("assets/button1.png"); // Załóżmy, że masz takie pliki
-    SharedTexture button_texture_2 = texture_manager.loadTexture("assets/button2.png");
+    // Utworzenie suwaka poziomego
+    Slider* horizontalSlider = new Slider(50, 50, 300, 30, 0, 100, 50, Orientation::Horizontal);
+    horizontalSlider->setOnChangeCallback(onSliderValueChanged);
 
-    // Utworzenie paneli
-    Panel* panel1 = new Panel(50, 50, 300, 200);
-    panel1->setBorderColor(255, 0, 0, 255); // Czerwone obramowanie
-    panel1->setBorderThickness(2);
+    // Utworzenie suwaka pionowego
+    Slider* verticalSlider = new Slider(400, 50, 30, 300, 0, 100, 50, Orientation::Vertical);
+    verticalSlider->setOnChangeCallback(onSliderValueChanged);
 
-    Panel* panel2 = new Panel(400, 50, 350, 400);
-    panel2->setBorderColor(0, 255, 0, 255); // Zielone obramowanie
-    panel2->setBorderThickness(3);
-
-    // Utworzenie przycisków
-    Button* button1 = new Button(10, 10, 100, 40); // Przycisk na panelu 1
-    button1->setOnClickCallback(onButtonClick);
-    // button1->setText("Przycisk 1"); // Usunięto setText
-
-    Button* button2 = new Button(120, 10, 100, 40); // Przycisk na panelu 1
-    button2->setOnClickCallback(onAnotherButtonClick);
-    // button2->setText("Przycisk 2"); // Usunięto setText
-    button2->setTexture(button_texture_1); // Przycisk z teksturą
-
-    Button* button3 = new Button(20, 300, 150, 50); // Przycisk na panelu 2
-    button3->setOnClickCallback(onButtonClick);
-    // button3->setText("Przycisk 3"); // Usunięto setText
-    button3->setTexture(button_texture_1); // Ten sam tekstura co button2
-
-    Button* button4 = new Button(180, 300, 150, 50); // Przycisk na panelu 2
-    button4->setOnClickCallback(onAnotherButtonClick);
-    // button4->setText("Przycisk 4"); // Usunięto setText
-    button4->setTexture(button_texture_2); // Inna tekstura
-
-    Button* button5 = new Button(20, 360, 310, 30); // Przycisk na panelu 2
-    button5->setOnClickCallback(onButtonClick);
-    // button5->setText("Przycisk 5"); // Usunięto setText
-
-
-    // Dodanie przycisków do paneli
-    panel1->addChild(button1);
-    panel1->addChild(button2);
-
-    panel2->addChild(button3);
-    panel2->addChild(button4);
-    panel2->addChild(button5);
-
-    // Dodanie paneli do menedżera GUI
-    gui_manager.addElement(panel1);
-    gui_manager.addElement(panel2);
-
-    // Istniejący przycisk (można go dodać do menedżera lub panelu)
-    // Na potrzeby przykładu dodajmy go bezpośrednio do menedżera GUI
-    Button* existing_button = new Button(100, 400, 150, 50);
-    existing_button->setOnClickCallback(onButtonClick);
-    // existing_button->setText("Istniejący Przycisk"); // Usunięto setText
-    gui_manager.addElement(existing_button);
-
+    // Dodanie suwaków do menedżera GUI
+    gui_manager.addElement(horizontalSlider);
+    gui_manager.addElement(verticalSlider);
 
     uint should_close = false;
     while (!should_close)

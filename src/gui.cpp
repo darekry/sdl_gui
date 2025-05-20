@@ -104,7 +104,7 @@ void Button::handleEvent(SDL_Event& e) {
         // Sprawdź, czy zdarzenie puszczenia przycisku myszy miało miejsce w obrębie przycisku
         // Pozycja myszy w zdarzeniu jest już absolutna
         if (contains(e.button.x, e.button.y)) {
-            triggerOnRelease();
+            triggerOnRelease(); // triggerOnRelease już przekazuje 'this'
         }
     }
     // Można dodać obsługę innych zdarzeń, np. SDL_MOUSEMOTION dla efektu najechania

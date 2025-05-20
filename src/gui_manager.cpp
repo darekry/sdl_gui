@@ -44,7 +44,6 @@ bool GUIManager::handleEvents() {
 
                         // Sprawdź, czy zdarzenie myszy miało miejsce w obrębie elementu
                         if (element->contains(mouseX, mouseY)) {
-                            std::cout << "GUIManager przekazuje zdarzenie do elementu" << std::endl; // Log
                             // Przekaż zdarzenie do metody handleEvent elementu
                             element->handleEvent(e);
 

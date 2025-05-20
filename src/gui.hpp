@@ -4,7 +4,6 @@
 #include "SDL2/SDL.h"
 #include "texture_manager.hpp" // Dodano include dla TextureManager
 #include <functional>
-#include <iostream> // Dodano include dla std::cout i std::endl
 
 // Podstawowa klasa bazowa dla elementów GUI
 class GUIElement {
@@ -70,19 +69,19 @@ public:
     void setTexture(SharedTexture texture); // Zmieniono typ parametru
 
     // Typy callbacków dla zdarzeń
-    using OnClickCallback = std::function<void()>;
-    using OnMouseOverCallback = std::function<void()>;
+    // Typy callbacków dla zdarzeń
+    using OnClickCallback = std::function<void(GUIElement*)>;
+    using OnMouseOverCallback = std::function<void(GUIElement*)>;
 
     // Metody do przypisywania callbacków
     void setOnClickCallback(OnClickCallback callback) { m_onClick = callback; }
     void setOnMouseOverCallback(OnMouseOverCallback callback) { m_onMouseOver = callback; }
 
     // Metody wywołujące callbacki (publiczne na potrzeby testów/integracji)
-    void triggerOnClick() { if (m_onClick) m_onClick(); }
-    void triggerOnMouseOver() { if (m_onMouseOver) m_onMouseOver(); }
+    void triggerOnClick() { if (m_onClick) m_onClick(this); }
+    void triggerOnMouseOver() { if (m_onMouseOver) m_onMouseOver(this); }
     void triggerOnRelease() {
-        std::cout << "triggerOnRelease() wywołane" << std::endl; // Log
-        if (m_onClick) m_onClick();
+        if (m_onClick) m_onClick(this);
     } // Używamy m_onClick dla zdarzenia puszczenia przycisku
 
     // Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
