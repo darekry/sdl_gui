@@ -1,0 +1,43 @@
+#ifndef FONT_MANAGER_HPP
+#define FONT_MANAGER_HPP
+
+#include "SDL2/SDL_ttf.h"
+#include <string>
+#include <map>
+#include <memory>
+#include <iostream>
+#include "sdl_deleters.hpp"
+
+// Typ dla współdzielonego wskaźnika na czcionkę
+using SharedFont = std::shared_ptr<TTF_Font>;
+// Klucz dla mapy cache'u czcionek (ścieżka + rozmiar)
+struct FontKey {
+    std::string path;
+    int size;
+
+    // Operator porównania dla użycia w std::map
+    bool operator<(const FontKey& other) const {
+        if (path != other.path) {
+            return path < other.path;
+        }
+        return size < other.size;
+    }
+};
+
+class FontManager {
+public:
+    // Konstruktor
+    FontManager();
+
+    // Destruktor
+    ~FontManager();
+
+    // Metoda do ładowania czcionki. Zwraca SharedFont.
+    // Jeśli czcionka o danej ścieżce i rozmiarze została już załadowana, zwraca istniejący SharedFont.
+    SharedFont loadFont(const std::string& path, int size);
+
+private:
+    std::map<FontKey, SharedFont> m_fonts; // Mapa przechowująca załadowane czcionki
+};
+
+#endif // FONT_MANAGER_HPP

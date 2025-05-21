@@ -1,4 +1,5 @@
 #include "texture_manager.hpp"
+#include "sdl_deleters.hpp"
 #include <iostream>
 
 TextureManager::TextureManager(SDL_Renderer* renderer) : m_renderer(renderer) {

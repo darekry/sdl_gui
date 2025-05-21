@@ -7,14 +7,7 @@
 #include <map>
 #include <memory>
 
-// Custom deleter dla SDL_Texture
-struct SDLTextureDeleter {
-    void operator()(SDL_Texture* texture) const {
-        if (texture) {
-            SDL_DestroyTexture(texture);
-        }
-    }
-};
+
 
 // Typ dla współdzielonego wskaźnika na teksturę
 using SharedTexture = std::shared_ptr<SDL_Texture>;

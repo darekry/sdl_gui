@@ -52,6 +52,9 @@ public:
     const std::vector<GUIElement*>& getChildren() const { return m_children; }
 };
 
+// Forward declaration for TextInput
+class TextInput;
+
 // Klasa przycisku dziedzicząca po GUIElement
 class Button : public GUIElement {
 public:
@@ -111,5 +114,7 @@ private:
     SDL_Color m_borderColor = {0, 0, 0, 255}; // Domyślny kolor obramowania (czarny)
     int m_borderThickness = 1; // Domyślna grubość obramowania
 };
+
+#include "text_input.hpp"
 
 #endif // GUI_HPP
