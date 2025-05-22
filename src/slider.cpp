@@ -13,13 +13,13 @@ Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, 
     int buttonSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
 
     if (m_orientation == Orientation::Horizontal) { // Poziomy suwak
-        // Przyciski po lewej i prawej stronie
-        m_decreaseButton = std::make_unique<Button>(0, 0, buttonSize, getHeight());
-        m_increaseButton = std::make_unique<Button>(getWidth() - buttonSize, 0, buttonSize, getHeight());
+        // Przyciski po lewej i prawej stronie, poza obszarem suwaka
+        m_decreaseButton = std::make_unique<Button>(-buttonSize, 0, buttonSize, getHeight());
+        m_increaseButton = std::make_unique<Button>(getWidth(), 0, buttonSize, getHeight());
     } else { // Pionowy suwak
-        // Przyciski na górze i na dole
-        m_decreaseButton = std::make_unique<Button>(0, 0, getWidth(), buttonSize);
-        m_increaseButton = std::make_unique<Button>(0, getHeight() - buttonSize, getWidth(), buttonSize);
+        // Przyciski na górze i na dole, poza obszarem suwaka
+        m_decreaseButton = std::make_unique<Button>(0, -buttonSize, getWidth(), buttonSize);
+        m_increaseButton = std::make_unique<Button>(0, getHeight(), getWidth(), buttonSize);
     }
  
       // Ustaw callbacki dla przycisków
@@ -84,7 +84,9 @@ void Slider::handleEvent(SDL_Event& e) {
             }
         }
     }
-    // Zdarzenia do przycisków strzałek są propagowane przez GUIElement::handleEvent
+     for (auto& child : m_children) {
+        child->handleEvent(e);}
+
 }
 
 void Slider::render(SDL_Renderer* renderer) {
