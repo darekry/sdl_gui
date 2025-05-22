@@ -37,8 +37,8 @@ private:
     OnChangeCallback m_onChange;
     bool m_isDragging = false; // Do obsługi przeciągania
 
-    Button* m_decreaseButton; // Przycisk do zmniejszania wartości
-    Button* m_increaseButton; // Przycisk do zwiększania wartości
+    std::unique_ptr<Button> m_decreaseButton; // Przycisk do zmniejszania wartości
+    std::unique_ptr<Button> m_increaseButton; // Przycisk do zwiększania wartości
 };
 
 #endif // SLIDER_HPP

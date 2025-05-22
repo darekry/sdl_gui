@@ -1,5 +1,6 @@
 #include "slider.hpp"
 #include <algorithm> // Dla std::clamp
+#include <memory> // Dla std::make_unique
 
 Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation)
     : GUIElement(x, y, width, height),
@@ -13,33 +14,33 @@ Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, 
 
     if (m_orientation == Orientation::Horizontal) { // Poziomy suwak
         // Przyciski po lewej i prawej stronie
-        m_decreaseButton = new Button(0, 0, buttonSize, getHeight());
-        m_increaseButton = new Button(getWidth() - buttonSize, 0, buttonSize, getHeight());
+        m_decreaseButton = std::make_unique<Button>(0, 0, buttonSize, getHeight());
+        m_increaseButton = std::make_unique<Button>(getWidth() - buttonSize, 0, buttonSize, getHeight());
     } else { // Pionowy suwak
         // Przyciski na górze i na dole
-        m_decreaseButton = new Button(0, 0, getWidth(), buttonSize);
-        m_increaseButton = new Button(0, getHeight() - buttonSize, getWidth(), buttonSize);
+        m_decreaseButton = std::make_unique<Button>(0, 0, getWidth(), buttonSize);
+        m_increaseButton = std::make_unique<Button>(0, getHeight() - buttonSize, getWidth(), buttonSize);
     }
-
-    // Ustaw callbacki dla przycisków
-    m_decreaseButton->setOnClickCallback([this](GUIElement* button) {
-        m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue); // Zmniejsz wartość o 1
-        if (m_onChange) {
-            m_onChange(this); // Przekazujemy wskaźnik do Slidera
-        }
-    });
-
-    m_increaseButton->setOnClickCallback([this](GUIElement* button) {
-        m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue); // Zwiększ wartość o 1
-        if (m_onChange) {
-            m_onChange(this); // Przekazujemy wskaźnik do Slidera
-        }
-    });
-
-    // Dodaj przyciski jako dzieci suwaka
-    addChild(m_decreaseButton);
-    addChild(m_increaseButton);
-}
+ 
+      // Ustaw callbacki dla przycisków
+      m_decreaseButton->setOnClickCallback([this](GUIElement* button) {
+          m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue); // Zmniejsz wartość o 1
+          if (m_onChange) {
+              m_onChange(this); // Przekazujemy wskaźnik do Slidera
+          }
+      });
+ 
+      m_increaseButton->setOnClickCallback([this](GUIElement* button) {
+          m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue); // Zwiększ wartość o 1
+          if (m_onChange) {
+              m_onChange(this); // Przekazujemy wskaźnik do Slidera
+          }
+      });
+ 
+      // Dodaj przyciski jako dzieci suwaka, przenosząc własność
+      addChild(std::move(m_decreaseButton));
+      addChild(std::move(m_increaseButton));
+  }
 
 void Slider::handleEvent(SDL_Event& e) {
     if (e.type == SDL_MOUSEBUTTONDOWN) {
@@ -83,9 +84,7 @@ void Slider::handleEvent(SDL_Event& e) {
             }
         }
     }
-    // Przekaż zdarzenie do przycisków
-    m_decreaseButton->handleEvent(e);
-    m_increaseButton->handleEvent(e);
+    // Zdarzenia do przycisków strzałek są propagowane przez GUIElement::handleEvent
 }
 
 void Slider::render(SDL_Renderer* renderer) {
@@ -113,7 +112,7 @@ void Slider::render(SDL_Renderer* renderer) {
     SDL_RenderFillRect(renderer, &thumbRect);
 
     // Renderuj dzieci (przyciski strzałek)
-    for (GUIElement* child : m_children) {
+    for (auto& child : m_children) {
         child->render(renderer);
     }
 }

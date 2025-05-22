@@ -2,17 +2,14 @@
 #define RADIOBUTTON_HPP
 
 #include "gui.hpp"
-#include "gui.hpp"
 #include "sdl_deleters.hpp" // Dla SharedFont i SDLTextureDeleter
 #include "radio_group.hpp" // Dla klasy RadioGroup
 #include <string>
 #include <functional>
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_ttf.h"
 #include <memory>
 
 // Typ dla współdzielonego wskaźnika na czcionkę (zdefiniowany w sdl_deleters.hpp)
-using SharedFont = std::shared_ptr<TTF_Font>; // Już zdefiniowane w checkbox.hpp lub sdl_deleters.hpp
+// using SharedFont = std::shared_ptr<TTF_Font>; // Już zdefiniowane w gui.hpp
 class RadioButton : public GUIElement {
 public:
     // Konstruktor
@@ -27,15 +24,19 @@ public:
 
     // Metoda do ustawiania etykiety tekstowej
     void setLabel(const std::string& label);
+    const std::string& getLabel() const { return m_labelText; } // Dodano metodę getLabel
 
     // Metoda do ustawiania czcionki dla etykiety
     void setFont(SharedFont font);
+    SharedFont getFont() const { return m_font; } // Dodano metodę getFont
 
     // Metoda do ustawiania koloru tekstu etykiety
     void setTextColor(SDL_Color color);
+    SDL_Color getTextColor() const { return m_textColor; } // Dodano metodę getTextColor
 
     // Metoda do ustawiania grupy, do której należy RadioButton
     void setGroup(RadioGroup* group);
+    RadioGroup* getGroup() const { return m_group; } // Dodano metodę getGroup
 
     // Typ callbacka dla zmiany stanu (zaznaczenia)
     using OnChangeCallback = std::function<void(RadioButton*)>;

@@ -108,29 +108,30 @@ int main(int argc, char* argv[]) {
 
     // Przycisk
     auto button = std::make_unique<Button>(10, 10, 100, 40); // Pozycja względem panelu
+
     // button->setTexture(texture_manager.loadTexture("assets/button.png")); // Jeśli masz teksturę przycisku
     button->setOnClickCallback(onButtonClick);
-    panel->addChild(button.get()); // Dodaj przycisk do panelu
+    panel->addChild(std::move(button)); // Dodaj przycisk do panelu, przenosząc własność
 
     // Suwak poziomy
     auto horizontalSlider = std::make_unique<Slider>(120, 10, 200, 30, 0, 100, 50, Orientation::Horizontal);
     horizontalSlider->setOnChangeCallback(onSliderValueChanged);
-    panel->addChild(horizontalSlider.get());
+    panel->addChild(std::move(horizontalSlider)); // Dodaj suwak do panelu, przenosząc własność
 
     // Suwak pionowy
     auto verticalSlider = std::make_unique<Slider>(10, 60, 30, 200, 0, 100, 50, Orientation::Vertical);
     verticalSlider->setOnChangeCallback(onSliderValueChanged);
-    panel->addChild(verticalSlider.get());
+    panel->addChild(std::move(verticalSlider)); // Dodaj suwak do panelu, przenosząc własność
 
     // Pole tekstowe
     auto textInput = std::make_unique<TextInput>(120, 60, 200, 40);
     if (font) {
         textInput->setFont(font);
-        textInput->setTextColor({255, 255, 255, 255}); // Biały tekst
+        textInput->setTextColor({0, 0, 255, 255}); // Biały tekst
     }
     textInput->setOnTextChanged(onTextInputTextChanged);
     textInput->setOnEnterPressed(onTextInputEnterPressed);
-    panel->addChild(textInput.get());
+    panel->addChild(std::move(textInput)); // Dodaj pole tekstowe do panelu, przenosząc własność
 
     // Checkbox
     auto checkbox = std::make_unique<Checkbox>(120, 110, 200, 30, "Enable Option");
@@ -139,7 +140,7 @@ int main(int argc, char* argv[]) {
         checkbox->setTextColor({255, 255, 255, 255}); // Biały tekst
     }
     checkbox->setOnChange(onCheckboxChanged);
-    panel->addChild(checkbox.get());
+    panel->addChild(std::move(checkbox)); // Dodaj checkbox do panelu, przenosząc własność
 
     // Grupa Radio Buttonów
     auto radioGroup = std::make_unique<RadioGroup>();
@@ -151,8 +152,8 @@ int main(int argc, char* argv[]) {
         radio1->setTextColor({255, 255, 255, 255}); // Biały tekst
     }
     radio1->setOnChange(onRadioButtonSelected);
-    radioGroup->addRadioButton(radio1.get());
-    panel->addChild(radio1.get());
+    radioGroup->addRadioButton(radio1.get()); // RadioGroup zarządza tylko wskaźnikami, nie własnością
+    panel->addChild(std::move(radio1)); // Dodaj radio button do panelu, przenosząc własność
 
     // Radio Button 2
     auto radio2 = std::make_unique<RadioButton>(120, 190, 150, 30, "Choice Two");
@@ -161,26 +162,23 @@ int main(int argc, char* argv[]) {
         radio2->setTextColor({255, 255, 255, 255}); // Biały tekst
     }
     radio2->setOnChange(onRadioButtonSelected);
-    radioGroup->addRadioButton(radio2.get());
-    panel->addChild(radio2.get());
+    radioGroup->addRadioButton(radio2.get()); // RadioGroup zarządza tylko wskaźnikami, nie własnością
+    panel->addChild(std::move(radio2)); // Dodaj radio button do panelu, przenosząc własność
 
 
     // Dodanie panelu (jako głównego kontenera) do menedżera GUI
-    gui_manager.addElement(panel.release()); // Przekazanie własności do menedżera
+    gui_manager.addElement(std::move(panel)); // Przekazanie własności do menedżera
 
     // --- Główna pętla aplikacji ---
     bool quit = false;
-    SDL_Event e;
+    
 
     while (!quit) {
         // Obsługa zdarzeń
-        while (SDL_PollEvent(&e) != 0) {
-            if (e.type == SDL_QUIT) {
-                quit = true;
-            }
+      
             // Przekazanie zdarzenia do menedżera GUI
             quit = gui_manager.handleEvents(); // handleEvents nie przyjmuje argumentu e
-        }
+        
 
         // Czyszczenie renderera
         SDL_SetRenderDrawColor(renderer, 0x1E, 0x1E, 0x1E, 0xFF); // Ciemnoszare tło

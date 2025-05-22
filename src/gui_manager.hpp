@@ -14,10 +14,12 @@ public:
     ~GUIManager();
 
     // Metoda do dodawania elementów GUI do zarządzania
-    void addElement(GUIElement* element);
+
+    // Metoda do dodawania elementów GUI do zarządzania, przejmując własność
+    void addElement(std::unique_ptr<GUIElement> element);
 
     // Metoda do usuwania elementów GUI (opcjonalnie, na razie nie wymagane przez zadanie)
-    // void removeElement(GUIElement* element);
+    // void removeElement(GUIElement* element); // Usunięcie elementu z unique_ptr oznacza jego zniszczenie
 
     // Metoda do obsługi zdarzeń SDL i przekazywania ich do odpowiednich elementów GUI
     bool handleEvents();
@@ -26,8 +28,8 @@ public:
     void render(SDL_Renderer* renderer);
 
 private:
-    // Kontener na wskaźniki do elementów GUI
-    std::vector<GUIElement*> m_elements;
+    // Kontener na unikalne wskaźniki do elementów GUI
+    std::vector<std::unique_ptr<GUIElement>> m_elements;
 };
 
 #endif // GUI_MANAGER_HPP

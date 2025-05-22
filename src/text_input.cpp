@@ -1,5 +1,4 @@
 #include "text_input.hpp"
-#include <iostream> // For basic debugging output
 
 TextInput::TextInput(int x, int y, int w, int h)
     : GUIElement(x, y, w, h), text(""), textColor({0, 0, 0, 255}), // Default text color black
@@ -66,7 +65,7 @@ bool TextInput::isLocked() const {
     return locked;
 }
 
-void TextInput::render(SDL_Renderer* renderer) {
+void TextInput::render(SDL_Renderer* renderer)  {
     SDL_Rect rect = {getAbsolutePosition().x, getAbsolutePosition().y, getWidth(), getHeight()};
 
     // Render background
@@ -79,7 +78,7 @@ void TextInput::render(SDL_Renderer* renderer) {
 
     // Render text
     // Render text
-    if (font && !text.empty()) {
+    if (font && !text.empty() && renderer) {
         if (text != m_renderedText) {
             // Text has changed, re-render texture
             m_textTexture.reset(); // Release the old texture
@@ -107,13 +106,13 @@ void TextInput::render(SDL_Renderer* renderer) {
             SDL_RenderCopy(renderer, m_textTexture.get(), nullptr, &renderQuad);
         }
     } else {
-        // If text is empty or font is null, destroy the texture
+        // If text is empty, font is null, or renderer is null, destroy the texture
         m_textTexture.reset();
         m_renderedText = "";
     }
 
     // Render children (if any)
-    for (GUIElement* child : m_children) {
+    for (auto& child : m_children) {
         child->render(renderer);
     }
 }
@@ -155,7 +154,7 @@ void TextInput::handleEvent(SDL_Event& e) {
     }
 
     // Pass event to children (if any) - though text input typically doesn't have children handling events
-    for (GUIElement* child : m_children) {
+    for (auto& child : m_children) {
         child->handleEvent(e);
     }
 }

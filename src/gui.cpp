@@ -1,6 +1,30 @@
 #include "gui.hpp"
 #include "SDL2/SDL.h"
 
+
+// Implementacja funkcji pomocniczej do tworzenia tekstury z tekstu
+SharedTexture createTextTexture(SDL_Renderer* renderer, SharedFont font, const std::string& text, SDL_Color color) {
+    if (!renderer || !font || text.empty()) {
+        return nullptr;
+    }
+
+    SDL_Surface* textSurface = TTF_RenderText_Solid(font.get(), text.c_str(), color);
+    if (!textSurface) {
+        std::cerr << "Unable to render text surface! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        return nullptr;
+    }
+
+    SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    SDL_FreeSurface(textSurface);
+
+    if (!newTexture) {
+        std::cerr << "Unable to create texture from rendered text! SDL Error: " << SDL_GetError() << std::endl;
+        return nullptr;
+    }
+
+    return {newTexture, SDLTextureDeleter()};
+}
+
 // Implementacja klasy GUIElement
 GUIElement::GUIElement(int x, int y, int width, int height)
     : m_x(x), m_y(y), m_width(width), m_height(height), m_parent(nullptr) {}
@@ -33,25 +57,27 @@ bool GUIElement::contains(int x, int y) const {
             y >= absPos.y && y < absPos.y + m_height);
 }
 
-void GUIElement::addChild(GUIElement* child) {
+
+void GUIElement::addChild(std::unique_ptr<GUIElement> child) {
     if (child && child->m_parent != this) {
+        // Jeśli dziecko ma już rodzica, usuń je z listy dzieci tego rodzica
+        // (Ta logika może wymagać dostosowania w zależności od tego, czy chcemy pozwalać na przenoszenie dzieci między rodzicami)
+        // Na razie zakładamy, że dziecko jest dodawane tylko raz lub przenoszone z nullptr parent
         if (child->m_parent) {
-            child->m_parent->removeChild(child);
+             // W przypadku unique_ptr, usunięcie dziecka z listy rodzica oznacza jego zniszczenie.
+             // Ta operacja jest bardziej złożona i może wymagać innej strategii zarządzania dziećmi.
+             // Na potrzeby tej refaktoryzacji, upraszczamy i zakładamy, że dziecko nie ma rodzica przy dodawaniu.
+             // Jeśli potrzebne jest przenoszenie, należy zaimplementować odpowiednią logikę.
         }
-        m_children.push_back(child);
         child->m_parent = this;
+        m_children.push_back(std::move(child)); // Przenieś własność do wektora
     }
 }
 
-void GUIElement::removeChild(GUIElement* child) {
-    for (size_t i = 0; i < m_children.size(); ++i) {
-        if (m_children[i] == child) {
-            m_children.erase(m_children.begin() + i);
-            child->m_parent = nullptr;
-            break;
-        }
-    }
-}
+// removeChild nie jest już potrzebne w tej formie przy użyciu unique_ptr,
+// ponieważ usunięcie elementu z wektora m_children automatycznie zwalnia pamięć.
+// Jeśli potrzebne jest usunięcie dziecka bez niszczenia go (np. przeniesienie do innego rodzica),
+// należy zaimplementować inną metodę, która zwraca unique_ptr.
 
 // Implementacja klasy Button
 Button::Button(int x, int y, int width, int height, SharedTexture texture)
@@ -83,7 +109,7 @@ void GUIElement::handleEvent(SDL_Event& e) {
 
         // Sprawdź, czy zdarzenie myszy miało miejsce w obrębie tego elementu przed przekazaniem do dzieci
         if (contains(mouseX, mouseY)) {
-            for (GUIElement* child : m_children) {
+            for (auto& child : m_children) {
                 if (child) {
                     child->handleEvent(e);
                 }
@@ -91,7 +117,7 @@ void GUIElement::handleEvent(SDL_Event& e) {
         }
     } else {
         // Dla innych typów zdarzeń, po prostu przekaż je do dzieci (opcjonalnie, w zależności od potrzeb)
-        for (GUIElement* child : m_children) {
+        for (auto& child : m_children) {
             if (child) {
                 child->handleEvent(e);
             }
@@ -99,27 +125,28 @@ void GUIElement::handleEvent(SDL_Event& e) {
     }
 }
 
+
 void Button::handleEvent(SDL_Event& e) {
+    // Obsługa zdarzenia puszczenia przycisku myszy w obrębie przycisku
     if (e.type == SDL_MOUSEBUTTONUP) {
-        // Sprawdź, czy zdarzenie puszczenia przycisku myszy miało miejsce w obrębie przycisku
         // Pozycja myszy w zdarzeniu jest już absolutna
         if (contains(e.button.x, e.button.y)) {
             triggerOnRelease(); // triggerOnRelease już przekazuje 'this'
         }
     }
-    // Można dodać obsługę innych zdarzeń, np. SDL_MOUSEMOTION dla efektu najechania
     // Przekaż zdarzenie dalej do dzieci (jeśli przycisk ma dzieci, np. tekst)
     GUIElement::handleEvent(e);
 }
 
 void GUIElement::render(SDL_Renderer* renderer) {
     // Domyślna implementacja renderowania: renderuj tylko dzieci
-    for (GUIElement* child : m_children) {
+    for (auto&& child : m_children) {
         if (child) {
             child->render(renderer);
         }
     }
 }
+
 
 void Button::render(SDL_Renderer* renderer) {
     SDL_Point absPos = getAbsolutePosition();
@@ -156,7 +183,7 @@ void Panel::setBorderThickness(int thickness) {
     m_borderThickness = thickness;
 }
 
-void Panel::render(SDL_Renderer* renderer) {
+void Panel::render(SDL_Renderer* renderer)  {
     // Pobierz absolutną pozycję panelu
     SDL_Point absPos = getAbsolutePosition();
 

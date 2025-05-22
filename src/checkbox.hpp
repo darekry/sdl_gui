@@ -2,12 +2,9 @@
 #define CHECKBOX_HPP
 
 #include "gui.hpp"
-#include "gui.hpp"
 #include "sdl_deleters.hpp" // Dla SharedFont i SDLTextureDeleter
 #include <string>
 #include <functional>
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_ttf.h"
 #include <memory>
 
 // Typ dla współdzielonego wskaźnika na czcionkę (zdefiniowany w sdl_deleters.hpp)
@@ -26,12 +23,15 @@ public:
 
     // Metoda do ustawiania etykiety tekstowej
     void setLabel(const std::string& label);
+    const std::string& getLabel() const { return m_labelText; } // Dodano metodę getLabel
 
     // Metoda do ustawiania czcionki dla etykiety
     void setFont(SharedFont font);
+    SharedFont getFont() const { return m_font; } // Dodano metodę getFont
 
     // Metoda do ustawiania koloru tekstu etykiety
     void setTextColor(SDL_Color color);
+    SDL_Color getTextColor() const { return m_textColor; } // Dodano metodę getTextColor
 
     // Typ callbacka dla zmiany stanu
     using OnChangeCallback = std::function<void(Checkbox*, bool)>;

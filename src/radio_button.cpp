@@ -47,7 +47,8 @@ void RadioButton::setGroup(RadioGroup* group) {
 }
 
 void RadioButton::handleEvent(SDL_Event& e) {
-    if (e.type == SDL_MOUSEBUTTONDOWN) {
+    // Reaguj na puszczenie lewego przycisku myszy w obrębie widgetu
+    if (e.type == SDL_MOUSEBUTTONUP) {
         // Sprawdź, czy kliknięcie było w obrębie widgetu
         if (e.button.button == SDL_BUTTON_LEFT &&
             e.button.x >= m_x && e.button.x < m_x + m_width &&
@@ -65,7 +66,7 @@ void RadioButton::handleEvent(SDL_Event& e) {
     }
 }
 
-void RadioButton::render(SDL_Renderer* renderer) {
+void RadioButton::render(SDL_Renderer* renderer)  {
     // Renderuj tło (opcjonalnie)
     // SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Ciemnoszary
     // SDL_Rect backgroundRect = {m_x, m_y, m_width, m_height};
@@ -87,10 +88,18 @@ void RadioButton::render(SDL_Renderer* renderer) {
     }
 
     // Renderuj etykietę tekstową
-    if (!m_labelText.empty() && m_font) {
-        // Sprawdź, czy tekstura etykiety wymaga aktualizacji
+    if (!m_labelText.empty() && m_font && renderer) {
+        // Sprawdź, czy tekstura etykiety wymaga aktualizacji lub nie istnieje
         if (!m_labelTexture || m_renderedText != m_labelText) {
-             updateLabelTexture(renderer);
+             m_labelTexture = createTextTexture(renderer, m_font, m_labelText, m_textColor);
+             if (m_labelTexture) {
+                 SDL_QueryTexture(m_labelTexture.get(), nullptr, nullptr, &m_labelWidth, &m_labelHeight);
+                 m_renderedText = m_labelText;
+             } else {
+                 m_labelWidth = 0;
+                 m_labelHeight = 0;
+                 m_renderedText = "";
+             }
         }
 
         // Renderuj teksturę etykiety (jeśli istnieje)
@@ -98,23 +107,8 @@ void RadioButton::render(SDL_Renderer* renderer) {
             SDL_Rect renderQuad = {m_x + m_height + 5, m_y + (m_height - m_labelHeight) / 2, m_labelWidth, m_labelHeight};
             SDL_RenderCopy(renderer, m_labelTexture.get(), nullptr, &renderQuad);
         }
-    }
-}
-
-// Metoda pomocnicza do aktualizacji tekstury etykiety (wymaga dostępu do renderer i FontManager)
-void RadioButton::updateLabelTexture(SDL_Renderer* renderer) {
-    if (!m_labelText.empty() && m_font && renderer) {
-        SDL_Surface* textSurface = TTF_RenderText_Solid(m_font.get(), m_labelText.c_str(), m_textColor);
-        if (textSurface) {
-            m_labelTexture.reset(SDL_CreateTextureFromSurface(renderer, textSurface), SDLTextureDeleter());
-            m_labelWidth = textSurface->w;
-            m_labelHeight = textSurface->h;
-            SDL_FreeSurface(textSurface);
-            m_renderedText = m_labelText;
-        } else {
-            std::cerr << "Unable to render text surface! SDL_ttf Error: " << TTF_GetError() << std::endl;
-        }
     } else {
+        // Jeśli tekst jest pusty, czcionka jest nullptr lub renderer jest nullptr, zwolnij teksturę
         m_labelTexture = nullptr;
         m_labelWidth = 0;
         m_labelHeight = 0;

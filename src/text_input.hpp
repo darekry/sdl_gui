@@ -4,12 +4,11 @@
 #include "gui.hpp"
 #include <string>
 #include <functional>
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_ttf.h" // Assuming SDL_ttf will be used for fonts
+#include <string>
+#include <functional>
 #include <memory>
 
 #include "sdl_deleters.hpp"
-
 class TextInput : public GUIElement {
 public:
     TextInput(int x, int y, int w, int h);
@@ -29,8 +28,8 @@ public:
     void setLocked(bool locked);
     bool isLocked() const;
 
-    void render(SDL_Renderer* renderer) override;
-    void handleEvent(SDL_Event& e) override;
+    virtual void render(SDL_Renderer* renderer) ;
+    virtual void handleEvent(SDL_Event& e) ;
 
 private:
     std::string text;

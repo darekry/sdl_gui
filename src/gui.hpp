@@ -3,7 +3,13 @@
 
 #include "SDL2/SDL.h"
 #include "texture_manager.hpp" // Dodano include dla TextureManager
+#include "font_manager.hpp" // Dodano include dla FontManager i SharedFont
 #include <functional>
+#include <string> // Dodano include dla std::string
+#include <memory> // Dodano include dla std::shared_ptr
+
+// Funkcja pomocnicza do tworzenia tekstury z tekstu
+SharedTexture createTextTexture(SDL_Renderer* renderer, SharedFont font, const std::string& text, SDL_Color color);
 
 // Podstawowa klasa bazowa dla elementów GUI
 class GUIElement {
@@ -42,14 +48,17 @@ protected:
     int m_x, m_y;
     int m_width, m_height;
     GUIElement* m_parent;
-    std::vector<GUIElement*> m_children;
+
+    std::vector<std::unique_ptr<GUIElement>> m_children;
 
 public:
     // Metody do zarządzania relacją rodzic-dziecko
-    void addChild(GUIElement* child);
-    void removeChild(GUIElement* child);
+    void addChild(std::unique_ptr<GUIElement> child);
+    // removeChild będzie wymagać przemyślenia - usunięcie dziecka oznacza jego zniszczenie
+    // Na razie zostawiamy, ale może być usunięte lub zmienione
+    // void removeChild(GUIElement* child);
     GUIElement* getParent() const { return m_parent; }
-    const std::vector<GUIElement*>& getChildren() const { return m_children; }
+    const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
 };
 
 // Forward declaration for TextInput
@@ -114,7 +123,4 @@ private:
     SDL_Color m_borderColor = {0, 0, 0, 255}; // Domyślny kolor obramowania (czarny)
     int m_borderThickness = 1; // Domyślna grubość obramowania
 };
-
-#include "text_input.hpp"
-
 #endif // GUI_HPP

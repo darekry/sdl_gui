@@ -11,9 +11,10 @@ GUIManager::~GUIManager() {
     // W tym zadaniu GUIManager zarządza wskaźnikami, a cykl życia obiektów GUIElement jest zarządzany zewnętrznie.
 }
 
-void GUIManager::addElement(GUIElement* element) {
+
+void GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     if (element) {
-        m_elements.push_back(element);
+        m_elements.push_back(std::move(element)); // Przenieś własność do wektora
     }
 }
 
@@ -24,8 +25,9 @@ bool GUIManager::handleEvents() {
         if (e.type == SDL_QUIT) {
             quit = true;
         } else {
+
             // Przekaż zdarzenie do wszystkich zarządzanych elementów
-            for (GUIElement* element : m_elements) {
+            for (const auto& element : m_elements) { // Iteracja po unique_ptr
                 if (element) {
                     // Sprawdź typ zdarzenia i pozycję myszy dla zdarzeń myszy
                     if (e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONUP) {
@@ -43,12 +45,12 @@ bool GUIManager::handleEvents() {
                         }
 
                         // Sprawdź, czy zdarzenie myszy miało miejsce w obrębie elementu
-                        if (element->contains(mouseX, mouseY)) {
+                        if (element->contains(mouseX, mouseY)) { // Użyj operatora -> na unique_ptr
                             // Przekaż zdarzenie do metody handleEvent elementu
-                            element->handleEvent(e);
+                            element->handleEvent(e); // Użyj operatora -> na unique_ptr
 
                             // Specyficzna obsługa dla przycisków
-                            Button* button = dynamic_cast<Button*>(element);
+                            Button* button = dynamic_cast<Button*>(element.get()); // Użyj .get() do rzutowania
                             if (button) {
                                 if (e.type == SDL_MOUSEBUTTONDOWN) {
                                     //button->triggerOnClick(); // Zmieniamy logikę kliknięcia na puszczenie przycisku
@@ -59,7 +61,7 @@ bool GUIManager::handleEvents() {
                         }
                     } else {
                         // Dla innych typów zdarzeń, po prostu przekaż je do elementu
-                        element->handleEvent(e);
+                        element->handleEvent(e); // Użyj operatora -> na unique_ptr
                     }
                 }
             }
@@ -67,12 +69,11 @@ bool GUIManager::handleEvents() {
     }
     return quit;
 }
-
 void GUIManager::render(SDL_Renderer* renderer) {
     // Renderuj wszystkie zarządzane elementy
-    for (GUIElement* element : m_elements) {
+    for (const auto& element : m_elements) { // Iteracja po unique_ptr
         if (element) {
-            element->render(renderer);
+            element->render(renderer); // Użyj operatora -> na unique_ptr
         }
     }
 }
