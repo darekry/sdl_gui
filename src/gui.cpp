@@ -128,7 +128,7 @@ void GUIElement::handleEvent(SDL_Event& e) {
 
 void Button::handleEvent(SDL_Event& e) {
     // Obsługa zdarzenia puszczenia przycisku myszy w obrębie przycisku
-    if (e.type == SDL_MOUSEBUTTONUP) {
+    if (e.type == SDL_MOUSEBUTTONDOWN) {
         // Pozycja myszy w zdarzeniu jest już absolutna
         if (contains(e.button.x, e.button.y)) {
             triggerOnRelease(); // triggerOnRelease już przekazuje 'this'

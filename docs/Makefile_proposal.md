@@ -39,29 +39,28 @@ INCLUDE := include
 # define lib directory
 LIB := lib
 
- # --- Źródła i obiekty ---
- # Wszystkie pliki źródłowe C++ w projekcie
- CPPSOURCES := $(wildcard $(SRC)/*.cpp)
- # Pliki obiektowe biblioteki
- LIB_OBJ_FILES := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/%.o,$(CPPSOURCES))
+MAIN_EXEC := $(OUTPUT)/main
+
+# --- Źródła i obiekty ---
+# Wszystkie pliki źródłowe C++ w projekcie
+CPPSOURCES := $(wildcard $(SRC)/*.cpp)
+# Pliki obiektowe biblioteki (bez main.o)
+LIB_OBJ_FILES := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/%.o,$(filter-out $(SRC)/main.cpp,$(CPPSOURCES)))
+# Plik obiektowy main
+MAIN_OBJ := $(patsubst $(SRC)/main.cpp,$(OUTPUT)/main.o,$(filter $(SRC)/main.cpp,$(CPPSOURCES)))
 
 # --- Konfiguracja testów ---
 # Pliki źródłowe testów
 TEST_SRC_FILES  := $(wildcard $(TESTS_DIR)/test_*.cpp)
 # Plik pomocniczy testów
 TEST_HELPER_SRC := $(TESTS_DIR)/test_helper.cpp
-TEST_HELPER_OBJ := $(OUTPUT)/test_helper.o
+TEST_HELPER_OBJ := $(patsubst $(TESTS_DIR)/%.cpp,$(OUTPUT)/%.o,$(TEST_HELPER_SRC))
 # Pliki wykonywalne testów
-TEST_EXECS      := $(patsubst $(TESTS_DIR)/test_%.cpp,$(OUTPUT)/test_%,$(filter-out $(TESTS_DIR)/test_helper.cpp,$(TEST_SRC_FILES)))
-# --- Konfiguracja przykładów ---
-EXAMPLE_SRC_FILES := $(wildcard examples/*.cpp)
-EXAMPLE_EXECS     := $(patsubst examples/%.cpp,$(OUTPUT)/%,$(EXAMPLE_SRC_FILES))
+TEST_EXECS      := $(patsubst $(TESTS_DIR)/test_%.cpp,$(OUTPUT)/test_%,$(TEST_SRC_FILES))
 
 # --- Główne cele ---
 
-all: examples
-
-examples: $(EXAMPLE_EXECS)
+all: $(MAIN_EXEC)
 
 # Cel do uruchamiania testów
 test: $(TEST_EXECS)
@@ -73,37 +72,35 @@ test: $(TEST_EXECS)
 
 # --- Reguły kompilacji ---
 
+# Główny plik wykonywalny
+$(MAIN_EXEC): $(MAIN_OBJ) $(LIB_OBJ_FILES)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
 # Pliki wykonywalne testów
 # Każdy test jest linkowany z całą biblioteką i pomocnikiem testów
-$(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(LIB_OBJ_FILES) $(OUTPUT)/catch_amalgamated.o
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIB_OBJ_FILES) $(OUTPUT)/catch_amalgamated.o $(LDFLAGS)
-
-# Pliki wykonywalne przykładów
-$(OUTPUT)/example_%: examples/example_%.cpp $(LIB_OBJ_FILES)
-	$(CXX) $(CXXFLAGS) -I$(SRC) -o $@ $^ $(LDFLAGS)
+$(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(LIB_OBJ_FILES) $(TEST_HELPER_OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Kompilacja plików obiektowych (zarówno z src, jak i tests)
 $(OUTPUT)/%.o: $(SRC)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -I$(SRC) -c $< -o $@
 
-
-$(OUTPUT)/catch_amalgamated.o: $(LIB)/catch_amalgamated.cpp $(LIB)/catch_amalgamated.hpp
+$(OUTPUT)/%.o: $(TESTS_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -I$(LIB) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I$(SRC) -c $< -o $@
 
 # --- Inne cele ---
 
 .PHONY: clean run debug
 
-run:
-	@echo "No main executable to run. Run examples individually, e.g., ./output/example_button"
+run: all
+	./$(MAIN_EXEC)
 
-debug:
-	@echo "No main executable to debug. Debug examples individually."
+debug: CFLAGS += -DDEBUG
+debug: all
+	gdb $(MAIN_EXEC)
 
 clean:
 	rm -rf $(OUTPUT)
-	rm -f $(TEST_EXECS)
 	@echo "Cleanup complete!"
-

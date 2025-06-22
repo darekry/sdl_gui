@@ -17,9 +17,13 @@ RadioButton::~RadioButton() {
     // Nie zwalniamy wskaźnika m_group, ponieważ grupa zarządza swoim cyklem życia
 }
 
-void RadioButton::setSelected(bool selected) {
+void RadioButton::setSelected(bool selected, bool notifyGroup) {
     if (m_isSelected != selected) {
         m_isSelected = selected;
+        // Jeśli przycisk jest zaznaczany, należy do grupy i mamy ją powiadomić
+        if (m_group && selected && notifyGroup) {
+            m_group->buttonSelected(this);
+        }
         // Wywołaj callback, jeśli istnieje
         if (m_onChange) {
             m_onChange(this);
@@ -48,12 +52,11 @@ void RadioButton::setGroup(RadioGroup* group) {
 
 void RadioButton::handleEvent(SDL_Event& e) {
     // Reaguj na puszczenie lewego przycisku myszy w obrębie widgetu
-    if (e.type == SDL_MOUSEBUTTONUP) {
+    if (e.type == SDL_MOUSEBUTTONDOWN) {
         // Sprawdź, czy kliknięcie było w obrębie widgetu
         if (e.button.button == SDL_BUTTON_LEFT &&
             e.button.x >= m_x && e.button.x < m_x + m_width &&
             e.button.y >= m_y && e.button.y < m_y + m_height) {
-
             // Jeśli przycisk nie jest jeszcze zaznaczony i należy do grupy, powiadom grupę
             if (!m_isSelected && m_group) {
                 m_group->buttonSelected(this);

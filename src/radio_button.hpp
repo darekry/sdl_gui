@@ -20,7 +20,7 @@ public:
 
     // Metody do zarządzania stanem
     bool isSelected() const { return m_isSelected; }
-    void setSelected(bool selected);
+    void setSelected(bool selected, bool notifyGroup = true);
 
     // Metoda do ustawiania etykiety tekstowej
     void setLabel(const std::string& label);

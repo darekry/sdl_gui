@@ -9,15 +9,17 @@ void RadioGroup::addRadioButton(RadioButton* button) {
 }
 
 void RadioGroup::buttonSelected(RadioButton* selectedButton) {
-    // Odznacz wszystkie inne przyciski w grupie
     for (RadioButton* button : m_buttons) {
-        if (button != selectedButton && button->isSelected()) {
-            button->setSelected(false);
+        if (button != selectedButton) {
+            // Odznacz inne przyciski, nie powiadamiając grupy (aby uniknąć pętli)
+            if (button->isSelected()) {
+                button->setSelected(false, false);
+            }
         }
     }
-    // Upewnij się, że wybrany przycisk jest zaznaczony (setSelected w RadioButton wywoła callback)
+    // Zaznacz wybrany przycisk, również bez powiadamiania grupy
     if (selectedButton && !selectedButton->isSelected()) {
-        selectedButton->setSelected(true);
+        selectedButton->setSelected(true, false);
     }
 }
 

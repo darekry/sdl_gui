@@ -44,9 +44,15 @@ public:
     // Domyślna implementacja renderuje dzieci
     virtual void render(SDL_Renderer* renderer);
 
+public:
+    // Metody do zarządzania stanem włączony/wyłączony
+    void setEnabled(bool enabled) { m_enabled = enabled; }
+    bool isEnabled() const { return m_enabled; }
+
 protected:
     int m_x, m_y;
     int m_width, m_height;
+    bool m_enabled = true; // Domyślnie włączony
     GUIElement* m_parent;
 
     std::vector<std::unique_ptr<GUIElement>> m_children;

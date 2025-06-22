@@ -123,12 +123,18 @@ void TextInput::handleEvent(SDL_Event& e) {
     }
 
     if (e.type == SDL_MOUSEBUTTONDOWN) {
-        int mouseX, mouseY;
-        SDL_GetMouseState(&mouseX, &mouseY);
+        int mouseX = e.button.x;
+        int mouseY = e.button.y;
         if (contains(mouseX, mouseY)) {
-            active = true; // Activate on click
+            if (!active) {
+                active = true;
+                SDL_StartTextInput();
+            }
         } else {
-            active = false; // Deactivate if clicked outside
+            if (active) {
+                active = false;
+                SDL_StopTextInput();
+            }
         }
     } else if (active && e.type == SDL_TEXTINPUT) {
         // Append new text
@@ -149,6 +155,8 @@ void TextInput::handleEvent(SDL_Event& e) {
             // Handle Enter key
             if (onEnterPressed) {
                 onEnterPressed(this);
+                active = false; // Deactivate on enter
+                SDL_StopTextInput();
             }
         }
     }

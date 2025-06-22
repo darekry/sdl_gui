@@ -27,6 +27,9 @@ public:
     // Metoda do renderowania wszystkich elementów GUI
     void render(SDL_Renderer* renderer);
 
+    // Metoda do uzyskiwania dostępu do elementów (potrzebna do ręcznej obsługi zdarzeń)
+    std::vector<std::unique_ptr<GUIElement>>& getElements() { return m_elements; }
+
 private:
     // Kontener na unikalne wskaźniki do elementów GUI
     std::vector<std::unique_ptr<GUIElement>> m_elements;

@@ -4,10 +4,10 @@
 
 Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation)
     : GUIElement(x, y, width, height),
+      m_orientation(orientation),
       m_minValue(minValue),
       m_maxValue(maxValue),
-      m_currentValue(std::clamp(initialValue, minValue, maxValue)),
-      m_orientation(orientation) { // Zainicjowanie orientacji
+      m_currentValue(std::clamp(initialValue, minValue, maxValue)) {
     
     // Określ rozmiar przycisków na podstawie orientacji suwaka
     int buttonSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
@@ -43,18 +43,22 @@ Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, 
   }
 
 void Slider::handleEvent(SDL_Event& e) {
+    if (!m_enabled) {
+        return; // Ignoruj zdarzenia, jeśli suwak jest wyłączony
+    }
+
     if (e.type == SDL_MOUSEBUTTONDOWN) {
         if (e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
             m_isDragging = true;
-            // Oblicz początkową wartość na podstawie pozycji kliknięcia
-            int clickX = e.button.x - getAbsolutePosition().x;
-            int clickY = e.button.y - getAbsolutePosition().y;
+            // Oblicz wartość na podstawie pozycji kliknięcia
+            int mouseX = e.button.x - getAbsolutePosition().x;
+            int mouseY = e.button.y - getAbsolutePosition().y;
             
-            if (m_orientation == Orientation::Horizontal) { // Poziomy suwak
-                float ratio = (float)clickX / getWidth();
+            if (m_orientation == Orientation::Horizontal) {
+                float ratio = static_cast<float>(mouseX) / getWidth();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
-            } else { // Pionowy suwak
-                float ratio = (float)clickY / getHeight();
+            } else {
+                float ratio = static_cast<float>(mouseY) / getHeight();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
             }
             m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
@@ -71,11 +75,11 @@ void Slider::handleEvent(SDL_Event& e) {
             int mouseX = e.motion.x - getAbsolutePosition().x;
             int mouseY = e.motion.y - getAbsolutePosition().y;
 
-            if (m_orientation == Orientation::Horizontal) { // Poziomy suwak
-                float ratio = (float)mouseX / getWidth();
+            if (m_orientation == Orientation::Horizontal) {
+                float ratio = static_cast<float>(mouseX) / getWidth();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
-            } else { // Pionowy suwak
-                float ratio = (float)mouseY / getHeight();
+            } else {
+                float ratio = static_cast<float>(mouseY) / getHeight();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
             }
             m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
@@ -84,9 +88,11 @@ void Slider::handleEvent(SDL_Event& e) {
             }
         }
     }
-     for (auto& child : m_children) {
-        child->handleEvent(e);}
 
+    // Propaguj zdarzenia do dzieci (przycisków)
+    for (auto& child : m_children) {
+        child->handleEvent(e);
+    }
 }
 
 void Slider::render(SDL_Renderer* renderer) {
