@@ -67,7 +67,7 @@ all: examples
 examples: $(EXAMPLE_EXECS)
 
 # Cel do uruchamiania testów
-test: $(TEST_EXECS)
+test: $(LIB_OBJ_FILES) $(TEST_EXECS)
 	@echo "Running all tests..."
 	@for t in $(TEST_EXECS); do \
 		./$$t || exit 1; \
@@ -78,8 +78,8 @@ test: $(TEST_EXECS)
 
 # Pliki wykonywalne testów
 # Każdy test jest linkowany z całą biblioteką i pomocnikiem testów
-$(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(LIB_OBJ_FILES) $(OUTPUT)/catch_amalgamated.o
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $< $(LIB_OBJ_FILES) $(OUTPUT)/catch_amalgamated.o $(LDFLAGS)
+$(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(LIB_OBJ_FILES) $(TEST_HELPER_OBJ) $(OUTPUT)/catch_amalgamated.o
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Pliki wykonywalne przykładów
 $(OUTPUT)/example_%: examples/example_%.cpp $(LIB_OBJ_FILES)
@@ -90,6 +90,10 @@ $(OUTPUT)/%.o: $(SRC)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
+
+$(TEST_HELPER_OBJ): $(TEST_HELPER_SRC)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 $(OUTPUT)/catch_amalgamated.o: $(LIB)/catch_amalgamated.cpp $(LIB)/catch_amalgamated.hpp
 	@mkdir -p $(dir $@)

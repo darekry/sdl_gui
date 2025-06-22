@@ -1,7 +1,6 @@
 #define CATCH_CONFIG_MAIN
 #include "../lib/catch_amalgamated.hpp"
 #include "test_helper.hpp"
-#include "test_helper.cpp"
 #include "../src/radio_button.hpp"
 #include "../src/radio_group.hpp"
 #include "../src/texture_manager.hpp"
