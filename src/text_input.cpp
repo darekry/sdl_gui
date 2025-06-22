@@ -117,18 +117,18 @@ void TextInput::render(SDL_Renderer* renderer)  {
     }
 }
 
-void TextInput::handleEvent(SDL_Event& e) {
-    if (locked) {
-        return; // Ignore events if locked
+bool TextInput::handleEvent(SDL_Event& e) {
+    if (locked || !m_enabled) {
+        return false;
     }
 
+    bool eventHandled = false;
     if (e.type == SDL_MOUSEBUTTONDOWN) {
-        int mouseX = e.button.x;
-        int mouseY = e.button.y;
-        if (contains(mouseX, mouseY)) {
+        if (contains(e.button.x, e.button.y)) {
             if (!active) {
                 active = true;
                 SDL_StartTextInput();
+                eventHandled = true;
             }
         } else {
             if (active) {
@@ -137,32 +137,25 @@ void TextInput::handleEvent(SDL_Event& e) {
             }
         }
     } else if (active && e.type == SDL_TEXTINPUT) {
-        // Append new text
         text += e.text.text;
-        m_renderedText = ""; // Mark for re-render
-        if (onTextChanged) {
-            onTextChanged(this);
-        }
+        m_renderedText = "";
+        if (onTextChanged) onTextChanged(this);
+        eventHandled = true;
     } else if (active && e.type == SDL_KEYDOWN) {
         if (e.key.keysym.sym == SDLK_BACKSPACE && !text.empty()) {
-            // Handle backspace
             text.pop_back();
-            m_renderedText = ""; // Mark for re-render
-            if (onTextChanged) {
-                onTextChanged(this);
-            }
+            m_renderedText = "";
+            if (onTextChanged) onTextChanged(this);
+            eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_RETURN) {
-            // Handle Enter key
-            if (onEnterPressed) {
-                onEnterPressed(this);
-                active = false; // Deactivate on enter
-                SDL_StopTextInput();
-            }
+            if (onEnterPressed) onEnterPressed(this);
+            active = false;
+            SDL_StopTextInput();
+            eventHandled = true;
         }
     }
 
-    // Pass event to children (if any) - though text input typically doesn't have children handling events
-    for (auto& child : m_children) {
-        child->handleEvent(e);
-    }
+    // Zdarzenie jest "konsumowane" tylko jeśli pole tekstowe jest aktywne
+    // lub zostało właśnie aktywowane. W przeciwnym razie pozwalamy na propagację.
+    return eventHandled;
 }

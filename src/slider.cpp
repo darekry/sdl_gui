@@ -44,19 +44,23 @@ Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, 
       addChild(std::move(m_increaseButton));
   }
 
-void Slider::handleEvent(SDL_Event& e) {
+bool Slider::handleEvent(SDL_Event& e) {
     if (!m_enabled) {
-        return; // Ignoruj zdarzenia, jeśli suwak jest wyłączony
+        return false;
     }
 
+    // Najpierw przekaż zdarzenie do dzieci (przycisków)
+    if (GUIElement::handleEvent(e)) {
+        return true; // Jeśli dziecko obsłużyło zdarzenie, zakończ
+    }
+
+    // Następnie obsłuż logikę przeciągania suwaka
     if (e.type == SDL_MOUSEBUTTONDOWN) {
         if (e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
             m_isDragging = true;
             int oldValue = m_currentValue;
-            // Oblicz wartość na podstawie pozycji kliknięcia
             int mouseX = e.button.x - getAbsolutePosition().x;
             int mouseY = e.button.y - getAbsolutePosition().y;
-            
             if (m_orientation == Orientation::Horizontal) {
                 float ratio = static_cast<float>(mouseX) / getWidth();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
@@ -68,17 +72,18 @@ void Slider::handleEvent(SDL_Event& e) {
             if (m_onChange && m_currentValue != oldValue) {
                 m_onChange(this);
             }
+            return true; // Zdarzenie obsłużone
         }
     } else if (e.type == SDL_MOUSEBUTTONUP) {
-        if (e.button.button == SDL_BUTTON_LEFT) {
+        if (e.button.button == SDL_BUTTON_LEFT && m_isDragging) {
             m_isDragging = false;
+            return true; // Zdarzenie obsłużone
         }
     } else if (e.type == SDL_MOUSEMOTION) {
         if (m_isDragging) {
             int oldValue = m_currentValue;
             int mouseX = e.motion.x - getAbsolutePosition().x;
             int mouseY = e.motion.y - getAbsolutePosition().y;
-
             if (m_orientation == Orientation::Horizontal) {
                 float ratio = static_cast<float>(mouseX) / getWidth();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
@@ -90,13 +95,11 @@ void Slider::handleEvent(SDL_Event& e) {
             if (m_onChange && m_currentValue != oldValue) {
                 m_onChange(this);
             }
+            return true; // Zdarzenie obsłużone
         }
     }
 
-    // Propaguj zdarzenia do dzieci (przycisków)
-    for (auto& child : m_children) {
-        child->handleEvent(e);
-    }
+    return false;
 }
 
 void Slider::render(SDL_Renderer* renderer) {

@@ -1,37 +1,87 @@
 [
     {
-        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -o output/font_manager.o src/font_manager.cpp",
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/checkbox.o src/checkbox.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/src/checkbox.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/font_manager.o src/font_manager.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/font_manager.cpp"
     },
     {
-        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -o output/gui.o src/gui.cpp",
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/gui.o src/gui.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/gui.cpp"
     },
     {
-        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -o output/gui_manager.o src/gui_manager.cpp",
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/gui_manager.o src/gui_manager.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/gui_manager.cpp"
     },
     {
-        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -o output/main.o src/main.cpp",
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/radio_button.o src/radio_button.cpp",
         "directory": "/home/darekry/code/sdl_gui",
-        "file": "/home/darekry/code/sdl_gui/src/main.cpp"
+        "file": "/home/darekry/code/sdl_gui/src/radio_button.cpp"
     },
     {
-        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -o output/slider.o src/slider.cpp",
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/radio_group.o src/radio_group.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/src/radio_group.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/slider.o src/slider.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/slider.cpp"
     },
     {
-        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -o output/text_input.o src/text_input.cpp",
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/tab_control.o src/tab_control.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/src/tab_control.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/text_input.o src/text_input.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/text_input.cpp"
     },
     {
-        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -o output/texture_manager.o src/texture_manager.cpp",
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/texture_manager.o src/texture_manager.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/texture_manager.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/example_button output/checkbox.o output/font_manager.o output/gui.o output/gui_manager.o output/radio_button.o output/radio_group.o output/slider.o output/tab_control.o output/text_input.o output/texture_manager.o examples/example_button.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_button.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/example_checkbox output/checkbox.o output/font_manager.o output/gui.o output/gui_manager.o output/radio_button.o output/radio_group.o output/slider.o output/tab_control.o output/text_input.o output/texture_manager.o examples/example_checkbox.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_checkbox.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/example_panel output/checkbox.o output/font_manager.o output/gui.o output/gui_manager.o output/radio_button.o output/radio_group.o output/slider.o output/tab_control.o output/text_input.o output/texture_manager.o examples/example_panel.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_panel.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/example_radio_button output/checkbox.o output/font_manager.o output/gui.o output/gui_manager.o output/radio_button.o output/radio_group.o output/slider.o output/tab_control.o output/text_input.o output/texture_manager.o examples/example_radio_button.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_radio_button.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/example_slider output/checkbox.o output/font_manager.o output/gui.o output/gui_manager.o output/radio_button.o output/radio_group.o output/slider.o output/tab_control.o output/text_input.o output/texture_manager.o examples/example_slider.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_slider.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/example_tabs output/checkbox.o output/font_manager.o output/gui.o output/gui_manager.o output/radio_button.o output/radio_group.o output/slider.o output/tab_control.o output/text_input.o output/texture_manager.o examples/example_tabs.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_tabs.cpp"
+    },
+    {
+        "command": "c++ -c -std=c++20 -Wall -Wextra -Og -I/usr/include/SDL2 -D_REENTRANT -march=native -g -stdlib=libc++ -Isrc -o output/example_text_input output/checkbox.o output/font_manager.o output/gui.o output/gui_manager.o output/radio_button.o output/radio_group.o output/slider.o output/tab_control.o output/text_input.o output/texture_manager.o examples/example_text_input.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_text_input.cpp"
     }
 ]

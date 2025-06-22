@@ -45,7 +45,7 @@ public:
     void setOnChange(OnChangeCallback callback) { m_onChange = callback; }
 
     // Przesłonięte metody do obsługi zdarzeń i renderowania
-    void handleEvent(SDL_Event& e) override;
+    bool handleEvent(SDL_Event& e) override;
     void render(SDL_Renderer* renderer) override;
 
 private:

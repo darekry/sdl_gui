@@ -36,16 +36,16 @@ void Checkbox::setTextColor(SDL_Color color) {
     m_renderedText = "";
 }
 
-void Checkbox::handleEvent(SDL_Event& e) {
-    if (!m_enabled) return;
+bool Checkbox::handleEvent(SDL_Event& e) {
+    if (!m_enabled) return false;
 
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-        // Match the logic from RadioButton, checking the full widget area for consistency.
-        if (e.button.x >= m_x && e.button.x < m_x + m_width &&
-            e.button.y >= m_y && e.button.y < m_y + m_height) {
+        if (contains(e.button.x, e.button.y)) {
             setChecked(!m_isChecked);
+            return true; // Zdarzenie obsłużone
         }
     }
+    return false;
 }
 
 void Checkbox::render(SDL_Renderer* renderer) {

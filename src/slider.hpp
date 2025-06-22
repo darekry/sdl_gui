@@ -21,7 +21,7 @@ public:
     using OnChangeCallback = std::function<void(GUIElement*)>;
     void setOnChangeCallback(OnChangeCallback callback) { m_onChange = callback; }
 
-    void handleEvent(SDL_Event& e) override;
+    bool handleEvent(SDL_Event& e) override;
     void render(SDL_Renderer* renderer) override;
 
 private:

@@ -1,0 +1,32 @@
+#ifndef TAB_CONTROL_HPP
+#define TAB_CONTROL_HPP
+
+#include "gui.hpp"
+#include <vector>
+#include <string>
+#include <memory>
+
+class TabControl : public GUIElement {
+public:
+    TabControl(int x, int y, int width, int height, SharedFont font, SDL_Renderer* renderer);
+
+    // Dodaje nową zakładkę i zwraca wskaźnik do jej panelu zawartości
+    Panel* addTab(const std::string& title);
+
+    // Ustawia aktywną zakładkę na podstawie wskaźnika na jej przycisk
+    void setActiveTab(Button* tabButton);
+
+private:
+    void reorderTabs(); // Prywatna metoda do aktualizacji pozycji przycisków
+
+    std::vector<Button*> m_tabButtons;
+    std::vector<Panel*> m_tabPanels;
+    Button* m_activeTabButton = nullptr;
+    
+    SharedFont m_font;
+    SDL_Renderer* m_renderer;
+    
+    int m_tabButtonHeight = 30;
+};
+
+#endif // TAB_CONTROL_HPP

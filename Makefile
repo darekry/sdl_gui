@@ -21,6 +21,9 @@ CXXFLAGS  := -std=c++20
 CXXFLAGS  += $(FLAGS)
 CXXFLAGS  += -stdlib=libc++
 
+# define C Preprocessor flags
+CPPFLAGS := -Isrc
+
 # define library paths in addition to /usr/lib
 LDFLAGS  = $(shell sdl2-config --libs)
 LDFLAGS += -lSDL2_image
@@ -76,16 +79,16 @@ test: $(TEST_EXECS)
 # Pliki wykonywalne testów
 # Każdy test jest linkowany z całą biblioteką i pomocnikiem testów
 $(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(LIB_OBJ_FILES) $(OUTPUT)/catch_amalgamated.o
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LIB_OBJ_FILES) $(OUTPUT)/catch_amalgamated.o $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $< $(LIB_OBJ_FILES) $(OUTPUT)/catch_amalgamated.o $(LDFLAGS)
 
 # Pliki wykonywalne przykładów
 $(OUTPUT)/example_%: examples/example_%.cpp $(LIB_OBJ_FILES)
-	$(CXX) $(CXXFLAGS) -I$(SRC) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Kompilacja plików obiektowych (zarówno z src, jak i tests)
 $(OUTPUT)/%.o: $(SRC)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -I$(SRC) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 
 $(OUTPUT)/catch_amalgamated.o: $(LIB)/catch_amalgamated.cpp $(LIB)/catch_amalgamated.hpp
@@ -106,4 +109,3 @@ clean:
 	rm -rf $(OUTPUT)
 	rm -f $(TEST_EXECS)
 	@echo "Cleanup complete!"
-

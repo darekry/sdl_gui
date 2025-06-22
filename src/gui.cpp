@@ -91,55 +91,46 @@ void Button::setTexture(SharedTexture texture) {
     m_texture = texture;
 }
 
-void GUIElement::handleEvent(SDL_Event& e) {
-    // Przekaż zdarzenie do dzieci, jeśli zdarzenie myszy miało miejsce w obrębie elementu
-    if (e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONUP) {
-        int mouseX, mouseY;
-        if (e.type == SDL_MOUSEBUTTONDOWN) {
-            mouseX = e.button.x;
-            mouseY = e.button.y;
-        } else if (e.type == SDL_MOUSEBUTTONUP) {
-             mouseX = e.button.x;
-             mouseY = e.button.y;
-        }
-        else { // SDL_MOUSEMOTION
-            mouseX = e.motion.x;
-            mouseY = e.motion.y;
-        }
+bool GUIElement::handleEvent(SDL_Event& e) {
+    if (!m_enabled) {
+        return false; // Jeśli element jest wyłączony, nie obsługuje zdarzenia
+    }
 
-        // Sprawdź, czy zdarzenie myszy miało miejsce w obrębie tego elementu przed przekazaniem do dzieci
-        if (contains(mouseX, mouseY)) {
-            for (auto& child : m_children) {
-                if (child) {
-                    child->handleEvent(e);
-                }
-            }
-        }
-    } else {
-        // Dla innych typów zdarzeń, po prostu przekaż je do dzieci (opcjonalnie, w zależności od potrzeb)
-        for (auto& child : m_children) {
-            if (child) {
-                child->handleEvent(e);
-            }
+    // Przekaż zdarzenie do dzieci w odwrotnej kolejności (od góry do dołu)
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+        if ((*it)->handleEvent(e)) {
+            return true; // Jeśli dziecko obsłużyło zdarzenie, nie propaguj dalej
         }
     }
+
+    return false; // Żadne dziecko nie obsłużyło zdarzenia
 }
 
 
-void Button::handleEvent(SDL_Event& e) {
-    // Obsługa zdarzenia puszczenia przycisku myszy w obrębie przycisku
+bool Button::handleEvent(SDL_Event& e) {
+    if (!m_enabled) return false;
+
+    // Najpierw sprawdź, czy dzieci obsłużyły zdarzenie
+    if (GUIElement::handleEvent(e)) {
+        return true;
+    }
+
+    // Jeśli nie, sprawdź, czy ten przycisk powinien obsłużyć zdarzenie
     if (e.type == SDL_MOUSEBUTTONDOWN) {
-        // Pozycja myszy w zdarzeniu jest już absolutna
         if (contains(e.button.x, e.button.y)) {
-            triggerOnRelease(); // triggerOnRelease już przekazuje 'this'
+            triggerOnRelease();
+            return true; // Zdarzenie obsłużone
         }
     }
-    // Przekaż zdarzenie dalej do dzieci (jeśli przycisk ma dzieci, np. tekst)
-    GUIElement::handleEvent(e);
+    return false;
 }
 
 void GUIElement::render(SDL_Renderer* renderer) {
-    // Domyślna implementacja renderowania: renderuj tylko dzieci
+    if (!m_enabled) {
+        return; // Jeśli element jest wyłączony, nie renderuj go ani jego dzieci
+    }
+
+    // Domyślna implementacja renderowania: renderuj dzieci
     for (auto&& child : m_children) {
         if (child) {
             child->render(renderer);

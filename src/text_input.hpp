@@ -29,7 +29,7 @@ public:
     bool isLocked() const;
 
     virtual void render(SDL_Renderer* renderer) ;
-    virtual void handleEvent(SDL_Event& e) ;
+    virtual bool handleEvent(SDL_Event& e) ;
 
 private:
     std::string text;

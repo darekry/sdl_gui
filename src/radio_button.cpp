@@ -50,23 +50,18 @@ void RadioButton::setGroup(RadioGroup* group) {
     m_group = group;
 }
 
-void RadioButton::handleEvent(SDL_Event& e) {
-    // Reaguj na puszczenie lewego przycisku myszy w obrębie widgetu
-    if (e.type == SDL_MOUSEBUTTONDOWN) {
-        // Sprawdź, czy kliknięcie było w obrębie widgetu
-        if (e.button.button == SDL_BUTTON_LEFT &&
-            e.button.x >= m_x && e.button.x < m_x + m_width &&
-            e.button.y >= m_y && e.button.y < m_y + m_height) {
-            // Jeśli przycisk nie jest jeszcze zaznaczony i należy do grupy, powiadom grupę
-            if (!m_isSelected && m_group) {
-                m_group->buttonSelected(this);
-            } else if (!m_isSelected && !m_group) {
-                // Jeśli nie należy do grupy, po prostu zaznacz go
-                setSelected(true);
+bool RadioButton::handleEvent(SDL_Event& e) {
+    if (!m_enabled) return false;
+
+    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+        if (contains(e.button.x, e.button.y)) {
+            if (!m_isSelected) {
+                setSelected(true); // To wywoła logikę grupy
             }
-            // Jeśli jest już zaznaczony, kliknięcie nic nie robi (Radio Buttony nie odznaczają się same)
+            return true; // Zawsze konsumuj kliknięcie, nawet jeśli nic nie zmienia
         }
     }
+    return false;
 }
 
 void RadioButton::render(SDL_Renderer* renderer)  {

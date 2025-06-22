@@ -38,7 +38,7 @@ public:
 
     // Wirtualna metoda do obsługi zdarzeń (do zaimplementowania w klasach pochodnych)
     // Na razie pusta, będzie rozszerzona w przyszłości
-    virtual void handleEvent(SDL_Event& e);
+    virtual bool handleEvent(SDL_Event& e);
 
     // Wirtualna metoda do renderowania (do zaimplementowania w klasach pochodnych)
     // Domyślna implementacja renderuje dzieci
@@ -103,7 +103,7 @@ public:
     } // Używamy m_onClick dla zdarzenia puszczenia przycisku
 
     // Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
-    void handleEvent(SDL_Event& e) override;
+    bool handleEvent(SDL_Event& e) override;
     void render(SDL_Renderer* renderer) override;
 
 private:
