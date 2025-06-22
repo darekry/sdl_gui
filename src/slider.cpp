@@ -24,15 +24,17 @@ Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, 
  
       // Ustaw callbacki dla przycisków
       m_decreaseButton->setOnClickCallback([this](GUIElement* button) {
+          int oldValue = m_currentValue;
           m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue); // Zmniejsz wartość o 1
-          if (m_onChange) {
+          if (m_onChange && m_currentValue != oldValue) {
               m_onChange(this); // Przekazujemy wskaźnik do Slidera
           }
       });
  
       m_increaseButton->setOnClickCallback([this](GUIElement* button) {
+          int oldValue = m_currentValue;
           m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue); // Zwiększ wartość o 1
-          if (m_onChange) {
+          if (m_onChange && m_currentValue != oldValue) {
               m_onChange(this); // Przekazujemy wskaźnik do Slidera
           }
       });
@@ -50,6 +52,7 @@ void Slider::handleEvent(SDL_Event& e) {
     if (e.type == SDL_MOUSEBUTTONDOWN) {
         if (e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
             m_isDragging = true;
+            int oldValue = m_currentValue;
             // Oblicz wartość na podstawie pozycji kliknięcia
             int mouseX = e.button.x - getAbsolutePosition().x;
             int mouseY = e.button.y - getAbsolutePosition().y;
@@ -62,7 +65,7 @@ void Slider::handleEvent(SDL_Event& e) {
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
             }
             m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
-            if (m_onChange) {
+            if (m_onChange && m_currentValue != oldValue) {
                 m_onChange(this);
             }
         }
@@ -72,6 +75,7 @@ void Slider::handleEvent(SDL_Event& e) {
         }
     } else if (e.type == SDL_MOUSEMOTION) {
         if (m_isDragging) {
+            int oldValue = m_currentValue;
             int mouseX = e.motion.x - getAbsolutePosition().x;
             int mouseY = e.motion.y - getAbsolutePosition().y;
 
@@ -83,7 +87,7 @@ void Slider::handleEvent(SDL_Event& e) {
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
             }
             m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
-            if (m_onChange) {
+            if (m_onChange && m_currentValue != oldValue) {
                 m_onChange(this);
             }
         }
