@@ -115,7 +115,7 @@ void ComboBox::updateMainButtonText() {
         }
         
         SDL_Color textColor = { 0, 0, 0, 255 };
-        SharedTexture textTexture = createTextTexture(renderer, font, m_options[m_selected_index], textColor);
+        SharedTexture textTexture = getGUIManager()->getTextureManager()->createTextureFromText(m_options[m_selected_index], font, textColor);
         m_main_button->setTexture(textTexture);
     }
 }
@@ -138,7 +138,7 @@ void ComboBox::createDropdownButtons() {
         SharedFont font = fontManager->loadFont("assets/fonts/font.ttf", 16);
         if (font) {
             SDL_Color textColor = { 0, 0, 0, 255 };
-            SharedTexture textTexture = createTextTexture(renderer, font, m_options[i], textColor);
+            SharedTexture textTexture = getGUIManager()->getTextureManager()->createTextureFromText(m_options[i], font, textColor);
             option_button->setTexture(textTexture);
         } else {
              std::cerr << "Failed to load font for dropdown button" << std::endl;

@@ -5,11 +5,8 @@
 #include "texture_manager.hpp" // Dodano include dla TextureManager
 #include "font_manager.hpp" // Dodano include dla FontManager i SharedFont
 #include <functional>
-#include <string> // Dodano include dla std::string
-#include <memory> // Dodano include dla std::shared_ptr
-
-// Funkcja pomocnicza do tworzenia tekstury z tekstu
-SharedTexture createTextTexture(SDL_Renderer* renderer, SharedFont font, const std::string& text, SDL_Color color);
+#include <string>
+#include <memory>
 
 // Forward declaration
 class GUIManager;
@@ -44,8 +41,10 @@ public:
     virtual bool handleEvent(SDL_Event& e);
 
     // Wirtualna metoda do renderowania (do zaimplementowania w klasach pochodnych)
-    // Domyślna implementacja renderuje dzieci
     virtual void render(SDL_Renderer* renderer);
+
+    // Metoda do ustawiania tekstury
+    void setTexture(SharedTexture texture);
 
 public:
     // Metody do zarządzania stanem włączony/wyłączony
@@ -61,15 +60,16 @@ public:
     GUIManager* getGUIManager() const;
 
 protected:
-    int m_x, m_y;
-    int m_width, m_height;
-    bool m_enabled = true; // Domyślnie włączony
-    bool m_visible = true; // Domyślnie widoczny
-    GUIElement* m_parent;
-    GUIManager* m_guiManager;
-
-    std::vector<std::unique_ptr<GUIElement>> m_children;
-
+    protected:
+        int m_x, m_y;
+        int m_width, m_height;
+        bool m_enabled = true; // Domyślnie włączony
+        bool m_visible = true; // Domyślnie widoczny
+        GUIElement* m_parent;
+        GUIManager* m_guiManager;
+        SharedTexture m_texture;
+    
+        std::vector<std::unique_ptr<GUIElement>> m_children;
 public:
     // Metody do zarządzania relacją rodzic-dziecko
     void addChild(std::unique_ptr<GUIElement> child);
@@ -85,17 +85,10 @@ class TextInput;
 class Button : public GUIElement {
 public:
     // Konstruktor
-    Button(int x, int y, int width, int height, SharedTexture texture = nullptr); // Zmieniono typ tekstury na SharedTexture
+    Button(int x, int y, int width, int height, SharedTexture texture = nullptr);
 
     // Destruktor
-    ~Button();
-
-    // Metody dostępu do tekstury
-    // Metody dostępu do tekstury
-    SharedTexture getTexture() const { return m_texture; } // Zmieniono zwracany typ
-
-    // Metody ustawiające teksturę
-    void setTexture(SharedTexture texture); // Zmieniono typ parametru
+    ~Button() = default;
 
     // Typy callbacków dla zdarzeń
     // Typy callbacków dla zdarzeń
@@ -118,7 +111,6 @@ public:
     void render(SDL_Renderer* renderer) override;
 
 private:
-    SharedTexture m_texture; // Zmieniono typ na SharedTexture
     OnClickCallback m_onClick;
     OnMouseOverCallback m_onMouseOver;
 };

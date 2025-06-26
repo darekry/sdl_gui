@@ -1,49 +1,28 @@
 #include "radio_button.hpp"
-#include "font_manager.hpp" // Potrzebne do renderowania tekstu
-#include "texture_manager.hpp" // Potrzebne do zarządzania teksturami
-#include <iostream> // Dla std::cerr
+#include "font_manager.hpp"
+#include "texture_manager.hpp"
+#include <iostream>
 
-RadioButton::RadioButton(int x, int y, int w, int h, const std::string& label)
-    : GUIElement(x, y, w, h), m_isSelected(false), m_labelText(label),
-      m_textColor({255, 255, 255, 255}), m_font(nullptr), m_group(nullptr),
-      m_labelTexture(nullptr), m_labelWidth(0), m_labelHeight(0)
+RadioButton::RadioButton(int x, int y, int w, int h)
+    : GUIElement(x, y, w, h), m_isSelected(false), m_group(nullptr), m_onChange(nullptr), m_labelTexture(nullptr)
 {
-    // Inicjalizacja specyficzna dla RadioButtona
-}
-
-RadioButton::~RadioButton() {
-    // Destruktor
-    // shared_ptr automatycznie zwolnią zasoby (czcionkę i teksturę)
-    // Nie zwalniamy wskaźnika m_group, ponieważ grupa zarządza swoim cyklem życia
 }
 
 void RadioButton::setSelected(bool selected, bool notifyGroup) {
     if (m_isSelected != selected) {
         m_isSelected = selected;
-        // Jeśli przycisk jest zaznaczany, należy do grupy i mamy ją powiadomić
         if (m_group && selected && notifyGroup) {
             m_group->buttonSelected(this);
         }
-        // Wywołaj callback, jeśli istnieje
         if (m_onChange) {
             m_onChange(this);
         }
     }
 }
 
-void RadioButton::setLabel(const std::string& label) {
-    m_labelText = label;
-    // Tekstura etykiety zostanie zaktualizowana przy następnym renderowaniu
-}
-
-void RadioButton::setFont(SharedFont font) {
-    m_font = font;
-    // Tekstura etykiety zostanie zaktualizowana przy następnym renderowaniu
-}
-
-void RadioButton::setTextColor(SDL_Color color) {
-    m_textColor = color;
-    // Tekstura etykiety zostanie zaktualizowana przy następnym renderowaniu
+void RadioButton::setLabel(SDL_Renderer* renderer, const std::string& text, SharedFont font, SDL_Color color, TextureManager& textureManager) {
+    (void)renderer; // Unused
+    m_labelTexture = textureManager.createTextureFromText(text, font, color);
 }
 
 void RadioButton::setGroup(RadioGroup* group) {
@@ -56,60 +35,31 @@ bool RadioButton::handleEvent(SDL_Event& e) {
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
         if (contains(e.button.x, e.button.y)) {
             if (!m_isSelected) {
-                setSelected(true); // To wywoła logikę grupy
+                setSelected(true);
             }
-            return true; // Zawsze konsumuj kliknięcie, nawet jeśli nic nie zmienia
+            return true;
         }
     }
     return false;
 }
 
 void RadioButton::render(SDL_Renderer* renderer)  {
-    // Renderuj tło (opcjonalnie)
-    // SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Ciemnoszary
-    // SDL_Rect backgroundRect = {m_x, m_y, m_width, m_height};
-    // SDL_RenderFillRect(renderer, &backgroundRect);
+    SDL_Point absPos = getAbsolutePosition();
+    SDL_Rect radioRect = {absPos.x, absPos.y, m_height, m_height};
 
-    // Renderuj okrąg RadioButtona
-    SDL_SetRenderDrawColor(renderer, m_textColor.r, m_textColor.g, m_textColor.b, m_textColor.a);
-    // Proste rysowanie okręgu (wymaga funkcji rysującej okręgi, której SDL2 natywnie nie ma)
-    // Na potrzeby przykładu, narysujemy kwadrat jako placeholder
-    SDL_Rect radioRect = {m_x, m_y, m_height, m_height}; // Przyjmujemy, że RadioButton jest kwadratowy o boku równym wysokości widgetu
+    // Domyślny kolor ramki
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderDrawRect(renderer, &radioRect);
 
-
-    // Renderuj kropkę zaznaczenia, jeśli RadioButton jest zaznaczony
     if (m_isSelected) {
-        // Prosta kropka (mniejszy kwadrat w środku)
-        SDL_Rect dotRect = {m_x + m_height / 4, m_y + m_height / 4, m_height / 2, m_height / 2};
+        SDL_Rect dotRect = {absPos.x + m_height / 4, absPos.y + m_height / 4, m_height / 2, m_height / 2};
         SDL_RenderFillRect(renderer, &dotRect);
     }
 
-    // Renderuj etykietę tekstową
-    if (!m_labelText.empty() && m_font && renderer) {
-        // Sprawdź, czy tekstura etykiety wymaga aktualizacji lub nie istnieje
-        if (!m_labelTexture || m_renderedText != m_labelText) {
-             m_labelTexture = createTextTexture(renderer, m_font, m_labelText, m_textColor);
-             if (m_labelTexture) {
-                 SDL_QueryTexture(m_labelTexture.get(), nullptr, nullptr, &m_labelWidth, &m_labelHeight);
-                 m_renderedText = m_labelText;
-             } else {
-                 m_labelWidth = 0;
-                 m_labelHeight = 0;
-                 m_renderedText = "";
-             }
-        }
-
-        // Renderuj teksturę etykiety (jeśli istnieje)
-        if (m_labelTexture) {
-            SDL_Rect renderQuad = {m_x + m_height + 5, m_y + (m_height - m_labelHeight) / 2, m_labelWidth, m_labelHeight};
-            SDL_RenderCopy(renderer, m_labelTexture.get(), nullptr, &renderQuad);
-        }
-    } else {
-        // Jeśli tekst jest pusty, czcionka jest nullptr lub renderer jest nullptr, zwolnij teksturę
-        m_labelTexture = nullptr;
-        m_labelWidth = 0;
-        m_labelHeight = 0;
-        m_renderedText = "";
+    if (m_labelTexture) {
+        int labelWidth, labelHeight;
+        SDL_QueryTexture(m_labelTexture.get(), nullptr, nullptr, &labelWidth, &labelHeight);
+        SDL_Rect renderQuad = {absPos.x + m_height + 5, absPos.y + (m_height - labelHeight) / 2, labelWidth, labelHeight};
+        SDL_RenderCopy(renderer, m_labelTexture.get(), nullptr, &renderQuad);
     }
 }

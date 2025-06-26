@@ -52,49 +52,65 @@ int main(int argc, char* args[]) {
     GUIManager guiManager(renderer, &fontManager, &textureManager);
 
     // Tworzenie TabControl
-    auto tabControl = std::make_unique<TabControl>(50, 50, 700, 500);
+    auto tabControlPtr = std::make_unique<TabControl>(50, 50, 700, 500);
+    TabControl* tabControl = tabControlPtr.get(); // Pobierz surowy wskaźnik
+    guiManager.addElement(std::move(tabControlPtr)); // Dodaj do menedżera, aby ustawić wskaźnik GUIManager
+
+    // Dodawanie zakładek
+    // Załaduj czcionkę
+    SharedFont font = fontManager.loadFont("assets/ARIAL.TTF", 16);
+    if (!font) {
+        std::cerr << "Failed to load font." << std::endl;
+        return 1;
+    }
+    SDL_Color textColor = { 0, 255, 255, 255 };
 
     // Dodawanie zakładek
     Panel* tab1Panel = tabControl->addTab("Tab 1");
     Panel* tab2Panel = tabControl->addTab("Tab 2");
     Panel* tab3Panel = tabControl->addTab("Tab 3");
 
+ tab1Panel->setBorderColor(255, 0, 0, 128); // Czerwony, półprzezroczysty kolor ramki
+    tab1Panel->setBorderThickness(5);
+
+     tab2Panel->setBorderColor(0, 255, 0, 128); // Czerwony, półprzezroczysty kolor ramki
+    tab2Panel->setBorderThickness(5);
+
+     tab3Panel->setBorderColor(0, 0, 255, 128); // Czerwony, półprzezroczysty kolor ramki
+    tab3Panel->setBorderThickness(5);
+
+
     // Dodawanie zawartości do zakładek
     // Zakładka 1
     if (tab1Panel) {
         auto button1 = std::make_unique<Button>(50, 50, 150, 50);
+        button1->setTexture(textureManager.createTextureFromText("Click Me", font, textColor));
         button1->setOnClickCallback([](GUIElement*){ std::cout << "Button 1 clicked!" << std::endl; });
         tab1Panel->addChild(std::move(button1));
     }
 
     // Zakładka 2
     if (tab2Panel) {
-        auto checkbox1 = std::make_unique<Checkbox>(50, 50, 200, 30, "Check me!");
+        auto checkbox1 = std::make_unique<Checkbox>(50, 50, 20, 20);
+        checkbox1->setLabel(renderer, "Check me!", font, textColor, textureManager);
         tab2Panel->addChild(std::move(checkbox1));
     }
-
     // Zakładka 3
     if (tab3Panel) {
         auto textInput1 = std::make_unique<TextInput>(50, 50, 300, 40);
         tab3Panel->addChild(std::move(textInput1));
     }
 
-
-    guiManager.addElement(std::move(tabControl));
-
     bool quit = false;
-    SDL_Event e;
 
     while (!quit) {
-while (SDL_PollEvent(&e) != 0) {
-   if (e.type == SDL_QUIT) {
-       quit = true;
-   }
-   guiManager.handleEvents();
-}
+
+   
+       quit = guiManager.handleEvents();
+
         
 
-        SDL_SetRenderDrawColor(renderer, 0x22, 0x22, 0x22, 0xFF);
+        SDL_SetRenderDrawColor(renderer, 0x22, 0, 0x22, 0xFF);
         SDL_RenderClear(renderer);
 
         guiManager.render(renderer);

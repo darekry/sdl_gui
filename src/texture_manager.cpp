@@ -45,3 +45,29 @@ SharedTexture TextureManager::loadTexture(const std::string& path) {
 
     return sharedNewTexture;
 }
+
+SharedTexture TextureManager::createTextureFromText(const std::string& text, std::shared_ptr<TTF_Font> font, SDL_Color color) {
+    if (!font) {
+        std::cerr << "Font is not loaded!" << std::endl;
+        return nullptr;
+    }
+
+    // Renderuj tekst do powierzchni
+    SDL_Surface* textSurface = TTF_RenderText_Blended(font.get(), text.c_str(), color);
+    if (!textSurface) {
+        std::cerr << "Unable to render text surface! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        return nullptr;
+    }
+
+    // Utwórz teksturę z powierzchni
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(m_renderer, textSurface);
+    SDL_FreeSurface(textSurface); // Zwolnij powierzchnię
+
+    if (!textTexture) {
+        std::cerr << "Unable to create texture from rendered text! SDL Error: " << SDL_GetError() << std::endl;
+        return nullptr;
+    }
+
+    // Zwróć teksturę jako shared_ptr z custom deleterem
+    return {textTexture, SDLTextureDeleter()};
+}

@@ -4,11 +4,11 @@
 #include <iostream>
 #include <memory>
 
-#include "../src/gui_manager.hpp"
-#include "../src/texture_manager.hpp"
-#include "../src/font_manager.hpp"
-#include "../src/slider.hpp"
-#include "../src/gui.hpp"
+#include "font_manager.hpp"
+#include "gui.hpp"
+#include "gui_manager.hpp"
+#include "slider.hpp"
+#include "texture_manager.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -67,17 +67,8 @@ int main(int argc, char* args[]) {
     guiManager.addElement(std::move(slider));
 
     bool quit = false;
-    SDL_Event e;
-
     while (!quit) {
-        while (SDL_PollEvent(&e) != 0) {
-            if (e.type == SDL_QUIT) {
-                quit = true;
-            }
-            for (auto& element : guiManager.getElements()) {
-                element->handleEvent(e);
-            }
-        }
+        quit = guiManager.handleEvents();
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);

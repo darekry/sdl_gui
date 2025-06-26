@@ -85,8 +85,8 @@ $(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(LIB_OBJ_FILES) $(TEST_HELPER_OBJ) $(
 $(OUTPUT)/example_%: examples/example_%.cpp $(LIB_OBJ_FILES)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Kompilacja plików obiektowych (zarówno z src, jak i tests)
-$(OUTPUT)/%.o: $(SRC)/%.cpp
+# Kompilacja plików obiektowych biblioteki (reguła statyczna)
+$(LIB_OBJ_FILES): $(OUTPUT)/%.o: $(SRC)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 

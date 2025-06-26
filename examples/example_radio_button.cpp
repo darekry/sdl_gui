@@ -1,10 +1,13 @@
-#include "../src/gui_manager.hpp"
-#include "../src/radio_group.hpp"
-#include "../src/radio_button.hpp"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <iostream>
+
+#include "font_manager.hpp"
+#include "gui_manager.hpp"
+#include "radio_button.hpp"
+#include "radio_group.hpp"
+#include "texture_manager.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -47,19 +50,28 @@ int main(int /*argc*/, char* /*args*/[]) {
         return 1;
     }
 
-    TextureManager textureManager(renderer);
     FontManager fontManager;
+    TextureManager textureManager(renderer);
     GUIManager guiManager(renderer, &fontManager, &textureManager);
+
+    // Załaduj czcionkę
+    SharedFont font = fontManager.loadFont("assets/fonts/DejaVuSans.ttf", 16);
+    if (!font) {
+        std::cerr << "Failed to load font." << std::endl;
+        return 1;
+    }
 
     auto radioGroup = std::make_shared<RadioGroup>();
 
     auto createRadioButton = [&](int x, int y, const std::string& label) {
-        auto rb = std::make_unique<RadioButton>(x, y, 20, 20, label);
+        auto rb = std::make_unique<RadioButton>(x, y, 20, 20);
+        rb->setLabel(renderer, label, font, {255, 255, 255, 255}, textureManager);
         radioGroup->addRadioButton(rb.get()); // Add button to the group
         return rb;
     };
+
     guiManager.addElement(createRadioButton(100, 100, "Option 1"));
-    
+
     auto rb2 = createRadioButton(100, 150, "Option 2");
     rb2->setSelected(true); // Pre-select the second button
     guiManager.addElement(std::move(rb2));

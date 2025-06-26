@@ -4,10 +4,10 @@
 #include <iostream>
 #include <memory>
 
-#include "gui_manager.hpp"
-#include "texture_manager.hpp"
 #include "font_manager.hpp"
 #include "gui.hpp"
+#include "gui_manager.hpp"
+#include "texture_manager.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -50,8 +50,8 @@ int main(int argc, char* args[]) {
         return 1;
     }
 
-    TextureManager textureManager(renderer);
     FontManager fontManager;
+    TextureManager textureManager(renderer);
     GUIManager guiManager(renderer, &fontManager, &textureManager);
 
     // Załaduj teksturę dla przycisku
@@ -67,27 +67,16 @@ int main(int argc, char* args[]) {
     }
 
     // Utwórz przycisk z załadowaną teksturą
-    auto button = std::make_unique<Button>(350, 250, 100, 50, buttonTexture);
-
-    button->setOnClickCallback([](GUIElement* elem) {
-        std::cout << "Button clicked!" << std::endl;
-    });
+    auto button = std::make_unique<Button>(350, 250, 100, 50);
+    button->setTexture(buttonTexture);
+    button->setOnClickCallback(
+        [](GUIElement* elem) { std::cout << "Button clicked!" << std::endl; });
 
     guiManager.addElement(std::move(button));
 
     bool quit = false;
-    SDL_Event e;
-
     while (!quit) {
-        while (SDL_PollEvent(&e) != 0) {
-            if (e.type == SDL_QUIT) {
-                quit = true;
-            }
-            // Ręczna obsługa zdarzeń dla każdego elementu
-            for (auto& element : guiManager.getElements()) {
-                element->handleEvent(e);
-            }
-        }
+        quit = guiManager.handleEvents();
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);

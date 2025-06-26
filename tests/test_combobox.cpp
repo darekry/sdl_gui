@@ -31,7 +31,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
 
 
     SECTION("Initialization") {
-        ComboBox comboBox(renderer, 10, 20, 200, 30, fontManager, textureManager);
+        ComboBox comboBox( 10, 20, 200, 30);
         REQUIRE(comboBox.getX() == 10);
         REQUIRE(comboBox.getY() == 20);
         REQUIRE(comboBox.getWidth() == 200);
@@ -41,7 +41,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
     }
 
     SECTION("Adding items and selection") {
-        ComboBox comboBox(renderer, 10, 20, 200, 30, fontManager, textureManager);
+        ComboBox comboBox( 10, 20, 200, 30);
         comboBox.addItem("Option 1");
         comboBox.addItem("Option 2");
         comboBox.addItem("Option 3");
@@ -60,7 +60,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
     }
 
     SECTION("Event Handling - Toggle Dropdown") {
-        ComboBox comboBox(renderer, 10, 20, 200, 30, fontManager, textureManager);
+        ComboBox comboBox(10, 20, 200, 30);
         comboBox.addItem("Option 1");
 
         // Początkowo zwinięty
@@ -77,7 +77,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
         REQUIRE(comboBox.isExpanded());
     }
     SECTION("Event Handling - Item Selection") {
-        ComboBox comboBox(renderer, 10, 20, 200, 30, fontManager, textureManager);
+        ComboBox comboBox( 10, 20, 200, 30);
         comboBox.addItem("Option 1");
         comboBox.addItem("Option 2");
 
@@ -109,7 +109,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
     }
     
     SECTION("Event Handling - Close when clicking outside") {
-        ComboBox comboBox(renderer, 10, 20, 200, 30, fontManager, textureManager);
+        ComboBox comboBox( 10, 20, 200, 30);
         comboBox.addItem("Option 1");
 
         // 1. Rozwiń listę

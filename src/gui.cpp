@@ -2,33 +2,9 @@
 #include "SDL2/SDL.h"
 #include "gui_manager.hpp" // Dodano, aby mieć definicję GUIManager
 
-
-// Implementacja funkcji pomocniczej do tworzenia tekstury z tekstu
-SharedTexture createTextTexture(SDL_Renderer* renderer, SharedFont font, const std::string& text, SDL_Color color) {
-    if (!renderer || !font || text.empty()) {
-        return nullptr;
-    }
-
-    SDL_Surface* textSurface = TTF_RenderText_Solid(font.get(), text.c_str(), color);
-    if (!textSurface) {
-        std::cerr << "Unable to render text surface! SDL_ttf Error: " << TTF_GetError() << std::endl;
-        return nullptr;
-    }
-
-    SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    SDL_FreeSurface(textSurface);
-
-    if (!newTexture) {
-        std::cerr << "Unable to create texture from rendered text! SDL Error: " << SDL_GetError() << std::endl;
-        return nullptr;
-    }
-
-    return {newTexture, SDLTextureDeleter()};
-}
-
 // Implementacja klasy GUIElement
 GUIElement::GUIElement(int x, int y, int width, int height)
-    : m_x(x), m_y(y), m_width(width), m_height(height), m_parent(nullptr), m_guiManager(nullptr) {}
+    : m_x(x), m_y(y), m_width(width), m_height(height), m_parent(nullptr), m_guiManager(nullptr), m_texture(nullptr) {}
 
 void GUIElement::setPosition(int x, int y) {
     m_x = x;
@@ -81,6 +57,10 @@ void GUIElement::setGUIManager(GUIManager* manager) {
     }
 }
 
+void GUIElement::setTexture(SharedTexture texture) {
+    m_texture = texture;
+}
+
 GUIManager* GUIElement::getGUIManager() const {
     return m_guiManager;
 }
@@ -92,13 +72,7 @@ GUIManager* GUIElement::getGUIManager() const {
 
 // Implementacja klasy Button
 Button::Button(int x, int y, int width, int height, SharedTexture texture)
-    : GUIElement(x, y, width, height), m_texture(texture) {}
-
-Button::~Button() {
-    // SharedTexture automatycznie zarządza pamięcią tekstury, więc nie ma potrzeby ręcznego zwalniania.
-}
-
-void Button::setTexture(SharedTexture texture) {
+    : GUIElement(x, y, width, height) {
     m_texture = texture;
 }
 
@@ -141,9 +115,15 @@ void GUIElement::render(SDL_Renderer* renderer) {
         return;
     }
 
+    if (m_texture) {
+        SDL_Point absPos = getAbsolutePosition();
+        SDL_Rect renderQuad = { absPos.x, absPos.y, m_width, m_height };
+        SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad);
+    }
+
     // Domyślna implementacja renderowania: renderuj dzieci
     for (auto&& child : m_children) {
-        if (child) {
+        if (child && child->isVisible()) {
             child->render(renderer);
         }
     }
@@ -151,23 +131,19 @@ void GUIElement::render(SDL_Renderer* renderer) {
 
 
 void Button::render(SDL_Renderer* renderer) {
+    if (!m_visible) return;
+
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect renderQuad = { absPos.x, absPos.y, m_width, m_height };
 
-    if (m_texture) { // Sprawdź, czy shared_ptr nie jest pusty
-        // Renderuj teksturę, jeśli istnieje
-        SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad); // Użyj .get() aby uzyskać surowy wskaźnik
+    if (m_texture) {
+        SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad);
     } else {
-        // Renderuj prostokąt w jednolitym kolorze, jeśli brak tekstury
-        // Można dodać pole koloru do klasy Button, na razie używamy domyślnego szarego
         SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF); // Szary
         SDL_RenderFillRect(renderer, &renderQuad);
-        // Opcjonalnie: przywróć poprzedni kolor rysowania, jeśli jest to konieczne
-        // SDL_GetRenderDrawColor(renderer, &oldR, &oldG, &oldB, &oldA);
-        // SDL_SetRenderDrawColor(renderer, oldR, oldG, oldB, oldA);
     }
 
-    // Renderuj dzieci (przyciski mogą mieć dzieci, np. tekst na przycisku)
+    // Renderuj dzieci
     GUIElement::render(renderer);
 }
 
@@ -184,8 +160,10 @@ void Panel::setBorderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 void Panel::setBorderThickness(int thickness) {
     m_borderThickness = thickness;
 }
-
 void Panel::render(SDL_Renderer* renderer)  {
+    if (!m_visible) {
+        return;
+    }
     // Pobierz absolutną pozycję panelu
     SDL_Point absPos = getAbsolutePosition();
 

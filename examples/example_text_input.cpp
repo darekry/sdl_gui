@@ -63,19 +63,11 @@ int main(int argc, char* args[]) {
     guiManager.addElement(std::move(textInput));
 
     bool quit = false;
-    SDL_Event e;
 
     SDL_StartTextInput();
 
     while (!quit) {
-        while (SDL_PollEvent(&e) != 0) {
-            if (e.type == SDL_QUIT) {
-                quit = true;
-            }
-            for (auto& element : guiManager.getElements()) {
-                element->handleEvent(e);
-            }
-        }
+        quit = guiManager.handleEvents();
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 

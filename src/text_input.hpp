@@ -12,7 +12,7 @@
 class TextInput : public GUIElement {
 public:
     TextInput(int x, int y, int w, int h);
-    ~TextInput();
+    ~TextInput() = default;
 
     void setText(const std::string& text);
     const std::string& getText() const;
@@ -30,17 +30,17 @@ public:
     bool handleEvent(SDL_Event& e) override;
 
 private:
-    std::string text;
-    SDL_Color textColor;
-    SDL_Color backgroundColor;
-    SDL_Color borderColor;
-    bool locked;
-    bool active; // To indicate if the input field is currently active for typing
-    std::shared_ptr<SDL_Texture> m_textTexture; // Tekstura zawierająca wyrenderowany tekst
-    std::string m_renderedText; // Tekst, który został ostatnio wyrenderowany
+    void updateTextTexture(SDL_Renderer* renderer, TextureManager& textureManager);
 
-    std::function<void(TextInput*)> onTextChanged;
-    std::function<void(TextInput*)> onEnterPressed;
+    std::string m_text;
+    SDL_Color m_textColor;
+    SDL_Color m_backgroundColor;
+    SDL_Color m_borderColor;
+    bool m_locked;
+    bool m_active; // To indicate if the input field is currently active for typing
+
+    std::function<void(TextInput*)> m_onTextChanged;
+    std::function<void(TextInput*)> m_onEnterPressed;
 };
 
 #endif // TEXT_INPUT_HPP

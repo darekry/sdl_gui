@@ -8,7 +8,7 @@
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include "texture_manager.hpp"
-#include "checkbox.hpp"
+#include "combobox.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -32,7 +32,7 @@ int main(int argc, char* args[]) {
         return 1;
     }
 
-    SDL_Window* window = SDL_CreateWindow("Checkbox Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    SDL_Window* window = SDL_CreateWindow("ComboBox Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {
         std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         TTF_Quit();
@@ -54,28 +54,28 @@ int main(int argc, char* args[]) {
     FontManager fontManager;
     TextureManager textureManager(renderer);
     GUIManager guiManager(renderer, &fontManager, &textureManager);
-    
-    // Załaduj czcionkę
-    SharedFont font = fontManager.loadFont("assets/ARIAL.TTF", 16);
-    if (!font) {
-        std::cerr << "Failed to load font." << std::endl;
-        return 1;
-    }
 
-    // Utwórz checkbox
-    auto checkbox = std::make_unique<Checkbox>(100, 100, 30, 30);
-    checkbox->setLabel(renderer, "Check me!", font, {255, 255, 255, 255}, textureManager);
-    checkbox->setOnChange([](Checkbox* cb, bool isChecked) {
-        std::cout << "Checkbox state changed: " << (isChecked ? "Checked" : "Unchecked") << std::endl;
-    });
+    // Utwórz ComboBox
+    auto comboBox = std::make_unique<ComboBox>(100, 100, 200, 30);
+    comboBox->addItem("Option 1");
+    comboBox->addItem("Option 2");
+    comboBox->addItem("Option 3");
+    comboBox->addItem("A longer option 4");
+    comboBox->setSelectedIndex(0);
 
-    guiManager.addElement(std::move(checkbox));
+    comboBox->on_selection_changed = [](int index, const std::string& item) {
+        std::cout << "Selected item: " << item << " at index: " << index << std::endl;
+    };
+
+    guiManager.addElement(std::move(comboBox));
 
     bool quit = false;
+    SDL_Event e;
+
     while (!quit) {
         quit = guiManager.handleEvents();
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
         SDL_RenderClear(renderer);
 
         guiManager.render(renderer);

@@ -13,30 +13,21 @@
 class RadioButton : public GUIElement {
 public:
     // Konstruktor
-    RadioButton(int x, int y, int w, int h, const std::string& label = "");
+    RadioButton(int x, int y, int w, int h);
 
     // Destruktor
-    ~RadioButton();
+    ~RadioButton() = default;
 
     // Metody do zarządzania stanem
     bool isSelected() const { return m_isSelected; }
     void setSelected(bool selected, bool notifyGroup = true);
 
     // Metoda do ustawiania etykiety tekstowej
-    void setLabel(const std::string& label);
-    const std::string& getLabel() const { return m_labelText; } // Dodano metodę getLabel
-
-    // Metoda do ustawiania czcionki dla etykiety
-    void setFont(SharedFont font);
-    SharedFont getFont() const { return m_font; } // Dodano metodę getFont
-
-    // Metoda do ustawiania koloru tekstu etykiety
-    void setTextColor(SDL_Color color);
-    SDL_Color getTextColor() const { return m_textColor; } // Dodano metodę getTextColor
+    void setLabel(SDL_Renderer* renderer, const std::string& text, SharedFont font, SDL_Color color, TextureManager& textureManager);
 
     // Metoda do ustawiania grupy, do której należy RadioButton
     void setGroup(RadioGroup* group);
-    RadioGroup* getGroup() const { return m_group; } // Dodano metodę getGroup
+    RadioGroup* getGroup() const { return m_group; }
 
     // Typ callbacka dla zmiany stanu (zaznaczenia)
     using OnChangeCallback = std::function<void(RadioButton*)>;
@@ -50,23 +41,9 @@ public:
 
 private:
     bool m_isSelected;
-    std::string m_labelText;
-    std::string m_renderedText;
-    SDL_Color m_textColor;
-    SharedFont m_font;
     RadioGroup* m_group; // Wskaźnik do grupy, do której należy przycisk
     OnChangeCallback m_onChange;
-
-    // Tekstura dla etykiety
-    std::shared_ptr<SDL_Texture> m_labelTexture;
-    // Rozmiar etykiety
-    int m_labelWidth;
-    int m_labelHeight;
-
-    // Metoda pomocnicza do renderowania etykiety
-    void renderLabel(SDL_Renderer* renderer);
-    // Metoda pomocnicza do aktualizacji tekstury etykiety
-    void updateLabelTexture(SDL_Renderer* renderer);
+    SharedTexture m_labelTexture;
 };
 
 #endif // RADIOBUTTON_HPP
