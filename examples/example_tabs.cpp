@@ -48,16 +48,11 @@ int main(int argc, char* args[]) {
     }
 
     FontManager fontManager;
-    SharedFont font = fontManager.loadFont("assets/ARIAL.TTF", 24);
-    if (!font) {
-        std::cerr << "Failed to load font." << std::endl;
-        return 1;
-    }
-
-    GUIManager guiManager;
+    TextureManager textureManager(renderer);
+    GUIManager guiManager(renderer, &fontManager, &textureManager);
 
     // Tworzenie TabControl
-    auto tabControl = std::make_unique<TabControl>(50, 50, 700, 500, font, renderer);
+    auto tabControl = std::make_unique<TabControl>(50, 50, 700, 500);
 
     // Dodawanie zakładek
     Panel* tab1Panel = tabControl->addTab("Tab 1");
@@ -66,19 +61,23 @@ int main(int argc, char* args[]) {
 
     // Dodawanie zawartości do zakładek
     // Zakładka 1
-    auto button1 = std::make_unique<Button>(50, 50, 150, 50);
-    button1->setOnClickCallback([](GUIElement*){ std::cout << "Button 1 clicked!" << std::endl; });
-    tab1Panel->addChild(std::move(button1));
+    if (tab1Panel) {
+        auto button1 = std::make_unique<Button>(50, 50, 150, 50);
+        button1->setOnClickCallback([](GUIElement*){ std::cout << "Button 1 clicked!" << std::endl; });
+        tab1Panel->addChild(std::move(button1));
+    }
 
     // Zakładka 2
-    auto checkbox1 = std::make_unique<Checkbox>(50, 50, 200, 30, "Check me!");
-    checkbox1->setFont(font);
-    tab2Panel->addChild(std::move(checkbox1));
+    if (tab2Panel) {
+        auto checkbox1 = std::make_unique<Checkbox>(50, 50, 200, 30, "Check me!");
+        tab2Panel->addChild(std::move(checkbox1));
+    }
 
     // Zakładka 3
-    auto textInput1 = std::make_unique<TextInput>(50, 50, 300, 40);
-    textInput1->setFont(font);
-    tab3Panel->addChild(std::move(textInput1));
+    if (tab3Panel) {
+        auto textInput1 = std::make_unique<TextInput>(50, 50, 300, 40);
+        tab3Panel->addChild(std::move(textInput1));
+    }
 
 
     guiManager.addElement(std::move(tabControl));
@@ -87,8 +86,12 @@ int main(int argc, char* args[]) {
     SDL_Event e;
 
     while (!quit) {
-       
-                quit = guiManager.handleEvents();
+while (SDL_PollEvent(&e) != 0) {
+   if (e.type == SDL_QUIT) {
+       quit = true;
+   }
+   guiManager.handleEvents();
+}
         
 
         SDL_SetRenderDrawColor(renderer, 0x22, 0x22, 0x22, 0xFF);

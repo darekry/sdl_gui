@@ -7,9 +7,10 @@
 
 TEST_CASE("Button Functionality", "[button]") {
     TestHelper helper;
-    SDL_Renderer* renderer = helper.getRenderer();
-    TextureManager textureManager(renderer);
-    FontManager fontManager;
+    // Managers are now provided by the TestHelper
+    // SDL_Renderer* renderer = helper.getRenderer();
+    // TextureManager textureManager(renderer);
+    // FontManager fontManager;
 
     SECTION("Initialization") {
         Button button(10, 20, 100, 50);

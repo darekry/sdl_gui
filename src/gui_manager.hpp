@@ -5,10 +5,14 @@
 #include <vector>
 #include "gui.hpp"
 
+// Forward declarations
+class FontManager;
+class TextureManager;
+
 class GUIManager {
 public:
     // Konstruktor
-    GUIManager();
+    GUIManager(SDL_Renderer* renderer, FontManager* fontManager, TextureManager* textureManager);
 
     // Destruktor
     ~GUIManager();
@@ -27,12 +31,22 @@ public:
     // Metoda do renderowania wszystkich elementów GUI
     void render(SDL_Renderer* renderer);
 
+    // Metody dostępu do kontekstu
+    SDL_Renderer* getRenderer() const { return m_renderer; }
+    FontManager* getFontManager() const { return m_fontManager; }
+    TextureManager* getTextureManager() const { return m_textureManager; }
+
     // Metoda do uzyskiwania dostępu do elementów (potrzebna do ręcznej obsługi zdarzeń)
     std::vector<std::unique_ptr<GUIElement>>& getElements() { return m_elements; }
 
 private:
     // Kontener na unikalne wskaźniki do elementów GUI
     std::vector<std::unique_ptr<GUIElement>> m_elements;
+
+    // Kontekst aplikacji
+    SDL_Renderer* m_renderer;
+    FontManager* m_fontManager;
+    TextureManager* m_textureManager;
 };
 
 #endif // GUI_MANAGER_HPP

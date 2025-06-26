@@ -20,23 +20,20 @@ public:
     void setTextColor(SDL_Color color);
     void setBackgroundColor(SDL_Color color);
     void setBorderColor(SDL_Color color);
-    void setFont(std::shared_ptr<TTF_Font> font); // Placeholder for font management
-
     void setOnTextChanged(std::function<void(TextInput*)> callback);
     void setOnEnterPressed(std::function<void(TextInput*)> callback);
 
     void setLocked(bool locked);
     bool isLocked() const;
 
-    virtual void render(SDL_Renderer* renderer) ;
-    virtual bool handleEvent(SDL_Event& e) ;
+    void render(SDL_Renderer* renderer) override;
+    bool handleEvent(SDL_Event& e) override;
 
 private:
     std::string text;
     SDL_Color textColor;
     SDL_Color backgroundColor;
     SDL_Color borderColor;
-    std::shared_ptr<TTF_Font> font;
     bool locked;
     bool active; // To indicate if the input field is currently active for typing
     std::shared_ptr<SDL_Texture> m_textTexture; // Tekstura zawierająca wyrenderowany tekst

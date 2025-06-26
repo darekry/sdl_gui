@@ -1,10 +1,12 @@
 #include "text_input.hpp"
+#include "gui_manager.hpp"
+#include "font_manager.hpp"
 
 TextInput::TextInput(int x, int y, int w, int h)
     : GUIElement(x, y, w, h), text(""), textColor({0, 0, 0, 255}), // Default text color black
       backgroundColor({255, 255, 255, 255}), // Default background color white
       borderColor({0, 0, 0, 255}), // Default border color black
-      font(nullptr), locked(false), active(false), m_textTexture(nullptr) {
+      locked(false), active(false), m_textTexture(nullptr) {
     // Constructor implementation
 }
 
@@ -40,11 +42,6 @@ void TextInput::setBorderColor(SDL_Color color) {
     borderColor = color;
 }
 
-void TextInput::setFont(std::shared_ptr<TTF_Font> newFont) {
-    font = newFont;
-    // Font change requires re-rendering the texture
-    m_renderedText = "";
-}
 
 void TextInput::setOnTextChanged(std::function<void(TextInput*)> callback) {
     onTextChanged = callback;
@@ -65,20 +62,25 @@ bool TextInput::isLocked() const {
     return locked;
 }
 
-void TextInput::render(SDL_Renderer* renderer)  {
+void TextInput::render(SDL_Renderer* renderer) {
+    if (!getGUIManager()) return;
+    SDL_Renderer* actual_renderer = getGUIManager()->getRenderer();
+    FontManager* fontManager = getGUIManager()->getFontManager();
+    if (!actual_renderer || !fontManager) return;
+
     SDL_Rect rect = {getAbsolutePosition().x, getAbsolutePosition().y, getWidth(), getHeight()};
 
     // Render background
-    SDL_SetRenderDrawColor(renderer, backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
-    SDL_RenderFillRect(renderer, &rect);
+    SDL_SetRenderDrawColor(actual_renderer, backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
+    SDL_RenderFillRect(actual_renderer, &rect);
 
     // Render border
-    SDL_SetRenderDrawColor(renderer, borderColor.r, borderColor.g, borderColor.b, borderColor.a);
-    SDL_RenderDrawRect(renderer, &rect);
+    SDL_SetRenderDrawColor(actual_renderer, borderColor.r, borderColor.g, borderColor.b, borderColor.a);
+    SDL_RenderDrawRect(actual_renderer, &rect);
 
     // Render text
-    // Render text
-    if (font && !text.empty() && renderer) {
+    SharedFont font = fontManager->loadFont("assets/fonts/font.ttf", 16); // Load default font
+    if (font && !text.empty()) {
         if (text != m_renderedText) {
             // Text has changed, re-render texture
             m_textTexture.reset(); // Release the old texture
@@ -87,7 +89,7 @@ void TextInput::render(SDL_Renderer* renderer)  {
             if (textSurface == nullptr) {
                 SDL_Log("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
             } else {
-                m_textTexture = std::shared_ptr<SDL_Texture>(SDL_CreateTextureFromSurface(renderer, textSurface), SDLTextureDeleter());
+                m_textTexture = std::shared_ptr<SDL_Texture>(SDL_CreateTextureFromSurface(actual_renderer, textSurface), SDLTextureDeleter());
                 if (m_textTexture == nullptr) {
                     SDL_Log("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
                 }
@@ -102,18 +104,18 @@ void TextInput::render(SDL_Renderer* renderer)  {
             int textHeight = 0;
             SDL_QueryTexture(m_textTexture.get(), nullptr, nullptr, &textWidth, &textHeight);
 
-            SDL_Rect renderQuad = { getAbsolutePosition().x, getAbsolutePosition().y, textWidth, textHeight };
-            SDL_RenderCopy(renderer, m_textTexture.get(), nullptr, &renderQuad);
+            SDL_Rect renderQuad = { getAbsolutePosition().x + 5, getAbsolutePosition().y + 5, textWidth, textHeight }; // Add some padding
+            SDL_RenderCopy(actual_renderer, m_textTexture.get(), nullptr, &renderQuad);
         }
     } else {
-        // If text is empty, font is null, or renderer is null, destroy the texture
+        // If text is empty or font is null, destroy the texture
         m_textTexture.reset();
         m_renderedText = "";
     }
 
     // Render children (if any)
     for (auto& child : m_children) {
-        child->render(renderer);
+        child->render(actual_renderer);
     }
 }
 

@@ -11,6 +11,9 @@
 // Funkcja pomocnicza do tworzenia tekstury z tekstu
 SharedTexture createTextTexture(SDL_Renderer* renderer, SharedFont font, const std::string& text, SDL_Color color);
 
+// Forward declaration
+class GUIManager;
+
 // Podstawowa klasa bazowa dla elementów GUI
 class GUIElement {
 public:
@@ -49,20 +52,28 @@ public:
     void setEnabled(bool enabled) { m_enabled = enabled; }
     bool isEnabled() const { return m_enabled; }
 
+    // Metody do zarządzania widocznością
+    void setVisible(bool visible) { m_visible = visible; }
+    bool isVisible() const { return m_visible; }
+
+    // Metody do zarządzania wskaźnikiem na GUIManager
+    void setGUIManager(GUIManager* manager);
+    GUIManager* getGUIManager() const;
+
 protected:
     int m_x, m_y;
     int m_width, m_height;
     bool m_enabled = true; // Domyślnie włączony
+    bool m_visible = true; // Domyślnie widoczny
     GUIElement* m_parent;
+    GUIManager* m_guiManager;
 
     std::vector<std::unique_ptr<GUIElement>> m_children;
 
 public:
     // Metody do zarządzania relacją rodzic-dziecko
     void addChild(std::unique_ptr<GUIElement> child);
-    // removeChild będzie wymagać przemyślenia - usunięcie dziecka oznacza jego zniszczenie
-    // Na razie zostawiamy, ale może być usunięte lub zmienione
-    // void removeChild(GUIElement* child);
+    void clearChildren();
     GUIElement* getParent() const { return m_parent; }
     const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
 };

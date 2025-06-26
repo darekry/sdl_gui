@@ -8,7 +8,7 @@
 
 class TabControl : public GUIElement {
 public:
-    TabControl(int x, int y, int width, int height, SharedFont font, SDL_Renderer* renderer);
+    TabControl(int x, int y, int width, int height);
 
     // Dodaje nową zakładkę i zwraca wskaźnik do jej panelu zawartości
     Panel* addTab(const std::string& title);
@@ -22,9 +22,6 @@ private:
     std::vector<Button*> m_tabButtons;
     std::vector<Panel*> m_tabPanels;
     Button* m_activeTabButton = nullptr;
-    
-    SharedFont m_font;
-    SDL_Renderer* m_renderer;
     
     int m_tabButtonHeight = 30;
 };

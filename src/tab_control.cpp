@@ -1,21 +1,34 @@
 #include "tab_control.hpp"
 #include "SDL2/SDL_ttf.h"
 #include <iostream>
+#include "gui_manager.hpp"
+#include "font_manager.hpp"
 
 // --- Implementacja TabControl ---
 
-TabControl::TabControl(int x, int y, int width, int height, SharedFont font, SDL_Renderer* renderer)
-    : GUIElement(x, y, width, height), 
-      m_font(font), 
-      m_renderer(renderer) {
+TabControl::TabControl(int x, int y, int width, int height)
+    : GUIElement(x, y, width, height) {
 }
 
 Panel* TabControl::addTab(const std::string& title) {
+    if (!getGUIManager()) return nullptr;
+    SDL_Renderer* renderer = getGUIManager()->getRenderer();
+    FontManager* fontManager = getGUIManager()->getFontManager();
+    if (!renderer || !fontManager) return nullptr;
+
+    SharedFont font = fontManager->loadFont("assets/ARIAL.TTF", 16); // Load default font
+    if (!font) {
+        std::cerr << "Failed to load font for tab button" << std::endl;
+        // Continue without text? Or return nullptr? For now, continue.
+    }
+
     // Tworzenie przycisku dla zakładki
     auto button = std::make_unique<Button>(0, 0, 100, m_tabButtonHeight);
-    SDL_Color textColor = {255, 255, 255, 255}; // Biały tekst
-    SharedTexture textTexture = createTextTexture(m_renderer, m_font, title, textColor);
-    button->setTexture(textTexture);
+    if (font) {
+        SDL_Color textColor = {255, 255, 255, 255}; // Biały tekst
+        SharedTexture textTexture = createTextTexture(renderer, font, title, textColor);
+        button->setTexture(textTexture);
+    }
     
     Button* buttonPtr = button.get();
     m_tabButtons.push_back(buttonPtr);

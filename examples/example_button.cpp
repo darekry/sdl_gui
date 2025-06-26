@@ -52,7 +52,7 @@ int main(int argc, char* args[]) {
 
     TextureManager textureManager(renderer);
     FontManager fontManager;
-    GUIManager guiManager;
+    GUIManager guiManager(renderer, &fontManager, &textureManager);
 
     // Załaduj teksturę dla przycisku
     SharedTexture buttonTexture = textureManager.loadTexture("assets/button1.png");

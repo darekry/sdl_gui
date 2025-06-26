@@ -52,7 +52,7 @@ int main(int argc, char* args[]) {
 
     TextureManager textureManager(renderer);
     FontManager fontManager;
-    GUIManager guiManager;
+    GUIManager guiManager(renderer, &fontManager, &textureManager);
 
     // Utwórz panel
     auto panel = std::make_unique<Panel>(100, 100, 600, 400);

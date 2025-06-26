@@ -1,5 +1,6 @@
 #include "gui.hpp"
 #include "SDL2/SDL.h"
+#include "gui_manager.hpp" // Dodano, aby mieć definicję GUIManager
 
 
 // Implementacja funkcji pomocniczej do tworzenia tekstury z tekstu
@@ -27,7 +28,7 @@ SharedTexture createTextTexture(SDL_Renderer* renderer, SharedFont font, const s
 
 // Implementacja klasy GUIElement
 GUIElement::GUIElement(int x, int y, int width, int height)
-    : m_x(x), m_y(y), m_width(width), m_height(height), m_parent(nullptr) {}
+    : m_x(x), m_y(y), m_width(width), m_height(height), m_parent(nullptr), m_guiManager(nullptr) {}
 
 void GUIElement::setPosition(int x, int y) {
     m_x = x;
@@ -60,18 +61,28 @@ bool GUIElement::contains(int x, int y) const {
 
 void GUIElement::addChild(std::unique_ptr<GUIElement> child) {
     if (child && child->m_parent != this) {
-        // Jeśli dziecko ma już rodzica, usuń je z listy dzieci tego rodzica
-        // (Ta logika może wymagać dostosowania w zależności od tego, czy chcemy pozwalać na przenoszenie dzieci między rodzicami)
-        // Na razie zakładamy, że dziecko jest dodawane tylko raz lub przenoszone z nullptr parent
-        if (child->m_parent) {
-             // W przypadku unique_ptr, usunięcie dziecka z listy rodzica oznacza jego zniszczenie.
-             // Ta operacja jest bardziej złożona i może wymagać innej strategii zarządzania dziećmi.
-             // Na potrzeby tej refaktoryzacji, upraszczamy i zakładamy, że dziecko nie ma rodzica przy dodawaniu.
-             // Jeśli potrzebne jest przenoszenie, należy zaimplementować odpowiednią logikę.
-        }
         child->m_parent = this;
-        m_children.push_back(std::move(child)); // Przenieś własność do wektora
+        // Propaguj wskaźnik do GUIManager do nowego dziecka
+        child->setGUIManager(this->m_guiManager);
+        m_children.push_back(std::move(child));
     }
+}
+
+void GUIElement::clearChildren() {
+    m_children.clear();
+}
+void GUIElement::setGUIManager(GUIManager* manager) {
+    m_guiManager = manager;
+    // Propaguj wskaźnik do wszystkich istniejących dzieci
+    for (auto& child : m_children) {
+        if (child) {
+            child->setGUIManager(manager);
+        }
+    }
+}
+
+GUIManager* GUIElement::getGUIManager() const {
+    return m_guiManager;
 }
 
 // removeChild nie jest już potrzebne w tej formie przy użyciu unique_ptr,
@@ -92,8 +103,8 @@ void Button::setTexture(SharedTexture texture) {
 }
 
 bool GUIElement::handleEvent(SDL_Event& e) {
-    if (!m_enabled) {
-        return false; // Jeśli element jest wyłączony, nie obsługuje zdarzenia
+    if (!m_enabled || !m_visible) {
+        return false;
     }
 
     // Przekaż zdarzenie do dzieci w odwrotnej kolejności (od góry do dołu)
@@ -126,8 +137,8 @@ bool Button::handleEvent(SDL_Event& e) {
 }
 
 void GUIElement::render(SDL_Renderer* renderer) {
-    if (!m_enabled) {
-        return; // Jeśli element jest wyłączony, nie renderuj go ani jego dzieci
+    if (!m_visible) {
+        return;
     }
 
     // Domyślna implementacja renderowania: renderuj dzieci

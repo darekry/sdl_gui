@@ -1,4 +1,8 @@
 #include "test_helper.hpp"
+#include "../src/font_manager.hpp"
+#include "../src/texture_manager.hpp"
+#include "../src/gui_manager.hpp"
+#include <memory>
 
 TestHelper::TestHelper() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -20,6 +24,10 @@ TestHelper::TestHelper() {
     if (!m_renderer) {
         throw std::runtime_error("Renderer could not be created! SDL_Error: " + std::string(SDL_GetError()));
     }
+
+    m_fontManager = std::make_unique<FontManager>();
+    m_textureManager = std::make_unique<TextureManager>(m_renderer);
+    m_guiManager = std::make_unique<GUIManager>(m_renderer, m_fontManager.get(), m_textureManager.get());
 }
 
 TestHelper::~TestHelper() {

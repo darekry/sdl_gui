@@ -1,9 +1,12 @@
 #include "gui_manager.hpp"
 #include "SDL2/SDL.h"
 #include "gui.hpp" // Potrzebne do rzutowania na Button
+#include "font_manager.hpp"
+#include "texture_manager.hpp"
 
-GUIManager::GUIManager() {
-    // Inicjalizacja, jeśli potrzebna
+GUIManager::GUIManager(SDL_Renderer* renderer, FontManager* fontManager, TextureManager* textureManager)
+    : m_renderer(renderer), m_fontManager(fontManager), m_textureManager(textureManager) {
+    // Konstruktor teraz przechowuje kontekst
 }
 
 GUIManager::~GUIManager() {
@@ -14,6 +17,8 @@ GUIManager::~GUIManager() {
 
 void GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     if (element) {
+        // Ustaw wskaźnik na ten GUIManager w dodawanym elemencie
+        element->setGUIManager(this);
         m_elements.push_back(std::move(element)); // Przenieś własność do wektora
     }
 }

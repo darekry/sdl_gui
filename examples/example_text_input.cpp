@@ -53,28 +53,13 @@ int main(int argc, char* args[]) {
 
     TextureManager textureManager(renderer);
     FontManager fontManager;
-    GUIManager guiManager;
+    GUIManager guiManager(renderer, &fontManager, &textureManager);
 
-    // Upewnij się, że masz czcionkę w assets/fonts/font.ttf
-    auto font = fontManager.loadFont("assets/ARIAL.TTF", 24);
-    if (!font) {
-        std::cerr << "Failed to load font!" << std::endl;
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        TTF_Quit();
-        IMG_Quit();
-        SDL_Quit();
-        return 1;
-    }
-
-    // Utwórz pole tekstowe
     // Utwórz pole tekstowe
     auto textInput = std::make_unique<TextInput>(100, 100, 300, 40);
-    textInput->setFont(font);
     textInput->setOnEnterPressed([](TextInput* ti) {
         std::cout << "Text submitted: " << ti->getText() << std::endl;
     });
-
     guiManager.addElement(std::move(textInput));
 
     bool quit = false;

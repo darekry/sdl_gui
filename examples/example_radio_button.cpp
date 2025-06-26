@@ -49,18 +49,15 @@ int main(int /*argc*/, char* /*args*/[]) {
 
     TextureManager textureManager(renderer);
     FontManager fontManager;
-    GUIManager guiManager;
+    GUIManager guiManager(renderer, &fontManager, &textureManager);
 
     auto radioGroup = std::make_shared<RadioGroup>();
-    SharedFont font = fontManager.loadFont("assets/ARIAL.TTF", 16);
 
     auto createRadioButton = [&](int x, int y, const std::string& label) {
         auto rb = std::make_unique<RadioButton>(x, y, 20, 20, label);
-        rb->setFont(font);
         radioGroup->addRadioButton(rb.get()); // Add button to the group
         return rb;
     };
-
     guiManager.addElement(createRadioButton(100, 100, "Option 1"));
     
     auto rb2 = createRadioButton(100, 150, "Option 2");

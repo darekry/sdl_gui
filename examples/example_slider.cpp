@@ -53,7 +53,7 @@ int main(int argc, char* args[]) {
 
     TextureManager textureManager(renderer);
     FontManager fontManager;
-    GUIManager guiManager;
+    GUIManager guiManager(renderer, &fontManager, &textureManager);
 
     // Utwórz suwak
     auto slider = std::make_unique<Slider>(100, 100, 200, 20, 0, 100, 50, Orientation::Horizontal);
