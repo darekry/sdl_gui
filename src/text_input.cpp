@@ -13,7 +13,7 @@ void TextInput::setText(const std::string& newText) {
     if (m_text != newText) {
         m_text = newText;
         if (m_guiManager) {
-            updateTextTexture(m_guiManager->getRenderer(), *m_guiManager->getTextureManager());
+            updateTextTexture(*m_guiManager->getTextureManager());
         }
         if (m_onTextChanged) {
             m_onTextChanged(this);
@@ -28,7 +28,7 @@ const std::string& TextInput::getText() const {
 void TextInput::setTextColor(SDL_Color color) {
     m_textColor = color;
     if (m_guiManager) {
-        updateTextTexture(m_guiManager->getRenderer(), *m_guiManager->getTextureManager());
+        updateTextTexture(*m_guiManager->getTextureManager());
     }
 }
 
@@ -59,7 +59,7 @@ bool TextInput::isLocked() const {
     return m_locked;
 }
 
-void TextInput::updateTextTexture(SDL_Renderer* renderer, TextureManager& textureManager) {
+void TextInput::updateTextTexture(TextureManager& textureManager) {
     if (m_text.empty() || !m_guiManager || !m_guiManager->getFontManager()) {
         m_texture = nullptr;
         return;
@@ -88,7 +88,7 @@ void TextInput::render(SDL_Renderer* renderer) {
         SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad);
     }
     
-    GUIElement::render(renderer);
+   // GUIElement::render(renderer);
 }
 
 bool TextInput::handleEvent(SDL_Event& e) {
@@ -112,13 +112,13 @@ bool TextInput::handleEvent(SDL_Event& e) {
         }
     } else if (m_active && e.type == SDL_TEXTINPUT) {
         m_text += e.text.text;
-        updateTextTexture(m_guiManager->getRenderer(), *m_guiManager->getTextureManager());
+        updateTextTexture(*m_guiManager->getTextureManager());
         if (m_onTextChanged) m_onTextChanged(this);
         eventHandled = true;
     } else if (m_active && e.type == SDL_KEYDOWN) {
         if (e.key.keysym.sym == SDLK_BACKSPACE && !m_text.empty()) {
             m_text.pop_back();
-            updateTextTexture(m_guiManager->getRenderer(), *m_guiManager->getTextureManager());
+            updateTextTexture(*m_guiManager->getTextureManager());
             if (m_onTextChanged) m_onTextChanged(this);
             eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_RETURN) {

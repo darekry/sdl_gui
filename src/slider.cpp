@@ -23,7 +23,7 @@ Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, 
     }
  
       // Ustaw callbacki dla przycisków
-      m_decreaseButton->setOnClickCallback([this](GUIElement* button) {
+      m_decreaseButton->setOnClickCallback([this](GUIElement*) {
           int oldValue = m_currentValue;
           m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue); // Zmniejsz wartość o 1
           if (m_onChange && m_currentValue != oldValue) {
@@ -31,7 +31,7 @@ Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, 
           }
       });
  
-      m_increaseButton->setOnClickCallback([this](GUIElement* button) {
+      m_increaseButton->setOnClickCallback([this](GUIElement*) {
           int oldValue = m_currentValue;
           m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue); // Zwiększ wartość o 1
           if (m_onChange && m_currentValue != oldValue) {

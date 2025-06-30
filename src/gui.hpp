@@ -109,8 +109,10 @@ public:
     // Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
     bool handleEvent(SDL_Event& e) override;
     void render(SDL_Renderer* renderer) override;
+    void setLabel(const std::string& text, GUIManager& guiManager);
 
 private:
+    std::string m_labelText;
     OnClickCallback m_onClick;
     OnMouseOverCallback m_onMouseOver;
 };

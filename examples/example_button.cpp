@@ -12,7 +12,7 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-int main(int argc, char* args[]) {
+int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return 1;
@@ -70,7 +70,7 @@ int main(int argc, char* args[]) {
     auto button = std::make_unique<Button>(350, 250, 100, 50);
     button->setTexture(buttonTexture);
     button->setOnClickCallback(
-        [](GUIElement* elem) { std::cout << "Button clicked!" << std::endl; });
+        []([[maybe_unused]]GUIElement* elem) { std::cout << "Button clicked!" << std::endl; });
 
     guiManager.addElement(std::move(button));
 

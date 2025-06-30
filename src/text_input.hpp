@@ -30,7 +30,7 @@ public:
     bool handleEvent(SDL_Event& e) override;
 
 private:
-    void updateTextTexture(SDL_Renderer* renderer, TextureManager& textureManager);
+    void updateTextTexture(TextureManager& textureManager);
 
     std::string m_text;
     SDL_Color m_textColor;

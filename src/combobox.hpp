@@ -34,6 +34,7 @@ private:
 
     Button* m_main_button;
     Panel* m_dropdown_panel;
+    bool m_needs_update;
 };
 
 #endif // COMBOBOX_HPP

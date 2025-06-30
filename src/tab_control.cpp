@@ -1,6 +1,5 @@
 #include "tab_control.hpp"
 #include "SDL2/SDL_ttf.h"
-#include <iostream>
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
 
@@ -18,7 +17,7 @@ Panel* TabControl::addTab(const std::string& title) {
 
     SharedFont font = fontManager->loadFont("assets/ARIAL.TTF", 16); // Load default font
     if (!font) {
-        std::cerr << "Failed to load font for tab button" << std::endl;
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load font for tab button");
         // Continue without text? Or return nullptr? For now, continue.
     }
 

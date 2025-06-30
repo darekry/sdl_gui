@@ -55,7 +55,7 @@ int main(int /*argc*/, char* /*args*/[]) {
     GUIManager guiManager(renderer, &fontManager, &textureManager);
 
     // Załaduj czcionkę
-    SharedFont font = fontManager.loadFont("assets/fonts/DejaVuSans.ttf", 16);
+    SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", 16);
     if (!font) {
         std::cerr << "Failed to load font." << std::endl;
         return 1;

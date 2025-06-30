@@ -1,9 +1,9 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
-#include <iostream>
 #include <memory>
 
+#include "SDL_render.h"
 #include "font_manager.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
@@ -13,20 +13,22 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-int main(int argc, char* args[]) {
+int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL could not initialize! SDL_Error: %s", SDL_GetError());
         return 1;
     }
 
+    SDL_LogSetAllPriority(SDL_LOG_PRIORITY_INFO);
+
     if (!(IMG_Init(IMG_INIT_PNG))) {
-        std::cerr << "SDL_image could not initialize! IMG_Error: " << IMG_GetError() << std::endl;
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_image could not initialize! IMG_Error: %s", IMG_GetError());
         SDL_Quit();
         return 1;
     }
 
     if (TTF_Init() == -1) {
-        std::cerr << "SDL_ttf could not initialize! TTF_Error: " << TTF_GetError() << std::endl;
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_ttf could not initialize! TTF_Error: %s", TTF_GetError());
         IMG_Quit();
         SDL_Quit();
         return 1;
@@ -34,16 +36,16 @@ int main(int argc, char* args[]) {
 
     SDL_Window* window = SDL_CreateWindow("ComboBox Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {
-        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Window could not be created! SDL_Error: %s", SDL_GetError());
         TTF_Quit();
         IMG_Quit();
         SDL_Quit();
         return 1;
     }
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) {
-        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Renderer could not be created! SDL_Error: %s", SDL_GetError());
         SDL_DestroyWindow(window);
         TTF_Quit();
         IMG_Quit();
@@ -55,6 +57,12 @@ int main(int argc, char* args[]) {
     TextureManager textureManager(renderer);
     GUIManager guiManager(renderer, &fontManager, &textureManager);
 
+    // Załaduj czcionkę, aby ComboBox mógł jej użyć
+    if (!fontManager.loadFont("assets/fonts/font.ttf", 16)) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load font 'assets/fonts/font.ttf'");
+        // Warto rozważyć przerwanie aplikacji, jeśli czcionka jest kluczowa
+    }
+
     // Utwórz ComboBox
     auto comboBox = std::make_unique<ComboBox>(100, 100, 200, 30);
     comboBox->addItem("Option 1");
@@ -64,14 +72,11 @@ int main(int argc, char* args[]) {
     comboBox->setSelectedIndex(0);
 
     comboBox->on_selection_changed = [](int index, const std::string& item) {
-        std::cout << "Selected item: " << item << " at index: " << index << std::endl;
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Selected item: %s at index: %d", item.c_str(), index);
     };
 
     guiManager.addElement(std::move(comboBox));
-
     bool quit = false;
-    SDL_Event e;
-
     while (!quit) {
         quit = guiManager.handleEvents();
 

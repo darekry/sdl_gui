@@ -13,7 +13,7 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-int main(int argc, char* args[]) {
+int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return 1;
@@ -65,7 +65,7 @@ int main(int argc, char* args[]) {
     // Utwórz checkbox
     auto checkbox = std::make_unique<Checkbox>(100, 100, 30, 30);
     checkbox->setLabel(renderer, "Check me!", font, {255, 255, 255, 255}, textureManager);
-    checkbox->setOnChange([](Checkbox* cb, bool isChecked) {
+    checkbox->setOnChange([]([[maybe_unused]]Checkbox* cb, bool isChecked) {
         std::cout << "Checkbox state changed: " << (isChecked ? "Checked" : "Unchecked") << std::endl;
     });
 

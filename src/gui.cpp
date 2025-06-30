@@ -131,20 +131,63 @@ void GUIElement::render(SDL_Renderer* renderer) {
 
 
 void Button::render(SDL_Renderer* renderer) {
-    if (!m_visible) return;
+    if (!m_visible) {
+        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Button::render: Not visible, skipping render for label: %s", m_labelText.c_str());
+        return;
+    }
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Button::render: Rendering button with label: %s", m_labelText.c_str());
 
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect renderQuad = { absPos.x, absPos.y, m_width, m_height };
 
+    SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
+    SDL_RenderFillRect(renderer, &renderQuad);
+
     if (m_texture) {
-        SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad);
+        int texW, texH;
+        SDL_QueryTexture(m_texture.get(), nullptr, nullptr, &texW, &texH);
+        SDL_Rect textQuad = {
+            absPos.x + (m_width - texW) / 2,
+            absPos.y + (m_height - texH) / 2,
+            texW,
+            texH
+        };
+        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Button::render: Rendering texture for label '%s' at x=%d, y=%d", m_labelText.c_str(), textQuad.x, textQuad.y);
+        SDL_RenderCopy(renderer, m_texture.get(), nullptr, &textQuad);
     } else {
-        SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF); // Szary
-        SDL_RenderFillRect(renderer, &renderQuad);
+        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Button::render: No texture to render for label: %s", m_labelText.c_str());
+    }
+}
+
+void Button::setLabel(const std::string& text, GUIManager& guiManager) {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Setting label to \"%s\"", text.c_str());
+    m_labelText = text;
+    FontManager* fontManager = guiManager.getFontManager();
+    if (!fontManager) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: FontManager is null.");
+        return;
     }
 
-    // Renderuj dzieci
-    GUIElement::render(renderer);
+    SharedFont font = fontManager->loadFont("assets/fonts/font.ttf", 16);
+    if (!font) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: Failed to load font.");
+        return;
+    }
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Font loaded.");
+
+    SDL_Color textColor = { 0, 0, 0, 255 };
+    SharedTexture textTexture = guiManager.getTextureManager()->createTextureFromText(
+        text,
+        font,
+        textColor
+    );
+
+    if (!textTexture) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: Failed to create text texture for \"%s\".", text.c_str());
+    } else {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Text texture created successfully for \"%s\".", text.c_str());
+    }
+    setTexture(textTexture);
 }
 
 // Implementacja klasy Panel
@@ -164,20 +207,22 @@ void Panel::render(SDL_Renderer* renderer)  {
     if (!m_visible) {
         return;
     }
-    // Pobierz absolutną pozycję panelu
+    
     SDL_Point absPos = getAbsolutePosition();
+    SDL_Rect panelRect = { absPos.x, absPos.y, m_width, m_height };
 
-    // Ustaw kolor rysowania na kolor obramowania
-    SDL_SetRenderDrawColor(renderer, m_borderColor.r, m_borderColor.g, m_borderColor.b, m_borderColor.a);
+    // Rysuj tło panelu
+    SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255); // Jasnoszary kolor tła
+    SDL_RenderFillRect(renderer, &panelRect);
 
-    // Narysuj obramowanie
-    for (int i = 0; i < m_borderThickness; ++i) {
-        SDL_Rect borderRect = {absPos.x + i, absPos.y + i, m_width - 2 * i, m_height - 2 * i};
-        SDL_RenderDrawRect(renderer, &borderRect);
+    // Rysuj obramowanie (jeśli jest grubsze niż 0)
+    if (m_borderThickness > 0) {
+        SDL_SetRenderDrawColor(renderer, m_borderColor.r, m_borderColor.g, m_borderColor.b, m_borderColor.a);
+        for (int i = 0; i < m_borderThickness; ++i) {
+            SDL_Rect borderRect = {absPos.x + i, absPos.y + i, m_width - 2 * i, m_height - 2 * i};
+            SDL_RenderDrawRect(renderer, &borderRect);
+        }
     }
-
-    // Przywróć domyślny kolor rysowania (opcjonalnie, jeśli jest to konieczne)
-    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Czarny
 
     // Renderuj dzieci panelu
     GUIElement::render(renderer);
