@@ -61,6 +61,11 @@ void GUIElement::setTexture(SharedTexture texture) {
     m_texture = texture;
 }
 
+SharedTexture GUIElement::getLabelTexture() const {
+    return m_texture;
+}
+
+
 GUIManager* GUIElement::getGUIManager() const {
     return m_guiManager;
 }
@@ -188,6 +193,10 @@ void Button::setLabel(const std::string& text, GUIManager& guiManager) {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Text texture created successfully for \"%s\".", text.c_str());
     }
     setTexture(textTexture);
+}
+
+void Button::setLabelText(const std::string& text) {
+    m_labelText = text;
 }
 
 // Implementacja klasy Panel

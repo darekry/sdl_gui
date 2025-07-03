@@ -45,6 +45,7 @@ public:
 
     // Metoda do ustawiania tekstury
     void setTexture(SharedTexture texture);
+    [[nodiscard]] SharedTexture getLabelTexture() const;
 
 public:
     // Metody do zarządzania stanem włączony/wyłączony
@@ -60,8 +61,7 @@ public:
     GUIManager* getGUIManager() const;
 
 protected:
-    protected:
-        int m_x, m_y;
+    int m_x, m_y;
         int m_width, m_height;
         bool m_enabled = true; // Domyślnie włączony
         bool m_visible = true; // Domyślnie widoczny
@@ -100,16 +100,16 @@ public:
     void setOnMouseOverCallback(OnMouseOverCallback callback) { m_onMouseOver = callback; }
 
     // Metody wywołujące callbacki (publiczne na potrzeby testów/integracji)
-    void triggerOnClick() { if (m_onClick) m_onClick(this); }
-    void triggerOnMouseOver() { if (m_onMouseOver) m_onMouseOver(this); }
+    void triggerOnClick() { if (m_onClick) m_onClick(static_cast<GUIElement*>(this)); }
+    void triggerOnMouseOver() { if (m_onMouseOver) m_onMouseOver(static_cast<GUIElement*>(this)); }
     void triggerOnRelease() {
-        if (m_onClick) m_onClick(this);
+        if (m_onClick) m_onClick(static_cast<GUIElement*>(this));
     } // Używamy m_onClick dla zdarzenia puszczenia przycisku
-
-    // Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
-    bool handleEvent(SDL_Event& e) override;
-    void render(SDL_Renderer* renderer) override;
-    void setLabel(const std::string& text, GUIManager& guiManager);
+// Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
+bool handleEvent(SDL_Event& e) override;
+void render(SDL_Renderer* renderer) override;
+void setLabel(const std::string& text, GUIManager& guiManager);
+void setLabelText(const std::string& text);
 
 private:
     std::string m_labelText;

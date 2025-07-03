@@ -105,10 +105,16 @@ void ComboBox::selectItem(int index) {
 }
 void ComboBox::updateMainButtonText() {
     if (m_selected_index != -1 && getGUIManager()) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::updateMainButtonText: Updating main button text to \"%s\"", m_options[m_selected_index].c_str());
-        m_main_button->setLabel(m_options[m_selected_index], *getGUIManager());
+        const auto& options = m_dropdown_panel->getChildren();
+        if (static_cast<size_t>(m_selected_index) < options.size()) {
+            auto selected_option_button = static_cast<Button*>(options[m_selected_index].get());
+            SharedTexture texture = selected_option_button->getLabelTexture();
+            m_main_button->setTexture(texture);
+            m_main_button->setLabelText(m_options[m_selected_index]);
+        }
     } else {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::updateMainButtonText: Could not update. Index: %d, GUIManager: %s", m_selected_index, (getGUIManager() ? "OK" : "null"));
+        m_main_button->setTexture(nullptr);
+        m_main_button->setLabelText("");
     }
 }
 void ComboBox::createDropdownButtons() {
