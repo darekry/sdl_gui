@@ -1,7 +1,8 @@
 #define CATCH_CONFIG_MAIN
 #include "../lib/catch_amalgamated.hpp"
 #include "test_helper.hpp"
-#include "../src/gui.hpp"
+#include "../src/panel.hpp"
+#include "../src/button.hpp"
 #include "../src/texture_manager.hpp"
 #include "../src/font_manager.hpp"
 

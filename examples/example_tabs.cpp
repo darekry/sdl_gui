@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 
+#include "SDL_render.h"
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
@@ -41,7 +42,7 @@ int main(int argc, char* args[]) {
         return 1;
     }
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) {
         std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
         return 1;

@@ -1,6 +1,8 @@
 #ifndef COMBOBOX_HPP
 #define COMBOBOX_HPP
 
+#include "button.hpp"
+#include "panel.hpp"
 #include "gui.hpp"
 #include <string>
 #include <vector>

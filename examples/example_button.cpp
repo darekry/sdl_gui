@@ -4,8 +4,8 @@
 #include <iostream>
 #include <memory>
 
+#include "button.hpp"
 #include "font_manager.hpp"
-#include "gui.hpp"
 #include "gui_manager.hpp"
 #include "texture_manager.hpp"
 

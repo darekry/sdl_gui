@@ -1,11 +1,10 @@
 #ifndef SLIDER_HPP
 #define SLIDER_HPP
 
+#include "button.hpp"
 #include "gui.hpp"
 #include <functional>
 #include <memory>
-
-class Button; // Forward declaration
 
 enum class Orientation {
     Horizontal,

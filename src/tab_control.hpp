@@ -1,7 +1,9 @@
 #ifndef TAB_CONTROL_HPP
 #define TAB_CONTROL_HPP
 
+#include "button.hpp"
 #include "gui.hpp"
+#include "panel.hpp"
 #include <vector>
 #include <string>
 #include <memory>

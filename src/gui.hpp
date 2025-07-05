@@ -60,11 +60,15 @@ public:
     void setGUIManager(GUIManager* manager);
     GUIManager* getGUIManager() const;
 
+    // Metoda do sprawdzania stanu najechania myszką
+    bool isHovered() const { return m_isHovered; }
+
 protected:
     int m_x, m_y;
         int m_width, m_height;
         bool m_enabled = true; // Domyślnie włączony
         bool m_visible = true; // Domyślnie widoczny
+        bool m_isHovered = false; // Stan najechania myszką
         GUIElement* m_parent;
         GUIManager* m_guiManager;
         SharedTexture m_texture;
@@ -82,56 +86,4 @@ public:
 class TextInput;
 
 // Klasa przycisku dziedzicząca po GUIElement
-class Button : public GUIElement {
-public:
-    // Konstruktor
-    Button(int x, int y, int width, int height, SharedTexture texture = nullptr);
-
-    // Destruktor
-    ~Button() = default;
-
-    // Typy callbacków dla zdarzeń
-    // Typy callbacków dla zdarzeń
-    using OnClickCallback = std::function<void(GUIElement*)>;
-    using OnMouseOverCallback = std::function<void(GUIElement*)>;
-
-    // Metody do przypisywania callbacków
-    void setOnClickCallback(OnClickCallback callback) { m_onClick = callback; }
-    void setOnMouseOverCallback(OnMouseOverCallback callback) { m_onMouseOver = callback; }
-
-    // Metody wywołujące callbacki (publiczne na potrzeby testów/integracji)
-    void triggerOnClick() { if (m_onClick) m_onClick(static_cast<GUIElement*>(this)); }
-    void triggerOnMouseOver() { if (m_onMouseOver) m_onMouseOver(static_cast<GUIElement*>(this)); }
-    void triggerOnRelease() {
-        if (m_onClick) m_onClick(static_cast<GUIElement*>(this));
-    } // Używamy m_onClick dla zdarzenia puszczenia przycisku
-// Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
-bool handleEvent(SDL_Event& e) override;
-void render(SDL_Renderer* renderer) override;
-void setLabel(const std::string& text, GUIManager& guiManager);
-void setLabelText(const std::string& text);
-
-private:
-    std::string m_labelText;
-    OnClickCallback m_onClick;
-    OnMouseOverCallback m_onMouseOver;
-};
-
-// Klasa Panel dziedzicząca po GUIElement
-class Panel : public GUIElement {
-public:
-    // Konstruktor
-    Panel(int x, int y, int width, int height);
-
-    // Przesłonięta metoda do renderowania
-    void render(SDL_Renderer* renderer) override;
-
-    // Metody do ustawiania obramowania
-    void setBorderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-    void setBorderThickness(int thickness);
-
-private:
-    SDL_Color m_borderColor = {0, 0, 0, 255}; // Domyślny kolor obramowania (czarny)
-    int m_borderThickness = 1; // Domyślna grubość obramowania
-};
 #endif // GUI_HPP

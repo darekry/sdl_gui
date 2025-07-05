@@ -75,45 +75,23 @@ GUIManager* GUIElement::getGUIManager() const {
 // Jeśli potrzebne jest usunięcie dziecka bez niszczenia go (np. przeniesienie do innego rodzica),
 // należy zaimplementować inną metodę, która zwraca unique_ptr.
 
-// Implementacja klasy Button
-Button::Button(int x, int y, int width, int height, SharedTexture texture)
-    : GUIElement(x, y, width, height) {
-    m_texture = texture;
-}
 
 bool GUIElement::handleEvent(SDL_Event& e) {
     if (!m_enabled || !m_visible) {
         return false;
     }
-
+ 
     // Przekaż zdarzenie do dzieci w odwrotnej kolejności (od góry do dołu)
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
         if ((*it)->handleEvent(e)) {
             return true; // Jeśli dziecko obsłużyło zdarzenie, nie propaguj dalej
         }
     }
-
+ 
     return false; // Żadne dziecko nie obsłużyło zdarzenia
 }
 
 
-bool Button::handleEvent(SDL_Event& e) {
-    if (!m_enabled) return false;
-
-    // Najpierw sprawdź, czy dzieci obsłużyły zdarzenie
-    if (GUIElement::handleEvent(e)) {
-        return true;
-    }
-
-    // Jeśli nie, sprawdź, czy ten przycisk powinien obsłużyć zdarzenie
-    if (e.type == SDL_MOUSEBUTTONDOWN) {
-        if (contains(e.button.x, e.button.y)) {
-            triggerOnRelease();
-            return true; // Zdarzenie obsłużone
-        }
-    }
-    return false;
-}
 
 void GUIElement::render(SDL_Renderer* renderer) {
     if (!m_visible) {
@@ -135,104 +113,5 @@ void GUIElement::render(SDL_Renderer* renderer) {
 }
 
 
-void Button::render(SDL_Renderer* renderer) {
-    if (!m_visible) {
-        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Button::render: Not visible, skipping render for label: %s", m_labelText.c_str());
-        return;
-    }
-    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Button::render: Rendering button with label: %s", m_labelText.c_str());
 
-    SDL_Point absPos = getAbsolutePosition();
-    SDL_Rect renderQuad = { absPos.x, absPos.y, m_width, m_height };
 
-    SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
-    SDL_RenderFillRect(renderer, &renderQuad);
-
-    if (m_texture) {
-        int texW, texH;
-        SDL_QueryTexture(m_texture.get(), nullptr, nullptr, &texW, &texH);
-        SDL_Rect textQuad = {
-            absPos.x + (m_width - texW) / 2,
-            absPos.y + (m_height - texH) / 2,
-            texW,
-            texH
-        };
-        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Button::render: Rendering texture for label '%s' at x=%d, y=%d", m_labelText.c_str(), textQuad.x, textQuad.y);
-        SDL_RenderCopy(renderer, m_texture.get(), nullptr, &textQuad);
-    } else {
-        // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Button::render: No texture to render for label: %s", m_labelText.c_str());
-    }
-}
-
-void Button::setLabel(const std::string& text, GUIManager& guiManager) {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Setting label to \"%s\"", text.c_str());
-    m_labelText = text;
-    FontManager* fontManager = guiManager.getFontManager();
-    if (!fontManager) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: FontManager is null.");
-        return;
-    }
-
-    SharedFont font = fontManager->loadFont("assets/fonts/font.ttf", 16);
-    if (!font) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: Failed to load font.");
-        return;
-    }
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Font loaded.");
-
-    SDL_Color textColor = { 0, 0, 0, 255 };
-    SharedTexture textTexture = guiManager.getTextureManager()->createTextureFromText(
-        text,
-        font,
-        textColor
-    );
-
-    if (!textTexture) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: Failed to create text texture for \"%s\".", text.c_str());
-    } else {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Text texture created successfully for \"%s\".", text.c_str());
-    }
-    setTexture(textTexture);
-}
-
-void Button::setLabelText(const std::string& text) {
-    m_labelText = text;
-}
-
-// Implementacja klasy Panel
-Panel::Panel(int x, int y, int width, int height)
-    : GUIElement(x, y, width, height) {
-    // Dodatkowa inicjalizacja dla Panelu, jeśli potrzebna
-}
-
-void Panel::setBorderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-    m_borderColor = {r, g, b, a};
-}
-
-void Panel::setBorderThickness(int thickness) {
-    m_borderThickness = thickness;
-}
-void Panel::render(SDL_Renderer* renderer)  {
-    if (!m_visible) {
-        return;
-    }
-    
-    SDL_Point absPos = getAbsolutePosition();
-    SDL_Rect panelRect = { absPos.x, absPos.y, m_width, m_height };
-
-    // Rysuj tło panelu
-    SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255); // Jasnoszary kolor tła
-    SDL_RenderFillRect(renderer, &panelRect);
-
-    // Rysuj obramowanie (jeśli jest grubsze niż 0)
-    if (m_borderThickness > 0) {
-        SDL_SetRenderDrawColor(renderer, m_borderColor.r, m_borderColor.g, m_borderColor.b, m_borderColor.a);
-        for (int i = 0; i < m_borderThickness; ++i) {
-            SDL_Rect borderRect = {absPos.x + i, absPos.y + i, m_width - 2 * i, m_height - 2 * i};
-            SDL_RenderDrawRect(renderer, &borderRect);
-        }
-    }
-
-    // Renderuj dzieci panelu
-    GUIElement::render(renderer);
-}
