@@ -12,10 +12,10 @@ TabControl::TabControl(int x, int y, int width, int height)
 Panel* TabControl::addTab(const std::string& title) {
     if (!getGUIManager()) return nullptr;
     SDL_Renderer* renderer = getGUIManager()->getRenderer();
-    FontManager* fontManager = getGUIManager()->getFontManager();
-    if (!renderer || !fontManager) return nullptr;
+    FontManager& fontManager = getGUIManager()->getFontManager();
+    if (!renderer) return nullptr;
 
-    SharedFont font = fontManager->loadFont("assets/ARIAL.TTF", 16); // Load default font
+    SharedFont font = fontManager.loadFont("assets/ARIAL.TTF", 16); // Load default font
     if (!font) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load font for tab button");
         // Continue without text? Or return nullptr? For now, continue.
@@ -25,7 +25,7 @@ Panel* TabControl::addTab(const std::string& title) {
     auto button = std::make_unique<Button>(0, 0, 100, m_tabButtonHeight);
     if (font) {
         SDL_Color textColor = {255, 255, 255, 255}; // Biały tekst
-        SharedTexture textTexture = getGUIManager()->getTextureManager()->createTextureFromText(title, font, textColor);
+        SharedTexture textTexture = getGUIManager()->getTextureManager().createTextureFromText(title, font, textColor);
         button->setTexture(textTexture);
     }
     

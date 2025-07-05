@@ -3,11 +3,9 @@
 #include <SDL_ttf.h>
 #include <iostream>
 
-#include "font_manager.hpp"
 #include "gui_manager.hpp"
 #include "radio_button.hpp"
 #include "radio_group.hpp"
-#include "texture_manager.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -50,12 +48,10 @@ int main(int /*argc*/, char* /*args*/[]) {
         return 1;
     }
 
-    FontManager fontManager;
-    TextureManager textureManager(renderer);
-    GUIManager guiManager(renderer, &fontManager, &textureManager);
+    GUIManager guiManager(renderer);
 
     // Załaduj czcionkę
-    SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", 16);
+    SharedFont font = guiManager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
     if (!font) {
         std::cerr << "Failed to load font." << std::endl;
         return 1;
@@ -65,7 +61,7 @@ int main(int /*argc*/, char* /*args*/[]) {
 
     auto createRadioButton = [&](int x, int y, const std::string& label) {
         auto rb = std::make_unique<RadioButton>(x, y, 20, 20);
-        rb->setLabel(renderer, label, font, {255, 255, 255, 255}, textureManager);
+        rb->setLabel(renderer, label, font, {255, 255, 255, 255}, guiManager.getTextureManager());
         radioGroup->addRadioButton(rb.get()); // Add button to the group
         return rb;
     };

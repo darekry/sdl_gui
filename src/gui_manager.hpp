@@ -4,15 +4,14 @@
 #include "SDL2/SDL.h"
 #include <vector>
 #include "gui.hpp"
+#include "font_manager.hpp"
+#include "texture_manager.hpp"
 
-// Forward declarations
-class FontManager;
-class TextureManager;
 
 class GUIManager {
 public:
     // Konstruktor
-    GUIManager(SDL_Renderer* renderer, FontManager* fontManager, TextureManager* textureManager);
+    GUIManager(SDL_Renderer* renderer);
 
     // Destruktor
     ~GUIManager();
@@ -33,8 +32,8 @@ public:
 
     // Metody dostępu do kontekstu
     SDL_Renderer* getRenderer() const { return m_renderer; }
-    FontManager* getFontManager() const { return m_fontManager; }
-    TextureManager* getTextureManager() const { return m_textureManager; }
+    FontManager& getFontManager() { return m_fontManager; }
+    TextureManager& getTextureManager() { return m_textureManager; }
 
     // Metoda do uzyskiwania dostępu do elementów (potrzebna do ręcznej obsługi zdarzeń)
     std::vector<std::unique_ptr<GUIElement>>& getElements() { return m_elements; }
@@ -45,8 +44,8 @@ private:
 
     // Kontekst aplikacji
     SDL_Renderer* m_renderer;
-    FontManager* m_fontManager;
-    TextureManager* m_textureManager;
+    FontManager m_fontManager;
+    TextureManager m_textureManager;
 };
 
 #endif // GUI_MANAGER_HPP

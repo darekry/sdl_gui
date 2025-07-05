@@ -4,10 +4,8 @@
 #include <memory>
 
 #include "SDL_render.h"
-#include "font_manager.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
-#include "texture_manager.hpp"
 #include "combobox.hpp"
 
 const int SCREEN_WIDTH = 800;
@@ -53,12 +51,10 @@ int main() {
         return 1;
     }
 
-    FontManager fontManager;
-    TextureManager textureManager(renderer);
-    GUIManager guiManager(renderer, &fontManager, &textureManager);
+    GUIManager guiManager(renderer);
 
     // Załaduj czcionkę, aby ComboBox mógł jej użyć
-    if (!fontManager.loadFont("assets/fonts/font.ttf", 16)) {
+    if (!guiManager.getFontManager().loadFont("assets/fonts/font.ttf", 16)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load font 'assets/fonts/font.ttf'");
         // Warto rozważyć przerwanie aplikacji, jeśli czcionka jest kluczowa
     }

@@ -1,4 +1,5 @@
 #include "gui.hpp"
+
 #include "SDL2/SDL.h"
 #include "gui_manager.hpp" // Dodano, aby mieć definicję GUIManager
 
@@ -50,7 +51,7 @@ void GUIElement::clearChildren() {
 void GUIElement::setGUIManager(GUIManager* manager) {
     m_guiManager = manager;
     // Propaguj wskaźnik do wszystkich istniejących dzieci
-    for (auto& child : m_children) {
+    for (auto&& child : m_children) {
         if (child) {
             child->setGUIManager(manager);
         }
@@ -82,8 +83,8 @@ bool GUIElement::handleEvent(SDL_Event& e) {
     }
  
     // Przekaż zdarzenie do dzieci w odwrotnej kolejności (od góry do dołu)
-    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        if ((*it)->handleEvent(e)) {
+    for (auto&& it : m_children) {
+        if (it->handleEvent(e)) {
             return true; // Jeśli dziecko obsłużyło zdarzenie, nie propaguj dalej
         }
     }

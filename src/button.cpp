@@ -74,13 +74,9 @@ void Button::render(SDL_Renderer* renderer) {
 void Button::setLabel(const std::string& text, GUIManager& guiManager) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Setting label to \"%s\"", text.c_str());
     m_labelText = text;
-    FontManager* fontManager = guiManager.getFontManager();
-    if (!fontManager) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: FontManager is null.");
-        return;
-    }
+    FontManager& fontManager = guiManager.getFontManager();
 
-    SharedFont font = fontManager->loadFont("assets/fonts/font.ttf", 16);
+    SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", 16);
     if (!font) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: Failed to load font.");
         return;
@@ -88,7 +84,7 @@ void Button::setLabel(const std::string& text, GUIManager& guiManager) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Font loaded.");
 
     SDL_Color textColor = { 0, 0, 0, 255 };
-    SharedTexture textTexture = guiManager.getTextureManager()->createTextureFromText(
+    SharedTexture textTexture = guiManager.getTextureManager().createTextureFromText(
         text,
         font,
         textColor

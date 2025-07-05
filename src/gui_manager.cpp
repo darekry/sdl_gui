@@ -1,17 +1,15 @@
 #include "gui_manager.hpp"
 #include "SDL2/SDL.h"
 #include "gui.hpp" // Potrzebne do rzutowania na Button
-#include "font_manager.hpp"
-#include "texture_manager.hpp"
 
-GUIManager::GUIManager(SDL_Renderer* renderer, FontManager* fontManager, TextureManager* textureManager)
-    : m_renderer(renderer), m_fontManager(fontManager), m_textureManager(textureManager) {
-    // Konstruktor teraz przechowuje kontekst
+GUIManager::GUIManager(SDL_Renderer* renderer)
+    : m_renderer(renderer), m_fontManager(), m_textureManager(renderer) {
+    // Konstruktor teraz tworzy i zarządza menedżerami zasobów
 }
 
 GUIManager::~GUIManager() {
-    // Zwolnienie zasobów, jeśli potrzebne (np. usunięcie elementów, jeśli GUIManager jest ich właścicielem)
-    // W tym zadaniu GUIManager zarządza wskaźnikami, a cykl życia obiektów GUIElement jest zarządzany zewnętrznie.
+    // Obiekty m_fontManager i m_textureManager są automatycznie niszczone,
+    // a unique_ptrs w m_elements dbają o zwolnienie pamięci po elementach GUI.
 }
 
 

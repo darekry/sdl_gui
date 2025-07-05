@@ -4,10 +4,8 @@
 #include <iostream>
 #include <memory>
 
-#include "font_manager.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
-#include "texture_manager.hpp"
 #include "checkbox.hpp"
 
 const int SCREEN_WIDTH = 800;
@@ -51,12 +49,10 @@ int main() {
         return 1;
     }
 
-    FontManager fontManager;
-    TextureManager textureManager(renderer);
-    GUIManager guiManager(renderer, &fontManager, &textureManager);
+    GUIManager guiManager(renderer);
     
     // Załaduj czcionkę
-    SharedFont font = fontManager.loadFont("assets/ARIAL.TTF", 16);
+    SharedFont font = guiManager.getFontManager().loadFont("assets/ARIAL.TTF", 16);
     if (!font) {
         std::cerr << "Failed to load font." << std::endl;
         return 1;
@@ -64,7 +60,7 @@ int main() {
 
     // Utwórz checkbox
     auto checkbox = std::make_unique<Checkbox>(100, 100, 30, 30);
-    checkbox->setLabel(renderer, "Check me!", font, {255, 255, 255, 255}, textureManager);
+    checkbox->setLabel(renderer, "Check me!", font, {255, 255, 255, 255}, guiManager.getTextureManager());
     checkbox->setOnChange([]([[maybe_unused]]Checkbox* cb, bool isChecked) {
         std::cout << "Checkbox state changed: " << (isChecked ? "Checked" : "Unchecked") << std::endl;
     });

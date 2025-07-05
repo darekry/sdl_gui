@@ -5,9 +5,7 @@
 #include <memory>
 
 #include "button.hpp"
-#include "font_manager.hpp"
 #include "gui_manager.hpp"
-#include "texture_manager.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -50,12 +48,10 @@ int main() {
         return 1;
     }
 
-    FontManager fontManager;
-    TextureManager textureManager(renderer);
-    GUIManager guiManager(renderer, &fontManager, &textureManager);
+    GUIManager guiManager(renderer);
 
     // Załaduj teksturę dla przycisku
-    SharedTexture buttonTexture = textureManager.loadTexture("assets/button1.png");
+    SharedTexture buttonTexture = guiManager.getTextureManager().loadTexture("assets/button1.png");
     if (!buttonTexture) {
         std::cerr << "Failed to load button texture." << std::endl;
         SDL_DestroyRenderer(renderer);

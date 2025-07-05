@@ -6,7 +6,7 @@
 #include <SDL_image.h>
 #include <stdexcept>
 #include <string>
-
+#include <memory>
 // Forward declarations
 class GUIManager;
 class FontManager;

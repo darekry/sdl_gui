@@ -7,8 +7,6 @@
 #include "SDL_render.h"
 #include "gui.hpp"
 #include "gui_manager.hpp"
-#include "font_manager.hpp"
-#include "texture_manager.hpp"
 #include "tab_control.hpp"
 #include "checkbox.hpp"
 #include "text_input.hpp"
@@ -48,9 +46,7 @@ int main(int argc, char* args[]) {
         return 1;
     }
 
-    FontManager fontManager;
-    TextureManager textureManager(renderer);
-    GUIManager guiManager(renderer, &fontManager, &textureManager);
+    GUIManager guiManager(renderer);
 
     // Tworzenie TabControl
     auto tabControlPtr = std::make_unique<TabControl>(50, 50, 700, 500);
@@ -59,7 +55,7 @@ int main(int argc, char* args[]) {
 
     // Dodawanie zakładek
     // Załaduj czcionkę
-    SharedFont font = fontManager.loadFont("assets/ARIAL.TTF", 16);
+    SharedFont font = guiManager.getFontManager().loadFont("assets/ARIAL.TTF", 16);
     if (!font) {
         std::cerr << "Failed to load font." << std::endl;
         return 1;
@@ -85,7 +81,7 @@ int main(int argc, char* args[]) {
     // Zakładka 1
     if (tab1Panel) {
         auto button1 = std::make_unique<Button>(50, 50, 150, 50);
-        button1->setTexture(textureManager.createTextureFromText("Click Me", font, textColor));
+        button1->setTexture(guiManager.getTextureManager().createTextureFromText("Click Me", font, textColor));
         button1->setOnClickCallback([](GUIElement*){ std::cout << "Button 1 clicked!" << std::endl; });
         tab1Panel->addChild(std::move(button1));
     }
@@ -93,7 +89,7 @@ int main(int argc, char* args[]) {
     // Zakładka 2
     if (tab2Panel) {
         auto checkbox1 = std::make_unique<Checkbox>(50, 50, 20, 20);
-        checkbox1->setLabel(renderer, "Check me!", font, textColor, textureManager);
+        checkbox1->setLabel(renderer, "Check me!", font, textColor, guiManager.getTextureManager());
         tab2Panel->addChild(std::move(checkbox1));
     }
     // Zakładka 3

@@ -4,11 +4,9 @@
 #include <iostream>
 #include <memory>
 
-#include "font_manager.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include "slider.hpp"
-#include "texture_manager.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -51,9 +49,7 @@ int main() {
         return 1;
     }
 
-    TextureManager textureManager(renderer);
-    FontManager fontManager;
-    GUIManager guiManager(renderer, &fontManager, &textureManager);
+    GUIManager guiManager(renderer);
 
     // Utwórz suwak
     auto slider = std::make_unique<Slider>(100, 100, 200, 20, 0, 100, 50, Orientation::Horizontal);

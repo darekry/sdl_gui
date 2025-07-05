@@ -9,6 +9,7 @@
 class Checkbox : public GUIElement {
 public:
     Checkbox(int x, int y, int w, int h);
+   // Checkbox(int x, int y, int w, int h, std::string&);
     ~Checkbox() = default;
 
     bool isChecked() const { return m_isChecked; }

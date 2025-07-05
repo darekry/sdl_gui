@@ -5,10 +5,8 @@
 #include <memory>
 
 #include "SDL_render.h"
-#include "font_manager.hpp"
 #include "panel.hpp"
 #include "gui_manager.hpp"
-#include "texture_manager.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -51,9 +49,7 @@ int main() {
         return 1;
     }
 
-    TextureManager textureManager(renderer);
-    FontManager fontManager;
-    GUIManager guiManager(renderer, &fontManager, &textureManager);
+    GUIManager guiManager(renderer);
 
     // Utwórz panel
     auto panel = std::make_unique<Panel>(100, 100, 600, 400);

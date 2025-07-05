@@ -4,11 +4,9 @@
 #include <iostream>
 #include <memory>
 
-#include "../src/font_manager.hpp"
 #include "../src/gui.hpp"
 #include "../src/gui_manager.hpp"
 #include "../src/text_input.hpp"
-#include "../src/texture_manager.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -51,9 +49,7 @@ int main() {
         return 1;
     }
 
-    TextureManager textureManager(renderer);
-    FontManager fontManager;
-    GUIManager guiManager(renderer, &fontManager, &textureManager);
+    GUIManager guiManager(renderer);
 
     // Utwórz pole tekstowe
     auto textInput = std::make_unique<TextInput>(100, 100, 300, 40);
