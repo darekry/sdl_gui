@@ -72,6 +72,22 @@ SharedTexture TextureManager::createTextureFromText(const std::string& text, std
     return {textTexture, SDLTextureDeleter()};
 }
 
+SharedTexture TextureManager::addTexture(const std::string& key, SDL_Texture* texture) {
+    if (m_textures.count(key)) {
+        // Klucz już istnieje, zwróć istniejącą teksturę.
+        // Nowa tekstura nie zostanie dodana, aby uniknąć nadpisania i wycieku pamięci.
+        // Użytkownik jest odpowiedzialny za zwolnienie pamięci po `texture`, jeśli klucz już istnieje.
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempted to add texture with existing key '%s'. Returning existing texture.", key.c_str());
+        return m_textures[key];
+    }
+    if (!texture) {
+        return nullptr;
+    }
+    SharedTexture shared(texture, SDLTextureDeleter());
+    m_textures[key] = shared;
+    return shared;
+}
+
 void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, const std::string& text) {
     SharedFont defaultFont = fontManager.getDefaultFont();
     if (!defaultFont) {

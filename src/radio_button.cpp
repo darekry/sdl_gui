@@ -47,7 +47,8 @@ bool RadioButton::handleEvent(SDL_Event& e) {
     return false;
 }
 
-void RadioButton::render(SDL_Renderer* renderer) {
+void RadioButton::render() {
+    SDL_Renderer* renderer = m_manager.getRenderer();
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect radioRect = {absPos.x, absPos.y, m_height, m_height};
 

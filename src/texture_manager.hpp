@@ -27,6 +27,9 @@ public:
     // Metoda do tworzenia tekstury z tekstu.
     SharedTexture createTextureFromText(const std::string& text, std::shared_ptr<TTF_Font> font, SDL_Color color);
 
+    // Metoda do dodawania istniejącej tekstury i przejmowania nad nią własności
+    SharedTexture addTexture(const std::string& key, SDL_Texture* texture);
+
     // Metoda do tworzenia domyślnej tekstury
     void createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, const std::string& text);
 

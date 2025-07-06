@@ -68,7 +68,8 @@ void TextInput::updateTextTexture(TextureManager& textureManager) {
     m_texture = textureManager.createTextureFromText(m_text, font, m_textColor);
 }
 
-void TextInput::render(SDL_Renderer* renderer) {
+void TextInput::render() {
+    SDL_Renderer* renderer = m_manager.getRenderer();
     SDL_Rect rect = {getAbsolutePosition().x, getAbsolutePosition().y, getWidth(), getHeight()};
 
     SDL_SetRenderDrawColor(renderer, m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b, m_backgroundColor.a);
@@ -84,7 +85,7 @@ void TextInput::render(SDL_Renderer* renderer) {
         SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad);
     }
     
-   // GUIElement::render(renderer);
+   // GUIElement::render();
 }
 
 bool TextInput::handleEvent(SDL_Event& e) {

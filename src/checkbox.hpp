@@ -19,7 +19,7 @@ void setLabel(const std::string& text, int fontSize, SDL_Color color);
 using OnChangeCallback = std::function<void(Checkbox*, bool)>;
 void setOnChange(OnChangeCallback callback) { m_onChange = callback; }
     bool handleEvent(SDL_Event& e) override;
-    void render(SDL_Renderer* renderer) override;
+    void render() override;
 
 private:
     bool m_isChecked;

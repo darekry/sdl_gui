@@ -10,7 +10,7 @@ public:
     Panel(GUIManager& manager, int x, int y, int width, int height);
 
     // Przesłonięta metoda do renderowania
-    void render(SDL_Renderer* renderer) override;
+    void render() override;
     // Przesłonięta metoda do obsługi zdarzeń
     bool handleEvent(SDL_Event& event) override;
     // Metody do ustawiania obramowania

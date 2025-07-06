@@ -1,6 +1,7 @@
 #include "gui_manager.hpp"
 #include "SDL2/SDL.h"
 #include "gui.hpp" // Potrzebne do rzutowania na Button
+#include <algorithm> // Dla std::remove_if
 
 GUIManager::GUIManager(SDL_Renderer* renderer)
     : m_renderer(renderer), m_fontManager(), m_textureManager(renderer) {
@@ -23,30 +24,41 @@ void GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     }
 }
 
-bool GUIManager::handleEvents() {
-    SDL_Event e;
-    while (SDL_PollEvent(&e) != 0) {
-        if (e.type == SDL_QUIT) {
-            return true; // Zasygnalizuj wyjście
-        }
-
-        // Przekaż zdarzenie do wszystkich elementów najwyższego poziomu.
-        // Pętla zatrzyma się, gdy któryś element "skonsumuje" zdarzenie.
-        for (const auto& element : m_elements) {
-            if (element && element->handleEvent(e)) {
-                // Jeśli element obsłużył zdarzenie, możemy przerwać pętlę,
-                // aby uniknąć obsługi tego samego zdarzenia przez wiele elementów.
-                break;
-            }
+bool GUIManager::processEvent(const SDL_Event& e) {
+    // Przekaż zdarzenie do wszystkich elementów najwyższego poziomu.
+    // Pętla zatrzyma się, gdy któryś element "skonsumuje" zdarzenie.
+    for (const auto& element : m_elements) {
+        if (element && element->handleEvent(const_cast<SDL_Event&>(e))) {
+            // Jeśli element obsłużył zdarzenie, zwracamy true.
+            return true;
         }
     }
-    return false; // Kontynuuj pętlę główną
+    // Żaden element nie obsłużył zdarzenia.
+    return false;
 }
-void GUIManager::render(SDL_Renderer* renderer) {
+
+void GUIManager::render() {
     // Renderuj wszystkie zarządzane elementy
     for (const auto& element : m_elements) { // Iteracja po unique_ptr
         if (element) {
-            element->render(renderer); // Przekaż referencję do textureManager
+            element->render();
         }
     }
+}
+
+void GUIManager::cleanup() {
+    // Najpierw rekurencyjnie wywołaj cleanup dla wszystkich elementów
+    for (const auto& element : m_elements) {
+        if (element) {
+            element->cleanup();
+        }
+    }
+
+    // Następnie usuń oznaczone elementy z głównego kontenera
+    auto new_end = std::remove_if(m_elements.begin(), m_elements.end(),
+                                  [](const std::unique_ptr<GUIElement>& element) {
+        return element->isMarkedForDeletion();
+    });
+    
+    m_elements.erase(new_end, m_elements.end());
 }

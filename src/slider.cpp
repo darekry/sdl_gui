@@ -102,7 +102,8 @@ bool Slider::handleEvent(SDL_Event& e) {
     return false;
 }
 
-void Slider::render(SDL_Renderer* renderer) {
+void Slider::render() {
+    SDL_Renderer* renderer = m_manager.getRenderer();
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect sliderBarRect = {absPos.x, absPos.y, getWidth(), getHeight()};
 
@@ -128,6 +129,6 @@ void Slider::render(SDL_Renderer* renderer) {
 
     // Renderuj dzieci (przyciski strzałek)
     for (auto& child : m_children) {
-        child->render(renderer);
+        child->render();
     }
 }

@@ -14,7 +14,7 @@ public:
     ComboBox(GUIManager& manager, int x, int y, int w, int h);
 
     bool handleEvent(SDL_Event& event) override;
-    void render(SDL_Renderer* renderer) override;
+    void render() override;
 
     void addItem(const std::string& item);
     std::string getSelectedItem() const;

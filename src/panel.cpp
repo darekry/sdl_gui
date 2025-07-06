@@ -61,10 +61,11 @@ bool Panel::handleEvent(SDL_Event& event) {
     return false;
 }
 
-void Panel::render(SDL_Renderer* renderer) {
+void Panel::render() {
     if (!m_visible) {
         return;
     }
+    SDL_Renderer* renderer = m_manager.getRenderer();
     
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect panelRect = { absPos.x, absPos.y, m_width, m_height };
@@ -83,5 +84,5 @@ void Panel::render(SDL_Renderer* renderer) {
     }
 
     // Renderuj dzieci panelu
-    GUIElement::render(renderer);
+    GUIElement::render();
 }

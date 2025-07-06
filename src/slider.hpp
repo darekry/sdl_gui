@@ -21,7 +21,7 @@ public:
     void setOnChangeCallback(OnChangeCallback callback) { m_onChange = callback; }
 
     bool handleEvent(SDL_Event& e) override;
-    void render(SDL_Renderer* renderer) override;
+    void render() override;
 
 private:
     Orientation m_orientation;

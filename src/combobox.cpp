@@ -53,14 +53,14 @@ bool ComboBox::handleEvent(SDL_Event& event) {
     return false;
 return false;
 }
-void ComboBox::render(SDL_Renderer* renderer) {
+void ComboBox::render() {
     if (m_needs_update) {
         createDropdownButtons();
         updateMainButtonText();
         m_needs_update = false;
     }
     // Klasa bazowa poprawnie renderuje wszystkie widoczne dzieci.
-    GUIElement::render(renderer);
+    GUIElement::render();
 }
 void ComboBox::addItem(const std::string& item) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::addItem: Adding item \"%s\"", item.c_str());

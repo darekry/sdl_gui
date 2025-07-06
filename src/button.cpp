@@ -44,10 +44,11 @@ bool Button::handleEvent(SDL_Event& e) {
     return false;
 }
 
-void Button::render(SDL_Renderer* renderer) {
+void Button::render() {
     if (!m_visible) {
         return;
     }
+    SDL_Renderer* renderer = m_manager.getRenderer();
 
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect renderQuad = { absPos.x, absPos.y, m_width, m_height };

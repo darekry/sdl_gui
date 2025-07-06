@@ -2,6 +2,7 @@
 
 #include "SDL2/SDL.h"
 #include "gui_manager.hpp" // Dodano, aby mieć definicję GUIManager
+#include <algorithm> // Dla std::remove_if
 
 // Implementacja klasy GUIElement
 GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)
@@ -90,10 +91,11 @@ bool GUIElement::handleEvent(SDL_Event& e) {
     return false; // Żadne dziecko nie obsłużyło zdarzenia
 }
 
-void GUIElement::render(SDL_Renderer* renderer) {
+void GUIElement::render() {
     if (!m_visible) {
         return;
     }
+    SDL_Renderer* renderer = m_manager.getRenderer();
 
     if (m_texture) {
         SDL_Point absPos = getAbsolutePosition();
@@ -104,11 +106,33 @@ void GUIElement::render(SDL_Renderer* renderer) {
     // Domyślna implementacja renderowania: renderuj dzieci
     for (auto&& child : m_children) {
         if (child && child->isVisible()) {
-            child->render(renderer);
+            child->render();
         }
     }
 }
 
+void GUIElement::markForDeletion() {
+    m_isMarkedForDeletion = true;
+}
 
+bool GUIElement::isMarkedForDeletion() const {
+    return m_isMarkedForDeletion;
+}
 
+void GUIElement::cleanup() {
+    // Najpierw rekurencyjnie wywołaj cleanup dla wszystkich dzieci
+    for (const auto& child : m_children) {
+        if (child) {
+            child->cleanup();
+        }
+    }
+
+    // Następnie usuń oznaczone dzieci z tego kontenera
+    auto new_end = std::remove_if(m_children.begin(), m_children.end(),
+                                  [](const std::unique_ptr<GUIElement>& element) {
+        return element->isMarkedForDeletion();
+    });
+
+    m_children.erase(new_end, m_children.end());
+}
 

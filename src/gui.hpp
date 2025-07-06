@@ -7,6 +7,7 @@
 #include <functional>
 #include <string>
 #include <memory>
+#include <vector>
 
 // Forward declaration
 class GUIManager;
@@ -40,7 +41,7 @@ public:
     virtual bool handleEvent(SDL_Event& e);
 
     // Wirtualna metoda do renderowania (do zaimplementowania w klasach pochodnych)
-    virtual void render(SDL_Renderer* renderer);
+    virtual void render();
 
         // Metoda do ustawiania tekstury
         void setTexture(SharedTexture texture);
@@ -59,6 +60,11 @@ public:
     // Metoda do sprawdzania stanu najechania myszką
     bool isHovered() const { return m_isHovered; }
 
+    // Metody do zarządzania usuwaniem
+    void markForDeletion();
+    bool isMarkedForDeletion() const;
+    void cleanup();
+
 protected:
     GUIManager& m_manager;
     int m_x, m_y;
@@ -66,6 +72,7 @@ protected:
     bool m_enabled = true; // Domyślnie włączony
     bool m_visible = true; // Domyślnie widoczny
     bool m_isHovered = false; // Stan najechania myszką
+    bool m_isMarkedForDeletion = false; // Flaga do oznaczania elementu do usunięcia
     GUIElement* m_parent;
     SharedTexture m_texture;
     

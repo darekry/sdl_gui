@@ -1,88 +1,65 @@
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
 #include <iostream>
 #include <memory>
 
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include "slider.hpp"
+#include "helpers/sdl_app.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-int main() {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-        return 1;
-    }
+int main(int, char**) {
+    try {
+        SDLApp app("Slider Example", SCREEN_WIDTH, SCREEN_HEIGHT);
+        SDL_Renderer* renderer = app.getRenderer();
+        GUIManager guiManager(renderer);
 
-    if (!(IMG_Init(IMG_INIT_PNG))) {
-        std::cerr << "SDL_image could not initialize! IMG_Error: " << IMG_GetError() << std::endl;
-        SDL_Quit();
-        return 1;
-    }
+        // Utwórz suwak
+        auto slider = std::make_unique<Slider>(guiManager, 100, 100, 200, 20, 0, 100, 50, Orientation::Horizontal);
 
-    if (TTF_Init() == -1) {
-        std::cerr << "SDL_ttf could not initialize! TTF_Error: " << TTF_GetError() << std::endl;
-        IMG_Quit();
-        SDL_Quit();
-        return 1;
-    }
-
-    SDL_Window* window = SDL_CreateWindow("Slider Example", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    if (!window) {
-        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        TTF_Quit();
-        IMG_Quit();
-        SDL_Quit();
-        return 1;
-    }
-
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        SDL_DestroyWindow(window);
-        TTF_Quit();
-        IMG_Quit();
-        SDL_Quit();
-        return 1;
-    }
-
-    GUIManager guiManager(renderer);
-
-    // Utwórz suwak
-    auto slider = std::make_unique<Slider>(guiManager, 100, 100, 200, 20, 0, 100, 50, Orientation::Horizontal);
-
-slider->getChildren()[0]->setLabel("<",24,(SDL_Color){0,0,0,255});
-slider->getChildren()[1]->setLabel(">",24,(SDL_Color){0,0,0,255});
-
-    slider->setOnChangeCallback([](GUIElement* element) {
-        Slider* slider_ptr = static_cast<Slider*>(element);
-        if (slider_ptr) {
-            std::cout << "Slider value changed: " << slider_ptr->getValue() << std::endl;
+        // Dostęp do przycisków przez getChildren() jest niebezpieczny, jeśli zmieni się kolejność.
+        // Lepszym podejściem byłoby dodanie dedykowanych metod w klasie Slider.
+        // Na potrzeby tego przykładu, zakładamy, że kolejność jest stała.
+        if (slider->getChildren().size() >= 2) {
+            if(auto dec_btn = dynamic_cast<Button*>(slider->getChildren()[0].get())) {
+                dec_btn->setLabel("<", 24, {0,0,0,255});
+            }
+            if(auto inc_btn = dynamic_cast<Button*>(slider->getChildren()[1].get())) {
+                inc_btn->setLabel(">", 24, {0,0,0,255});
+            }
         }
-    });
 
-    guiManager.addElement(std::move(slider));
+        slider->setOnChangeCallback([](GUIElement* element) {
+            Slider* slider_ptr = static_cast<Slider*>(element);
+            if (slider_ptr) {
+                std::cout << "Slider value changed: " << slider_ptr->getValue() << std::endl;
+            }
+        });
 
-    bool quit = false;
-    while (!quit) {
-        quit = guiManager.handleEvents();
+        guiManager.addElement(std::move(slider));
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
+        bool quit = false;
+        SDL_Event e;
+        while (!quit) {
+            while (SDL_PollEvent(&e)) {
+                if (e.type == SDL_QUIT) {
+                    quit = true;
+                }
+                guiManager.processEvent(e);
+            }
 
-        guiManager.render(renderer);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderClear(renderer);
 
-        SDL_RenderPresent(renderer);
+            guiManager.render();
+
+            SDL_RenderPresent(renderer);
+        }
+    } catch (const std::runtime_error& e) {
+        std::cerr << "An error occurred: " << e.what() << std::endl;
+        return 1;
     }
-
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    TTF_Quit();
-    IMG_Quit();
-    SDL_Quit();
 
     return 0;
 }

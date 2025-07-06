@@ -26,7 +26,7 @@ public:
     void setLocked(bool locked);
     bool isLocked() const;
 
-    void render(SDL_Renderer* renderer) override;
+    void render() override;
     bool handleEvent(SDL_Event& e) override;
 
 private:

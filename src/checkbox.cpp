@@ -1,6 +1,7 @@
 #include "checkbox.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
+#include "gui_manager.hpp"
 
 Checkbox::Checkbox(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h), m_isChecked(false), m_labelTexture(nullptr), m_onChange(nullptr)
@@ -38,7 +39,8 @@ bool Checkbox::handleEvent(SDL_Event& e) {
     return false;
 }
 
-void Checkbox::render(SDL_Renderer* renderer) {
+void Checkbox::render() {
+    SDL_Renderer* renderer = m_manager.getRenderer();
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect checkboxRect = {absPos.x, absPos.y, m_height, m_height};
 

@@ -25,10 +25,13 @@ public:
     // void removeElement(GUIElement* element); // Usunięcie elementu z unique_ptr oznacza jego zniszczenie
 
     // Metoda do obsługi zdarzeń SDL i przekazywania ich do odpowiednich elementów GUI
-    bool handleEvents();
+    bool processEvent(const SDL_Event& e);
 
     // Metoda do renderowania wszystkich elementów GUI
-    void render(SDL_Renderer* renderer);
+    void render();
+
+    // Metoda do czyszczenia elementów oznaczonych do usunięcia
+    void cleanup();
 
     // Metody dostępu do kontekstu
     SDL_Renderer* getRenderer() const { return m_renderer; }

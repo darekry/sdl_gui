@@ -37,7 +37,7 @@ public:
 
     // Przesłonięte metody do obsługi zdarzeń i renderowania
     bool handleEvent(SDL_Event& e) override;
-    void render(SDL_Renderer* renderer) override;
+    void render() override;
 
 private:
     bool m_isSelected;
