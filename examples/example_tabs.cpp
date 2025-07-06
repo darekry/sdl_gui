@@ -36,23 +36,23 @@ int main(int, char**) {
         tab3Panel->setBorderThickness(5);
 
         // Dodawanie zawartości do zakładek
-        if (tab1Panel) {
-            auto button1 = std::make_unique<Button>(guiManager, 50, 50, 150, 50);
-            button1->setLabel("Click Me", 24, {0, 0, 0, 255});
-            button1->setOnClickCallback([](GUIElement*){ std::cout << "Button 1 clicked!" << std::endl; });
-            tab1Panel->addChild(std::move(button1));
-        }
-
-        if (tab2Panel) {
-            auto checkbox1 = std::make_unique<Checkbox>(guiManager, 50, 50, 20, 20);
-            checkbox1->setLabel("Check me!", 24, {0, 0, 0, 255});
-            tab2Panel->addChild(std::move(checkbox1));
-        }
         
-        if (tab3Panel) {
-            auto textInput1 = std::make_unique<TextInput>(guiManager, 50, 50, 300, 40);
-            tab3Panel->addChild(std::move(textInput1));
-        }
+        auto button1 = std::make_unique<Button>(guiManager, 50, 50, 150, 50);
+        button1->setLabel("Click Me", 24, {0, 0, 0, 255});
+        button1->setOnClickCallback([](GUIElement*){ std::cout << "Button 1 clicked!" << std::endl; });
+        tab1Panel->addChild(std::move(button1));
+        
+
+       
+        auto checkbox1 = std::make_unique<Checkbox>(guiManager, 50, 50, 20, 20);
+        checkbox1->setLabel("Check me!", 24, {0, 0, 0, 255});
+        tab2Panel->addChild(std::move(checkbox1));
+        
+        
+       
+        auto textInput1 = std::make_unique<TextInput>(guiManager, 50, 50, 300, 40);
+        tab3Panel->addChild(std::move(textInput1));
+        
 
         guiManager.addElement(std::move(tabControl));
 

@@ -1,9 +1,9 @@
 # define the C compiler to use
 # CC = gcc
-CC = clang
+CC = clang-20
 # define the Cpp compiler to use
 # CXX    = g++
-CXX    = clang++
+CXX    = clang++-20
 FLAGS  = -Wall
 FLAGS += -Wextra
 FLAGS += -O3
@@ -11,7 +11,7 @@ FLAGS += $(shell sdl2-config --cflags)
 FLAGS += -march=native
 #FLAGS += -g
 FLAGS += -flto
-#FLAGS += -fmodules-ts
+FLAGS += -fmodules
 #define any compile-time flags for C
 CFLAGS := $(FLAGS)
 
@@ -50,6 +50,20 @@ UNITY_OBJECT := $(OUTPUT)/all.o
 # Wszystkie pliki źródłowe C++ w projekcie
 CPPSOURCES := $(wildcard $(SRC)/*.cpp)
 
+# --- Konfiguracja tradycyjnej kompilacji (dla compile_commands.json) ---
+# Cel `non_unity` kompiluje każdy plik .cpp osobno.
+# Służy do generowania `compile_commands.json` za pomocą `bear` lub `intercept-build`:
+# $ bear -- make non_unity
+#
+# Lista plików obiektowych dla tradycyjnej kompilacji (każdy .cpp -> .o)
+NON_UNITY_OBJECTS := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/%.o,$(CPPSOURCES))
+
+# Reguła wzorcowa do kompilacji pojedynczego pliku źródłowego na plik obiektowy
+# Ta reguła jest używana tylko przez cel `non_unity`
+$(OUTPUT)/%.o: $(SRC)/%.cpp | $(OUTPUT)
+	@echo "Kompilowanie (non-unity): $<"
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+
 # --- Konfiguracja testów ---
 # Pliki źródłowe testów
 TEST_SRC_FILES  := $(wildcard $(TESTS_DIR)/test_*.cpp)
@@ -67,6 +81,11 @@ EXAMPLE_EXECS     := $(patsubst examples/%.cpp,$(OUTPUT)/%,$(EXAMPLE_SRC_FILES))
 examples: $(EXAMPLE_EXECS)
 all: examples test
 
+# Cel do tradycyjnej kompilacji (non-unity)
+# Buduje wszystkie pliki obiektowe, ale nie linkuje ich.
+# To wystarczy, aby `bear` przechwycił komendy kompilacji.
+non_unity: $(NON_UNITY_OBJECTS)
+	@echo "Tradycyjna kompilacja (non-unity) zakończona. Obiekty znajdują się w $(OUTPUT)/"
 
 # Cel do uruchamiania testów
 test: $(UNITY_OBJECT) $(TEST_EXECS)
@@ -114,7 +133,7 @@ $(OUTPUT)/catch_amalgamated.o: $(LIB)/catch_amalgamated.cpp $(LIB)/catch_amalgam
 
 # --- Inne cele ---
 
-.PHONY: clean run debug
+.PHONY: clean run debug non_unity
 
 run:
 	@echo "No main executable to run. Run examples individually, e.g., ./output/example_button"

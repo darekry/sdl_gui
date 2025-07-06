@@ -1,6 +1,6 @@
 #include "panel.hpp"
 #include "gui.hpp" // Dla GUIElement::render
-
+#include "gui_manager.hpp"
 // Implementacja klasy Panel
 Panel::Panel(GUIManager& manager, int x, int y, int width, int height)
     : GUIElement(manager, x, y, width, height) {

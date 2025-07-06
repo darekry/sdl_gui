@@ -1,4 +1,5 @@
 #include "slider.hpp"
+#include "gui_manager.hpp"
 #include <algorithm> // Dla std::clamp
 #include <memory> // Dla std::make_unique
 
