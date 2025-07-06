@@ -2,8 +2,7 @@
 #define BUTTON_HPP
 
 #include "gui.hpp"
-#include <functional>
-#include <string>
+import std.compat;
 
 // Klasa przycisku dziedzicząca po GUIElement
 class Button : public GUIElement {

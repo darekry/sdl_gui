@@ -1,116 +1,116 @@
 [
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/button.o src/button.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/button.o src/button.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/button.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/checkbox.o src/checkbox.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/checkbox.o src/checkbox.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/checkbox.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/combobox.o src/combobox.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/combobox.o src/combobox.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/combobox.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/font_manager.o src/font_manager.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/font_manager.o src/font_manager.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/font_manager.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/gui.o src/gui.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/gui.o src/gui.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/gui.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/gui_manager.o src/gui_manager.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/gui_manager.o src/gui_manager.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/gui_manager.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/panel.o src/panel.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/panel.o src/panel.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/panel.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/radio_button.o src/radio_button.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/radio_button.o src/radio_button.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/radio_button.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/radio_group.o src/radio_group.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/radio_group.o src/radio_group.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/radio_group.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/slider.o src/slider.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/slider.o src/slider.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/slider.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/tab_control.o src/tab_control.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/tab_control.o src/tab_control.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/tab_control.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/text_input.o src/text_input.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/text_input.o src/text_input.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/text_input.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/texture_manager.o src/texture_manager.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/texture_manager.o src/texture_manager.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/src/texture_manager.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/all.o output/all.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/all.o output/all.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/output/all.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/example_button output/all.o examples/example_button.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/example_button output/all.o examples/example_button.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_button.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/example_checkbox output/all.o examples/example_checkbox.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/example_checkbox output/all.o examples/example_checkbox.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_checkbox.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/example_combobox output/all.o examples/example_combobox.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/example_combobox output/all.o examples/example_combobox.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_combobox.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/example_panel output/all.o examples/example_panel.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/example_panel output/all.o examples/example_panel.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_panel.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/example_radio_button output/all.o examples/example_radio_button.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/example_radio_button output/all.o examples/example_radio_button.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_radio_button.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/example_slider output/all.o examples/example_slider.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/example_slider output/all.o examples/example_slider.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_slider.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/example_tabs output/all.o examples/example_tabs.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/example_tabs output/all.o examples/example_tabs.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_tabs.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/example_text_input output/all.o examples/example_text_input.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/example_text_input output/all.o examples/example_text_input.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_text_input.cpp"
     },
     {
-        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -fmodules -stdlib=libc++ -Isrc -o output/example_window output/all.o examples/example_window.cpp",
+        "command": "c++ -c -std=c++23 -Wall -Wextra -O3 -I/usr/include/SDL2 -D_REENTRANT -march=native -flto -stdlib=libc++ -fmodule-file=std=modules_cache/std.pcm -fmodule-file=std.compat=modules_cache/std.compat.pcm -Isrc -o output/example_window output/all.o examples/example_window.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_window.cpp"
     }

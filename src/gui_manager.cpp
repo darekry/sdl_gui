@@ -1,7 +1,7 @@
 #include "gui_manager.hpp"
 #include "SDL2/SDL.h"
 #include "gui.hpp" // Potrzebne do rzutowania na Button
-#include <algorithm> // Dla std::remove_if
+import std.compat;
 
 GUIManager::GUIManager(SDL_Renderer* renderer)
     : m_renderer(renderer), m_fontManager(), m_textureManager(renderer) {

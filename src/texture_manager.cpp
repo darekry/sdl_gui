@@ -2,6 +2,8 @@
 #include "sdl_deleters.hpp"
 #include <SDL2/SDL.h>
 
+import std.compat;
+
 TextureManager::TextureManager(SDL_Renderer* renderer) : m_renderer(renderer) {
     // Inicjalizacja SDL_image, jeśli nie została jeszcze zainicjowana
     // Sprawdzamy, czy wymagane formaty są już załadowane

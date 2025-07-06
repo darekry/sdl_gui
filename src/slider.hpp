@@ -3,8 +3,7 @@
 
 #include "button.hpp"
 #include "gui.hpp"
-#include <functional>
-#include <memory>
+import std.compat;
 
 enum class Orientation {
     Horizontal,

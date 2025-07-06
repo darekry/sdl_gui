@@ -4,9 +4,7 @@
 #include "button.hpp"
 #include "gui.hpp"
 #include "panel.hpp"
-#include <vector>
-#include <string>
-#include <memory>
+import std.compat;
 
 class TabControl : public GUIElement {
 public:

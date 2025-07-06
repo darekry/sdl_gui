@@ -2,7 +2,7 @@
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
 #include "gui_manager.hpp"
-#include <iostream>
+import std.compat;
 
 RadioButton::RadioButton(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h), m_isSelected(false), m_group(nullptr), m_onChange(nullptr), m_labelTexture(nullptr)

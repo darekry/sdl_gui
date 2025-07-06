@@ -1,13 +1,10 @@
 #ifndef GUI_HPP
 #define GUI_HPP
 
-#include "SDL2/SDL.h"
 #include "texture_manager.hpp" // Dodano include dla TextureManager
 #include "font_manager.hpp" // Dodano include dla FontManager i SharedFont
-#include <functional>
-#include <string>
-#include <memory>
-#include <vector>
+#include "SDL2/SDL.h"
+import std.compat;
 
 // Forward declaration
 class GUIManager;

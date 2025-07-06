@@ -11,7 +11,7 @@ FLAGS += $(shell sdl2-config --cflags)
 FLAGS += -march=native
 #FLAGS += -g
 FLAGS += -flto
-FLAGS += -fmodules
+# FLAGS += -fmodules
 #define any compile-time flags for C
 CFLAGS := $(FLAGS)
 
@@ -20,6 +20,8 @@ CXXFLAGS  := -std=c++23
 #CXXFLAGS += -Wnon-virtual-dtor
 CXXFLAGS  += $(FLAGS)
 CXXFLAGS  += -stdlib=libc++
+CXXFLAGS  +=-fmodule-file=std=modules_cache/std.pcm
+CXXFLAGS  +=-fmodule-file=std.compat=modules_cache/std.compat.pcm
 
 # define C Preprocessor flags
 CPPFLAGS := -Isrc

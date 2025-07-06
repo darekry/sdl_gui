@@ -3,6 +3,8 @@
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
 
+import std.compat;
+
 // --- Implementacja TabControl ---
 
 TabControl::TabControl(GUIManager& manager, int x, int y, int width, int height)

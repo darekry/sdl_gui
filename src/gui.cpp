@@ -1,8 +1,8 @@
 #include "gui.hpp"
 
-#include "SDL2/SDL.h"
 #include "gui_manager.hpp" // Dodano, aby mieć definicję GUIManager
-#include <algorithm> // Dla std::remove_if
+#include "SDL2/SDL.h"
+import std.compat;
 
 // Implementacja klasy GUIElement
 GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)

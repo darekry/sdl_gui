@@ -2,7 +2,11 @@
 #include "../src/font_manager.hpp"
 #include "../src/texture_manager.hpp"
 #include "../src/gui_manager.hpp"
-#include <memory>
+#include "test_helper.hpp"
+#include "../src/font_manager.hpp"
+#include "../src/texture_manager.hpp"
+#include "../src/gui_manager.hpp"
+import std.compat;
 
 TestHelper::TestHelper() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {

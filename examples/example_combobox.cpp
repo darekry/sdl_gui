@@ -1,10 +1,9 @@
-#include <memory>
 #include "SDL_log.h"
-
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include "combobox.hpp"
 #include "helpers/sdl_app.hpp"
+import std.compat;
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;

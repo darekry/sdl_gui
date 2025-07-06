@@ -2,6 +2,7 @@
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
 #include "gui_manager.hpp"
+import std.compat;
 
 Checkbox::Checkbox(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h), m_isChecked(false), m_labelTexture(nullptr), m_onChange(nullptr)

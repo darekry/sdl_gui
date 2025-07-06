@@ -2,10 +2,10 @@
 #define GUI_MANAGER_HPP
 
 #include "SDL2/SDL.h"
-#include <vector>
 #include "gui.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
+import std.compat;
 
 
 class GUIManager {

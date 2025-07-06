@@ -1,10 +1,9 @@
-#include <iostream>
-#include <memory>
-
 #include "../src/gui.hpp"
 #include "../src/gui_manager.hpp"
 #include "../src/text_input.hpp"
 #include "helpers/sdl_app.hpp"
+
+import std.compat;
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;

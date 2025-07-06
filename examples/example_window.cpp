@@ -4,8 +4,8 @@
 #include "../src/checkbox.hpp"
 #include "helpers/sdl_app.hpp"
 #include "SDL_log.h"
-#include <iostream>
-#include <memory>
+
+import std.compat;
 
 // Helper function to create a 1x1 texture of a specific color
 // Ta funkcja jest teraz używana tylko do stworzenia surowej tekstury,

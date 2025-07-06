@@ -1,10 +1,11 @@
-#include <iostream>
-#include <memory>
 
+#include "SDL_pixels.h"
 #include "gui_manager.hpp"
 #include "radio_button.hpp"
 #include "radio_group.hpp"
 #include "helpers/sdl_app.hpp"
+
+import std.compat;
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -19,7 +20,7 @@ int main(int, char**) {
 
         auto createRadioButton = [&](int x, int y, const std::string& label) {
             auto rb = std::make_unique<RadioButton>(guiManager, x, y, 20, 20);
-            rb->setLabel(label, 24, {255, 255, 255, 255});
+            rb->setLabel(label, 24, (SDL_Color){255, 255, 255, 255});
             radioGroup->addRadioButton(rb.get());
             return rb;
         };

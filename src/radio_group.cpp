@@ -1,5 +1,6 @@
 #include "radio_group.hpp"
 #include "radio_button.hpp" // Potrzebne do pracy z obiektami RadioButton
+import std.compat;
 
 void RadioGroup::addRadioButton(RadioButton* button) {
     if (button) {

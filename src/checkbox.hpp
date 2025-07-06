@@ -2,9 +2,8 @@
 #define CHECKBOX_HPP
 
 #include "gui.hpp"
-#include <string>
-#include <functional>
-#include <memory>
+
+import std.compat;
 
 class Checkbox : public GUIElement {
 public:

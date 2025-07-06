@@ -1,14 +1,10 @@
 #ifndef TEXT_INPUT_HPP
 #define TEXT_INPUT_HPP
 
-#include "gui.hpp"
-#include <string>
-#include <functional>
-#include <string>
-#include <functional>
-#include <memory>
 
+#include "gui.hpp"
 #include "sdl_deleters.hpp"
+import std.compat;
 class TextInput : public GUIElement {
 public:
     TextInput(GUIManager& manager, int x, int y, int w, int h);

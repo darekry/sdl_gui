@@ -2,6 +2,8 @@
 #include "SDL2/SDL.h" // Potrzebne do SDL_GetError()
 #include "SDL2/SDL_log.h"
 
+import std.compat;
+
 FontManager::FontManager() {
     // Inicjalizacja SDL_ttf, jeśli nie została jeszcze zainicjowana
     if (TTF_Init() == -1) {

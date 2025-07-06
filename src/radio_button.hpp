@@ -4,9 +4,7 @@
 #include "gui.hpp"
 #include "sdl_deleters.hpp" // Dla SharedFont i SDLTextureDeleter
 #include "radio_group.hpp" // Dla klasy RadioGroup
-#include <string>
-#include <functional>
-#include <memory>
+import std.compat;
 
 // Typ dla współdzielonego wskaźnika na czcionkę (zdefiniowany w sdl_deleters.hpp)
 // using SharedFont = std::shared_ptr<TTF_Font>; // Już zdefiniowane w gui.hpp

@@ -1,8 +1,7 @@
 #ifndef RADIOGROUP_HPP
 #define RADIOGROUP_HPP
 
-#include <vector>
-#include <algorithm> // Dla std::remove
+import std.compat;
 
 // Forward declaration
 class RadioButton;

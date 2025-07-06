@@ -4,10 +4,7 @@
 #include "button.hpp"
 #include "panel.hpp"
 #include "gui.hpp"
-#include <string>
-#include <vector>
-#include <functional>
-#include <memory>
+import std.compat;
 
 class ComboBox : public GUIElement {
 public:

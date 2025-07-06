@@ -1,7 +1,6 @@
 #include "slider.hpp"
 #include "gui_manager.hpp"
-#include <algorithm> // Dla std::clamp
-#include <memory> // Dla std::make_unique
+import std.compat;
 
 Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation)
     : GUIElement(manager, x, y, width, height),
