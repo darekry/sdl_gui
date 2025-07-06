@@ -4,8 +4,10 @@
 #include "gui_manager.hpp" // Dodano, aby mieć definicję GUIManager
 
 // Implementacja klasy GUIElement
-GUIElement::GUIElement(int x, int y, int width, int height)
-    : m_x(x), m_y(y), m_width(width), m_height(height), m_parent(nullptr), m_guiManager(nullptr), m_texture(nullptr) {}
+GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)
+    : m_manager(manager), m_x(x), m_y(y), m_width(width), m_height(height), m_parent(nullptr) {
+    m_texture = m_manager.getTextureManager().getDefaultTexture();
+}
 
 void GUIElement::setPosition(int x, int y) {
     m_x = x;
@@ -39,23 +41,12 @@ bool GUIElement::contains(int x, int y) const {
 void GUIElement::addChild(std::unique_ptr<GUIElement> child) {
     if (child && child->m_parent != this) {
         child->m_parent = this;
-        // Propaguj wskaźnik do GUIManager do nowego dziecka
-        child->setGUIManager(this->m_guiManager);
         m_children.push_back(std::move(child));
     }
 }
 
 void GUIElement::clearChildren() {
     m_children.clear();
-}
-void GUIElement::setGUIManager(GUIManager* manager) {
-    m_guiManager = manager;
-    // Propaguj wskaźnik do wszystkich istniejących dzieci
-    for (auto&& child : m_children) {
-        if (child) {
-            child->setGUIManager(manager);
-        }
-    }
 }
 
 void GUIElement::setTexture(SharedTexture texture) {
@@ -66,9 +57,16 @@ SharedTexture GUIElement::getLabelTexture() const {
     return m_texture;
 }
 
-
-GUIManager* GUIElement::getGUIManager() const {
-    return m_guiManager;
+void GUIElement::setLabel(const std::string& text, int fontSize, SDL_Color color) {
+    FontManager& fontManager = m_manager.getFontManager();
+    // Używamy domyślnej czcionki - załóżmy, że jest w assets
+    SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
+    if (font) {
+        TextureManager& textureManager = m_manager.getTextureManager();
+        m_texture = textureManager.createTextureFromText(text, font, color);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "setLabel failed: Font could not be loaded.");
+    }
 }
 
 // removeChild nie jest już potrzebne w tej formie przy użyciu unique_ptr,
@@ -91,8 +89,6 @@ bool GUIElement::handleEvent(SDL_Event& e) {
  
     return false; // Żadne dziecko nie obsłużyło zdarzenia
 }
-
-
 
 void GUIElement::render(SDL_Renderer* renderer) {
     if (!m_visible) {

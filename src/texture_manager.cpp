@@ -71,3 +71,49 @@ SharedTexture TextureManager::createTextureFromText(const std::string& text, std
 
     return {textTexture, SDLTextureDeleter()};
 }
+
+void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, const std::string& text) {
+    SharedFont defaultFont = fontManager.getDefaultFont();
+    if (!defaultFont) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Default font not loaded. Cannot create default texture.");
+        return;
+    }
+
+    // Utwórz powierzchnię tła
+    SDL_Surface* bgSurface = SDL_CreateRGBSurface(0, 100, 30, 32, 0, 0, 0, 0);
+    if (!bgSurface) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Could not create background surface for default texture.");
+        return;
+    }
+    SDL_FillRect(bgSurface, NULL, SDL_MapRGB(bgSurface->format, 200, 200, 200)); // Szare tło
+
+    // Utwórz teksturę z tekstem
+    SDL_Color textColor = { 0, 0, 0, 255 }; // Czarny
+    SDL_Surface* textSurface = TTF_RenderText_Blended(defaultFont.get(), text.c_str(), textColor);
+    if (!textSurface) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to render text for default texture. SDL_ttf Error: %s", TTF_GetError());
+        SDL_FreeSurface(bgSurface);
+        return;
+    }
+
+    // Blituj tekst na tło
+    SDL_Rect textRect = { (bgSurface->w - textSurface->w) / 2, (bgSurface->h - textSurface->h) / 2, textSurface->w, textSurface->h };
+    SDL_BlitSurface(textSurface, NULL, bgSurface, &textRect);
+    SDL_FreeSurface(textSurface);
+
+    // Utwórz finalną teksturę
+    SDL_Texture* finalTexture = SDL_CreateTextureFromSurface(renderer, bgSurface);
+    SDL_FreeSurface(bgSurface);
+
+    if (!finalTexture) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to create default texture. SDL Error: %s", SDL_GetError());
+        return;
+    }
+
+    m_defaultTexture = SharedTexture(finalTexture, SDLTextureDeleter());
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Default texture created successfully.");
+}
+
+SharedTexture TextureManager::getDefaultTexture() {
+    return m_defaultTexture;
+}

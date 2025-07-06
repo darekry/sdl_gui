@@ -2,8 +2,8 @@
 #include "gui.hpp" // Dla GUIElement::render
 
 // Implementacja klasy Panel
-Panel::Panel(int x, int y, int width, int height)
-    : GUIElement(x, y, width, height) {
+Panel::Panel(GUIManager& manager, int x, int y, int width, int height)
+    : GUIElement(manager, x, y, width, height) {
     // Dodatkowa inicjalizacja dla Panelu, jeśli potrzebna
 }
 
@@ -14,7 +14,7 @@ void Panel::setBorderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 void Panel::setBorderThickness(int thickness) {
     m_borderThickness = thickness;
 }
-void Panel::render(SDL_Renderer* renderer)  {
+void Panel::render(SDL_Renderer* renderer) {
     if (!m_visible) {
         return;
     }

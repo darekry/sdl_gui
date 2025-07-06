@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include "font_manager.hpp" // Potrzebne do stworzenia domyślnej tekstury
 
 // Typ dla współdzielonego wskaźnika na teksturę
 using SharedTexture = std::shared_ptr<SDL_Texture>;
@@ -26,9 +27,16 @@ public:
     // Metoda do tworzenia tekstury z tekstu.
     SharedTexture createTextureFromText(const std::string& text, std::shared_ptr<TTF_Font> font, SDL_Color color);
 
+    // Metoda do tworzenia domyślnej tekstury
+    void createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, const std::string& text);
+
+    // Metoda do pobierania domyślnej tekstury
+    SharedTexture getDefaultTexture();
+
 private:
     SDL_Renderer* m_renderer;
     std::map<std::string, SharedTexture> m_textures; // Mapa przechowująca załadowane tekstury
+    SharedTexture m_defaultTexture; // Domyślna tekstura
 };
 
 #endif // TEXTURE_MANAGER_HPP

@@ -2,9 +2,11 @@
 #include "gui_manager.hpp"
 
 // Implementacja klasy Button
-Button::Button(int x, int y, int width, int height, SharedTexture texture)
-    : GUIElement(x, y, width, height) {
-    m_texture = texture;
+Button::Button(GUIManager& manager, int x, int y, int width, int height, SharedTexture texture)
+    : GUIElement(manager, x, y, width, height) {
+    if (texture) {
+        m_texture = texture;
+    }
 }
 
 bool Button::handleEvent(SDL_Event& e) {
@@ -71,33 +73,6 @@ void Button::render(SDL_Renderer* renderer) {
     }
 }
 
-void Button::setLabel(const std::string& text, GUIManager& guiManager) {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Setting label to \"%s\"", text.c_str());
-    m_labelText = text;
-    FontManager& fontManager = guiManager.getFontManager();
-
-    SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", 16);
-    if (!font) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: Failed to load font.");
-        return;
-    }
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Font loaded.");
-
-    SDL_Color textColor = { 0, 0, 0, 255 };
-    SharedTexture textTexture = guiManager.getTextureManager().createTextureFromText(
-        text,
-        font,
-        textColor
-    );
-
-    if (!textTexture) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel ERROR: Failed to create text texture for \"%s\".", text.c_str());
-    } else {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Button::setLabel: Text texture created successfully for \"%s\".", text.c_str());
-    }
-    setTexture(textTexture);
-}
-
-void Button::setLabelText(const std::string& text) {
-    m_labelText = text;
+void Button::setLabel(const std::string& text, int fontSize, SDL_Color color) {
+    GUIElement::setLabel(text, fontSize, color);
 }

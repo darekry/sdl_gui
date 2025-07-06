@@ -50,25 +50,34 @@ int main() {
 
     GUIManager guiManager(renderer);
 
-    // Załaduj teksturę dla przycisku
-    SharedTexture buttonTexture = guiManager.getTextureManager().loadTexture("assets/button1.png");
-    if (!buttonTexture) {
-        std::cerr << "Failed to load button texture." << std::endl;
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        TTF_Quit();
-        IMG_Quit();
-        SDL_Quit();
-        return 1;
+    // --- Przycisk 1: Z tekstury z pliku ---
+    SharedTexture buttonTextureFromFile = guiManager.getTextureManager().loadTexture("assets/button1.png");
+    if (!buttonTextureFromFile) {
+        std::cerr << "Failed to load button texture from file." << std::endl;
+        // Można kontynuować bez tego przycisku lub zakończyć, w zależności od wymagań
+    } else {
+        auto buttonFromFile = std::make_unique<Button>(guiManager, 50, 50, 200, 80);
+        buttonFromFile->setTexture(buttonTextureFromFile);
+        buttonFromFile->setOnClickCallback([]([[maybe_unused]] GUIElement* elem) {
+            std::cout << "Button 1 (from file) clicked!" << std::endl;
+        });
+        guiManager.addElement(std::move(buttonFromFile));
     }
 
-    // Utwórz przycisk z załadowaną teksturą
-    auto button = std::make_unique<Button>(350, 250, 100, 50);
-    button->setTexture(buttonTexture);
-    button->setOnClickCallback(
-        []([[maybe_unused]]GUIElement* elem) { std::cout << "Button clicked!" << std::endl; });
+    // --- Przycisk 2: Z tekstury z tekstu (używając setLabel) ---
+    auto buttonFromText = std::make_unique<Button>(guiManager, 300, 50, 200, 80);
+    buttonFromText->setLabel("Click Me!", 24, {0, 0, 0, 255}); // Czarny kolor
+    buttonFromText->setOnClickCallback([]([[maybe_unused]] GUIElement* elem) {
+        std::cout << "Button 2 (from text) clicked!" << std::endl;
+    });
+    guiManager.addElement(std::move(buttonFromText));
 
-    guiManager.addElement(std::move(button));
+    // --- Przycisk 3: Z domyślną teksturą (placeholder) ---
+    auto buttonDefault = std::make_unique<Button>(guiManager, 550, 50, 200, 80);
+    buttonDefault->setOnClickCallback([]([[maybe_unused]] GUIElement* elem) {
+        std::cout << "Button 3 (default) clicked!" << std::endl;
+    });
+    guiManager.addElement(std::move(buttonDefault));
 
     bool quit = false;
     while (!quit) {

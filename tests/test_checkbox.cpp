@@ -4,28 +4,27 @@
 #include "../src/checkbox.hpp"
 #include "../src/texture_manager.hpp"
 #include "../src/font_manager.hpp"
+#include "../src/gui_manager.hpp"
 
 TEST_CASE("Checkbox Functionality", "[checkbox]") {
     TestHelper helper;
-    SDL_Renderer* renderer = helper.getRenderer();
-    TextureManager textureManager(renderer);
-    FontManager fontManager;
+    GUIManager guiManager(helper.getRenderer());
 
     SECTION("Initialization") {
-        Checkbox checkbox(10, 20, 20, 20, "Option 1");
+        Checkbox checkbox(guiManager, 10, 20, 20, 20);
         REQUIRE(checkbox.getX() == 10);
         REQUIRE(checkbox.getY() == 20);
         REQUIRE(checkbox.getWidth() == 20);
         REQUIRE(checkbox.getHeight() == 20);
         REQUIRE(checkbox.isChecked() == false);
 
-        Checkbox checkbox2(0, 0, 20, 20, "Option 2");
+        Checkbox checkbox2(guiManager, 0, 0, 20, 20);
         checkbox2.setChecked(true);
         REQUIRE(checkbox2.isChecked() == true);
     }
 
     SECTION("Event Handling - Toggle") {
-        Checkbox checkbox(10, 10, 20, 20, "Toggle Me");
+        Checkbox checkbox(guiManager, 10, 10, 20, 20);
         bool toggled = false;
         bool newState = false;
         checkbox.setOnChange([&](Checkbox*, bool checked) { toggled = true; newState = checked; });
@@ -57,7 +56,7 @@ TEST_CASE("Checkbox Functionality", "[checkbox]") {
     }
 
     SECTION("State - Set Checked") {
-        Checkbox checkbox(10, 10, 20, 20, "Set Checked");
+        Checkbox checkbox(guiManager, 10, 10, 20, 20);
         bool toggled = false;
         checkbox.setOnChange([&](Checkbox*, bool) { toggled = true; });
 

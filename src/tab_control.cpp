@@ -5,29 +5,15 @@
 
 // --- Implementacja TabControl ---
 
-TabControl::TabControl(int x, int y, int width, int height)
-    : GUIElement(x, y, width, height) {
+TabControl::TabControl(GUIManager& manager, int x, int y, int width, int height)
+    : GUIElement(manager, x, y, width, height) {
 }
 
 Panel* TabControl::addTab(const std::string& title) {
-    if (!getGUIManager()) return nullptr;
-    SDL_Renderer* renderer = getGUIManager()->getRenderer();
-    FontManager& fontManager = getGUIManager()->getFontManager();
-    if (!renderer) return nullptr;
-
-    SharedFont font = fontManager.loadFont("assets/ARIAL.TTF", 16); // Load default font
-    if (!font) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load font for tab button");
-        // Continue without text? Or return nullptr? For now, continue.
-    }
-
     // Tworzenie przycisku dla zakładki
-    auto button = std::make_unique<Button>(0, 0, 100, m_tabButtonHeight);
-    if (font) {
-        SDL_Color textColor = {255, 255, 255, 255}; // Biały tekst
-        SharedTexture textTexture = getGUIManager()->getTextureManager().createTextureFromText(title, font, textColor);
-        button->setTexture(textTexture);
-    }
+    auto button = std::make_unique<Button>(m_manager, 0, 0, 100, m_tabButtonHeight);
+    SDL_Color textColor = {255, 255, 255, 255}; // Biały tekst
+    button->setLabel(title, 16, textColor);
     
     Button* buttonPtr = button.get();
     m_tabButtons.push_back(buttonPtr);
@@ -38,7 +24,7 @@ Panel* TabControl::addTab(const std::string& title) {
     });
 
     // Tworzenie panelu na zawartość zakładki
-    auto panel = std::make_unique<Panel>(0, m_tabButtonHeight, m_width, m_height - m_tabButtonHeight);
+    auto panel = std::make_unique<Panel>(m_manager, 0, m_tabButtonHeight, m_width, m_height - m_tabButtonHeight);
     panel->setVisible(false); // Domyślnie niewidoczny
     Panel* panelPtr = panel.get();
     m_tabPanels.push_back(panelPtr);

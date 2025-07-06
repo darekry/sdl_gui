@@ -4,7 +4,11 @@
 
 GUIManager::GUIManager(SDL_Renderer* renderer)
     : m_renderer(renderer), m_fontManager(), m_textureManager(renderer) {
-    // Konstruktor teraz tworzy i zarządza menedżerami zasobów
+    // Załaduj domyślną czcionkę
+    m_fontManager.loadDefaultFont("assets/fonts/font.ttf", 24);
+
+    // Utwórz domyślną teksturę zastępczą
+    m_textureManager.createDefaultTexture(m_renderer, m_fontManager, "No Texture");
 }
 
 GUIManager::~GUIManager() {
@@ -15,8 +19,6 @@ GUIManager::~GUIManager() {
 
 void GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     if (element) {
-        // Ustaw wskaźnik na ten GUIManager w dodawanym elemencie
-        element->setGUIManager(this);
         m_elements.push_back(std::move(element)); // Przenieś własność do wektora
     }
 }
@@ -44,7 +46,7 @@ void GUIManager::render(SDL_Renderer* renderer) {
     // Renderuj wszystkie zarządzane elementy
     for (const auto& element : m_elements) { // Iteracja po unique_ptr
         if (element) {
-            element->render(renderer); // Użyj operatora -> na unique_ptr
+            element->render(renderer); // Przekaż referencję do textureManager
         }
     }
 }

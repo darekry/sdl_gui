@@ -5,15 +5,14 @@
 #include "../src/button.hpp"
 #include "../src/texture_manager.hpp"
 #include "../src/font_manager.hpp"
+#include "../src/gui_manager.hpp"
 
 TEST_CASE("Panel Functionality", "[panel]") {
     TestHelper helper;
-    SDL_Renderer* renderer = helper.getRenderer();
-    TextureManager textureManager(renderer);
-    FontManager fontManager;
+    GUIManager guiManager(helper.getRenderer());
 
     SECTION("Initialization") {
-        Panel panel(10, 20, 200, 150);
+        Panel panel(guiManager, 10, 20, 200, 150);
         REQUIRE(panel.getX() == 10);
         REQUIRE(panel.getY() == 20);
         REQUIRE(panel.getWidth() == 200);
@@ -21,9 +20,9 @@ TEST_CASE("Panel Functionality", "[panel]") {
     }
 
     SECTION("Event Handling - Child Interaction") {
-        Panel panel(50, 50, 200, 150);
+        Panel panel(guiManager, 50, 50, 200, 150);
         bool buttonClicked = false;
-        auto button = std::make_unique<Button>(60, 60, 80, 40);
+        auto button = std::make_unique<Button>(guiManager, 60, 60, 80, 40);
         button->setOnClickCallback([&](GUIElement*){ buttonClicked = true; });
         panel.addChild(std::move(button));
 
@@ -46,11 +45,11 @@ TEST_CASE("Panel Functionality", "[panel]") {
     }
 
     SECTION("State - Add and Remove Children") {
-        Panel panel(0, 0, 100, 100);
+        Panel panel(guiManager, 0, 0, 100, 100);
         REQUIRE(panel.getChildren().empty());
  
-        auto child1 = std::make_unique<Button>(0, 0, 10, 10);
-        auto child2 = std::make_unique<Button>(0, 0, 10, 10);
+        auto child1 = std::make_unique<Button>(guiManager, 0, 0, 10, 10);
+        auto child2 = std::make_unique<Button>(guiManager, 0, 0, 10, 10);
         
         panel.addChild(std::move(child1));
         REQUIRE(panel.getChildren().size() == 1);

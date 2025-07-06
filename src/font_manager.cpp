@@ -34,3 +34,14 @@ SharedFont FontManager::loadFont(const std::string& path, int size) {
 
     return sharedNewFont;
 }
+
+void FontManager::loadDefaultFont(const std::string& path, int size) {
+    m_defaultFont = loadFont(path, size);
+    if (!m_defaultFont) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FontManager ERROR: Failed to load default font from %s", path.c_str());
+    }
+}
+
+SharedFont FontManager::getDefaultFont() {
+    return m_defaultFont;
+}

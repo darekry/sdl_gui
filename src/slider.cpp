@@ -2,8 +2,8 @@
 #include <algorithm> // Dla std::clamp
 #include <memory> // Dla std::make_unique
 
-Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation)
-    : GUIElement(x, y, width, height),
+Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation)
+    : GUIElement(manager, x, y, width, height),
       m_orientation(orientation),
       m_minValue(minValue),
       m_maxValue(maxValue),
@@ -14,12 +14,12 @@ Slider::Slider(int x, int y, int width, int height, int minValue, int maxValue, 
 
     if (m_orientation == Orientation::Horizontal) { // Poziomy suwak
         // Przyciski po lewej i prawej stronie, poza obszarem suwaka
-        m_decreaseButton = std::make_unique<Button>(-buttonSize, 0, buttonSize, getHeight());
-        m_increaseButton = std::make_unique<Button>(getWidth(), 0, buttonSize, getHeight());
+        m_decreaseButton = std::make_unique<Button>(manager, -buttonSize, 0, buttonSize, getHeight());
+        m_increaseButton = std::make_unique<Button>(manager, getWidth(), 0, buttonSize, getHeight());
     } else { // Pionowy suwak
         // Przyciski na górze i na dole, poza obszarem suwaka
-        m_decreaseButton = std::make_unique<Button>(0, -buttonSize, getWidth(), buttonSize);
-        m_increaseButton = std::make_unique<Button>(0, getHeight(), getWidth(), buttonSize);
+        m_decreaseButton = std::make_unique<Button>(manager, 0, -buttonSize, getWidth(), buttonSize);
+        m_increaseButton = std::make_unique<Button>(manager, 0, getHeight(), getWidth(), buttonSize);
     }
  
       // Ustaw callbacki dla przycisków

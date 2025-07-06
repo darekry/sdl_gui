@@ -6,12 +6,12 @@
 // Klasa Panel dziedzicząca po GUIElement
 class Panel : public GUIElement {
 public:
-    // Konstruktor
-    Panel(int x, int y, int width, int height);
-
-    // Przesłonięta metoda do renderowania
-    void render(SDL_Renderer* renderer) override;
-
+    public:
+        // Konstruktor
+        Panel(GUIManager& manager, int x, int y, int width, int height);
+    
+        // Przesłonięta metoda do renderowania
+        void render(SDL_Renderer* renderer) override;
     // Metody do ustawiania obramowania
     void setBorderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
     void setBorderThickness(int thickness);

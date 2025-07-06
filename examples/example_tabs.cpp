@@ -49,7 +49,7 @@ int main(int argc, char* args[]) {
     GUIManager guiManager(renderer);
 
     // Tworzenie TabControl
-    auto tabControlPtr = std::make_unique<TabControl>(50, 50, 700, 500);
+    auto tabControlPtr = std::make_unique<TabControl>(guiManager, 50, 50, 700, 500);
     TabControl* tabControl = tabControlPtr.get(); // Pobierz surowy wskaźnik
     guiManager.addElement(std::move(tabControlPtr)); // Dodaj do menedżera, aby ustawić wskaźnik GUIManager
 
@@ -80,7 +80,7 @@ int main(int argc, char* args[]) {
     // Dodawanie zawartości do zakładek
     // Zakładka 1
     if (tab1Panel) {
-        auto button1 = std::make_unique<Button>(50, 50, 150, 50);
+        auto button1 = std::make_unique<Button>(guiManager, 50, 50, 150, 50);
         button1->setTexture(guiManager.getTextureManager().createTextureFromText("Click Me", font, textColor));
         button1->setOnClickCallback([](GUIElement*){ std::cout << "Button 1 clicked!" << std::endl; });
         tab1Panel->addChild(std::move(button1));
@@ -88,16 +88,15 @@ int main(int argc, char* args[]) {
 
     // Zakładka 2
     if (tab2Panel) {
-        auto checkbox1 = std::make_unique<Checkbox>(50, 50, 20, 20);
-        checkbox1->setLabel(renderer, "Check me!", font, textColor, guiManager.getTextureManager());
+        auto checkbox1 = std::make_unique<Checkbox>(guiManager, 50, 50, 20, 20);
+        checkbox1->setLabel("Check me!", 24, textColor);
         tab2Panel->addChild(std::move(checkbox1));
     }
     // Zakładka 3
     if (tab3Panel) {
-        auto textInput1 = std::make_unique<TextInput>(50, 50, 300, 40);
+        auto textInput1 = std::make_unique<TextInput>(guiManager, 50, 50, 300, 40);
         tab3Panel->addChild(std::move(textInput1));
     }
-
     bool quit = false;
 
     while (!quit) {

@@ -13,7 +13,7 @@ enum class Orientation {
 
 class Slider : public GUIElement {
 public:
-    Slider(int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation);
+    Slider(GUIManager& manager, int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation);
 
     int getValue() const { return m_currentValue; }
 

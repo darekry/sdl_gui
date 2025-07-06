@@ -11,7 +11,7 @@
 #include "sdl_deleters.hpp"
 class TextInput : public GUIElement {
 public:
-    TextInput(int x, int y, int w, int h);
+    TextInput(GUIManager& manager, int x, int y, int w, int h);
     ~TextInput() = default;
 
     void setText(const std::string& text);

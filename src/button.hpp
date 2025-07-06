@@ -9,7 +9,7 @@
 class Button : public GUIElement {
 public:
     // Konstruktor
-    Button(int x, int y, int width, int height, SharedTexture texture = nullptr);
+    Button(GUIManager& manager, int x, int y, int width, int height, SharedTexture texture = nullptr);
 
     // Destruktor
     ~Button() = default;
@@ -28,14 +28,12 @@ public:
     void triggerOnRelease() {
         if (m_onClick) m_onClick(static_cast<GUIElement*>(this));
     } // Używamy m_onClick dla zdarzenia puszczenia przycisku
-// Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
-bool handleEvent(SDL_Event& e) override;
-void render(SDL_Renderer* renderer) override;
-void setLabel(const std::string& text, GUIManager& guiManager);
-void setLabelText(const std::string& text);
+    // Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
+    bool handleEvent(SDL_Event& e) override;
+    void render(SDL_Renderer* renderer) override;
+    void setLabel(const std::string& text, int fontSize, SDL_Color color);
 
 private:
-    std::string m_labelText;
     OnClickCallback m_onClick;
     OnMouseOverCallback m_onMouseOver;
 };

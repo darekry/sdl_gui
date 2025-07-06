@@ -5,16 +5,15 @@
 #include "../src/radio_group.hpp"
 #include "../src/texture_manager.hpp"
 #include "../src/font_manager.hpp"
+#include "../src/gui_manager.hpp"
 
 TEST_CASE("RadioButton and RadioGroup Functionality", "[radio_button][radio_group]") {
     TestHelper helper;
-    SDL_Renderer* renderer = helper.getRenderer();
-    TextureManager textureManager(renderer);
-    FontManager fontManager;
+    GUIManager guiManager(helper.getRenderer());
     RadioGroup group;
 
     SECTION("RadioButton Initialization") {
-        RadioButton radio1(10, 20, 20, 20, "Option A");
+        RadioButton radio1(guiManager, 10, 20, 20, 20);
         radio1.setGroup(&group);
         group.addRadioButton(&radio1);
         REQUIRE(radio1.getX() == 10);
@@ -25,13 +24,13 @@ TEST_CASE("RadioButton and RadioGroup Functionality", "[radio_button][radio_grou
     }
 
     SECTION("RadioGroup - Single Selection") {
-        RadioButton radio1(10, 10, 20, 20, "Option 1");
+        RadioButton radio1(guiManager, 10, 10, 20, 20);
         radio1.setGroup(&group);
         group.addRadioButton(&radio1);
-        RadioButton radio2(10, 40, 20, 20, "Option 2");
+        RadioButton radio2(guiManager, 10, 40, 20, 20);
         radio2.setGroup(&group);
         group.addRadioButton(&radio2);
-        RadioButton radio3(10, 70, 20, 20, "Option 3");
+        RadioButton radio3(guiManager, 10, 70, 20, 20);
         radio3.setGroup(&group);
         group.addRadioButton(&radio3);
 
@@ -62,7 +61,7 @@ TEST_CASE("RadioButton and RadioGroup Functionality", "[radio_button][radio_grou
     }
 
     SECTION("RadioButton - onToggle Callback") {
-        RadioButton radio1(10, 10, 20, 20, "Option 1");
+        RadioButton radio1(guiManager, 10, 10, 20, 20);
         radio1.setGroup(&group);
         group.addRadioButton(&radio1);
         bool toggled = false;
@@ -75,7 +74,7 @@ TEST_CASE("RadioButton and RadioGroup Functionality", "[radio_button][radio_grou
         REQUIRE(newState == true);
 
         toggled = false; // Reset flagę
-        RadioButton radio2(10, 40, 20, 20, "Option 2");
+        RadioButton radio2(guiManager, 10, 40, 20, 20);
         radio2.setGroup(&group);
         group.addRadioButton(&radio2);
         event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 45); // Nowe zdarzenie dla radio2
@@ -85,10 +84,10 @@ TEST_CASE("RadioButton and RadioGroup Functionality", "[radio_button][radio_grou
     }
 
     SECTION("RadioGroup - Set Selected") {
-        RadioButton radio1(10, 10, 20, 20, "Option 1");
+        RadioButton radio1(guiManager, 10, 10, 20, 20);
         radio1.setGroup(&group);
         group.addRadioButton(&radio1);
-        RadioButton radio2(10, 40, 20, 20, "Option 2");
+        RadioButton radio2(guiManager, 10, 40, 20, 20);
         radio2.setGroup(&group);
         group.addRadioButton(&radio2);
  

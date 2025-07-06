@@ -52,7 +52,7 @@ int main() {
     GUIManager guiManager(renderer);
 
     // Utwórz pole tekstowe
-    auto textInput = std::make_unique<TextInput>(100, 100, 300, 40);
+    auto textInput = std::make_unique<TextInput>(guiManager, 100, 100, 300, 40);
     textInput->setOnEnterPressed([](TextInput* ti) {
         std::cout << "Text submitted: " << ti->getText() << std::endl;
     });

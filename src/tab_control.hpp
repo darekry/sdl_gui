@@ -10,7 +10,7 @@
 
 class TabControl : public GUIElement {
 public:
-    TabControl(int x, int y, int width, int height);
+    TabControl(GUIManager& manager, int x, int y, int width, int height);
 
     // Dodaje nową zakładkę i zwraca wskaźnik do jej panelu zawartości
     Panel* addTab(const std::string& title);

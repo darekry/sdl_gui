@@ -11,7 +11,7 @@
 
 class ComboBox : public GUIElement {
 public:
-    ComboBox(int x, int y, int w, int h);
+    ComboBox(GUIManager& manager, int x, int y, int w, int h);
 
     bool handleEvent(SDL_Event& event) override;
     void render(SDL_Renderer* renderer) override;

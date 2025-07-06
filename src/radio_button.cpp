@@ -1,10 +1,11 @@
 #include "radio_button.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
+#include "gui_manager.hpp"
 #include <iostream>
 
-RadioButton::RadioButton(int x, int y, int w, int h)
-    : GUIElement(x, y, w, h), m_isSelected(false), m_group(nullptr), m_onChange(nullptr), m_labelTexture(nullptr)
+RadioButton::RadioButton(GUIManager& manager, int x, int y, int w, int h)
+    : GUIElement(manager, x, y, w, h), m_isSelected(false), m_group(nullptr), m_onChange(nullptr), m_labelTexture(nullptr)
 {
 }
 
@@ -20,9 +21,12 @@ void RadioButton::setSelected(bool selected, bool notifyGroup) {
     }
 }
 
-void RadioButton::setLabel(SDL_Renderer* renderer, const std::string& text, SharedFont font, SDL_Color color, TextureManager& textureManager) {
-    (void)renderer; // Unused
-    m_labelTexture = textureManager.createTextureFromText(text, font, color);
+void RadioButton::setLabel(const std::string& text, int fontSize, SDL_Color color) {
+    FontManager& fontManager = m_manager.getFontManager();
+    SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
+    if(font) {
+        m_labelTexture = m_manager.getTextureManager().createTextureFromText(text, font, color);
+    }
 }
 
 void RadioButton::setGroup(RadioGroup* group) {
@@ -43,7 +47,7 @@ bool RadioButton::handleEvent(SDL_Event& e) {
     return false;
 }
 
-void RadioButton::render(SDL_Renderer* renderer)  {
+void RadioButton::render(SDL_Renderer* renderer) {
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect radioRect = {absPos.x, absPos.y, m_height, m_height};
 

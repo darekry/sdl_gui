@@ -4,15 +4,14 @@
 #include "../src/text_input.hpp"
 #include "../src/texture_manager.hpp"
 #include "../src/font_manager.hpp"
+#include "../src/gui_manager.hpp"
 
 TEST_CASE("TextInput Functionality", "[text_input]") {
     TestHelper helper;
-    SDL_Renderer* renderer = helper.getRenderer();
-    TextureManager textureManager(renderer);
-    FontManager fontManager;
+    GUIManager guiManager(helper.getRenderer());
 
     SECTION("Initialization") {
-        TextInput textInput(10, 20, 200, 30);
+        TextInput textInput(guiManager, 10, 20, 200, 30);
         REQUIRE(textInput.getX() == 10);
         REQUIRE(textInput.getY() == 20);
         REQUIRE(textInput.getWidth() == 200);
@@ -22,7 +21,7 @@ TEST_CASE("TextInput Functionality", "[text_input]") {
     }
 
     SECTION("Event Handling - Focus and Text Input") {
-        TextInput textInput(10, 10, 200, 30);
+        TextInput textInput(guiManager, 10, 10, 200, 30);
         std::string changedText = "";
         textInput.setOnTextChanged([&](TextInput* input) { changedText = input->getText(); });
 
@@ -60,7 +59,7 @@ TEST_CASE("TextInput Functionality", "[text_input]") {
     }
 
     SECTION("State - Disabled TextInput") {
-        TextInput textInput(10, 10, 200, 30);
+        TextInput textInput(guiManager, 10, 10, 200, 30);
         textInput.setText("Initial");
         std::string changedText = "";
         textInput.setOnTextChanged([&](TextInput* input) { changedText = input->getText(); });

@@ -52,7 +52,7 @@ int main() {
     GUIManager guiManager(renderer);
 
     // Utwórz panel
-    auto panel = std::make_unique<Panel>(100, 100, 600, 400);
+    auto panel = std::make_unique<Panel>(guiManager, 100, 100, 600, 400);
     panel->setBorderColor(255, 0, 0, 128); // Czerwony, półprzezroczysty kolor ramki
     panel->setBorderThickness(5);
 

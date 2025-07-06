@@ -25,9 +25,8 @@ TestHelper::TestHelper() {
         throw std::runtime_error("Renderer could not be created! SDL_Error: " + std::string(SDL_GetError()));
     }
 
-    m_fontManager = std::make_unique<FontManager>();
-    m_textureManager = std::make_unique<TextureManager>(m_renderer);
-    m_guiManager = std::make_unique<GUIManager>(m_renderer, m_fontManager.get(), m_textureManager.get());
+   
+    m_guiManager = std::make_unique<GUIManager>(m_renderer);
 }
 
 TestHelper::~TestHelper() {

@@ -5,20 +5,20 @@
 #include "texture_manager.hpp"
 
 #include <SDL2/SDL.h>
-ComboBox::ComboBox(int x, int y, int w, int h)
-    : GUIElement(x, y, w, h),
+ComboBox::ComboBox(GUIManager& manager, int x, int y, int w, int h)
+    : GUIElement(manager, x, y, w, h),
       m_is_expanded(false),
       m_selected_index(-1),
       m_needs_update(true) {
 
-    auto main_button = std::make_unique<Button>(0, 0, w, h);
+    auto main_button = std::make_unique<Button>(manager, 0, 0, w, h);
     main_button->setOnClickCallback([this](GUIElement*){
         toggleDropdown();
     });
     m_main_button = main_button.get();
     
     // Poprawka: Inicjalizuj panel z poprawną pozycją Y, ale wysokość zostanie ustawiona później
-    auto dropdown_panel = std::make_unique<Panel>(0, h, w, 100);
+    auto dropdown_panel = std::make_unique<Panel>(manager, 0, h, w, 100);
     dropdown_panel->setVisible(false);
     m_dropdown_panel = dropdown_panel.get();
 
@@ -51,9 +51,10 @@ bool ComboBox::handleEvent(SDL_Event& event) {
     }
 
     return false;
+return false;
 }
 void ComboBox::render(SDL_Renderer* renderer) {
-    if (m_needs_update && getGUIManager()) {
+    if (m_needs_update) {
         createDropdownButtons();
         updateMainButtonText();
         m_needs_update = false;
@@ -61,7 +62,6 @@ void ComboBox::render(SDL_Renderer* renderer) {
     // Klasa bazowa poprawnie renderuje wszystkie widoczne dzieci.
     GUIElement::render(renderer);
 }
-
 void ComboBox::addItem(const std::string& item) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::addItem: Adding item \"%s\"", item.c_str());
     m_options.push_back(item);
@@ -104,25 +104,14 @@ void ComboBox::selectItem(int index) {
     toggleDropdown(); // Zamknij po wybraniu
 }
 void ComboBox::updateMainButtonText() {
-    if (m_selected_index != -1 && getGUIManager()) {
-        const auto& options = m_dropdown_panel->getChildren();
-        if (static_cast<size_t>(m_selected_index) < options.size()) {
-            auto selected_option_button = static_cast<Button*>(options[m_selected_index].get());
-            SharedTexture texture = selected_option_button->getLabelTexture();
-            m_main_button->setTexture(texture);
-            m_main_button->setLabelText(m_options[m_selected_index]);
-        }
+    if (m_selected_index != -1) {
+        m_main_button->setLabel(m_options[m_selected_index], 16, {0,0,0,255});
     } else {
         m_main_button->setTexture(nullptr);
-        m_main_button->setLabelText("");
     }
 }
 void ComboBox::createDropdownButtons() {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::createDropdownButtons: Creating dropdown buttons.");
-    if (!getGUIManager()) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::createDropdownButtons ERROR: GUIManager is null.");
-        return;
-    }
 
     m_dropdown_panel->clearChildren();
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::createDropdownButtons: Dropdown panel cleared.");
@@ -133,8 +122,8 @@ void ComboBox::createDropdownButtons() {
 
     for (size_t i = 0; i < m_options.size(); ++i) {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::createDropdownButtons: Creating button for item \"%s\"", m_options[i].c_str());
-        auto option_button = std::make_unique<Button>(0, i * item_h, getWidth(), item_h);
-        option_button->setLabel(m_options[i], *getGUIManager());
+        auto option_button = std::make_unique<Button>(m_manager, 0, i * item_h, getWidth(), item_h);
+        option_button->setLabel(m_options[i], 16, {0, 0, 0, 255});
         option_button->setVisible(true);
         option_button->setOnClickCallback([this, i](GUIElement*){
             selectItem(i);

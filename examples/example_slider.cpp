@@ -52,7 +52,11 @@ int main() {
     GUIManager guiManager(renderer);
 
     // Utwórz suwak
-    auto slider = std::make_unique<Slider>(100, 100, 200, 20, 0, 100, 50, Orientation::Horizontal);
+    auto slider = std::make_unique<Slider>(guiManager, 100, 100, 200, 20, 0, 100, 50, Orientation::Horizontal);
+
+slider->getChildren()[0]->setLabel("<",24,(SDL_Color){0,0,0,255});
+slider->getChildren()[1]->setLabel(">",24,(SDL_Color){0,0,0,255});
+
     slider->setOnChangeCallback([](GUIElement* element) {
         Slider* slider_ptr = static_cast<Slider*>(element);
         if (slider_ptr) {

@@ -2,8 +2,8 @@
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
 
-Checkbox::Checkbox(int x, int y, int w, int h)
-    : GUIElement(x, y, w, h), m_isChecked(false), m_labelTexture(nullptr), m_onChange(nullptr)
+Checkbox::Checkbox(GUIManager& manager, int x, int y, int w, int h)
+    : GUIElement(manager, x, y, w, h), m_isChecked(false), m_labelTexture(nullptr), m_onChange(nullptr)
 {
 }
 
@@ -16,9 +16,13 @@ void Checkbox::setChecked(bool checked) {
     }
 }
 
-void Checkbox::setLabel(SDL_Renderer* renderer, const std::string& text, std::shared_ptr<TTF_Font> font, SDL_Color color, TextureManager& textureManager) {
-    (void)renderer; // Unused
-    m_labelTexture = textureManager.createTextureFromText(text, font, color);
+void Checkbox::setLabel(const std::string& text, int fontSize, SDL_Color color) {
+    FontManager& fontManager = m_manager.getFontManager();
+    SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
+    if(font) {
+        TextureManager& textureManager = m_manager.getTextureManager();
+        m_labelTexture = textureManager.createTextureFromText(text, font, color);
+    }
 }
 
 

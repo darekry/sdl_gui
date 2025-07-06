@@ -13,7 +13,7 @@
 class RadioButton : public GUIElement {
 public:
     // Konstruktor
-    RadioButton(int x, int y, int w, int h);
+    RadioButton(GUIManager& manager, int x, int y, int w, int h);
 
     // Destruktor
     ~RadioButton() = default;
@@ -23,7 +23,7 @@ public:
     void setSelected(bool selected, bool notifyGroup = true);
 
     // Metoda do ustawiania etykiety tekstowej
-    void setLabel(SDL_Renderer* renderer, const std::string& text, SharedFont font, SDL_Color color, TextureManager& textureManager);
+    void setLabel(const std::string& text, int fontSize, SDL_Color color);
 
     // Metoda do ustawiania grupy, do której należy RadioButton
     void setGroup(RadioGroup* group);

@@ -60,7 +60,7 @@ int main() {
     }
 
     // Utwórz ComboBox
-    auto comboBox = std::make_unique<ComboBox>(100, 100, 200, 30);
+    auto comboBox = std::make_unique<ComboBox>(guiManager, 100, 100, 200, 30);
     comboBox->addItem("Option 1");
     comboBox->addItem("Option 2");
     comboBox->addItem("Option 3");

@@ -4,27 +4,26 @@
 #include "../src/slider.hpp"
 #include "../src/texture_manager.hpp"
 #include "../src/font_manager.hpp"
+#include "../src/gui_manager.hpp"
 
 TEST_CASE("Slider Functionality", "[slider]") {
     TestHelper helper;
-    SDL_Renderer* renderer = helper.getRenderer();
-    TextureManager textureManager(renderer);
-    FontManager fontManager;
+    GUIManager guiManager(helper.getRenderer());
 
     SECTION("Initialization") {
-        Slider slider(10, 20, 200, 20, 0, 100, 50, Orientation::Horizontal);
+        Slider slider(guiManager, 10, 20, 200, 20, 0, 100, 50, Orientation::Horizontal);
         REQUIRE(slider.getX() == 10);
         REQUIRE(slider.getY() == 20);
         REQUIRE(slider.getWidth() == 200);
         REQUIRE(slider.getHeight() == 20);
         REQUIRE(slider.getValue() == 50);
 
-        Slider slider2(0, 0, 100, 10, -10, 10, 0, Orientation::Horizontal);
+        Slider slider2(guiManager, 0, 0, 100, 10, -10, 10, 0, Orientation::Horizontal);
         REQUIRE(slider2.getValue() == 0);
     }
 
     SECTION("Event Handling - Dragging") {
-        Slider slider(10, 10, 200, 20, 0, 100, 50, Orientation::Horizontal);
+        Slider slider(guiManager, 10, 10, 200, 20, 0, 100, 50, Orientation::Horizontal);
         int changedValue = -1;
         slider.setOnChangeCallback([&](GUIElement*){ changedValue = slider.getValue(); });
 
@@ -62,14 +61,14 @@ TEST_CASE("Slider Functionality", "[slider]") {
     }
 
     SECTION("State - Value Clamping") {
-        Slider slider(10, 10, 200, 20, 0, 100, 50, Orientation::Horizontal);
+        Slider slider(guiManager, 10, 10, 200, 20, 0, 100, 50, Orientation::Horizontal);
         // Testy setValue nie są możliwe, ponieważ metoda setValue nie istnieje.
         // Wartości min/max są ustawiane w konstruktorze i nie ma publicznej metody do ich zmiany.
         // Możemy jedynie testować, czy początkowa wartość jest poprawna i czy callback działa.
     }
 
     SECTION("State - Disabled Slider") {
-        Slider slider(10, 10, 200, 20, 0, 100, 50, Orientation::Horizontal);
+        Slider slider(guiManager, 10, 10, 200, 20, 0, 100, 50, Orientation::Horizontal);
         int changedValue = -1;
         slider.setOnChangeCallback([&](GUIElement*){ changedValue = slider.getValue(); });
 

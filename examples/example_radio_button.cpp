@@ -60,8 +60,8 @@ int main(int /*argc*/, char* /*args*/[]) {
     auto radioGroup = std::make_shared<RadioGroup>();
 
     auto createRadioButton = [&](int x, int y, const std::string& label) {
-        auto rb = std::make_unique<RadioButton>(x, y, 20, 20);
-        rb->setLabel(renderer, label, font, {255, 255, 255, 255}, guiManager.getTextureManager());
+        auto rb = std::make_unique<RadioButton>(guiManager, x, y, 20, 20);
+        rb->setLabel(label, 24, {255, 255, 255, 255});
         radioGroup->addRadioButton(rb.get()); // Add button to the group
         return rb;
     };

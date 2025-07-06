@@ -36,8 +36,15 @@ public:
     // Jeśli czcionka o danej ścieżce i rozmiarze została już załadowana, zwraca istniejący SharedFont.
     SharedFont loadFont(const std::string& path, int size);
 
+    // Metoda do ładowania domyślnej czcionki
+    void loadDefaultFont(const std::string& path, int size);
+    
+    // Metoda do pobierania domyślnej czcionki
+    SharedFont getDefaultFont();
+
 private:
     std::map<FontKey, SharedFont> m_fonts; // Mapa przechowująca załadowane czcionki
+    SharedFont m_defaultFont; // Domyślna czcionka
 };
 
 #endif // FONT_MANAGER_HPP

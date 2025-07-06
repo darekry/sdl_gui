@@ -3,8 +3,8 @@
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
 
-TextInput::TextInput(int x, int y, int w, int h)
-    : GUIElement(x, y, w, h), m_text(""), m_textColor({0, 0, 0, 255}),
+TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
+    : GUIElement(manager, x, y, w, h), m_text(""), m_textColor({0, 0, 0, 255}),
       m_backgroundColor({255, 255, 255, 255}), m_borderColor({0, 0, 0, 255}),
       m_locked(false), m_active(false) {
 }
@@ -12,9 +12,7 @@ TextInput::TextInput(int x, int y, int w, int h)
 void TextInput::setText(const std::string& newText) {
     if (m_text != newText) {
         m_text = newText;
-        if (m_guiManager) {
-            updateTextTexture(m_guiManager->getTextureManager());
-        }
+        updateTextTexture(m_manager.getTextureManager());
         if (m_onTextChanged) {
             m_onTextChanged(this);
         }
@@ -27,9 +25,7 @@ const std::string& TextInput::getText() const {
 
 void TextInput::setTextColor(SDL_Color color) {
     m_textColor = color;
-    if (m_guiManager) {
-        updateTextTexture(m_guiManager->getTextureManager());
-    }
+    updateTextTexture(m_manager.getTextureManager());
 }
 
 void TextInput::setBackgroundColor(SDL_Color color) {
@@ -60,11 +56,11 @@ bool TextInput::isLocked() const {
 }
 
 void TextInput::updateTextTexture(TextureManager& textureManager) {
-    if (m_text.empty() || !m_guiManager) {
+    if (m_text.empty()) {
         m_texture = nullptr;
         return;
     }
-    SharedFont font = m_guiManager->getFontManager().loadFont("assets/fonts/font.ttf", 16);
+    SharedFont font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
     if (!font) {
         m_texture = nullptr;
         return;
@@ -92,7 +88,7 @@ void TextInput::render(SDL_Renderer* renderer) {
 }
 
 bool TextInput::handleEvent(SDL_Event& e) {
-    if (m_locked || !m_enabled || !m_guiManager) {
+    if (m_locked || !m_enabled) {
         return false;
     }
 
@@ -112,13 +108,13 @@ bool TextInput::handleEvent(SDL_Event& e) {
         }
     } else if (m_active && e.type == SDL_TEXTINPUT) {
         m_text += e.text.text;
-        updateTextTexture(m_guiManager->getTextureManager());
+        updateTextTexture(m_manager.getTextureManager());
         if (m_onTextChanged) m_onTextChanged(this);
         eventHandled = true;
     } else if (m_active && e.type == SDL_KEYDOWN) {
         if (e.key.keysym.sym == SDLK_BACKSPACE && !m_text.empty()) {
             m_text.pop_back();
-            updateTextTexture(m_guiManager->getTextureManager());
+            updateTextTexture(m_manager.getTextureManager());
             if (m_onTextChanged) m_onTextChanged(this);
             eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_RETURN) {

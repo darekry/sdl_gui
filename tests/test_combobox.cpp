@@ -5,13 +5,12 @@
 #include "../src/font_manager.hpp"
 #include "../src/texture_manager.hpp"
 #include "../src/gui.hpp"
+#include "../src/gui_manager.hpp"
 #include <unistd.h> // For access()
 
 TEST_CASE("ComboBox Functionality", "[combobox]") {
     TestHelper helper;
-    SDL_Renderer* renderer = helper.getRenderer();
-    FontManager fontManager;
-    TextureManager textureManager(renderer);
+    GUIManager guiManager(helper.getRenderer());
 
     // Inicjalizacja TTF, jeśli jeszcze nie została zainicjowana
     if (TTF_Init() == -1) {
@@ -31,7 +30,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
 
 
     SECTION("Initialization") {
-        ComboBox comboBox( 10, 20, 200, 30);
+        ComboBox comboBox(guiManager, 10, 20, 200, 30);
         REQUIRE(comboBox.getX() == 10);
         REQUIRE(comboBox.getY() == 20);
         REQUIRE(comboBox.getWidth() == 200);
@@ -41,7 +40,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
     }
 
     SECTION("Adding items and selection") {
-        ComboBox comboBox( 10, 20, 200, 30);
+        ComboBox comboBox(guiManager, 10, 20, 200, 30);
         comboBox.addItem("Option 1");
         comboBox.addItem("Option 2");
         comboBox.addItem("Option 3");
@@ -60,7 +59,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
     }
 
     SECTION("Event Handling - Toggle Dropdown") {
-        ComboBox comboBox(10, 20, 200, 30);
+        ComboBox comboBox(guiManager, 10, 20, 200, 30);
         comboBox.addItem("Option 1");
 
         // Początkowo zwinięty
@@ -71,13 +70,12 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
         comboBox.handleEvent(event);
         event.type = SDL_MOUSEBUTTONUP;
         comboBox.handleEvent(event);
-        comboBox.handleEvent(event);
         
         // Powinien być rozwinięty
         REQUIRE(comboBox.isExpanded());
     }
     SECTION("Event Handling - Item Selection") {
-        ComboBox comboBox( 10, 20, 200, 30);
+        ComboBox comboBox(guiManager, 0, 0, 20, 20);
         comboBox.addItem("Option 1");
         comboBox.addItem("Option 2");
 
@@ -89,7 +87,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
         };
 
         // 1. Rozwiń listę
-        SDL_Event event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 25);
+        SDL_Event event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 10);
         comboBox.handleEvent(event);
         event.type = SDL_MOUSEBUTTONUP;
         comboBox.handleEvent(event);
@@ -97,7 +95,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
         // 2. Kliknij na drugi element (Option 2)
         // Pozycja Y = y + height + item_height * item_index
         // Y = 20 + 30 + 30 * 1 = 80
-        event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 85);
+        event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 50);
         comboBox.handleEvent(event);
         event.type = SDL_MOUSEBUTTONUP;
         comboBox.handleEvent(event);
@@ -109,7 +107,7 @@ TEST_CASE("ComboBox Functionality", "[combobox]") {
     }
     
     SECTION("Event Handling - Close when clicking outside") {
-        ComboBox comboBox( 10, 20, 200, 30);
+        ComboBox comboBox(guiManager, 10, 20, 200, 30);
         comboBox.addItem("Option 1");
 
         // 1. Rozwiń listę

@@ -15,11 +15,10 @@ class GUIManager;
 class GUIElement {
 public:
     // Konstruktor
-    GUIElement(int x, int y, int width, int height);
-
+    GUIElement(GUIManager& manager, int x, int y, int width, int height);
+    
     // Wirtualny destruktor dla poprawnego dziedziczenia
     virtual ~GUIElement() = default;
-
     // Metody dostępu do położenia i rozmiaru
     int getX() const { return m_x; }
     int getY() const { return m_y; }
@@ -43,35 +42,32 @@ public:
     // Wirtualna metoda do renderowania (do zaimplementowania w klasach pochodnych)
     virtual void render(SDL_Renderer* renderer);
 
-    // Metoda do ustawiania tekstury
-    void setTexture(SharedTexture texture);
-    [[nodiscard]] SharedTexture getLabelTexture() const;
-
-public:
-    // Metody do zarządzania stanem włączony/wyłączony
-    void setEnabled(bool enabled) { m_enabled = enabled; }
-    bool isEnabled() const { return m_enabled; }
-
-    // Metody do zarządzania widocznością
-    void setVisible(bool visible) { m_visible = visible; }
-    bool isVisible() const { return m_visible; }
-
-    // Metody do zarządzania wskaźnikiem na GUIManager
-    void setGUIManager(GUIManager* manager);
-    GUIManager* getGUIManager() const;
+        // Metoda do ustawiania tekstury
+        void setTexture(SharedTexture texture);
+        [[nodiscard]] SharedTexture getLabelTexture() const;
+        void setLabel(const std::string& text, int fontSize, SDL_Color color);
+    
+    public:
+        // Metody do zarządzania stanem włączony/wyłączony
+        void setEnabled(bool enabled) { m_enabled = enabled; }
+        bool isEnabled() const { return m_enabled; }
+    
+        // Metody do zarządzania widocznością
+        void setVisible(bool visible) { m_visible = visible; }
+        bool isVisible() const { return m_visible; }
 
     // Metoda do sprawdzania stanu najechania myszką
     bool isHovered() const { return m_isHovered; }
 
 protected:
+    GUIManager& m_manager;
     int m_x, m_y;
-        int m_width, m_height;
-        bool m_enabled = true; // Domyślnie włączony
-        bool m_visible = true; // Domyślnie widoczny
-        bool m_isHovered = false; // Stan najechania myszką
-        GUIElement* m_parent;
-        GUIManager* m_guiManager;
-        SharedTexture m_texture;
+    int m_width, m_height;
+    bool m_enabled = true; // Domyślnie włączony
+    bool m_visible = true; // Domyślnie widoczny
+    bool m_isHovered = false; // Stan najechania myszką
+    GUIElement* m_parent;
+    SharedTexture m_texture;
     
         std::vector<std::unique_ptr<GUIElement>> m_children;
 public:

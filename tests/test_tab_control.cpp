@@ -1,6 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "../lib/catch_amalgamated.hpp"
 #include "test_helper.hpp"
+#include "../src/gui_manager.hpp"
 #include "../src/gui.hpp"
 #include "../src/tab_control.hpp"
 #include "../src/font_manager.hpp"
@@ -8,13 +9,12 @@
 
 TEST_CASE("TabControl Functionality", "[tab_control]") {
     TestHelper helper;
-    SDL_Renderer* renderer = helper.getRenderer();
-    FontManager fontManager;
-    auto font = fontManager.loadFont("assets/ARIAL.TTF", 16);
+    GUIManager guiManager(helper.getRenderer());
+    auto font = guiManager.getFontManager().loadFont("assets/ARIAL.TTF", 16);
     REQUIRE(font != nullptr);
 
     SECTION("Initialization") {
-        TabControl tabControl(0, 0, 800, 600);
+        TabControl tabControl(guiManager, 0, 0, 800, 600);
         REQUIRE(tabControl.getX() == 0);
         REQUIRE(tabControl.getY() == 0);
         REQUIRE(tabControl.getWidth() == 800);
@@ -22,7 +22,7 @@ TEST_CASE("TabControl Functionality", "[tab_control]") {
     }
 
     SECTION("Adding Tabs") {
-        TabControl tabControl(0, 0, 800, 600);
+        TabControl tabControl(guiManager,0, 0, 800, 600);
         
         Panel* panel1 = tabControl.addTab("Tab 1");
         REQUIRE(panel1 != nullptr);
@@ -34,7 +34,7 @@ TEST_CASE("TabControl Functionality", "[tab_control]") {
     }
 
     SECTION("Setting Active Tab") {
-        TabControl tabControl(0, 0, 800, 600);
+        TabControl tabControl(guiManager, 0, 0, 800, 600);
         
         Panel* panel1 = tabControl.addTab("Tab 1");
         Panel* panel2 = tabControl.addTab("Tab 2");
@@ -62,7 +62,7 @@ TEST_CASE("TabControl Functionality", "[tab_control]") {
     }
 
     SECTION("Event Handling - Switching Tabs on Click") {
-        TabControl tabControl(0, 0, 800, 600);
+        TabControl tabControl(guiManager, 0, 0, 800, 600);
         
         Panel* panel1 = tabControl.addTab("Tab 1");
         Panel* panel2 = tabControl.addTab("Tab 2");

@@ -59,8 +59,8 @@ int main() {
     }
 
     // Utwórz checkbox
-    auto checkbox = std::make_unique<Checkbox>(100, 100, 30, 30);
-    checkbox->setLabel(renderer, "Check me!", font, {255, 255, 255, 255}, guiManager.getTextureManager());
+    auto checkbox = std::make_unique<Checkbox>(guiManager, 100, 100, 30, 30);
+    checkbox->setLabel("Check me!", 24, {255, 255, 255, 255});
     checkbox->setOnChange([]([[maybe_unused]]Checkbox* cb, bool isChecked) {
         std::cout << "Checkbox state changed: " << (isChecked ? "Checked" : "Unchecked") << std::endl;
     });
