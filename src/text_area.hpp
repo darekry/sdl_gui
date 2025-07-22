@@ -7,16 +7,18 @@ import std.compat;
 
 class TextArea : public GUIElement {
 public:
-    TextArea(GUIManager& manager, int x, int y, int w, int h, const std::string& font_path, int font_size);
+    TextArea(GUIManager& manager, int x, int y, int w, int h, std::string_view font_path, int font_size);
     
-    void setText(const std::string& text);
+    void setText(std::string_view text);
+    void setText(std::string&& text);
+    void setText(const char* text);
     const std::string& getText() const;
 
-    void setTextColor(SDL_Color color);
+    void setTextColor(const SDL_Color& color);
     void setWordWrap(bool enabled);
     bool getWordWrap() const;
 
-    bool handleEvent(SDL_Event& e) override;
+    bool handleEvent(const SDL_Event& e) override;
 
 protected:
     void draw() override;

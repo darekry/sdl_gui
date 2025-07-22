@@ -7,11 +7,11 @@ import std.compat;
 
 // --- Implementacja TabControl ---
 
-TabControl::TabControl(GUIManager& manager, int x, int y, int width, int height)
-    : GUIElement(manager, x, y, width, height) {
+TabControl::TabControl(GUIManager& manager, int x, int y, int width, int height, int tabButtonHeight)
+    : GUIElement(manager, x, y, width, height), m_tabButtonHeight(tabButtonHeight) {
 }
 
-Panel* TabControl::addTab(const std::string& title) {
+Panel* TabControl::addTab(std::string_view title) {
     auto button = std::make_unique<Button>(m_manager, 0, 0, 100, m_tabButtonHeight);
     SDL_Color textColor = {255, 255, 255, 255};
     button->setLabel(title, 16, textColor);
@@ -44,17 +44,20 @@ void TabControl::setActiveTab(Button* tabButton) {
         return;
     }
 
+    // Deaktywuj poprzednią zakładkę
     for (size_t i = 0; i < m_tabButtons.size(); ++i) {
         if (m_tabButtons[i] == m_activeTabButton) {
-            m_tabPanels[i]->setVisible(false);
+            if(m_tabPanels[i]) m_tabPanels[i]->setVisible(false);
             break;
         }
     }
 
     m_activeTabButton = tabButton;
+
+    // Aktywuj nową zakładkę
     for (size_t i = 0; i < m_tabButtons.size(); ++i) {
         if (m_tabButtons[i] == m_activeTabButton) {
-            m_tabPanels[i]->setVisible(true);
+            if(m_tabPanels[i]) m_tabPanels[i]->setVisible(true);
             break;
         }
     }

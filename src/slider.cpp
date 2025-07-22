@@ -42,7 +42,7 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
       addChild(std::move(m_increaseButton));
   }
 
-bool Slider::handleEvent(SDL_Event& e) {
+bool Slider::handleEvent(const SDL_Event& e) {
     if (!m_enabled) {
         return false;
     }

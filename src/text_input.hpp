@@ -10,19 +10,20 @@ public:
     TextInput(GUIManager& manager, int x, int y, int w, int h);
     ~TextInput() = default;
 
-    void setText(const std::string& text);
+    void setText(std::string_view text);
+    void setText(std::string&& text);
     const std::string& getText() const;
 
-    void setTextColor(SDL_Color color);
-    void setBackgroundColor(SDL_Color color);
-    void setBorderColor(SDL_Color color);
-    void setOnTextChanged(std::function<void(TextInput*)> callback);
-    void setOnEnterPressed(std::function<void(TextInput*)> callback);
+    void setTextColor(const SDL_Color& color);
+    void setBackgroundColor(const SDL_Color& color);
+    void setBorderColor(const SDL_Color& color);
+    void setOnTextChanged(const std::function<void(TextInput*)>& callback);
+    void setOnEnterPressed(const std::function<void(TextInput*)>& callback);
 
     void setLocked(bool locked);
     bool isLocked() const;
 
-    bool handleEvent(SDL_Event& e) override;
+    bool handleEvent(const SDL_Event& e) override;
 
 protected:
     void draw() override;

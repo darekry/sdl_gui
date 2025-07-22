@@ -8,10 +8,10 @@ import std.compat;
 
 class TabControl : public GUIElement {
 public:
-    TabControl(GUIManager& manager, int x, int y, int width, int height);
+    TabControl(GUIManager& manager, int x, int y, int w, int h, int tabButtonHeight = 30);
 
     // Dodaje nową zakładkę i zwraca wskaźnik do jej panelu zawartości
-    Panel* addTab(const std::string& title);
+    Panel* addTab(std::string_view title);
 
     // Ustawia aktywną zakładkę na podstawie wskaźnika na jej przycisk
     void setActiveTab(Button* tabButton);

@@ -19,43 +19,43 @@ TextureManager::~TextureManager() {
     // IMG_Quit();
 }
 
-SharedTexture TextureManager::loadTexture(const std::string& path) {
-    // Sprawdź, czy tekstura o danej ścieżce została już załadowana
-    if (m_textures.count(path)) {
-        return m_textures[path];
+SharedTexture TextureManager::loadTexture(std::string_view path) {
+    // Używamy find, aby uniknąć tworzenia std::string, jeśli to możliwe
+    auto it = m_textures.find(path);
+    if (it != m_textures.end()) {
+        return it->second;
     }
 
-    // Załaduj teksturę z pliku
-    // Załaduj teksturę z pliku
-    SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+    std::string path_str(path);
+    SDL_Surface* loadedSurface = IMG_Load(path_str.c_str());
     if (!loadedSurface) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to load image %s! SDL_image Error: %s", path.c_str(), IMG_GetError());
-        return nullptr; // Zwróć nullptr w przypadku błędu ładowania
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to load image %s! SDL_image Error: %s", path_str.c_str(), IMG_GetError());
+        return nullptr;
     }
-    // Utwórz teksturę z powierzchni
-    // Utwórz teksturę z powierzchni
+    
     SDL_Texture* newTexture = SDL_CreateTextureFromSurface(m_renderer, loadedSurface);
-    SDL_FreeSurface(loadedSurface); // Zwolnij powierzchnię po utworzeniu tekstury
+    SDL_FreeSurface(loadedSurface);
 
     if (!newTexture) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to create texture from %s! SDL Error: %s", path.c_str(), SDL_GetError());
-        return nullptr; // Zwróć nullptr w przypadku błędu tworzenia tekstury
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to create texture from %s! SDL Error: %s", path_str.c_str(), SDL_GetError());
+        return nullptr;
     }
-    // Utwórz shared_ptr z custom deleterem i zapisz w mapie
-    SharedTexture sharedNewTexture(newTexture, SDLTextureDeleter());
-    m_textures[path] = sharedNewTexture;
 
-    return sharedNewTexture;
+    SharedTexture sharedNewTexture(newTexture, SDLTextureDeleter());
+    auto [inserted_it, success] = m_textures.emplace(std::move(path_str), sharedNewTexture);
+    
+    return inserted_it->second;
 }
 
-SharedTexture TextureManager::createTextureFromText(const std::string& text, std::shared_ptr<TTF_Font> font, SDL_Color color) {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempting to create texture for text: \"%s\"", text.c_str());
+
+SharedTexture TextureManager::createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color) {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempting to create texture for text: \"%s\"", std::string(text).c_str());
     if (!font) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Font is not loaded!");
         return nullptr;
     }
 
-    SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font.get(), text.c_str(), color);
+    SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font.get(), std::string(text).c_str(), color);
     if (!textSurface) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to render text surface! SDL_ttf Error: %s", TTF_GetError());
         return nullptr;
@@ -74,23 +74,23 @@ SharedTexture TextureManager::createTextureFromText(const std::string& text, std
     return {textTexture, SDLTextureDeleter()};
 }
 
-SharedTexture TextureManager::addTexture(const std::string& key, SDL_Texture* texture) {
-    if (m_textures.count(key)) {
-        // Klucz już istnieje, zwróć istniejącą teksturę.
-        // Nowa tekstura nie zostanie dodana, aby uniknąć nadpisania i wycieku pamięci.
-        // Użytkownik jest odpowiedzialny za zwolnienie pamięci po `texture`, jeśli klucz już istnieje.
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempted to add texture with existing key '%s'. Returning existing texture.", key.c_str());
-        return m_textures[key];
+SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* texture) {
+    auto it = m_textures.find(key);
+    if (it != m_textures.end()) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
+        return it->second;
     }
+
     if (!texture) {
         return nullptr;
     }
     SharedTexture shared(texture, SDLTextureDeleter());
-    m_textures[key] = shared;
-    return shared;
+    auto [inserted_it, success] = m_textures.emplace(key, shared);
+    return inserted_it->second;
 }
 
-void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, const std::string& text) {
+
+void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, std::string_view text) {
     SharedFont defaultFont = fontManager.getDefaultFont();
     if (!defaultFont) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Default font not loaded. Cannot create default texture.");
@@ -107,7 +107,7 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
 
     // Utwórz teksturę z tekstem
     SDL_Color textColor = { 0, 0, 0, 255 }; // Czarny
-    SDL_Surface* textSurface = TTF_RenderUTF8_Blended(defaultFont.get(), text.c_str(), textColor);
+    SDL_Surface* textSurface = TTF_RenderUTF8_Blended(defaultFont.get(), std::string(text).c_str(), textColor);
     if (!textSurface) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to render text for default texture. SDL_ttf Error: %s", TTF_GetError());
         SDL_FreeSurface(bgSurface);
@@ -132,6 +132,6 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Default texture created successfully.");
 }
 
-SharedTexture TextureManager::getDefaultTexture() {
+SharedTexture TextureManager::getDefaultTexture() const {
     return m_defaultTexture;
 }

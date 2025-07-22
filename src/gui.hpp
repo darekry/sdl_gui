@@ -6,6 +6,7 @@
 #include "SDL2/SDL.h"
 import std.compat;
 
+
 // Forward declaration
 class GUIManager;
 
@@ -35,15 +36,15 @@ public:
 
     // Wirtualna metoda do obsługi zdarzeń (do zaimplementowania w klasach pochodnych)
     // Na razie pusta, będzie rozszerzona w przyszłości
-    virtual bool handleEvent(SDL_Event& e);
+    virtual bool handleEvent(const SDL_Event& e);
 
     // Metoda renderująca, nie jest już wirtualna
     void render();
 
     // Metoda do ustawiania tekstury
-    void setTexture(SharedTexture texture);
+    void setTexture(const SharedTexture& texture);
         [[nodiscard]] SharedTexture getLabelTexture() const;
-        void setLabel(const std::string& text, int fontSize, SDL_Color color);
+    void setLabel(std::string_view text, int fontSize, const SDL_Color& color);
     
     public:
         // Metody do zarządzania stanem włączony/wyłączony

@@ -4,15 +4,27 @@
 
 import std.compat;
 
-TextArea::TextArea(GUIManager& manager, int x, int y, int w, int h, const std::string& font_path, int font_size)
+TextArea::TextArea(GUIManager& manager, int x, int y, int w, int h, std::string_view font_path, int font_size)
     : GUIElement(manager, x, y, w, h), m_font_path(font_path), m_font_size(font_size) {
     
-    m_manager.getFontManager().loadFont(m_font_path, m_font_size);
+    m_manager.getFontManager().loadFont(m_font_path.c_str(), m_font_size);
     m_needs_texture_update = true;
     m_text_offset_x = 0;
 }
 
-void TextArea::setText(const std::string& text) {
+void TextArea::setText(std::string_view text) {
+    m_text = text;
+    m_cursorPos = std::min(m_cursorPos, m_text.length());
+    m_needs_texture_update = true;
+}
+
+void TextArea::setText(std::string&& text) {
+    m_text = std::move(text);
+    m_cursorPos = std::min(m_cursorPos, m_text.length());
+    m_needs_texture_update = true;
+}
+
+void TextArea::setText(const char* text) {
     m_text = text;
     m_cursorPos = std::min(m_cursorPos, m_text.length());
     m_needs_texture_update = true;
@@ -22,7 +34,7 @@ const std::string& TextArea::getText() const {
     return m_text;
 }
 
-void TextArea::setTextColor(SDL_Color color) {
+void TextArea::setTextColor(const SDL_Color& color) {
     m_textColor = color;
     m_needs_texture_update = true;
 }
@@ -76,7 +88,7 @@ void TextArea::draw() {
     }
     SDL_RenderSetClipRect(renderer, nullptr);
 }
-bool TextArea::handleEvent(SDL_Event& e) {
+bool TextArea::handleEvent(const SDL_Event& e) {
     if (!m_enabled || !m_visible) {
         return false;
     }

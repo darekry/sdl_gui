@@ -34,13 +34,15 @@ public:
     void cleanup();
 
     // Metody dostępu do kontekstu
+    // Metody dostępu do kontekstu
     SDL_Renderer* getRenderer() const { return m_renderer; }
     FontManager& getFontManager() { return m_fontManager; }
+    const FontManager& getFontManager() const { return m_fontManager; }
     TextureManager& getTextureManager() { return m_textureManager; }
+    const TextureManager& getTextureManager() const { return m_textureManager; }
 
     // Metoda do uzyskiwania dostępu do elementów (potrzebna do ręcznej obsługi zdarzeń)
-    std::vector<std::unique_ptr<GUIElement>>& getElements() { return m_elements; }
-
+    const std::vector<std::unique_ptr<GUIElement>>& getElements() const { return m_elements; }
 private:
     // Kontener na unikalne wskaźniki do elementów GUI
     std::vector<std::unique_ptr<GUIElement>> m_elements;

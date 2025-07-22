@@ -10,7 +10,7 @@ Button::Button(GUIManager& manager, int x, int y, int width, int height, SharedT
     }
 }
 
-bool Button::handleEvent(SDL_Event& e) {
+bool Button::handleEvent(const SDL_Event& e) {
     if (!m_enabled || !m_visible) return false;
 
     // Najpierw pozwól dzieciom obsłużyć zdarzenie
@@ -72,6 +72,6 @@ void Button::draw() {
     }
 }
 
-void Button::setLabel(const std::string& text, int fontSize, SDL_Color color) {
+void Button::setLabel(std::string_view text, int fontSize, const SDL_Color& color) {
     GUIElement::setLabel(text, fontSize, color);
 }

@@ -18,7 +18,7 @@ void Panel::setDraggable(bool draggable) {
     m_is_draggable = draggable;
 }
 
-bool Panel::handleEvent(SDL_Event& event) {
+bool Panel::handleEvent(const SDL_Event& event) {
     if (!m_visible) {
         return false;
     }

@@ -21,8 +21,8 @@ void RadioButton::setSelected(bool selected, bool notifyGroup) {
     }
 }
 
-void RadioButton::setLabel(const std::string& text, int fontSize, SDL_Color color) {
-    FontManager& fontManager = m_manager.getFontManager();
+void RadioButton::setLabel(std::string_view text, int fontSize, const SDL_Color& color) {
+    auto& fontManager = m_manager.getFontManager();
     SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
     if(font) {
         m_labelTexture = m_manager.getTextureManager().createTextureFromText(text, font, color);
@@ -33,7 +33,7 @@ void RadioButton::setGroup(RadioGroup* group) {
     m_group = group;
 }
 
-bool RadioButton::handleEvent(SDL_Event& e) {
+bool RadioButton::handleEvent(const SDL_Event& e) {
     if (!m_enabled) return false;
 
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {

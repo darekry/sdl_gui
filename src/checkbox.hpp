@@ -13,11 +13,11 @@ public:
     bool isChecked() const { return m_isChecked; }
     void setChecked(bool checked);
 
-void setLabel(const std::string& text, int fontSize, SDL_Color color);
+void setLabel(std::string_view text, int fontSize, const SDL_Color& color);
 
 using OnChangeCallback = std::function<void(Checkbox*, bool)>;
 void setOnChange(OnChangeCallback callback) { m_onChange = callback; }
-    bool handleEvent(SDL_Event& e) override;
+    bool handleEvent(const SDL_Event& e) override;
 
 protected:
     void draw() override;

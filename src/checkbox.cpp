@@ -18,17 +18,17 @@ void Checkbox::setChecked(bool checked) {
     }
 }
 
-void Checkbox::setLabel(const std::string& text, int fontSize, SDL_Color color) {
-    FontManager& fontManager = m_manager.getFontManager();
+void Checkbox::setLabel(std::string_view text, int fontSize, const SDL_Color& color) {
+    auto& fontManager = m_manager.getFontManager();
     SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
     if(font) {
-        TextureManager& textureManager = m_manager.getTextureManager();
+        auto& textureManager = m_manager.getTextureManager();
         m_labelTexture = textureManager.createTextureFromText(text, font, color);
     }
 }
 
 
-bool Checkbox::handleEvent(SDL_Event& e) {
+bool Checkbox::handleEvent(const SDL_Event& e) {
     if (!m_enabled) return false;
 
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {

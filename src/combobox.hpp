@@ -10,9 +10,11 @@ class ComboBox : public GUIElement {
 public:
     ComboBox(GUIManager& manager, int x, int y, int w, int h);
 
-    bool handleEvent(SDL_Event& event) override;
+    bool handleEvent(const SDL_Event& event) override;
 
-    void addItem(const std::string& item);
+    void addItem(std::string_view item);
+    void addItem(std::string&& item);
+    void addItem(const char* item);
     std::string getSelectedItem() const;
     int getSelectedIndex() const;
     void setSelectedIndex(int index);

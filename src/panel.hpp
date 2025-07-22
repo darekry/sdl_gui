@@ -10,7 +10,7 @@ public:
     Panel(GUIManager& manager, int x, int y, int width, int height);
 
     // Przesłonięta metoda do obsługi zdarzeń
-    bool handleEvent(SDL_Event& event) override;
+    bool handleEvent(const SDL_Event& event) override;
     // Metody do ustawiania obramowania
     void setBorderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
     void setBorderThickness(int thickness);

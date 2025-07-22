@@ -50,7 +50,7 @@ void GUIElement::clearChildren() {
     m_children.clear();
 }
 
-void GUIElement::setTexture(SharedTexture texture) {
+void GUIElement::setTexture(const SharedTexture& texture) {
     m_texture = texture;
 }
 
@@ -58,12 +58,12 @@ SharedTexture GUIElement::getLabelTexture() const {
     return m_texture;
 }
 
-void GUIElement::setLabel(const std::string& text, int fontSize, SDL_Color color) {
-    FontManager& fontManager = m_manager.getFontManager();
+void GUIElement::setLabel(std::string_view text, int fontSize, const SDL_Color& color) {
+    auto& fontManager = m_manager.getFontManager();
     // Używamy domyślnej czcionki - załóżmy, że jest w assets
     SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
     if (font) {
-        TextureManager& textureManager = m_manager.getTextureManager();
+        auto& textureManager = m_manager.getTextureManager();
         m_texture = textureManager.createTextureFromText(text, font, color);
     } else {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "setLabel failed: Font could not be loaded.");
@@ -76,7 +76,7 @@ void GUIElement::setLabel(const std::string& text, int fontSize, SDL_Color color
 // należy zaimplementować inną metodę, która zwraca unique_ptr.
 
 
-bool GUIElement::handleEvent(SDL_Event& e) {
+bool GUIElement::handleEvent(const SDL_Event& e) {
     if (!m_enabled || !m_visible) {
         return false;
     }

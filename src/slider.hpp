@@ -19,7 +19,7 @@ public:
     using OnChangeCallback = std::function<void(GUIElement*)>;
     void setOnChangeCallback(OnChangeCallback callback) { m_onChange = callback; }
 
-    bool handleEvent(SDL_Event& e) override;
+    bool handleEvent(const SDL_Event& e) override;
 
 protected:
     void draw() override;

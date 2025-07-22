@@ -29,7 +29,7 @@ ComboBox::ComboBox(GUIManager& manager, int x, int y, int w, int h)
     addChild(std::move(dropdown_panel));
 }
 
-bool ComboBox::handleEvent(SDL_Event& event) {
+bool ComboBox::handleEvent(const SDL_Event& event) {
     if (!m_enabled || !m_visible) {
         return false;
     }
@@ -53,7 +53,6 @@ bool ComboBox::handleEvent(SDL_Event& event) {
     }
 
     return false;
-return false;
 }
 void ComboBox::draw() {
     if (m_needs_update) {
@@ -64,13 +63,26 @@ void ComboBox::draw() {
     // Rysowanie jest obsługiwane przez dzieci (Button, Panel), które są
     // renderowane przez pętlę w GUIElement::render(). Ta metoda jest pusta.
 }
-void ComboBox::addItem(const std::string& item) {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::addItem: Adding item \"%s\"", item.c_str());
-    m_options.push_back(item);
+void ComboBox::addItem(std::string_view item) {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::addItem: Adding item \"%.*s\"", (int)item.length(), item.data());
+    m_options.emplace_back(item);
     if (m_selected_index == -1) {
         m_selected_index = 0;
     }
     m_needs_update = true;
+}
+
+void ComboBox::addItem(std::string&& item) {
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::addItem: Adding item \"%s\"", item.c_str());
+    m_options.push_back(std::move(item));
+    if (m_selected_index == -1) {
+        m_selected_index = 0;
+    }
+    m_needs_update = true;
+}
+
+void ComboBox::addItem(const char* item) {
+    addItem(std::string(item));
 }
 
 std::string ComboBox::getSelectedItem() const {

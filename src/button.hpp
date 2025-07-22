@@ -28,8 +28,8 @@ public:
         if (m_onClick) m_onClick(static_cast<GUIElement*>(this));
     } // Używamy m_onClick dla zdarzenia puszczenia przycisku
     // Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
-    bool handleEvent(SDL_Event& e) override;
-    void setLabel(const std::string& text, int fontSize, SDL_Color color);
+    bool handleEvent(const SDL_Event& e) override;
+    void setLabel(std::string_view text, int fontSize, const SDL_Color& color);
 
 protected:
     void draw() override;

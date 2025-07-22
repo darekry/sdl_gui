@@ -31,7 +31,7 @@ bool GUIManager::processEvent(const SDL_Event& e) {
     // Przekaż zdarzenie do wszystkich elementów najwyższego poziomu.
     // Pętla zatrzyma się, gdy któryś element "skonsumuje" zdarzenie.
     for (const auto& element : m_elements) {
-        if (element && element->handleEvent(const_cast<SDL_Event&>(e))) {
+        if (element && element->handleEvent(e)) {
             // Jeśli element obsłużył zdarzenie, zwracamy true.
             return true;
         }

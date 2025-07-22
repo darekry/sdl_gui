@@ -20,24 +20,23 @@ public:
 
     // Metoda do ładowania tekstury. Zwraca SharedTexture.
     // Jeśli tekstura o danej ścieżce została już załadowana, zwraca istniejący SharedTexture.
-    SharedTexture loadTexture(const std::string& path);
+    SharedTexture loadTexture(std::string_view path);
 
     // Metoda do tworzenia tekstury z tekstu.
-    SharedTexture createTextureFromText(const std::string& text, std::shared_ptr<TTF_Font> font, SDL_Color color);
+    SharedTexture createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color);
 
     // Metoda do dodawania istniejącej tekstury i przejmowania nad nią własności
-    SharedTexture addTexture(const std::string& key, SDL_Texture* texture);
+    SharedTexture addTexture(std::string_view key, SDL_Texture* texture);
 
     // Metoda do tworzenia domyślnej tekstury
-    void createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, const std::string& text);
+    void createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, std::string_view text);
 
     // Metoda do pobierania domyślnej tekstury
-    SharedTexture getDefaultTexture();
+    SharedTexture getDefaultTexture() const;
 
 private:
     SDL_Renderer* m_renderer;
-    std::map<std::string, SharedTexture> m_textures; // Mapa przechowująca załadowane tekstury
+    std::map<std::string, SharedTexture, std::less<>> m_textures; // Mapa przechowująca załadowane tekstury
     SharedTexture m_defaultTexture; // Domyślna tekstura
 };
-
 #endif // TEXTURE_MANAGER_HPP

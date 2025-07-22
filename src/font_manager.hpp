@@ -12,6 +12,9 @@ struct FontKey {
     std::string path;
     int size;
 
+    FontKey(std::string_view p, int s) : path(p), size(s) {}
+    FontKey(std::string&& p, int s) : path(std::move(p)), size(s) {}
+
     // Operator porównania dla użycia w std::map
     bool operator<(const FontKey& other) const {
         if (path != other.path) {
@@ -31,17 +34,17 @@ public:
 
     // Metoda do ładowania czcionki. Zwraca SharedFont.
     // Jeśli czcionka o danej ścieżce i rozmiarze została już załadowana, zwraca istniejący SharedFont.
-    SharedFont loadFont(const std::string& path, int size);
+    SharedFont loadFont(std::string_view path, int size);
 
     // Metoda do ładowania domyślnej czcionki
-    void loadDefaultFont(const std::string& path, int size);
+    void loadDefaultFont(std::string_view path, int size);
     
     // Metoda do pobierania domyślnej czcionki
-    SharedFont getDefaultFont();
+    SharedFont getDefaultFont() const;
 
     // Metoda do pobierania surowego wskaźnika do czcionki (dla wydajności).
     // UWAGA: Ta metoda nie zarządza pamięcią, jedynie zwraca wskaźnik.
-    TTF_Font* getFont(const std::string& path, int size);
+    TTF_Font* getFont(std::string_view path, int size);
 
 private:
     std::map<FontKey, SharedFont> m_fonts; // Mapa przechowująca załadowane czcionki

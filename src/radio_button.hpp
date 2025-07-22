@@ -21,7 +21,7 @@ public:
     void setSelected(bool selected, bool notifyGroup = true);
 
     // Metoda do ustawiania etykiety tekstowej
-    void setLabel(const std::string& text, int fontSize, SDL_Color color);
+    void setLabel(std::string_view text, int fontSize, const SDL_Color& color);
 
     // Metoda do ustawiania grupy, do której należy RadioButton
     void setGroup(RadioGroup* group);
@@ -34,7 +34,7 @@ public:
     void setOnChange(OnChangeCallback callback) { m_onChange = callback; }
 
     // Przesłonięte metody do obsługi zdarzeń i renderowania
-    bool handleEvent(SDL_Event& e) override;
+    bool handleEvent(const SDL_Event& e) override;
 
 protected:
     void draw() override;
