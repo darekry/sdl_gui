@@ -10,7 +10,7 @@ void RadioGroup::addRadioButton(RadioButton* button) {
 }
 
 void RadioGroup::buttonSelected(RadioButton* selectedButton) {
-    for (RadioButton* button : m_buttons) {
+    for (auto* button : m_buttons) {
         if (button != selectedButton) {
             // Odznacz inne przyciski, nie powiadamiając grupy (aby uniknąć pętli)
             if (button->isSelected()) {

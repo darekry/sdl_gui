@@ -42,9 +42,9 @@ bool ComboBox::handleEvent(const SDL_Event& event) {
     // Jeśli kliknięto poza obszarem całego comboboxa (wraz z panelem)
     // a lista jest rozwinięta, zamknij ją.
     if (m_is_expanded && event.type == SDL_MOUSEBUTTONDOWN) {
-        SDL_Point p = { event.button.x, event.button.y };
-        SDL_Point abs_pos = getAbsolutePosition();
-        SDL_Rect combobox_area = { abs_pos.x, abs_pos.y, m_width, m_height + m_dropdown_panel->getHeight() };
+        const auto p = SDL_Point{event.button.x, event.button.y};
+        auto abs_pos = getAbsolutePosition();
+        auto combobox_area = SDL_Rect{abs_pos.x, abs_pos.y, m_width, m_height + m_dropdown_panel->getHeight()};
         
         if (!SDL_PointInRect(&p, &combobox_area)) {
             toggleDropdown();

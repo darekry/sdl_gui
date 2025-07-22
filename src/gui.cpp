@@ -22,9 +22,9 @@ void GUIElement::setSize(int width, int height) {
 
 // Metoda zwracająca absolutną pozycję elementu
 SDL_Point GUIElement::getAbsolutePosition() const {
-    SDL_Point pos = {m_x, m_y};
+    auto pos = SDL_Point{m_x, m_y};
     if (m_parent) {
-        SDL_Point parentPos = m_parent->getAbsolutePosition();
+        auto parentPos = m_parent->getAbsolutePosition();
         pos.x += parentPos.x;
         pos.y += parentPos.y;
     }
@@ -33,7 +33,7 @@ SDL_Point GUIElement::getAbsolutePosition() const {
 
 // Metoda sprawdzająca, czy punkt (x, y) znajduje się w obrębie elementu (uwzględniając pozycję rodzica)
 bool GUIElement::contains(int x, int y) const {
-    SDL_Point absPos = getAbsolutePosition();
+    auto absPos = getAbsolutePosition();
     return (x >= absPos.x && x < absPos.x + m_width &&
             y >= absPos.y && y < absPos.y + m_height);
 }
@@ -61,7 +61,7 @@ SharedTexture GUIElement::getLabelTexture() const {
 void GUIElement::setLabel(std::string_view text, int fontSize, const SDL_Color& color) {
     auto& fontManager = m_manager.getFontManager();
     // Używamy domyślnej czcionki - załóżmy, że jest w assets
-    SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
+    auto font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
     if (font) {
         auto& textureManager = m_manager.getTextureManager();
         m_texture = textureManager.createTextureFromText(text, font, color);
@@ -82,7 +82,7 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
     }
  
     // Przekaż zdarzenie do dzieci w odwrotnej kolejności (od góry do dołu)
-    for (auto&& it : m_children) {
+    for (auto& it : m_children) {
         if (it->handleEvent(e)) {
             return true; // Jeśli dziecko obsłużyło zdarzenie, nie propaguj dalej
         }
@@ -95,13 +95,13 @@ void GUIElement::render() {
     if (!m_visible) {
         return;
     }
-    SDL_Renderer* renderer = m_manager.getRenderer();
-    SDL_Rect previous_clip_rect;
+    auto* renderer = m_manager.getRenderer();
+    auto previous_clip_rect = SDL_Rect{};
     SDL_RenderGetClipRect(renderer, &previous_clip_rect);
 
-    SDL_Point abs_pos = getAbsolutePosition();
-    SDL_Rect new_clip_rect = { abs_pos.x, abs_pos.y, m_width, m_height };
-    
+    auto abs_pos = getAbsolutePosition();
+    auto new_clip_rect = SDL_Rect{abs_pos.x, abs_pos.y, m_width, m_height};
+
     // Jeżeli istnieje już jakiś obszar przycinania, nowy musi być jego częścią
     if (previous_clip_rect.w != 0 || previous_clip_rect.h != 0) {
         SDL_IntersectRect(&previous_clip_rect, &new_clip_rect, &new_clip_rect);
@@ -113,7 +113,7 @@ void GUIElement::render() {
     draw();
 
     // Renderowanie dzieci z już ustawionym (i być może zawężonym) obszarem przycinania
-    for (auto&& child : m_children) {
+    for (auto& child : m_children) {
         if (child && child->isVisible()) {
             child->render();
         }
@@ -127,9 +127,9 @@ void GUIElement::draw() {
     // Domyślna implementacja rysowania: narysuj tło (teksturę), jeśli istnieje.
     // Klasy pochodne mogą to rozszerzyć lub zastąpić.
     if (m_texture) {
-        SDL_Renderer* renderer = m_manager.getRenderer();
-        SDL_Point absPos = getAbsolutePosition();
-        SDL_Rect renderQuad = { absPos.x, absPos.y, m_width, m_height };
+        auto* renderer = m_manager.getRenderer();
+        auto absPos = getAbsolutePosition();
+        auto renderQuad = SDL_Rect{absPos.x, absPos.y, m_width, m_height};
         SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad);
     }
 }

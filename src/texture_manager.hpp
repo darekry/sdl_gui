@@ -13,7 +13,7 @@ using SharedTexture = std::shared_ptr<SDL_Texture>;
 class TextureManager {
 public:
     // Konstruktor
-    TextureManager(SDL_Renderer* renderer);
+    explicit TextureManager(SDL_Renderer* renderer);
 
     // Destruktor
     ~TextureManager();

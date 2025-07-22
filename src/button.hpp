@@ -1,6 +1,8 @@
 #ifndef BUTTON_HPP
 #define BUTTON_HPP
 
+#include <utility>
+
 #include "gui.hpp"
 import std.compat;
 
@@ -8,7 +10,7 @@ import std.compat;
 class Button : public GUIElement {
 public:
     // Konstruktor
-    Button(GUIManager& manager, int x, int y, int width, int height, SharedTexture texture = nullptr);
+    Button(GUIManager& manager, int x, int y, int width, int height, const SharedTexture& texture = nullptr);
 
     // Destruktor
     ~Button() = default;
@@ -18,8 +20,8 @@ public:
     using OnMouseOverCallback = std::function<void(GUIElement*)>;
 
     // Metody do przypisywania callbacków
-    void setOnClickCallback(OnClickCallback callback) { m_onClick = callback; }
-    void setOnMouseOverCallback(OnMouseOverCallback callback) { m_onMouseOver = callback; }
+    void setOnClickCallback(OnClickCallback callback) { m_onClick = std::move(callback); }
+    void setOnMouseOverCallback(OnMouseOverCallback callback) { m_onMouseOver = std::move(callback); }
 
     // Metody wywołujące callbacki (publiczne na potrzeby testów/integracji)
     void triggerOnClick() { if (m_onClick) m_onClick(static_cast<GUIElement*>(this)); }

@@ -1,11 +1,14 @@
 #ifndef SLIDER_HPP
 #define SLIDER_HPP
 
+#include <cstdint>
+#include <utility>
+
 #include "button.hpp"
 #include "gui.hpp"
 import std.compat;
 
-enum class Orientation {
+enum class Orientation :uint8_t{
     Horizontal,
     Vertical
 };
@@ -17,7 +20,7 @@ public:
     int getValue() const { return m_currentValue; }
 
     using OnChangeCallback = std::function<void(GUIElement*)>;
-    void setOnChangeCallback(OnChangeCallback callback) { m_onChange = callback; }
+    void setOnChangeCallback(OnChangeCallback callback) { m_onChange = std::move(callback); }
 
     bool handleEvent(const SDL_Event& e) override;
 

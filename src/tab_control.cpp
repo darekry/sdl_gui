@@ -13,10 +13,10 @@ TabControl::TabControl(GUIManager& manager, int x, int y, int width, int height,
 
 Panel* TabControl::addTab(std::string_view title) {
     auto button = std::make_unique<Button>(m_manager, 0, 0, 100, m_tabButtonHeight);
-    SDL_Color textColor = {255, 255, 255, 255};
+    auto textColor = SDL_Color{255, 255, 255, 255};
     button->setLabel(title, 16, textColor);
     
-    Button* buttonPtr = button.get();
+    auto* buttonPtr = button.get();
     m_tabButtons.push_back(buttonPtr);
 
     button->setOnClickCallback([this, buttonPtr](GUIElement*){
@@ -25,7 +25,7 @@ Panel* TabControl::addTab(std::string_view title) {
 
     auto panel = std::make_unique<Panel>(m_manager, 0, m_tabButtonHeight, m_width, m_height - m_tabButtonHeight);
     panel->setVisible(false);
-    Panel* panelPtr = panel.get();
+    auto* panelPtr = panel.get();
     m_tabPanels.push_back(panelPtr);
 
     addChild(std::move(button));
@@ -64,8 +64,8 @@ void TabControl::setActiveTab(Button* tabButton) {
 }
 
 void TabControl::reorderTabs() {
-    int current_x = 0;
-    for (Button* button : m_tabButtons) {
+    auto current_x = 0;
+    for (auto* button : m_tabButtons) {
         button->setPosition(current_x, 0);
         current_x += button->getWidth() + 5;
     }

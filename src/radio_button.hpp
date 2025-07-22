@@ -1,6 +1,8 @@
 #ifndef RADIOBUTTON_HPP
 #define RADIOBUTTON_HPP
 
+#include <utility>
+
 #include "gui.hpp"
 #include "sdl_deleters.hpp" // Dla SharedFont i SDLTextureDeleter
 #include "radio_group.hpp" // Dla klasy RadioGroup
@@ -31,7 +33,7 @@ public:
     using OnChangeCallback = std::function<void(RadioButton*)>;
 
     // Metoda do przypisywania callbacka
-    void setOnChange(OnChangeCallback callback) { m_onChange = callback; }
+    void setOnChange(OnChangeCallback callback) { m_onChange = std::move(callback); }
 
     // Przesłonięte metody do obsługi zdarzeń i renderowania
     bool handleEvent(const SDL_Event& e) override;

@@ -46,7 +46,7 @@ public:
         [[nodiscard]] SharedTexture getLabelTexture() const;
     void setLabel(std::string_view text, int fontSize, const SDL_Color& color);
     
-    public:
+    
         // Metody do zarządzania stanem włączony/wyłączony
         void setEnabled(bool enabled) { m_enabled = enabled; }
         bool isEnabled() const { return m_enabled; }
@@ -83,8 +83,8 @@ public:
     // Metody do zarządzania relacją rodzic-dziecko
     void addChild(std::unique_ptr<GUIElement> child);
     void clearChildren();
-    GUIElement* getParent() const { return m_parent; }
-    const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
+    [[nodiscard]] GUIElement* getParent() const { return m_parent; }
+    [[nodiscard]] const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
 };
 
 // Forward declaration for TextInput

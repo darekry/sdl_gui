@@ -11,7 +11,7 @@ import std.compat;
 class GUIManager {
 public:
     // Konstruktor
-    GUIManager(SDL_Renderer* renderer);
+    explicit GUIManager(SDL_Renderer* renderer);
 
     // Destruktor
     ~GUIManager();

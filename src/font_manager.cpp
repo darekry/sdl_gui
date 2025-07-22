@@ -17,7 +17,7 @@ FontManager::~FontManager() {
     // TTF_Quit();
 }
 SharedFont FontManager::loadFont(std::string_view path, int size) {
-    FontKey key = {path, size};
+    auto key = FontKey{std::string(path), size};
     auto it = m_fonts.find(key);
     if (it != m_fonts.end()) {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Loading font from cache: %s (size %d)", key.path.c_str(), size);
@@ -25,13 +25,13 @@ SharedFont FontManager::loadFont(std::string_view path, int size) {
     }
 
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Loading font from file: %s (size %d)", key.path.c_str(), size);
-    TTF_Font* loadedFont = TTF_OpenFont(key.path.c_str(), size);
+    auto* loadedFont = TTF_OpenFont(key.path.c_str(), size);
     if (!loadedFont) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FontManager ERROR: Unable to load font %s with size %d! SDL_ttf Error: %s", key.path.c_str(), size, TTF_GetError());
         return nullptr;
     }
 
-    SharedFont sharedNewFont(loadedFont, TTFFontDeleter());
+    auto sharedNewFont = SharedFont(loadedFont, TTFFontDeleter());
     auto [inserted_it, success] = m_fonts.emplace(std::move(key), sharedNewFont);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Font loaded and cached successfully.");
 
@@ -50,7 +50,7 @@ SharedFont FontManager::getDefaultFont() const {
 }
 
 TTF_Font* FontManager::getFont(std::string_view path, int size) {
-    SharedFont font = loadFont(path, size);
+    auto font = loadFont(path, size);
     if (font) {
         return font.get();
     }

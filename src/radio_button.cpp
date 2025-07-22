@@ -23,7 +23,7 @@ void RadioButton::setSelected(bool selected, bool notifyGroup) {
 
 void RadioButton::setLabel(std::string_view text, int fontSize, const SDL_Color& color) {
     auto& fontManager = m_manager.getFontManager();
-    SharedFont font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
+    auto font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
     if(font) {
         m_labelTexture = m_manager.getTextureManager().createTextureFromText(text, font, color);
     }
@@ -48,9 +48,9 @@ bool RadioButton::handleEvent(const SDL_Event& e) {
 }
 
 void RadioButton::draw() {
-    SDL_Renderer* renderer = m_manager.getRenderer();
-    SDL_Point absPos = getAbsolutePosition();
-    SDL_Rect radioRect = {absPos.x, absPos.y, m_height, m_height};
+    auto* renderer = m_manager.getRenderer();
+    auto absPos = getAbsolutePosition();
+    auto radioRect = SDL_Rect{absPos.x, absPos.y, m_height, m_height};
 
     if (m_isHovered) {
         SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
@@ -65,14 +65,15 @@ void RadioButton::draw() {
 
     if (m_isSelected) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_Rect dotRect = {absPos.x + 4, absPos.y + 4, m_height - 8, m_height - 8};
+        auto dotRect = SDL_Rect{absPos.x + 4, absPos.y + 4, m_height - 8, m_height - 8};
         SDL_RenderFillRect(renderer, &dotRect);
     }
 
     if (m_labelTexture) {
-        int labelWidth, labelHeight;
+        auto labelWidth = 0;
+        auto labelHeight = 0;
         SDL_QueryTexture(m_labelTexture.get(), nullptr, nullptr, &labelWidth, &labelHeight);
-        SDL_Rect renderQuad = {absPos.x + m_height + 5, absPos.y + (m_height - labelHeight) / 2, labelWidth, labelHeight};
+        auto renderQuad = SDL_Rect{absPos.x + m_height + 5, absPos.y + (m_height - labelHeight) / 2, labelWidth, labelHeight};
         SDL_RenderCopy(renderer, m_labelTexture.get(), nullptr, &renderQuad);
     }
 }

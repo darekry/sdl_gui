@@ -120,11 +120,11 @@ modules: $(MODULE_PCMS)
 
 $(STD_PCM): | $(MODULE_CACHE_DIR)
 	@echo "Kompilowanie modułu std..."
-	$(CXX) -std=c++23 -stdlib=libc++ -Wno-reserved-identifier -Wno-reserved-module-identifier --precompile -o $@ /usr/lib/llvm-20/share/libc++/v1/std.cppm
+	$(CXX) -std=c++23 -stdlib=libc++ -Wno-reserved-identifier -Wno-reserved-module-identifier -march=native -O3 --precompile -o $@ /usr/lib/llvm-20/share/libc++/v1/std.cppm
 
 $(STD_COMPAT_PCM): $(STD_PCM) | $(MODULE_CACHE_DIR)
 	@echo "Kompilowanie modułu std.compat..."
-	$(CXX) -std=c++23 -stdlib=libc++ -fmodule-file=std=$(STD_PCM) -Wno-reserved-identifier -Wno-reserved-module-identifier --precompile -o $@ /usr/lib/llvm-20/share/libc++/v1/std.compat.cppm
+	$(CXX) -std=c++23 -stdlib=libc++ -fmodule-file=std=$(STD_PCM) -Wno-reserved-identifier -Wno-reserved-module-identifier -march=native -O3 --precompile -o $@ /usr/lib/llvm-20/share/libc++/v1/std.compat.cppm
 
 $(MODULE_CACHE_DIR):
 	@mkdir -p $@

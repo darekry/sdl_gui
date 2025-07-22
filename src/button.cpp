@@ -3,7 +3,7 @@
 import std.compat;
 
 // Implementacja klasy Button
-Button::Button(GUIManager& manager, int x, int y, int width, int height, SharedTexture texture)
+Button::Button(GUIManager& manager, int x, int y, int width, int height, const SharedTexture& texture)
     : GUIElement(manager, x, y, width, height) {
     if (texture) {
         m_texture = texture;
@@ -22,7 +22,7 @@ bool Button::handleEvent(const SDL_Event& e) {
     }
 
     // Następnie obsłuż zdarzenia dla samego przycisku
-    bool previousHoverState = m_isHovered;
+    auto previousHoverState = m_isHovered;
     
     if (e.type == SDL_MOUSEMOTION) {
         m_isHovered = contains(e.motion.x, e.motion.y);
@@ -46,10 +46,10 @@ bool Button::handleEvent(const SDL_Event& e) {
 }
 
 void Button::draw() {
-    SDL_Renderer* renderer = m_manager.getRenderer();
+    auto* renderer = m_manager.getRenderer();
 
-    SDL_Point absPos = getAbsolutePosition();
-    SDL_Rect renderQuad = { absPos.x, absPos.y, m_width, m_height };
+    auto absPos = getAbsolutePosition();
+    SDL_Rect renderQuad = {absPos.x, absPos.y, m_width, m_height};
  
     // Zmień kolor tła w zależności od stanu najechania
     if (m_isHovered) {
@@ -60,16 +60,17 @@ void Button::draw() {
     SDL_RenderFillRect(renderer, &renderQuad);
  
     if (m_texture) {
-        int texW, texH;
+        auto texW = 0, texH = 0;
         SDL_QueryTexture(m_texture.get(), nullptr, nullptr, &texW, &texH);
-        SDL_Rect textQuad = {
+        auto textQuad = SDL_Rect{
             absPos.x + (m_width - texW) / 2,
             absPos.y + (m_height - texH) / 2,
             texW,
-            texH
-        };
+            texH};
         SDL_RenderCopy(renderer, m_texture.get(), nullptr, &textQuad);
     }
+
+
 }
 
 void Button::setLabel(std::string_view text, int fontSize, const SDL_Color& color) {

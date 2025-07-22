@@ -10,7 +10,7 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
       m_currentValue(std::clamp(initialValue, minValue, maxValue)) {
     
     // Określ rozmiar przycisków na podstawie orientacji suwaka
-    int buttonSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
+    auto buttonSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
 
     if (m_orientation == Orientation::Horizontal) { // Poziomy suwak
         m_decreaseButton = std::make_unique<Button>(manager, -buttonSize, 0, buttonSize, getHeight());
@@ -22,7 +22,7 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
  
       // Ustaw callbacki dla przycisków
       m_decreaseButton->setOnClickCallback([this](GUIElement*) {
-          int oldValue = m_currentValue;
+          auto oldValue = m_currentValue;
           m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue);
           if (m_onChange && m_currentValue != oldValue) {
               m_onChange(this);
@@ -30,7 +30,7 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
       });
  
       m_increaseButton->setOnClickCallback([this](GUIElement*) {
-          int oldValue = m_currentValue;
+          auto oldValue = m_currentValue;
           m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue);
           if (m_onChange && m_currentValue != oldValue) {
               m_onChange(this);
@@ -56,14 +56,14 @@ bool Slider::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_MOUSEBUTTONDOWN) {
         if (e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
             m_isDragging = true;
-            int oldValue = m_currentValue;
-            int mouseX = e.button.x - getAbsolutePosition().x;
-            int mouseY = e.button.y - getAbsolutePosition().y;
+            auto oldValue = m_currentValue;
+            auto mouseX = e.button.x - getAbsolutePosition().x;
+            auto mouseY = e.button.y - getAbsolutePosition().y;
             if (m_orientation == Orientation::Horizontal) {
-                float ratio = static_cast<float>(mouseX) / getWidth();
+                auto ratio = static_cast<float>(mouseX) / getWidth();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
             } else {
-                float ratio = static_cast<float>(mouseY) / getHeight();
+                auto ratio = static_cast<float>(mouseY) / getHeight();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
             }
             m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
@@ -79,14 +79,14 @@ bool Slider::handleEvent(const SDL_Event& e) {
         }
     } else if (e.type == SDL_MOUSEMOTION) {
         if (m_isDragging) {
-            int oldValue = m_currentValue;
-            int mouseX = e.motion.x - getAbsolutePosition().x;
-            int mouseY = e.motion.y - getAbsolutePosition().y;
+            auto oldValue = m_currentValue;
+            auto mouseX = e.motion.x - getAbsolutePosition().x;
+            auto mouseY = e.motion.y - getAbsolutePosition().y;
             if (m_orientation == Orientation::Horizontal) {
-                float ratio = static_cast<float>(mouseX) / getWidth();
+                auto ratio = static_cast<float>(mouseX) / getWidth();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
             } else {
-                float ratio = static_cast<float>(mouseY) / getHeight();
+                auto ratio = static_cast<float>(mouseY) / getHeight();
                 m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
             }
             m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
@@ -101,24 +101,24 @@ bool Slider::handleEvent(const SDL_Event& e) {
 }
 
 void Slider::draw() {
-    SDL_Renderer* renderer = m_manager.getRenderer();
-    SDL_Point absPos = getAbsolutePosition();
-    SDL_Rect sliderBarRect = {absPos.x, absPos.y, getWidth(), getHeight()};
+    auto* renderer = m_manager.getRenderer();
+    auto absPos = getAbsolutePosition();
+    auto sliderBarRect = SDL_Rect{absPos.x, absPos.y, getWidth(), getHeight()};
 
     // Rysuj tło suwaka
     SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);
     SDL_RenderFillRect(renderer, &sliderBarRect);
 
     // Oblicz pozycję "kciuka" suwaka
-    int thumbSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
-    SDL_Rect thumbRect;
+    auto thumbSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
+    auto thumbRect = SDL_Rect{};
 
     if (m_orientation == Orientation::Horizontal) {
-        int thumbX = absPos.x + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getWidth() - thumbSize));
-        thumbRect = {thumbX, absPos.y, thumbSize, getHeight()};
+        auto thumbX = absPos.x + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getWidth() - thumbSize));
+        thumbRect = {.x=thumbX, .y=absPos.y, .w=thumbSize, .h=getHeight()};
     } else {
-        int thumbY = absPos.y + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getHeight() - thumbSize));
-        thumbRect = {absPos.x, thumbY, getWidth(), thumbSize};
+        auto thumbY = absPos.y + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getHeight() - thumbSize));
+        thumbRect = {.x=absPos.x, .y=thumbY, .w=getWidth(), .h=thumbSize};
     }
     // Rysuj "kciuk" suwaka
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);

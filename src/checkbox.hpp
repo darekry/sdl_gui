@@ -1,6 +1,8 @@
 #ifndef CHECKBOX_HPP
 #define CHECKBOX_HPP
 
+#include <utility>
+
 #include "gui.hpp"
 
 import std.compat;
@@ -16,7 +18,7 @@ public:
 void setLabel(std::string_view text, int fontSize, const SDL_Color& color);
 
 using OnChangeCallback = std::function<void(Checkbox*, bool)>;
-void setOnChange(OnChangeCallback callback) { m_onChange = callback; }
+void setOnChange(OnChangeCallback callback) { m_onChange = std::move(callback); }
     bool handleEvent(const SDL_Event& e) override;
 
 protected:

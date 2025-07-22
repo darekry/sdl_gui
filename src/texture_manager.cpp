@@ -7,7 +7,7 @@ import std.compat;
 TextureManager::TextureManager(SDL_Renderer* renderer) : m_renderer(renderer) {
     // Inicjalizacja SDL_image, jeśli nie została jeszcze zainicjowana
     // Sprawdzamy, czy wymagane formaty są już załadowane
-    int imgFlags = IMG_INIT_PNG; // Można dodać więcej formatów, np. IMG_INIT_JPG
+    const auto imgFlags = IMG_INIT_PNG; // Można dodać więcej formatów, np. IMG_INIT_JPG
     if (!(IMG_Init(imgFlags) & imgFlags)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_image could not initialize! SDL_image Error: %s", IMG_GetError());
         // W przypadku błędu inicjalizacji, można podjąć odpowiednie działania, np. rzucić wyjątek
@@ -26,14 +26,14 @@ SharedTexture TextureManager::loadTexture(std::string_view path) {
         return it->second;
     }
 
-    std::string path_str(path);
-    SDL_Surface* loadedSurface = IMG_Load(path_str.c_str());
+    const std::string path_str(path);
+    auto* loadedSurface = IMG_Load(path_str.c_str());
     if (!loadedSurface) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to load image %s! SDL_image Error: %s", path_str.c_str(), IMG_GetError());
         return nullptr;
     }
     
-    SDL_Texture* newTexture = SDL_CreateTextureFromSurface(m_renderer, loadedSurface);
+    auto* newTexture = SDL_CreateTextureFromSurface(m_renderer, loadedSurface);
     SDL_FreeSurface(loadedSurface);
 
     if (!newTexture) {
@@ -41,7 +41,7 @@ SharedTexture TextureManager::loadTexture(std::string_view path) {
         return nullptr;
     }
 
-    SharedTexture sharedNewTexture(newTexture, SDLTextureDeleter());
+    auto sharedNewTexture = SharedTexture(newTexture, SDLTextureDeleter());
     auto [inserted_it, success] = m_textures.emplace(std::move(path_str), sharedNewTexture);
     
     return inserted_it->second;
@@ -55,14 +55,14 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
         return nullptr;
     }
 
-    SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font.get(), std::string(text).c_str(), color);
+    auto* textSurface = TTF_RenderUTF8_Blended(font.get(), std::string(text).c_str(), color);
     if (!textSurface) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to render text surface! SDL_ttf Error: %s", TTF_GetError());
         return nullptr;
     }
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Text surface created successfully (w: %d, h: %d).", textSurface->w, textSurface->h);
 
-    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(m_renderer, textSurface);
+    auto* textTexture = SDL_CreateTextureFromSurface(m_renderer, textSurface);
     SDL_FreeSurface(textSurface);
 
     if (!textTexture) {
@@ -84,21 +84,21 @@ SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* text
     if (!texture) {
         return nullptr;
     }
-    SharedTexture shared(texture, SDLTextureDeleter());
+    auto shared = SharedTexture(texture, SDLTextureDeleter());
     auto [inserted_it, success] = m_textures.emplace(key, shared);
     return inserted_it->second;
 }
 
 
 void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, std::string_view text) {
-    SharedFont defaultFont = fontManager.getDefaultFont();
+    auto defaultFont = fontManager.getDefaultFont();
     if (!defaultFont) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Default font not loaded. Cannot create default texture.");
         return;
     }
 
     // Utwórz powierzchnię tła
-    SDL_Surface* bgSurface = SDL_CreateRGBSurface(0, 100, 30, 32, 0, 0, 0, 0);
+    auto* bgSurface = SDL_CreateRGBSurface(0, 100, 30, 32, 0, 0, 0, 0);
     if (!bgSurface) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Could not create background surface for default texture.");
         return;
@@ -106,8 +106,8 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
     SDL_FillRect(bgSurface, NULL, SDL_MapRGB(bgSurface->format, 200, 200, 200)); // Szare tło
 
     // Utwórz teksturę z tekstem
-    SDL_Color textColor = { 0, 0, 0, 255 }; // Czarny
-    SDL_Surface* textSurface = TTF_RenderUTF8_Blended(defaultFont.get(), std::string(text).c_str(), textColor);
+    auto textColor = SDL_Color{ 0, 0, 0, 255 }; // Czarny
+    auto* textSurface = TTF_RenderUTF8_Blended(defaultFont.get(), std::string(text).c_str(), textColor);
     if (!textSurface) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to render text for default texture. SDL_ttf Error: %s", TTF_GetError());
         SDL_FreeSurface(bgSurface);
@@ -115,12 +115,12 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
     }
 
     // Blituj tekst na tło
-    SDL_Rect textRect = { (bgSurface->w - textSurface->w) / 2, (bgSurface->h - textSurface->h) / 2, textSurface->w, textSurface->h };
+    auto textRect = SDL_Rect{ (bgSurface->w - textSurface->w) / 2, (bgSurface->h - textSurface->h) / 2, textSurface->w, textSurface->h };
     SDL_BlitSurface(textSurface, NULL, bgSurface, &textRect);
     SDL_FreeSurface(textSurface);
 
     // Utwórz finalną teksturę
-    SDL_Texture* finalTexture = SDL_CreateTextureFromSurface(renderer, bgSurface);
+    auto* finalTexture = SDL_CreateTextureFromSurface(renderer, bgSurface);
     SDL_FreeSurface(bgSurface);
 
     if (!finalTexture) {

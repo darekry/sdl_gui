@@ -20,7 +20,7 @@ GUIManager::~GUIManager() {
 
 GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     if (element) {
-        GUIElement* raw_ptr = element.get();
+        auto* raw_ptr = element.get();
         m_elements.push_back(std::move(element)); // Przenieś własność do wektora
         return raw_ptr;
     }
@@ -65,3 +65,4 @@ void GUIManager::cleanup() {
     
     m_elements.erase(new_end, m_elements.end());
 }
+

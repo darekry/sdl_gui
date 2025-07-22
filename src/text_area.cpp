@@ -54,8 +54,8 @@ void TextArea::draw() {
         m_needs_texture_update = false;
     }
 
-    SDL_Renderer* renderer = m_manager.getRenderer();
-    SDL_Rect bounds = { getAbsolutePosition().x, getAbsolutePosition().y, m_width, m_height };
+    auto* renderer = m_manager.getRenderer();
+    auto bounds = SDL_Rect{getAbsolutePosition().x, getAbsolutePosition().y, m_width, m_height};
 
     // Tło
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -66,23 +66,23 @@ void TextArea::draw() {
     SDL_RenderDrawRect(renderer, &bounds);
 
     // Tekst
-    SharedFont font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
+    // Tekst
+    auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
      if (!font) {
         return;
     }
 
-    SDL_Rect clip_rect = { bounds.x + 2, bounds.y, bounds.w - 4, bounds.h };
+    auto clip_rect = SDL_Rect{bounds.x + 2, bounds.y, bounds.w - 4, bounds.h};
     SDL_RenderSetClipRect(renderer, &clip_rect);
-    int yOffset = 0;
+    auto yOffset = 0;
     for (const auto& texture : m_line_textures) {
         if (texture) {
-            SDL_Rect destRect = { bounds.x + 2 + m_text_offset_x, bounds.y + yOffset + 2, 0, 0 };
+            auto destRect = SDL_Rect{bounds.x + 2 + m_text_offset_x, bounds.y + yOffset + 2, 0, 0};
             SDL_QueryTexture(texture.get(), nullptr, nullptr, &destRect.w, &destRect.h);
              SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
         }
         yOffset += TTF_FontHeight(font.get());
     }
-
     if (m_showCursor) {
         renderCursor();
     }
@@ -93,7 +93,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         return false;
     }
 
-    bool eventHandled = false;
+    auto eventHandled = false;
     if (e.type == SDL_MOUSEBUTTONDOWN) {
         if (contains(e.button.x, e.button.y)) {
             m_isHovered = true;
@@ -157,31 +157,31 @@ void TextArea::recalculateLines() {
         return;
     }
 
-    SharedFont font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
+    auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
     if (!font) return;
 
-    std::string currentLine;
-    size_t startPos = 0;
-    size_t endPos = 0;
+    auto currentLine = std::string{};
+    auto startPos = 0uz;
+    auto endPos = 0uz;
 
     while ((endPos = m_text.find('\n', startPos)) != std::string::npos) {
         m_lines.push_back(m_text.substr(startPos, endPos - startPos));
         startPos = endPos + 1;
     }
-    std::string remainingText = m_text.substr(startPos);
+    auto remainingText = m_text.substr(startPos);
     
     if (!m_wordWrap) {
         m_lines.push_back(remainingText);
         return;
     }
 
-    std::string word;
-    std::istringstream stream(remainingText);
+    auto word = std::string{};
+    auto stream = std::istringstream(remainingText);
     
     currentLine.clear();
     while (stream >> word) {
-        std::string testLine = currentLine.empty() ? word : (currentLine + " " + word);
-        int width;
+        auto testLine = currentLine.empty() ? word : (currentLine + " " + word);
+        auto width = 0;
         TTF_SizeText(font.get(), testLine.c_str(), &width, nullptr);
     
         if (width > m_width - 4) { // 4px padding
@@ -196,29 +196,29 @@ void TextArea::recalculateLines() {
 
 void TextArea::refreshTextures() {
     m_line_textures.clear();
-    SharedFont font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
+    auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
     if (!font) return;
 
     for (const auto& line : m_lines) {
         if (line.empty()) {
             m_line_textures.push_back(nullptr);
         } else {
-            SharedTexture lineTexture = m_manager.getTextureManager().createTextureFromText(line, font, m_textColor);
+            auto lineTexture = m_manager.getTextureManager().createTextureFromText(line, font, m_textColor);
             m_line_textures.push_back(lineTexture);
         }
     }
 }
 
 void TextArea::renderCursor() {
-    SharedFont font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
+    auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
     if (!font) return;
 
-    int currentLineIndex = 0;
-    size_t posInLines = 0;
-    size_t tempPos = 0;
+    auto currentLineIndex = 0;
+    auto posInLines = 0uz;
+    auto tempPos = 0uz;
 
     for(size_t i = 0; i < m_lines.size(); ++i) {
-        size_t lineLengthWithNewline = m_lines[i].length() + (i < m_lines.size() - 1 ? 1 : 0);
+        const auto lineLengthWithNewline = m_lines[i].length() + (i < m_lines.size() - 1 ? 1 : 0);
         if (m_cursorPos >= tempPos && m_cursorPos <= tempPos + lineLengthWithNewline) {
             currentLineIndex = i;
             posInLines = m_cursorPos - tempPos;
@@ -227,31 +227,31 @@ void TextArea::renderCursor() {
         tempPos += lineLengthWithNewline;
     }
 
-    int x, y;
-    std::string lineContent = m_lines[currentLineIndex];
+    auto x = 0, y = 0;
+    const auto& lineContent = m_lines[currentLineIndex];
     if (posInLines > lineContent.length()) posInLines = lineContent.length();
 
-    std::string textBeforeCursor = lineContent.substr(0, posInLines);
+    auto textBeforeCursor = lineContent.substr(0, posInLines);
     TTF_SizeText(font.get(), textBeforeCursor.c_str(), &x, nullptr);
 
     y = currentLineIndex * TTF_FontHeight(font.get());
 
-    SDL_Rect cursorRect = { getAbsolutePosition().x + 2 + x + m_text_offset_x, getAbsolutePosition().y + 2 + y, 2, TTF_FontHeight(font.get()) };
+    auto cursorRect = SDL_Rect{ getAbsolutePosition().x + 2 + x + m_text_offset_x, getAbsolutePosition().y + 2 + y, 2, TTF_FontHeight(font.get()) };
     SDL_SetRenderDrawColor(m_manager.getRenderer(), m_textColor.r, m_textColor.g, m_textColor.b, m_textColor.a);
     SDL_RenderFillRect(m_manager.getRenderer(), &cursorRect);
 }
 
 
 void TextArea::update_text_offset() {
-    SharedFont font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
+    auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
     if (!font) return;
 
-    int current_line_idx = 0;
-    size_t pos_in_lines = 0;
-    size_t temp_pos = 0;
+    auto current_line_idx = 0;
+    auto pos_in_lines = 0uz;
+    auto temp_pos = 0uz;
 
     for (size_t i = 0; i < m_lines.size(); ++i) {
-        size_t line_len = m_lines[i].length() + (i < m_lines.size() - 1 ? 1 : 0);
+        auto line_len = m_lines[i].length() + (i < m_lines.size() - 1 ? 1 : 0);
         if (m_cursorPos >= temp_pos && m_cursorPos <= temp_pos + line_len) {
             current_line_idx = i;
             pos_in_lines = m_cursorPos - temp_pos;
@@ -260,13 +260,13 @@ void TextArea::update_text_offset() {
         temp_pos += line_len;
     }
     
-    std::string text_before_cursor = m_lines[current_line_idx].substr(0, pos_in_lines);
-    int cursor_pos_x=0;
+    auto text_before_cursor = m_lines[current_line_idx].substr(0, pos_in_lines);
+    auto cursor_pos_x=0;
     TTF_SizeText(font.get(), text_before_cursor.c_str(), &cursor_pos_x, nullptr);
 
 
-    int padding = 2;
-    int visible_width = getWidth() - 2 * padding;
+    auto padding = 2;
+    auto visible_width = getWidth() - 2 * padding;
 
     if (cursor_pos_x + m_text_offset_x > visible_width) {
         m_text_offset_x = visible_width - cursor_pos_x;
@@ -275,14 +275,12 @@ void TextArea::update_text_offset() {
         m_text_offset_x = -cursor_pos_x;
     }
     
-    int total_text_width=0;
+    auto total_text_width=0;
     TTF_SizeText(font.get(), m_lines[current_line_idx].c_str(), &total_text_width, nullptr);
 
-    if (total_text_width < visible_width) {
+    if (total_text_width <= visible_width) {
         m_text_offset_x = 0;
-    } else if (m_text_offset_x > 0) {
-        m_text_offset_x = 0;
-    } else if (m_text_offset_x < visible_width - total_text_width ) {
-        m_text_offset_x = visible_width - total_text_width;
+    } else {
+        m_text_offset_x = std::clamp(m_text_offset_x, visible_width - total_text_width, 0);
     }
 }

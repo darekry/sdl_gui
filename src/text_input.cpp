@@ -77,7 +77,7 @@ void TextInput::updateTextTexture() {
         m_texture = nullptr;
         return;
     }
-    SharedFont font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
+    auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
     if (!font) {
         m_texture = nullptr;
         return;
@@ -85,15 +85,15 @@ void TextInput::updateTextTexture() {
     m_texture = m_manager.getTextureManager().createTextureFromText(m_text, font, m_textColor);
 }
 void TextInput::update_text_offset() {
-    SharedFont font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
+    auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
     if (!font) return;
 
-    int text_width = 0;
+    auto text_width = 0;
     TTF_SizeText(font.get(), m_text.substr(0, m_cursor_pos).c_str(), &text_width, nullptr);
 
-    int cursor_pos_x = text_width;
-    int padding = 5;
-    int visible_width = getWidth() - 2 * padding;
+    auto cursor_pos_x = text_width;
+    auto padding = 5;
+    auto visible_width = getWidth() - 2 * padding;
 
     if (cursor_pos_x + m_text_offset_x > visible_width) {
         m_text_offset_x = visible_width - cursor_pos_x;
@@ -102,7 +102,7 @@ void TextInput::update_text_offset() {
         m_text_offset_x = -cursor_pos_x;
     }
     
-    int total_text_width=0;
+    auto total_text_width=0;
     TTF_SizeText(font.get(), m_text.c_str(), &total_text_width, nullptr);
 
     if (total_text_width < visible_width) {
@@ -114,15 +114,15 @@ void TextInput::update_text_offset() {
     }
 }
 void TextInput::render_cursor() {
-    SharedFont font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
+    auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
     if (!font) return;
 
-    int cursor_x_pos = 0;
+    auto cursor_x_pos = 0;
     if (m_cursor_pos > 0) {
         TTF_SizeText(font.get(), m_text.substr(0, m_cursor_pos).c_str(), &cursor_x_pos, nullptr);
     }
     
-    SDL_Rect cursor_rect = {
+    auto cursor_rect = SDL_Rect{
         getAbsolutePosition().x + 5 + cursor_x_pos + m_text_offset_x,
         getAbsolutePosition().y + (getHeight() - TTF_FontHeight(font.get())) / 2,
         2,
@@ -133,8 +133,8 @@ void TextInput::render_cursor() {
     SDL_RenderFillRect(m_manager.getRenderer(), &cursor_rect);
 }
 void TextInput::draw() {
-    SDL_Renderer* renderer = m_manager.getRenderer();
-    SDL_Rect rect = {getAbsolutePosition().x, getAbsolutePosition().y, getWidth(), getHeight()};
+    auto* renderer = m_manager.getRenderer();
+    auto rect = SDL_Rect{getAbsolutePosition().x, getAbsolutePosition().y, getWidth(), getHeight()};
 
     SDL_SetRenderDrawColor(renderer, m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b, m_backgroundColor.a);
     SDL_RenderFillRect(renderer, &rect);
@@ -143,14 +143,14 @@ void TextInput::draw() {
     SDL_RenderDrawRect(renderer, &rect);
 
     
-    SDL_Rect clip_rect = { getAbsolutePosition().x + 5, getAbsolutePosition().y, getWidth() - 10, getHeight() };
+    auto clip_rect = SDL_Rect{ getAbsolutePosition().x + 5, getAbsolutePosition().y, getWidth() - 10, getHeight() };
     SDL_RenderSetClipRect(renderer, &clip_rect);
     
     if (m_texture) {
-        int textWidth, textHeight;
+        auto textWidth = 0, textHeight = 0;
         SDL_QueryTexture(m_texture.get(), nullptr, nullptr, &textWidth, &textHeight);
         
-        SDL_Rect renderQuad = { getAbsolutePosition().x + 5 + m_text_offset_x, getAbsolutePosition().y + (getHeight() - textHeight) / 2, textWidth, textHeight };
+        auto renderQuad = SDL_Rect{ getAbsolutePosition().x + 5 + m_text_offset_x, getAbsolutePosition().y + (getHeight() - textHeight) / 2, textWidth, textHeight };
 
         SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad);
     }
@@ -165,7 +165,7 @@ if (m_locked || !m_enabled) {
     return false;
 }
 
-bool eventHandled = false;
+auto eventHandled = false;
 if (e.type == SDL_MOUSEBUTTONDOWN) {
     if (contains(e.button.x, e.button.y)) {
          if (!m_active) {
