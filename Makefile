@@ -44,6 +44,12 @@ INCLUDE := include
 # define lib directory
 LIB := lib
 
+# --- Konfiguracja modułów C++23 ---
+MODULE_CACHE_DIR := modules_cache
+STD_PCM := $(MODULE_CACHE_DIR)/std.pcm
+STD_COMPAT_PCM := $(MODULE_CACHE_DIR)/std.compat.pcm
+MODULE_PCMS := $(STD_PCM) $(STD_COMPAT_PCM)
+
  # Define unity build files
 UNITY_SOURCE := $(OUTPUT)/all.cpp
 UNITY_OBJECT := $(OUTPUT)/all.o
@@ -81,7 +87,7 @@ EXAMPLE_EXECS     := $(patsubst examples/%.cpp,$(OUTPUT)/%,$(EXAMPLE_SRC_FILES))
 # --- Główne cele ---
 
 examples: $(EXAMPLE_EXECS)
-all: examples test
+all: modules examples test
 
 # Cel do tradycyjnej kompilacji (non-unity)
 # Buduje wszystkie pliki obiektowe, ale nie linkuje ich.
@@ -90,7 +96,7 @@ non_unity: $(NON_UNITY_OBJECTS)
 	@echo "Tradycyjna kompilacja (non-unity) zakończona. Obiekty znajdują się w $(OUTPUT)/"
 
 # Cel do uruchamiania testów
-test: $(UNITY_OBJECT) $(TEST_EXECS)
+test: modules $(UNITY_OBJECT) $(TEST_EXECS)
 	@echo "Running all tests..."
 	@for t in $(TEST_EXECS); do \
 		./$$t || exit 1; \
@@ -101,15 +107,30 @@ test: $(UNITY_OBJECT) $(TEST_EXECS)
 
 # Pliki wykonywalne testów
 # Każdy test jest linkowany z całą biblioteką i pomocnikiem testów
-$(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(UNITY_OBJECT) $(TEST_HELPER_OBJ) $(OUTPUT)/catch_amalgamated.o
+$(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(UNITY_OBJECT) $(TEST_HELPER_OBJ) $(OUTPUT)/catch_amalgamated.o | modules
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Pliki wykonywalne przykładów
-$(OUTPUT)/example_%: examples/example_%.cpp $(UNITY_OBJECT)
+$(OUTPUT)/example_%: examples/example_%.cpp $(UNITY_OBJECT) | modules
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
+# Cel do kompilacji modułów
+.PHONY: modules
+modules: $(MODULE_PCMS)
+
+$(STD_PCM): | $(MODULE_CACHE_DIR)
+	@echo "Kompilowanie modułu std..."
+	$(CXX) -std=c++23 -stdlib=libc++ -Wno-reserved-identifier -Wno-reserved-module-identifier --precompile -o $@ /usr/lib/llvm-20/share/libc++/v1/std.cppm
+
+$(STD_COMPAT_PCM): $(STD_PCM) | $(MODULE_CACHE_DIR)
+	@echo "Kompilowanie modułu std.compat..."
+	$(CXX) -std=c++23 -stdlib=libc++ -fmodule-file=std=$(STD_PCM) -Wno-reserved-identifier -Wno-reserved-module-identifier --precompile -o $@ /usr/lib/llvm-20/share/libc++/v1/std.compat.cppm
+
+$(MODULE_CACHE_DIR):
+	@mkdir -p $@
+
 # Reguła dla unity build
-$(UNITY_OBJECT): $(UNITY_SOURCE)
+$(UNITY_OBJECT): $(UNITY_SOURCE) | modules
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
@@ -146,6 +167,7 @@ debug:
 clean:
 	rm -rf $(OUTPUT)
 	rm -f $(TEST_EXECS) $(UNITY_SOURCE) $(UNITY_OBJECT)
+	# rm -f $(MODULE_CACHE_DIR)/*.pcm
 	@echo "Cleanup complete!"
 
 $(OUTPUT):
