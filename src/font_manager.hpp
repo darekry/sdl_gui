@@ -39,6 +39,10 @@ public:
     // Metoda do pobierania domyślnej czcionki
     SharedFont getDefaultFont();
 
+    // Metoda do pobierania surowego wskaźnika do czcionki (dla wydajności).
+    // UWAGA: Ta metoda nie zarządza pamięcią, jedynie zwraca wskaźnik.
+    TTF_Font* getFont(const std::string& path, int size);
+
 private:
     std::map<FontKey, SharedFont> m_fonts; // Mapa przechowująca załadowane czcionki
     SharedFont m_defaultFont; // Domyślna czcionka

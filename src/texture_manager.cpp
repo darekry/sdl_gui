@@ -55,7 +55,7 @@ SharedTexture TextureManager::createTextureFromText(const std::string& text, std
         return nullptr;
     }
 
-    SDL_Surface* textSurface = TTF_RenderText_Blended(font.get(), text.c_str(), color);
+    SDL_Surface* textSurface = TTF_RenderUTF8_Blended(font.get(), text.c_str(), color);
     if (!textSurface) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to render text surface! SDL_ttf Error: %s", TTF_GetError());
         return nullptr;
@@ -107,7 +107,7 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
 
     // Utwórz teksturę z tekstem
     SDL_Color textColor = { 0, 0, 0, 255 }; // Czarny
-    SDL_Surface* textSurface = TTF_RenderText_Blended(defaultFont.get(), text.c_str(), textColor);
+    SDL_Surface* textSurface = TTF_RenderUTF8_Blended(defaultFont.get(), text.c_str(), textColor);
     if (!textSurface) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to render text for default texture. SDL_ttf Error: %s", TTF_GetError());
         SDL_FreeSurface(bgSurface);

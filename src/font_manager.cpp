@@ -47,3 +47,11 @@ void FontManager::loadDefaultFont(const std::string& path, int size) {
 SharedFont FontManager::getDefaultFont() {
     return m_defaultFont;
 }
+
+TTF_Font* FontManager::getFont(const std::string& path, int size) {
+    SharedFont font = loadFont(path, size);
+    if (font) {
+        return font.get();
+    }
+    return nullptr;
+}

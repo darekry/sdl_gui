@@ -19,7 +19,7 @@ public:
     // Metoda do dodawania elementów GUI do zarządzania
 
     // Metoda do dodawania elementów GUI do zarządzania, przejmując własność
-    void addElement(std::unique_ptr<GUIElement> element);
+    GUIElement* addElement(std::unique_ptr<GUIElement> element);
 
     // Metoda do usuwania elementów GUI (opcjonalnie, na razie nie wymagane przez zadanie)
     // void removeElement(GUIElement* element); // Usunięcie elementu z unique_ptr oznacza jego zniszczenie

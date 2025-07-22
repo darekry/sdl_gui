@@ -18,10 +18,13 @@ GUIManager::~GUIManager() {
 }
 
 
-void GUIManager::addElement(std::unique_ptr<GUIElement> element) {
+GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     if (element) {
+        GUIElement* raw_ptr = element.get();
         m_elements.push_back(std::move(element)); // Przenieś własność do wektora
+        return raw_ptr;
     }
+    return nullptr;
 }
 
 bool GUIManager::processEvent(const SDL_Event& e) {

@@ -11,7 +11,7 @@ import std.compat;
 class SDLApp {
 public:
     SDLApp(const char* title, int width, int height) {
-        if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
             std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
             throw std::runtime_error("SDL_Init failed");
         }
