@@ -9,8 +9,6 @@ public:
     // Konstruktor
     Panel(GUIManager& manager, int x, int y, int width, int height);
 
-    // Przesłonięta metoda do renderowania
-    void render() override;
     // Przesłonięta metoda do obsługi zdarzeń
     bool handleEvent(SDL_Event& event) override;
     // Metody do ustawiania obramowania
@@ -18,6 +16,9 @@ public:
     void setBorderThickness(int thickness);
     // Metoda do ustawiania możliwości przeciągania
     void setDraggable(bool draggable);
+
+protected:
+    void draw() override;
 
 private:
     SDL_Color m_borderColor = {0, 0, 0, 255}; // Domyślny kolor obramowania (czarny)

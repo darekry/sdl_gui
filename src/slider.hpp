@@ -20,7 +20,9 @@ public:
     void setOnChangeCallback(OnChangeCallback callback) { m_onChange = callback; }
 
     bool handleEvent(SDL_Event& e) override;
-    void render() override;
+
+protected:
+    void draw() override;
 
 private:
     Orientation m_orientation;

@@ -29,8 +29,10 @@ public:
     } // Używamy m_onClick dla zdarzenia puszczenia przycisku
     // Przesłonięte metody do obsługi zdarzeń i renderowania (na razie puste)
     bool handleEvent(SDL_Event& e) override;
-    void render() override;
     void setLabel(const std::string& text, int fontSize, SDL_Color color);
+
+protected:
+    void draw() override;
 
 private:
     OnClickCallback m_onClick;

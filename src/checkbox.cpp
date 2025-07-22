@@ -40,18 +40,27 @@ bool Checkbox::handleEvent(SDL_Event& e) {
     return false;
 }
 
-void Checkbox::render() {
+void Checkbox::draw() {
     SDL_Renderer* renderer = m_manager.getRenderer();
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect checkboxRect = {absPos.x, absPos.y, m_height, m_height};
 
-    // Domyślny kolor ramki, można by dodać setBorderColor
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    if (m_isHovered) {
+       SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    }
+    else {
+       SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    }
+    SDL_RenderFillRect(renderer, &checkboxRect);
+
+    // Domyślny kolor ramki
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderDrawRect(renderer, &checkboxRect);
 
     if (m_isChecked) {
-        SDL_RenderDrawLine(renderer, absPos.x + 2, absPos.y + 2, absPos.x + m_height - 2, absPos.y + m_height - 2);
-        SDL_RenderDrawLine(renderer, absPos.x + m_height - 2, absPos.y + 2, absPos.x + 2, absPos.y + m_height - 2);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderDrawLine(renderer, absPos.x + 3, absPos.y + m_height / 2, absPos.x + m_height / 2, absPos.y + m_height - 3);
+        SDL_RenderDrawLine(renderer, absPos.x + m_height / 2, absPos.y + m_height - 3, absPos.x + m_height - 3, absPos.y + 3);
     }
 
     if (m_labelTexture) {

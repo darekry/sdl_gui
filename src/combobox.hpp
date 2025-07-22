@@ -11,15 +11,17 @@ public:
     ComboBox(GUIManager& manager, int x, int y, int w, int h);
 
     bool handleEvent(SDL_Event& event) override;
-    void render() override;
 
     void addItem(const std::string& item);
     std::string getSelectedItem() const;
     int getSelectedIndex() const;
     void setSelectedIndex(int index);
 
-bool isExpanded() const { return m_is_expanded; }
+    bool isExpanded() const { return m_is_expanded; }
     std::function<void(int, const std::string&)> on_selection_changed;
+
+protected:
+    void draw() override;
 
 private:
     void toggleDropdown();

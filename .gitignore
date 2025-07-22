@@ -54,4 +54,5 @@ dkms.conf
 .aider*
 assets/
 output/
+vendor/
 .*

@@ -13,11 +13,9 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
     int buttonSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
 
     if (m_orientation == Orientation::Horizontal) { // Poziomy suwak
-        // Przyciski po lewej i prawej stronie, poza obszarem suwaka
         m_decreaseButton = std::make_unique<Button>(manager, -buttonSize, 0, buttonSize, getHeight());
         m_increaseButton = std::make_unique<Button>(manager, getWidth(), 0, buttonSize, getHeight());
     } else { // Pionowy suwak
-        // Przyciski na górze i na dole, poza obszarem suwaka
         m_decreaseButton = std::make_unique<Button>(manager, 0, -buttonSize, getWidth(), buttonSize);
         m_increaseButton = std::make_unique<Button>(manager, 0, getHeight(), getWidth(), buttonSize);
     }
@@ -25,17 +23,17 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
       // Ustaw callbacki dla przycisków
       m_decreaseButton->setOnClickCallback([this](GUIElement*) {
           int oldValue = m_currentValue;
-          m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue); // Zmniejsz wartość o 1
+          m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue);
           if (m_onChange && m_currentValue != oldValue) {
-              m_onChange(this); // Przekazujemy wskaźnik do Slidera
+              m_onChange(this);
           }
       });
  
       m_increaseButton->setOnClickCallback([this](GUIElement*) {
           int oldValue = m_currentValue;
-          m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue); // Zwiększ wartość o 1
+          m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue);
           if (m_onChange && m_currentValue != oldValue) {
-              m_onChange(this); // Przekazujemy wskaźnik do Slidera
+              m_onChange(this);
           }
       });
  
@@ -72,12 +70,12 @@ bool Slider::handleEvent(SDL_Event& e) {
             if (m_onChange && m_currentValue != oldValue) {
                 m_onChange(this);
             }
-            return true; // Zdarzenie obsłużone
+            return true;
         }
     } else if (e.type == SDL_MOUSEBUTTONUP) {
         if (e.button.button == SDL_BUTTON_LEFT && m_isDragging) {
             m_isDragging = false;
-            return true; // Zdarzenie obsłużone
+            return true;
         }
     } else if (e.type == SDL_MOUSEMOTION) {
         if (m_isDragging) {
@@ -95,40 +93,36 @@ bool Slider::handleEvent(SDL_Event& e) {
             if (m_onChange && m_currentValue != oldValue) {
                 m_onChange(this);
             }
-            return true; // Zdarzenie obsłużone
+            return true;
         }
     }
 
     return false;
 }
 
-void Slider::render() {
+void Slider::draw() {
     SDL_Renderer* renderer = m_manager.getRenderer();
     SDL_Point absPos = getAbsolutePosition();
     SDL_Rect sliderBarRect = {absPos.x, absPos.y, getWidth(), getHeight()};
 
-    // Rysuj tło suwaka (np. szary prostokąt)
+    // Rysuj tło suwaka
     SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);
     SDL_RenderFillRect(renderer, &sliderBarRect);
 
     // Oblicz pozycję "kciuka" suwaka
-    // Oblicz pozycję "kciuka" suwaka
-    int thumbSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth(); // Rozmiar kciuka zależy od mniejszego wymiaru suwaka
+    int thumbSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
     SDL_Rect thumbRect;
 
-    if (m_orientation == Orientation::Horizontal) { // Poziomy suwak
+    if (m_orientation == Orientation::Horizontal) {
         int thumbX = absPos.x + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getWidth() - thumbSize));
         thumbRect = {thumbX, absPos.y, thumbSize, getHeight()};
-    } else { // Pionowy suwak
+    } else {
         int thumbY = absPos.y + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getHeight() - thumbSize));
         thumbRect = {absPos.x, thumbY, getWidth(), thumbSize};
     }
-    // Rysuj "kciuk" suwaka (np. niebieski prostokąt)
+    // Rysuj "kciuk" suwaka
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
     SDL_RenderFillRect(renderer, &thumbRect);
 
-    // Renderuj dzieci (przyciski strzałek)
-    for (auto& child : m_children) {
-        child->render();
-    }
+    // Dzieci są renderowane automatycznie
 }

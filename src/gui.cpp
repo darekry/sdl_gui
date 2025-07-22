@@ -96,18 +96,41 @@ void GUIElement::render() {
         return;
     }
     SDL_Renderer* renderer = m_manager.getRenderer();
+    SDL_Rect previous_clip_rect;
+    SDL_RenderGetClipRect(renderer, &previous_clip_rect);
 
-    if (m_texture) {
-        SDL_Point absPos = getAbsolutePosition();
-        SDL_Rect renderQuad = { absPos.x, absPos.y, m_width, m_height };
-        SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad);
+    SDL_Point abs_pos = getAbsolutePosition();
+    SDL_Rect new_clip_rect = { abs_pos.x, abs_pos.y, m_width, m_height };
+    
+    // Jeżeli istnieje już jakiś obszar przycinania, nowy musi być jego częścią
+    if (previous_clip_rect.w != 0 || previous_clip_rect.h != 0) {
+        SDL_IntersectRect(&previous_clip_rect, &new_clip_rect, &new_clip_rect);
     }
 
-    // Domyślna implementacja renderowania: renderuj dzieci
+    SDL_RenderSetClipRect(renderer, &new_clip_rect);
+
+    // Wywołanie specyficznego rysowania dla danego elementu
+    draw();
+
+    // Renderowanie dzieci z już ustawionym (i być może zawężonym) obszarem przycinania
     for (auto&& child : m_children) {
         if (child && child->isVisible()) {
             child->render();
         }
+    }
+
+    // Przywróć poprzedni obszar przycinania
+    SDL_RenderSetClipRect(renderer, &previous_clip_rect);
+}
+
+void GUIElement::draw() {
+    // Domyślna implementacja rysowania: narysuj tło (teksturę), jeśli istnieje.
+    // Klasy pochodne mogą to rozszerzyć lub zastąpić.
+    if (m_texture) {
+        SDL_Renderer* renderer = m_manager.getRenderer();
+        SDL_Point absPos = getAbsolutePosition();
+        SDL_Rect renderQuad = { absPos.x, absPos.y, m_width, m_height };
+        SDL_RenderCopy(renderer, m_texture.get(), nullptr, &renderQuad);
     }
 }
 

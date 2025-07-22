@@ -37,11 +37,11 @@ public:
     // Na razie pusta, będzie rozszerzona w przyszłości
     virtual bool handleEvent(SDL_Event& e);
 
-    // Wirtualna metoda do renderowania (do zaimplementowania w klasach pochodnych)
-    virtual void render();
+    // Metoda renderująca, nie jest już wirtualna
+    void render();
 
-        // Metoda do ustawiania tekstury
-        void setTexture(SharedTexture texture);
+    // Metoda do ustawiania tekstury
+    void setTexture(SharedTexture texture);
         [[nodiscard]] SharedTexture getLabelTexture() const;
         void setLabel(const std::string& text, int fontSize, SDL_Color color);
     
@@ -63,6 +63,10 @@ public:
     void cleanup();
 
 protected:
+    // Nowa, chroniona metoda wirtualna do rysowania zawartości elementu.
+    // Klasy pochodne powinny ją nadpisywać.
+    virtual void draw();
+
     GUIManager& m_manager;
     int m_x, m_y;
     int m_width, m_height;

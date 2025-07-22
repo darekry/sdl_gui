@@ -1,5 +1,6 @@
 #include "button.hpp"
 #include "gui_manager.hpp"
+import std.compat;
 
 // Implementacja klasy Button
 Button::Button(GUIManager& manager, int x, int y, int width, int height, SharedTexture texture)
@@ -44,10 +45,7 @@ bool Button::handleEvent(SDL_Event& e) {
     return false;
 }
 
-void Button::render() {
-    if (!m_visible) {
-        return;
-    }
+void Button::draw() {
     SDL_Renderer* renderer = m_manager.getRenderer();
 
     SDL_Point absPos = getAbsolutePosition();

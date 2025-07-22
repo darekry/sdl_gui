@@ -16,6 +16,9 @@ public:
     // Ustawia aktywną zakładkę na podstawie wskaźnika na jej przycisk
     void setActiveTab(Button* tabButton);
 
+protected:
+    void draw() override;
+
 private:
     void reorderTabs(); // Prywatna metoda do aktualizacji pozycji przycisków
 

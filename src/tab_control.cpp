@@ -12,30 +12,25 @@ TabControl::TabControl(GUIManager& manager, int x, int y, int width, int height)
 }
 
 Panel* TabControl::addTab(const std::string& title) {
-    // Tworzenie przycisku dla zakładki
     auto button = std::make_unique<Button>(m_manager, 0, 0, 100, m_tabButtonHeight);
-    SDL_Color textColor = {255, 255, 255, 255}; // Biały tekst
+    SDL_Color textColor = {255, 255, 255, 255};
     button->setLabel(title, 16, textColor);
     
     Button* buttonPtr = button.get();
     m_tabButtons.push_back(buttonPtr);
 
-    // Ustawienie callbacku na kliknięcie przycisku
     button->setOnClickCallback([this, buttonPtr](GUIElement*){
         setActiveTab(buttonPtr);
     });
 
-    // Tworzenie panelu na zawartość zakładki
     auto panel = std::make_unique<Panel>(m_manager, 0, m_tabButtonHeight, m_width, m_height - m_tabButtonHeight);
-    panel->setVisible(false); // Domyślnie niewidoczny
+    panel->setVisible(false);
     Panel* panelPtr = panel.get();
     m_tabPanels.push_back(panelPtr);
 
-    // Dodaj przycisk i panel jako dzieci TabControl
     addChild(std::move(button));
     addChild(std::move(panel));
 
-    // Jeśli to pierwsza zakładka, ustaw ją jako aktywną
     if (m_tabButtons.size() == 1) {
         setActiveTab(buttonPtr);
     }
@@ -46,10 +41,9 @@ Panel* TabControl::addTab(const std::string& title) {
 
 void TabControl::setActiveTab(Button* tabButton) {
     if (m_activeTabButton == tabButton) {
-        return; // Już aktywna
+        return;
     }
 
-    // Deaktywuj poprzednią aktywną zakładkę
     for (size_t i = 0; i < m_tabButtons.size(); ++i) {
         if (m_tabButtons[i] == m_activeTabButton) {
             m_tabPanels[i]->setVisible(false);
@@ -57,7 +51,6 @@ void TabControl::setActiveTab(Button* tabButton) {
         }
     }
 
-    // Aktywuj nową zakładkę
     m_activeTabButton = tabButton;
     for (size_t i = 0; i < m_tabButtons.size(); ++i) {
         if (m_tabButtons[i] == m_activeTabButton) {
@@ -71,8 +64,10 @@ void TabControl::reorderTabs() {
     int current_x = 0;
     for (Button* button : m_tabButtons) {
         button->setPosition(current_x, 0);
-        current_x += button->getWidth() + 5; // 5px przerwy
+        current_x += button->getWidth() + 5;
     }
 }
 
-// handleEvent i render są teraz poprawnie obsługiwane przez klasę bazową GUIElement
+void TabControl::draw() {
+    //
+}
