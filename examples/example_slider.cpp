@@ -16,16 +16,12 @@ int main(int, char**) {
         // Utwórz suwak
         auto slider = std::make_unique<Slider>(guiManager, 100, 100, 200, 20, 0, 100, 50, Orientation::Horizontal);
 
-        // Dostęp do przycisków przez getChildren() jest niebezpieczny, jeśli zmieni się kolejność.
-        // Lepszym podejściem byłoby dodanie dedykowanych metod w klasie Slider.
-        // Na potrzeby tego przykładu, zakładamy, że kolejność jest stała.
-        if (slider->getChildren().size() >= 2) {
-            if(auto dec_btn = dynamic_cast<Button*>(slider->getChildren()[0].get())) {
-                dec_btn->setLabel("<", 24, {0,0,0,255});
-            }
-            if(auto inc_btn = dynamic_cast<Button*>(slider->getChildren()[1].get())) {
-                inc_btn->setLabel(">", 24, {0,0,0,255});
-            }
+        // Przykład użycia nowych metod dostępowych do modyfikacji przycisków
+        if (auto decBtn = slider->getDecrementButton()) {
+         
+        }
+        if (auto incBtn = slider->getIncrementButton()) {
+           // incBtn->// Ustaw kolor etykiety na zielony
         }
 
         slider->setOnChangeCallback([](GUIElement* element) {

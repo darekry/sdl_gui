@@ -3,12 +3,14 @@
 import std.compat;
 
 Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation)
-    : GUIElement(manager, x, y, width, height),
+    : Panel(manager, x, y, width, height),
       m_orientation(orientation),
       m_minValue(minValue),
       m_maxValue(maxValue),
       m_currentValue(std::clamp(initialValue, minValue, maxValue)) {
-    
+    // Ustawienie koloru tła jest dziedziczone z Panel
+    setBackgroundColor({150, 150, 150, 255});
+    setClipChildren(false);
     // Określ rozmiar przycisków na podstawie orientacji suwaka
     auto buttonSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
 
@@ -19,6 +21,12 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
         m_decreaseButton = std::make_unique<Button>(manager, 0, -buttonSize, getWidth(), buttonSize);
         m_increaseButton = std::make_unique<Button>(manager, 0, getHeight(), getWidth(), buttonSize);
     }
+    
+    decrementButton = m_decreaseButton.get();
+    incrementButton = m_increaseButton.get();
+
+    decrementButton->setLabel("<", 12, {255, 255, 255, 255});
+    incrementButton->setLabel(">", 12, {255, 255, 255, 255});
  
       // Ustaw callbacki dla przycisków
       m_decreaseButton->setOnClickCallback([this](GUIElement*) {
@@ -96,33 +104,57 @@ bool Slider::handleEvent(const SDL_Event& e) {
             return true;
         }
     }
-
-    return false;
+return false;
 }
 
 void Slider::draw() {
+    // Krok 3a: Standardowe sprawdzenie widoczności.
+    if (!isVisible()) return;
+
+    SDL_RenderSetClipRect(m_manager.getRenderer(), nullptr);
+
+    // Krok 3b: Pobierz wskaźnik na renderer.
     auto* renderer = m_manager.getRenderer();
     auto absPos = getAbsolutePosition();
-    auto sliderBarRect = SDL_Rect{absPos.x, absPos.y, getWidth(), getHeight()};
+    auto rect = SDL_Rect{absPos.x, absPos.y, getWidth(), getHeight()};
 
-    // Rysuj tło suwaka
-    SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);
-    SDL_RenderFillRect(renderer, &sliderBarRect);
+    // Krok 3c: Rysuj tło Slidera.
+    SDL_SetRenderDrawColor(renderer, m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b, m_backgroundColor.a);
+    SDL_RenderFillRect(renderer, &rect);
 
-    // Oblicz pozycję "kciuka" suwaka
-    auto thumbSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
-    auto thumbRect = SDL_Rect{};
-
+    // Krok 3d: Rysuj "kciuk" Slidera.
+    SDL_Rect thumbRect;
+    int thumbSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
+    
     if (m_orientation == Orientation::Horizontal) {
-        auto thumbX = absPos.x + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getWidth() - thumbSize));
+        int thumbX = absPos.x + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getWidth() - thumbSize));
         thumbRect = {.x=thumbX, .y=absPos.y, .w=thumbSize, .h=getHeight()};
     } else {
-        auto thumbY = absPos.y + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getHeight() - thumbSize));
+        int thumbY = absPos.y + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getHeight() - thumbSize));
         thumbRect = {.x=absPos.x, .y=thumbY, .w=getWidth(), .h=thumbSize};
     }
-    // Rysuj "kciuk" suwaka
-    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-    SDL_RenderFillRect(renderer, &thumbRect);
 
-    // Dzieci są renderowane automatycznie
+    // Użyj koloru `foregroundColor` dla kciuka.
+    SDL_SetRenderDrawColor(renderer, m_foregroundColor.r, m_foregroundColor.g, m_foregroundColor.b, m_foregroundColor.a);
+    SDL_RenderFillRect(renderer, &thumbRect);
+    
+    // Krok 3e: Rysuj obramowanie.
+    if (m_borderWidth > 0) {
+        SDL_SetRenderDrawColor(renderer, m_borderColor.r, m_borderColor.g, m_borderColor.b, m_borderColor.a);
+        for (int i = 0; i < m_borderWidth; ++i) {
+            SDL_Rect borderRect = {rect.x + i, rect.y + i, rect.w - 2 * i, rect.h - 2 * i};
+            SDL_RenderDrawRect(renderer, &borderRect);
+        }
+    }
+
+    // Krok 3f: Rysowanie dzieci (przycisków) jest obsługiwane przez GUIElement::render() po wywołaniu tej metody.
+    // Nie ma potrzeby dodawać tutaj pętli.
+}
+
+Button* Slider::getDecrementButton() {
+    return decrementButton;
+}
+
+Button* Slider::getIncrementButton() {
+    return incrementButton;
 }

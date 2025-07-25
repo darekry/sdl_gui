@@ -1,12 +1,16 @@
 #ifndef GUI_MANAGER_HPP
 #define GUI_MANAGER_HPP
 
+
 #include "SDL2/SDL.h"
 #include "gui.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
+#include "timer_manager.hpp"
 import std.compat;
 
+class TimerManager;
+class GUIElement;
 
 class GUIManager {
 public:
@@ -40,17 +44,25 @@ public:
     const FontManager& getFontManager() const { return m_fontManager; }
     TextureManager& getTextureManager() { return m_textureManager; }
     const TextureManager& getTextureManager() const { return m_textureManager; }
+    TimerManager* getTimerManager();
+    
+    // Tooltip
+    void showTooltip(GUIElement* target, const std::string& text);
+    void hideTooltip();
 
     // Metoda do uzyskiwania dostępu do elementów (potrzebna do ręcznej obsługi zdarzeń)
     const std::vector<std::unique_ptr<GUIElement>>& getElements() const { return m_elements; }
 private:
     // Kontener na unikalne wskaźniki do elementów GUI
     std::vector<std::unique_ptr<GUIElement>> m_elements;
+    std::unique_ptr<GUIElement> tooltipElement;
+
 
     // Kontekst aplikacji
     SDL_Renderer* m_renderer;
     FontManager m_fontManager;
     TextureManager m_textureManager;
+    std::unique_ptr<TimerManager> timerManager;
 };
 
 #endif // GUI_MANAGER_HPP

@@ -12,14 +12,19 @@ class GUIManager;
 
 // Podstawowa klasa bazowa dla elementów GUI
 class GUIElement {
+private:
+    std::string tooltip;
+    uint32_t tooltipTimerId = 0;
 public:
     // Konstruktor
     GUIElement(GUIManager& manager, int x, int y, int width, int height);
     
     // Wirtualny destruktor dla poprawnego dziedziczenia
     virtual ~GUIElement() = default;
+
+    void setTooltip(const std::string& text);
     // Metody dostępu do położenia i rozmiaru
-    int getX() const { return m_x; }
+    [[nodiscard]] int getX() const { return m_x; }
     int getY() const { return m_y; }
     int getWidth() const { return m_width; }
     int getHeight() const { return m_height; }
@@ -51,14 +56,14 @@ public:
     
         // Metody do zarządzania stanem włączony/wyłączony
         void setEnabled(bool enabled) { m_enabled = enabled; }
-        bool isEnabled() const { return m_enabled; }
+        [[nodiscard]] bool isEnabled() const { return m_enabled; }
     
         // Metody do zarządzania widocznością
         void setVisible(bool visible) { m_visible = visible; }
-        bool isVisible() const { return m_visible; }
+        [[nodiscard]] bool isVisible() const { return m_visible; }
 
     // Metoda do sprawdzania stanu najechania myszką
-    bool isHovered() const { return m_isHovered; }
+    [[nodiscard]] bool isHovered() const { return m_isHovered; }
 
     // Metody do zarządzania usuwaniem
     void markForDeletion();
@@ -66,6 +71,9 @@ public:
     void cleanup();
 
 protected:
+    uint32_t startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback);
+    void stopTimer(uint32_t timerId);
+    
     bool m_clip_children = true;
     
     // Nowa, chroniona metoda wirtualna do rysowania zawartości elementu.

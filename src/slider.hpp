@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "button.hpp"
-#include "gui.hpp"
+#include "panel.hpp"
 import std.compat;
 
 enum class Orientation :uint8_t{
@@ -13,7 +13,7 @@ enum class Orientation :uint8_t{
     Vertical
 };
 
-class Slider : public GUIElement {
+class Slider : public Panel {
 public:
     Slider(GUIManager& manager, int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation);
 
@@ -22,12 +22,18 @@ public:
     using OnChangeCallback = std::function<void(GUIElement*)>;
     void setOnChangeCallback(OnChangeCallback callback) { m_onChange = std::move(callback); }
 
+    Button* getDecrementButton();
+    Button* getIncrementButton();
+
     bool handleEvent(const SDL_Event& e) override;
 
 protected:
     void draw() override;
 
 private:
+    Button* decrementButton = nullptr;
+    Button* incrementButton = nullptr;
+
     Orientation m_orientation;
     int m_minValue;
     int m_maxValue;

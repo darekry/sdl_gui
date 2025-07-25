@@ -1,10 +1,15 @@
 #include "gui_manager.hpp"
 #include "SDL2/SDL.h"
-#include "gui.hpp" // Potrzebne do rzutowania na Button
+#include "gui.hpp"
+#include "timer_manager.hpp"
+#include "panel.hpp"
+#include "label.hpp"
 import std.compat;
 
 GUIManager::GUIManager(SDL_Renderer* renderer)
     : m_renderer(renderer), m_fontManager(), m_textureManager(renderer) {
+    timerManager = std::make_unique<TimerManager>();
+    tooltipElement = nullptr;
     // Załaduj domyślną czcionkę
     m_fontManager.loadDefaultFont("assets/fonts/font.ttf", 24);
 
@@ -47,9 +52,20 @@ void GUIManager::render() {
             element->render();
         }
     }
+    
+    if (tooltipElement) {
+        tooltipElement->render();
+    }
 }
 
 void GUIManager::cleanup() {
+    // Zaktualizuj timery
+    timerManager->update();
+
+    if (tooltipElement && tooltipElement->isMarkedForDeletion()) {
+        tooltipElement.reset();
+    }
+    
     // Najpierw rekurencyjnie wywołaj cleanup dla wszystkich elementów
     for (const auto& element : m_elements) {
         if (element) {
@@ -65,4 +81,40 @@ void GUIManager::cleanup() {
     
     m_elements.erase(new_end, m_elements.end());
 }
+
+void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
+    if (!target) return;
+
+    const int fontSize = 14;
+    const int padding = 5;
+
+    // Precyzyjne obliczanie rozmiaru tekstu
+    int textWidth, textHeight;
+    m_fontManager.getTextSize(text, "assets/fonts/font.ttf", fontSize, &textWidth, &textHeight);
+    
+    auto targetPos = target->getAbsolutePosition();
+    int x = targetPos.x;
+    int y = targetPos.y + target->getHeight();
+
+    // Utwórz panel
+    auto panel = std::make_unique<Panel>(*this, x, y, textWidth + 2 * padding, textHeight + 2 * padding);
+    panel->setBorderThickness(1);
+    panel->setBackgroundColor({255, 255, 225, 255}); // Jasnożółte tło
+
+    // Utwórz etykietę i dodaj ją do panelu
+    auto label = std::make_unique<Label>(*this, padding, padding, text, fontSize, SDL_Color{0, 0, 0, 255});
+    panel->addChild(std::move(label));
+
+    tooltipElement = std::move(panel);
+}
+
+void GUIManager::hideTooltip() {
+    tooltipElement.reset();
+}
+
+
+TimerManager* GUIManager::getTimerManager() {
+    return timerManager.get();
+}
+
 

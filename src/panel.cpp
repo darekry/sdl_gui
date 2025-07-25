@@ -14,7 +14,10 @@ void Panel::setBorderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 }
 
 void Panel::setBorderThickness(int thickness) {
-    m_borderThickness = thickness;
+    m_borderWidth = thickness;
+}
+void  Panel::setBackgroundColor(const SDL_Color& color) {
+    m_backgroundColor = color;
 }
 void Panel::setDraggable(bool draggable) {
     m_is_draggable = draggable;
@@ -71,13 +74,13 @@ void Panel::draw() {
     auto panelRect = SDL_Rect{ absPos.x, absPos.y, m_width, m_height };
 
     // Rysuj tło panelu
-    SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255); // Jasnoszary kolor tła
+    SDL_SetRenderDrawColor(renderer, m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b, m_backgroundColor.a);
     SDL_RenderFillRect(renderer, &panelRect);
 
     // Rysuj obramowanie (jeśli jest grubsze niż 0)
-    if (m_borderThickness > 0) {
+    if (m_borderWidth > 0) {
         SDL_SetRenderDrawColor(renderer, m_borderColor.r, m_borderColor.g, m_borderColor.b, m_borderColor.a);
-        for (int i = 0; i < m_borderThickness; ++i) {
+        for (int i = 0; i < m_borderWidth; ++i) {
             auto borderRect = SDL_Rect{absPos.x + i, absPos.y + i, m_width - 2 * i, m_height - 2 * i};
             SDL_RenderDrawRect(renderer, &borderRect);
         }

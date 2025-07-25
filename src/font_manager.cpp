@@ -56,3 +56,20 @@ TTF_Font* FontManager::getFont(std::string_view path, int size) {
     }
     return nullptr;
 }
+
+void FontManager::getTextSize(std::string_view text, std::string_view fontPath, int fontSize, int* width, int* height) {
+    if (!width || !height) {
+        return;
+    }
+    *width = 0;
+    *height = 0;
+
+    auto font = loadFont(fontPath, fontSize);
+    if (font) {
+        if (TTF_SizeUTF8(font.get(), text.data(), width, height) != 0) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TTF_SizeUTF8 failed: %s", TTF_GetError());
+            *width = 0;
+            *height = 0;
+        }
+    }
+}

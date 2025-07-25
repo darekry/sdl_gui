@@ -74,26 +74,54 @@ void GUIElement::setLabel(std::string_view text, int fontSize, const SDL_Color& 
     }
 }
 
+void GUIElement::setTooltip(const std::string& text) {
+    this->tooltip = text;
+}
+
 // removeChild nie jest już potrzebne w tej formie przy użyciu unique_ptr,
 // ponieważ usunięcie elementu z wektora m_children automatycznie zwalnia pamięć.
 // Jeśli potrzebne jest usunięcie dziecka bez niszczenia go (np. przeniesienie do innego rodzica),
 // należy zaimplementować inną metodę, która zwraca unique_ptr.
 
-
 bool GUIElement::handleEvent(const SDL_Event& e) {
     if (!m_enabled || !m_visible) {
         return false;
     }
- 
+
     // Przekaż zdarzenie do dzieci w odwrotnej kolejności (od góry do dołu)
-    for (auto& it : m_children) {
-        if (it->handleEvent(e)) {
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+        if ((*it)->handleEvent(e)) {
             return true; // Jeśli dziecko obsłużyło zdarzenie, nie propaguj dalej
+        }
+    }
+    
+    if (e.type == SDL_MOUSEMOTION) {
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        bool currentlyHovered = contains(mouseX, mouseY);
+
+        if (currentlyHovered && !m_isHovered) { // Kursor wjechał na element
+            m_isHovered = true;
+            if (!tooltip.empty()) {
+                tooltipTimerId = startTimer(500, true, [this](GUIElement* self) {
+                    if (self) {
+                       self->m_manager.showTooltip(self, self->tooltip);
+                    }
+                });
+            }
+        } else if (!currentlyHovered && m_isHovered) { // Kursor opuścił element
+            m_isHovered = false;
+            if (tooltipTimerId != 0) {
+                stopTimer(tooltipTimerId);
+                tooltipTimerId = 0;
+            }
+            m_manager.hideTooltip();
         }
     }
  
     return false; // Żadne dziecko nie obsłużyło zdarzenia
 }
+
 
 void GUIElement::render() {
     if (!m_visible) {
@@ -166,5 +194,22 @@ void GUIElement::cleanup() {
     });
 
     m_children.erase(new_end, m_children.end());
+}
+uint32_t GUIElement::startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback) {
+    if (m_manager.getTimerManager()) {
+        // Poprawiona kolejność argumentów: target, delay, singleShot, callback
+        return m_manager.getTimerManager()->addTimer(this, delay, singleShot, [callback](GUIElement* target)
+        {
+            callback(target);
+        });
+    }
+    return 0;
+}
+
+
+void GUIElement::stopTimer(uint32_t timerId) {
+    if (m_manager.getTimerManager()) {
+        m_manager.getTimerManager()->removeTimer(timerId);
+    }
 }
 

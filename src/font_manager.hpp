@@ -46,6 +46,9 @@ public:
     // UWAGA: Ta metoda nie zarządza pamięcią, jedynie zwraca wskaźnik.
     TTF_Font* getFont(std::string_view path, int size);
 
+    // Metoda do obliczania rozmiaru tekstu
+    void getTextSize(std::string_view text, std::string_view fontPath, int fontSize, int* width, int* height);
+
 private:
     std::map<FontKey, SharedFont> m_fonts; // Mapa przechowująca załadowane czcionki
     SharedFont m_defaultFont; // Domyślna czcionka
