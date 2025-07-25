@@ -15,7 +15,7 @@ Poniższa lista zawiera zebrane propozycje nowych funkcji i ulepszeń dla biblio
     *   **Grid Layout**: Organizuje elementy w siatce o definiowalnych wierszach i kolumnach.
     *   Upraszcza to tworzenie złożonych interfejsów bez potrzeby ręcznego liczenia koordynatów.
 
-2.  **Podpowiedzi (Tooltips)**: Małe okienka z tekstem informacyjnym pojawiające się, gdy kursor myszy najedzie na dany element i zatrzyma się na chwilę.
+2.  **Podpowiedzi (Tooltips)**: Małe okienka z tekstem informacyjnym pojawiające się, gdy kursor myszy najedzie na dany element i zatrzyma się na chwilę. **[ZAIMPLEMENTOWANE]**
 
 3.  **Dialog wyboru pliku/katalogu**: Standardowy, wbudowany widget do przeglądania i wybierania plików lub folderów z systemu plików.
 
@@ -24,7 +24,7 @@ Poniższa lista zawiera zebrane propozycje nowych funkcji i ulepszeń dla biblio
 5.  **Proste animacje/przejścia**: Wsparcie dla płynnych przejść, np. animowane pojawianie/znikanie (fade-in/fade-out) okien lub subtelne zmiany kolorów po najechaniu myszą, aby uczynić interfejs bardziej "żywym".
 
 
-### 2. Rekomendowane Rozwiązanie Alternatywne: Wewnętrzny Menedżer Zdarzeń Czasowych
+### 2. Rekomendowane Rozwiązanie Alternatywne: Wewnętrzny Menedżer Zdarzeń Czasowych **[ZAIMPLEMENTOWANE - jako TimerManager]**
 
 -   **Opis**: Stworzenie dedykowanej klasy, np. `TimeEventManager`, zintegrowanej z `GUIManager`. Menedżer ten utrzymuje kolejkę zaplanowanych zdarzeń. W każdej klatce pętli głównej aplikacji `GUIManager` wywołuje metodę `TimeEventManager::update(deltaTime)`, gdzie `deltaTime` to czas, jaki upłynął od ostatniej klatki. Menedżer sprawdza, które zdarzenia powinny zostać uruchomione i wykonuje przypisane do nich akcje (callbacki) bezpośrednio w głównym wątku.
 -   **Zalety**:
