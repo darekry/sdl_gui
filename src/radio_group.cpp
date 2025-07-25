@@ -1,40 +1,28 @@
 #include "radio_group.hpp"
-#include "radio_button.hpp" // Potrzebne do pracy z obiektami RadioButton
+#include "radio_button.hpp"
 import std.compat;
 
-void RadioGroup::addRadioButton(RadioButton* button) {
-    if (button) {
-        m_buttons.push_back(button);
-        button->setGroup(this); // Ustaw wskaźnik do tej grupy w przycisku
-    }
+RadioGroup::RadioGroup(GUIManager& manager, int x, int y, int w, int h)
+    : Panel(manager, x, y, w, h) {
 }
 
-void RadioGroup::buttonSelected(RadioButton* selectedButton) {
-    for (auto* button : m_buttons) {
-        if (button != selectedButton) {
-            // Odznacz inne przyciski, nie powiadamiając grupy (aby uniknąć pętli)
-            if (button->isSelected()) {
-                button->setSelected(false, false);
+void RadioGroup::onButtonSelected(RadioButton* selectedButton) {
+    for (const auto& child : getChildren()) {
+        if (auto* rb = dynamic_cast<RadioButton*>(child.get())) {
+            if (rb != selectedButton && rb->isSelected()) {
+                rb->setSelected(false);
             }
         }
     }
-    // Zaznacz wybrany przycisk, również bez powiadamiania grupy
-    if (selectedButton && !selectedButton->isSelected()) {
-        selectedButton->setSelected(true, false);
-    }
 }
 
-// Opcjonalna metoda do usuwania RadioButtona z grupy
-// void RadioGroup::removeRadioButton(RadioButton* button) {
-//     m_buttons.erase(std::remove(m_buttons.begin(), m_buttons.end(), button), m_buttons.end());
-// }
-
-// Opcjonalna metoda zwracająca wskaźnik do aktualnie zaznaczonego RadioButtona
-// RadioButton* RadioGroup::getSelectedButton() const {
-//     for (RadioButton* button : m_buttons) {
-//         if (button->isSelected()) {
-//             return button;
-//         }
-//     }
-//     return nullptr; // Brak zaznaczonego przycisku
-// }
+RadioButton* RadioGroup::getSelectedButton() const {
+    for (const auto& child : getChildren()) {
+        if (auto* rb = dynamic_cast<RadioButton*>(child.get())) {
+            if (rb->isSelected()) {
+                return rb;
+            }
+        }
+    }
+    return nullptr;
+}

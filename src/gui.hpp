@@ -28,10 +28,12 @@ public:
     int getY() const { return m_y; }
     int getWidth() const { return m_width; }
     int getHeight() const { return m_height; }
+    void getSize(int& width, int& height) const;
 
     // Metody ustawiające położenie i rozmiar
     void setPosition(int x, int y);
     void setSize(int width, int height);
+    void setParent(GUIElement* parent);
 
     // Metoda zwracająca absolutną pozycję elementu
     SDL_Point getAbsolutePosition() const;

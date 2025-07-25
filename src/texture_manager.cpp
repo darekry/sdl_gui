@@ -89,6 +89,33 @@ SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* text
     return inserted_it->second;
 }
 
+SharedTexture TextureManager::addTexture(std::string_view key, SharedTexture texture) {
+    auto it = m_textures.find(key);
+    if (it != m_textures.end()) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
+        return it->second;
+    }
+
+    if (!texture) {
+        return nullptr;
+    }
+
+    auto [inserted_it, success] = m_textures.emplace(key, texture);
+    return inserted_it->second;
+}
+
+SharedTexture TextureManager::getTexture(std::string_view key) const {
+    auto it = m_textures.find(key);
+    if (it != m_textures.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+bool TextureManager::hasTexture(std::string_view key) const {
+    return m_textures.contains(key);
+}
+
 
 void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, std::string_view text) {
     auto defaultFont = fontManager.getDefaultFont();

@@ -20,6 +20,15 @@ void GUIElement::setSize(int width, int height) {
     m_height = height;
 }
 
+void GUIElement::setParent(GUIElement* parent) {
+    m_parent = parent;
+}
+
+void GUIElement::getSize(int& width, int& height) const {
+    width = m_width;
+    height = m_height;
+}
+
 void GUIElement::setClipChildren(bool clip) {
     m_clip_children = clip;
 }

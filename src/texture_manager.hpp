@@ -27,6 +27,13 @@ public:
 
     // Metoda do dodawania istniejącej tekstury i przejmowania nad nią własności
     SharedTexture addTexture(std::string_view key, SDL_Texture* texture);
+    SharedTexture addTexture(std::string_view key, SharedTexture texture);
+
+    // Metoda do pobierania tekstury po kluczu
+    SharedTexture getTexture(std::string_view key) const;
+
+    // Metoda do sprawdzania, czy tekstura o danym kluczu istnieje
+    bool hasTexture(std::string_view key) const;
 
     // Metoda do tworzenia domyślnej tekstury
     void createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, std::string_view text);

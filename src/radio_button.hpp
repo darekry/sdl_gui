@@ -1,51 +1,46 @@
 #ifndef RADIOBUTTON_HPP
 #define RADIOBUTTON_HPP
 
-#include <utility>
-
 #include "gui.hpp"
-#include "sdl_deleters.hpp" // Dla SharedFont i SDLTextureDeleter
-#include "radio_group.hpp" // Dla klasy RadioGroup
+#include "label.hpp"
 import std.compat;
 
-// Typ dla współdzielonego wskaźnika na czcionkę (zdefiniowany w sdl_deleters.hpp)
-// using SharedFont = std::shared_ptr<TTF_Font>; // Już zdefiniowane w gui.hpp
 class RadioButton : public GUIElement {
 public:
-    // Konstruktor
-    RadioButton(GUIManager& manager, int x, int y, int w, int h);
+    RadioButton(GUIManager& manager, int x, int y, std::string_view text, int fontSize = 16);
+    RadioButton(GUIManager& manager, int x, int y, SharedTexture texture);
 
     // Destruktor
     ~RadioButton() = default;
 
-    // Metody do zarządzania stanem
-    bool isSelected() const { return m_isSelected; }
-    void setSelected(bool selected, bool notifyGroup = true);
+    bool isSelected() const;
+    void setSelected(bool selected);
+    Label* getLabel() const;
 
-    // Metoda do ustawiania etykiety tekstowej
-    void setLabel(std::string_view text, int fontSize, const SDL_Color& color);
+    using OnChangeCallback = std::function<void(RadioButton*, bool)>;
+    void setOnChange(OnChangeCallback callback);
 
-    // Metoda do ustawiania grupy, do której należy RadioButton
-    void setGroup(RadioGroup* group);
-    RadioGroup* getGroup() const { return m_group; }
+    void setNormalTexture(SharedTexture texture);
+    void setHoverTexture(SharedTexture texture);
+    void setSelectedTexture(SharedTexture texture);
+    void setSelectedHoverTexture(SharedTexture texture);
 
-    // Typ callbacka dla zmiany stanu (zaznaczenia)
-    using OnChangeCallback = std::function<void(RadioButton*)>;
-
-    // Metoda do przypisywania callbacka
-    void setOnChange(OnChangeCallback callback) { m_onChange = std::move(callback); }
-
-    // Przesłonięte metody do obsługi zdarzeń i renderowania
     bool handleEvent(const SDL_Event& e) override;
 
 protected:
     void draw() override;
 
 private:
-    bool m_isSelected;
-    RadioGroup* m_group; // Wskaźnik do grupy, do której należy przycisk
+    void init();
+    bool m_isSelected = false;
     OnChangeCallback m_onChange;
-    SharedTexture m_labelTexture;
+
+    SharedTexture m_tex_normal;
+    SharedTexture m_tex_hover;
+    SharedTexture m_tex_selected;
+    SharedTexture m_tex_selected_hover;
+
+    Label* m_label = nullptr;
 };
 
 #endif // RADIOBUTTON_HPP

@@ -1,10 +1,9 @@
 
-#include "SDL_pixels.h"
 #include "gui_manager.hpp"
 #include "radio_button.hpp"
 #include "radio_group.hpp"
+#include "label.hpp"
 #include "helpers/sdl_app.hpp"
-
 import std.compat;
 
 const int SCREEN_WIDTH = 800;
@@ -13,25 +12,32 @@ const int SCREEN_HEIGHT = 600;
 int main(int, char**) {
     try {
         SDLApp app("RadioButton Example", SCREEN_WIDTH, SCREEN_HEIGHT);
-        SDL_Renderer* renderer = app.getRenderer();
+        auto* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        auto radioGroup = std::make_shared<RadioGroup>();
+        // 1. Utwórz RadioGroup jako kontener Panel
+        auto radioGroup = std::make_unique<RadioGroup>(guiManager, 100, 100, 250, 200);
+        radioGroup->setBackgroundColor({40, 40, 40, 255});
+        radioGroup->setBorderColor(100, 100, 100, 255);
+        radioGroup->setBorderThickness(2);
 
-        auto createRadioButton = [&](int x, int y, const std::string& label) {
-            auto rb = std::make_unique<RadioButton>(guiManager, x, y, 20, 20);
-            rb->setLabel(label, 24, (SDL_Color){255, 255, 255, 255});
-            radioGroup->addRadioButton(rb.get());
-            return rb;
-        };
+        // 2. Utwórz i dodaj RadioButton jako dzieci RadioGroup
+        auto rb1 = std::make_unique<RadioButton>(guiManager, 20, 20, "Opcja 1 po polsku");
+        radioGroup->addChild(std::move(rb1));
 
-        guiManager.addElement(createRadioButton(100, 100, "Option 1"));
+        auto rb2 = std::make_unique<RadioButton>(guiManager, 20, 60, "Opcja 2");
+        rb2->setSelected(true); // Ustaw domyślnie zaznaczony
+        radioGroup->addChild(std::move(rb2));
+        
+        auto rb3 = std::make_unique<RadioButton>(guiManager, 20, 100, "Opcja 3");
+        radioGroup->addChild(std::move(rb3));
 
-        auto rb2 = createRadioButton(100, 150, "Option 2");
-        rb2->setSelected(true);
-        guiManager.addElement(std::move(rb2));
-
-        guiManager.addElement(createRadioButton(100, 200, "Option 3"));
+        // Dodaj etykietę informacyjną do RadioGroup
+        auto infoLabel = std::make_unique<Label>(guiManager, 20, 150, "Wybierz jedną opcję:", 14, SDL_Color{200, 200, 200, 255});
+        radioGroup->addChild(std::move(infoLabel));
+        
+        // Przekaż własność RadioGroup do GUIManager
+        guiManager.addElement(std::move(radioGroup));
 
         bool quit = false;
         SDL_Event e;
@@ -43,7 +49,7 @@ int main(int, char**) {
                 guiManager.processEvent(e);
             }
 
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_SetRenderDrawColor(renderer, 44, 44, 44, 255);
             SDL_RenderClear(renderer);
 
             guiManager.render();

@@ -1,27 +1,17 @@
 #ifndef RADIOGROUP_HPP
 #define RADIOGROUP_HPP
 
+#include "panel.hpp"
 import std.compat;
 
-// Forward declaration
 class RadioButton;
 
-class RadioGroup {
+class RadioGroup : public Panel {
 public:
-    // Metoda do dodawania RadioButtona do grupy
-    void addRadioButton(RadioButton* button);
+    RadioGroup(GUIManager& manager, int x, int y, int w, int h);
 
-    // Metoda wywoływana przez RadioButton, gdy zostanie zaznaczony
-    void buttonSelected(RadioButton* selectedButton);
-
-    // Metoda do usuwania RadioButtona z grupy (opcjonalnie, do rozważenia w przyszłości)
-    // void removeRadioButton(RadioButton* button);
-
-    // Metoda zwracająca wskaźnik do aktualnie zaznaczonego RadioButtona (opcjonalnie)
-    // RadioButton* getSelectedButton() const;
-
-private:
-    std::vector<RadioButton*> m_buttons;
+    void onButtonSelected(RadioButton* selectedButton);
+    RadioButton* getSelectedButton() const;
 };
 
 #endif // RADIOGROUP_HPP
