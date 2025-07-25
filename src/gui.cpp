@@ -20,6 +20,10 @@ void GUIElement::setSize(int width, int height) {
     m_height = height;
 }
 
+void GUIElement::setClipChildren(bool clip) {
+    m_clip_children = clip;
+}
+
 // Metoda zwracająca absolutną pozycję elementu
 SDL_Point GUIElement::getAbsolutePosition() const {
     auto pos = SDL_Point{m_x, m_y};
@@ -96,18 +100,21 @@ void GUIElement::render() {
         return;
     }
     auto* renderer = m_manager.getRenderer();
-    auto previous_clip_rect = SDL_Rect{};
-    SDL_RenderGetClipRect(renderer, &previous_clip_rect);
+    auto old_clip_rect = SDL_Rect{};
+    bool clipping_was_active = false;
 
-    auto abs_pos = getAbsolutePosition();
-    auto new_clip_rect = SDL_Rect{abs_pos.x, abs_pos.y, m_width, m_height};
+    if (m_clip_children) {
+        clipping_was_active = true;
+        SDL_RenderGetClipRect(renderer, &old_clip_rect);
+        auto abs_pos = getAbsolutePosition();
+        auto new_clip_rect = SDL_Rect{abs_pos.x, abs_pos.y, m_width, m_height};
 
-    // Jeżeli istnieje już jakiś obszar przycinania, nowy musi być jego częścią
-    if (previous_clip_rect.w != 0 || previous_clip_rect.h != 0) {
-        SDL_IntersectRect(&previous_clip_rect, &new_clip_rect, &new_clip_rect);
+        // Jeżeli istnieje już jakiś obszar przycinania, nowy musi być jego częścią
+        if (old_clip_rect.w != 0 || old_clip_rect.h != 0) {
+            SDL_IntersectRect(&old_clip_rect, &new_clip_rect, &new_clip_rect);
+        }
+        SDL_RenderSetClipRect(renderer, &new_clip_rect);
     }
-
-    SDL_RenderSetClipRect(renderer, &new_clip_rect);
 
     // Wywołanie specyficznego rysowania dla danego elementu
     draw();
@@ -119,8 +126,10 @@ void GUIElement::render() {
         }
     }
 
-    // Przywróć poprzedni obszar przycinania
-    SDL_RenderSetClipRect(renderer, &previous_clip_rect);
+    // Przywróć poprzedni obszar przycinania_
+    if (clipping_was_active) {
+        SDL_RenderSetClipRect(renderer, &old_clip_rect);
+    }
 }
 
 void GUIElement::draw() {

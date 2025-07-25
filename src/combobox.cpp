@@ -27,6 +27,8 @@ ComboBox::ComboBox(GUIManager& manager, int x, int y, int w, int h)
     // Kolejność dodawania ma znaczenie dla renderowania i obsługi zdarzeń
     addChild(std::move(main_button));
     addChild(std::move(dropdown_panel));
+
+    setClipChildren(false);
 }
 
 bool ComboBox::handleEvent(const SDL_Event& event) {

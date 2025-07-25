@@ -41,6 +41,8 @@ public:
     // Metoda renderująca, nie jest już wirtualna
     void render();
 
+    void setClipChildren(bool clip);
+
     // Metoda do ustawiania tekstury
     void setTexture(const SharedTexture& texture);
         [[nodiscard]] SharedTexture getLabelTexture() const;
@@ -64,6 +66,8 @@ public:
     void cleanup();
 
 protected:
+    bool m_clip_children = true;
+    
     // Nowa, chroniona metoda wirtualna do rysowania zawartości elementu.
     // Klasy pochodne powinny ją nadpisywać.
     virtual void draw();
