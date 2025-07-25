@@ -11,10 +11,13 @@ TabControl::TabControl(GUIManager& manager, int x, int y, int width, int height,
     : GUIElement(manager, x, y, width, height), m_tabButtonHeight(tabButtonHeight) {
 }
 
+#include "label.hpp"
+
 Panel* TabControl::addTab(std::string_view title) {
     auto button = std::make_unique<Button>(m_manager, 0, 0, 100, m_tabButtonHeight);
-    auto textColor = SDL_Color{255, 255, 255, 255};
-    button->setLabel(title, 16, textColor);
+    auto label = std::make_unique<Label>(m_manager, 0, 0, title, 16);
+    label->setPosition((button->getWidth() - label->getWidth())/2, (button->getHeight() - label->getHeight())/2);
+    button->addChild(std::move(label));
     
     auto* buttonPtr = button.get();
     m_tabButtons.push_back(buttonPtr);

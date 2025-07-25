@@ -1,15 +1,13 @@
-#include "../src/gui_manager.hpp"
-#include "../src/panel.hpp"
-#include "../src/button.hpp"
-#include "../src/checkbox.hpp"
+#include "gui_manager.hpp"
+#include "panel.hpp"
+#include "button.hpp"
+#include "checkbox.hpp"
 #include "helpers/sdl_app.hpp"
 #include "SDL_log.h"
-
+#include "label.hpp"
 import std.compat;
 
 // Helper function to create a 1x1 texture of a specific color
-// Ta funkcja jest teraz używana tylko do stworzenia surowej tekstury,
-// która następnie jest przekazywana do TextureManager.
 SDL_Texture* createColorTexture(SDL_Renderer* renderer, SDL_Color color) {
     SDL_Surface* surface = SDL_CreateRGBSurface(0, 1, 1, 32, 0, 0, 0, 0);
     if (!surface) return nullptr;
@@ -27,22 +25,22 @@ int main() {
 
         // Main window panel
         auto windowPanel = std::make_unique<Panel>(guiManager, 100, 100, 300, 200);
-        windowPanel->setTexture(
-            guiManager.getTextureManager().addTexture("window_bg", createColorTexture(renderer, {200, 200, 200, 255}))
-        );
+        windowPanel->setStyle(ElementState::Normal, {.texture = guiManager.getTextureManager().addTexture("window_bg", createColorTexture(renderer, {200, 200, 200, 255}))});
         Panel* windowPanelPtr = windowPanel.get();
 
         // Title bar
         auto titleBar = std::make_unique<Panel>(guiManager, 0, 0, 300, 30);
-        titleBar->setTexture(
-            guiManager.getTextureManager().addTexture("title_bg", createColorTexture(renderer, {100, 100, 150, 255}))
-        );
-        titleBar->setLabel("Window Title", 16, {255, 255, 255, 255});
+        titleBar->setStyle(ElementState::Normal, {.texture = guiManager.getTextureManager().addTexture("title_bg", createColorTexture(renderer, {100, 100, 150, 255}))});
+        auto titleLabel = std::make_unique<Label>(guiManager, 0, 0, "Window Title", 16);
+        titleLabel->setPosition((titleBar->getWidth() - titleLabel->getWidth())/2, (titleBar->getHeight() - titleLabel->getHeight())/2);
+        titleBar->addChild(std::move(titleLabel));
         titleBar->setDraggable(true);
 
         // Close button
         auto closeButton = std::make_unique<Button>(guiManager, 270, 5, 25, 20);
-        closeButton->setLabel("X", 14, {255, 255, 255, 255});
+        auto closeLabel = std::make_unique<Label>(guiManager, 0, 0, "X", 14);
+        closeLabel->setPosition((closeButton->getWidth() - closeLabel->getWidth())/2, (closeButton->getHeight() - closeLabel->getHeight())/2);
+        closeButton->addChild(std::move(closeLabel));
         closeButton->setOnClickCallback([windowPanelPtr](GUIElement*){
             windowPanelPtr->markForDeletion();
             std::cout << "Window marked for deletion.\n";
@@ -50,16 +48,16 @@ int main() {
 
         // Content panel
         auto contentPanel = std::make_unique<Panel>(guiManager, 5, 35, 290, 160);
-        contentPanel->setTexture(
-            guiManager.getTextureManager().addTexture("content_bg", createColorTexture(renderer, {220, 220, 220, 255}))
-        );
-        contentPanel->setLabel("This is the content area.", 14, {0, 0, 0, 255});
+        contentPanel->setStyle(ElementState::Normal, {.texture = guiManager.getTextureManager().addTexture("content_bg", createColorTexture(renderer, {220, 220, 220, 255}))});
+        auto contentLabel = std::make_unique<Label>(guiManager, 5, 5, "This is the content area.", 14);
+        contentPanel->addChild(std::move(contentLabel));
 
         // Add a checkbox to the content to show it moves with the window
-        auto sampleCheckbox = std::make_unique<Checkbox>(guiManager, 10, 40, 150, 20);
-        sampleCheckbox->setLabel("Sample Checkbox", 14, {0, 0, 0, 255});
-
+        auto sampleCheckbox = std::make_unique<Checkbox>(guiManager, 10, 40, 20, 20);
+        auto checkboxLabel = std::make_unique<Label>(guiManager, 35, 40, "Sample Checkbox", 14);
         contentPanel->addChild(std::move(sampleCheckbox));
+        contentPanel->addChild(std::move(checkboxLabel));
+
         titleBar->addChild(std::move(closeButton));
         windowPanel->addChild(std::move(titleBar));
         windowPanel->addChild(std::move(contentPanel));

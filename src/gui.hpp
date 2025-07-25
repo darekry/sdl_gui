@@ -4,9 +4,10 @@
 #include "texture_manager.hpp" // Dodano include dla TextureManager
 #include "font_manager.hpp" // Dodano include dla FontManager i SharedFont
 #include "SDL2/SDL.h"
+
+#include "style.hpp"
+
 import std.compat;
-
-
 // Forward declaration
 class GUIManager;
 
@@ -52,9 +53,7 @@ public:
 
     // Metoda do ustawiania tekstury
     void setTexture(const SharedTexture& texture);
-        [[nodiscard]] SharedTexture getLabelTexture() const;
-    void setLabel(std::string_view text, int fontSize, const SDL_Color& color);
-    
+    void setLabel(std::string_view text, int font_size = -1);
     
         // Metody do zarządzania stanem włączony/wyłączony
         void setEnabled(bool enabled) { m_enabled = enabled; }
@@ -66,6 +65,19 @@ public:
 
     // Metoda do sprawdzania stanu najechania myszką
     [[nodiscard]] bool isHovered() const { return m_isHovered; }
+
+    // --- Nowe API do stylizacji ---
+    void setStyle(ElementState state, Style style);
+    std::optional<Style> getStyle(ElementState state) const;
+    Style getResolvedStyle() const;
+
+    // Metody pomocnicze
+    void setBackgroundColor(ElementState state, SDL_Color color);
+    void setTextColor(ElementState state, SDL_Color color);
+    void setTexture(ElementState state, SharedTexture texture);
+    void setBorder(ElementState state, SDL_Color color, int width);
+    
+    virtual const char* getComponentType() const;
 
     // Metody do zarządzania usuwaniem
     void markForDeletion();
@@ -82,6 +94,8 @@ protected:
     // Klasy pochodne powinny ją nadpisywać.
     virtual void draw();
 
+    Style resolveStyle(const Style& base, const std::optional<Style>& override) const;
+
     GUIManager& m_manager;
     int m_x, m_y;
     int m_width, m_height;
@@ -91,8 +105,14 @@ protected:
     bool m_isMarkedForDeletion = false; // Flaga do oznaczania elementu do usunięcia
     GUIElement* m_parent;
     SharedTexture m_texture;
+    std::unique_ptr<GUIElement> m_label = nullptr;
     
-        std::vector<std::unique_ptr<GUIElement>> m_children;
+    // --- Nowe pola dla stylów ---
+    std::map<ElementState, Style> m_styles;
+    ElementState m_currentState = ElementState::Normal;
+    bool m_style_dirty = true;
+
+    std::vector<std::unique_ptr<GUIElement>> m_children;
 public:
     // Metody do zarządzania relacją rodzic-dziecko
     void addChild(std::unique_ptr<GUIElement> child);

@@ -1,14 +1,12 @@
 #ifndef SLIDER_HPP
 #define SLIDER_HPP
 
-#include <cstdint>
-#include <utility>
-
 #include "button.hpp"
 #include "panel.hpp"
+#include "label.hpp"
 import std.compat;
 
-enum class Orientation :uint8_t{
+enum class Orientation : uint8_t {
     Horizontal,
     Vertical
 };
@@ -26,11 +24,14 @@ public:
     Button* getIncrementButton();
 
     bool handleEvent(const SDL_Event& e) override;
+    const char* getComponentType() const override;
 
 protected:
     void draw() override;
 
 private:
+    void updateValueFromMouse(int mouseX, int mouseY);
+
     Button* decrementButton = nullptr;
     Button* incrementButton = nullptr;
 
@@ -40,6 +41,11 @@ private:
     int m_currentValue;
     OnChangeCallback m_onChange;
     bool m_isDragging = false;
+
+    // Pola do zarządzania wewnętrznym układem
+    int m_trackSize;
+    int m_trackOffsetX = 0;
+    int m_trackOffsetY = 0;
 
     std::unique_ptr<Button> m_decreaseButton;
     std::unique_ptr<Button> m_increaseButton;

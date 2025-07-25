@@ -1,6 +1,7 @@
-#include "panel.hpp"
 #include "gui_manager.hpp"
 #include "helpers/sdl_app.hpp"
+#include "panel.hpp"
+
 import std.compat;
 
 const int SCREEN_WIDTH = 800;
@@ -14,8 +15,10 @@ int main(int, char**) {
 
         // Utwórz panel
         auto panel = std::make_unique<Panel>(guiManager, 100, 100, 600, 400);
-        panel->setBorderColor(255, 0, 0, 128); // Czerwony, półprzezroczysty kolor ramki
-        panel->setBorderThickness(5);
+        Style panel_style;
+        panel_style.borderColor = {255, 0, 0, 128};
+        panel_style.borderWidth = 5;
+        panel->setStyle(ElementState::Normal, panel_style);
 
         guiManager.addElement(std::move(panel));
 
@@ -29,7 +32,7 @@ int main(int, char**) {
                 guiManager.processEvent(e);
             }
 
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
             SDL_RenderClear(renderer);
 
             guiManager.render();

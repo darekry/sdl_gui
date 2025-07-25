@@ -3,7 +3,7 @@
 #include "gui_manager.hpp"
 #include "helpers/sdl_app.hpp"
 #include "slider.hpp"
-
+#include "label.hpp"
 import std.compat;
 
 const int SCREEN_WIDTH = 800;
@@ -17,7 +17,9 @@ int main(int, char**) {
 
         // --- Przycisk z podpowiedzią ---
         auto button = std::make_unique<Button>(guiManager, 50, 50, 200, 80);
-        button->setLabel("Najedź na mnie", 20, {0, 0, 0, 255});
+        auto label = std::make_unique<Label>(guiManager, 0,0, "Najedź na mnie", 20);
+        label->setPosition((button->getWidth() - label->getWidth()) / 2, (button->getHeight() - label->getHeight())/2);
+        button->addChild(std::move(label));
         button->setTooltip("To jest podpowiedź dla przycisku.");
         button->setOnClickCallback(
             []([[maybe_unused]] GUIElement* elem) { std::cout << "Przycisk kliknięty!" << std::endl; });
@@ -27,7 +29,7 @@ int main(int, char**) {
         auto checkbox = std::make_unique<Checkbox>(guiManager, 300, 50, 40, 40);
         checkbox->setTooltip("Zaznacz lub odznacz tę opcję.\nObsługuje\nwiele linii!");
         guiManager.addElement(std::move(checkbox));
-
+        
         // --- Suwak z podpowiedzią ---
         auto slider = std::make_unique<Slider>(guiManager, 50, 200, 300, 30, 0, 100, 50, Orientation::Horizontal);
         slider->setTooltip("Użyj tego suwaka, aby zmienić wartość.");

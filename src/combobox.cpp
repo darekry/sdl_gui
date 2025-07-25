@@ -120,10 +120,11 @@ void ComboBox::selectItem(int index) {
     toggleDropdown(); // Zamknij po wybraniu
 }
 void ComboBox::updateMainButtonText() {
+    m_main_button->clearChildren();
     if (m_selected_index != -1) {
-        m_main_button->setLabel(m_options[m_selected_index], 16, {0,0,0,255});
-    } else {
-        m_main_button->setTexture(nullptr);
+        auto label = std::make_unique<Label>(m_manager, 0, 0, m_options[m_selected_index], 16);
+        label->setPosition((m_main_button->getWidth() - label->getWidth())/2, (m_main_button->getHeight() - label->getHeight())/2);
+        m_main_button->addChild(std::move(label));
     }
 }
 void ComboBox::createDropdownButtons() {
@@ -139,7 +140,9 @@ void ComboBox::createDropdownButtons() {
     for (size_t i = 0; i < m_options.size(); ++i) {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "ComboBox::createDropdownButtons: Creating button for item \"%s\"", m_options[i].c_str());
         auto option_button = std::make_unique<Button>(m_manager, 0, i * item_h, getWidth(), item_h);
-        option_button->setLabel(m_options[i], 16, {0, 0, 0, 255});
+        auto label = std::make_unique<Label>(m_manager, 0, 0, m_options[i], 16);
+        label->setPosition((option_button->getWidth() - label->getWidth())/2, (option_button->getHeight() - label->getHeight())/2);
+        option_button->addChild(std::move(label));
         option_button->setVisible(true);
         option_button->setOnClickCallback([this, i](GUIElement*){
             selectItem(i);

@@ -26,7 +26,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         TextArea* textArea = static_cast<TextArea*>(guiManager.addElement(std::move(textArea_ptr)));
         
         textArea->setText("");
-        textArea->setTextColor({20, 20, 20, 255});
+        textArea->setTextColor(ElementState::Normal, {20, 20, 20, 255});
         
         bool quit = false;
         SDL_Event e;

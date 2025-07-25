@@ -1,12 +1,12 @@
 #include "checkbox.hpp"
-#include "font_manager.hpp"
-#include "texture_manager.hpp"
 #include "gui_manager.hpp"
-import std.compat;
 
 Checkbox::Checkbox(GUIManager& manager, int x, int y, int w, int h)
-    : GUIElement(manager, x, y, w, h), m_isChecked(false), m_labelTexture(nullptr), m_onChange(nullptr)
-{
+    : GUIElement(manager, x, y, w, h), m_isChecked(false) {
+}
+
+bool Checkbox::isChecked() const {
+    return m_isChecked;
 }
 
 void Checkbox::setChecked(bool checked) {
@@ -18,56 +18,42 @@ void Checkbox::setChecked(bool checked) {
     }
 }
 
-void Checkbox::setLabel(std::string_view text, int fontSize, const SDL_Color& color) {
-    auto& fontManager = m_manager.getFontManager();
-    auto font = fontManager.loadFont("assets/fonts/font.ttf", fontSize);
-    if(font) {
-        auto& textureManager = m_manager.getTextureManager();
-        m_labelTexture = textureManager.createTextureFromText(text, font, color);
-    }
+void Checkbox::setOnChange(OnChangeCallback callback) {
+    m_onChange = std::move(callback);
 }
 
-
 bool Checkbox::handleEvent(const SDL_Event& e) {
-    if (!m_enabled) return false;
+    auto previousState = m_currentState;
+    GUIElement::handleEvent(e);
 
-    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-        if (contains(e.button.x, e.button.y)) {
+    if (m_enabled && m_visible) {
+        if (previousState == ElementState::Pressed && m_currentState == ElementState::Hover) {
             setChecked(!m_isChecked);
-            return true; // Zdarzenie obsłużone
+            return true;
         }
     }
     return false;
 }
 
+const char* Checkbox::getComponentType() const {
+    return "Checkbox";
+}
+
 void Checkbox::draw() {
-    auto* renderer = m_manager.getRenderer();
-    auto absPos = getAbsolutePosition();
-    auto checkboxRect = SDL_Rect{absPos.x, absPos.y, m_height, m_height};
-
-    if (m_isHovered) {
-       SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-    }
-    else {
-       SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    }
-    SDL_RenderFillRect(renderer, &checkboxRect);
-
-    // Domyślny kolor ramki
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderDrawRect(renderer, &checkboxRect);
+    GUIElement::draw(); // Rysuje tło i ramkę
 
     if (m_isChecked) {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderDrawLine(renderer, absPos.x + 3, absPos.y + m_height / 2, absPos.x + m_height / 2, absPos.y + m_height - 3);
-        SDL_RenderDrawLine(renderer, absPos.x + m_height / 2, absPos.y + m_height - 3, absPos.x + m_height - 3, absPos.y + 3);
-    }
+        auto* renderer = m_manager.getRenderer();
+        const auto style = getResolvedStyle();
+        const auto absPos = getAbsolutePosition();
 
-    if (m_labelTexture) {
-        auto labelWidth = 0;
-        auto labelHeight = 0;
-        SDL_QueryTexture(m_labelTexture.get(), nullptr, nullptr, &labelWidth, &labelHeight);
-        auto renderQuad = SDL_Rect{absPos.x + m_height + 5, absPos.y + (m_height - labelHeight) / 2, labelWidth, labelHeight};
-        SDL_RenderCopy(renderer, m_labelTexture.get(), nullptr, &renderQuad);
+        if (style.textColor) { // Używamy koloru tekstu do rysowania "ptaszka"
+            const auto& c = style.textColor.value();
+            SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+
+            // Rysowanie "ptaszka"
+            SDL_RenderDrawLine(renderer, absPos.x + 3, absPos.y + m_height / 2, absPos.x + m_height / 2, absPos.y + m_height - 3);
+            SDL_RenderDrawLine(renderer, absPos.x + m_height / 2, absPos.y + m_height - 3, absPos.x + m_height - 3, absPos.y + 3);
+        }
     }
 }

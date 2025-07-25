@@ -13,24 +13,19 @@ int main(int, char**) {
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        // Utwórz suwak
+        // Tworzenie etykiety do wyświetlania wartości
+        auto valueLabel = std::make_unique<Label>(guiManager, 320, 100, "50", 16);
+        auto* valueLabelPtr = valueLabel.get();
+        guiManager.addElement(std::move(valueLabel));
+
+        // Tworzenie suwaka i ustawienie callbacku
         auto slider = std::make_unique<Slider>(guiManager, 100, 100, 200, 20, 0, 100, 50, Orientation::Horizontal);
-
-        // Przykład użycia nowych metod dostępowych do modyfikacji przycisków
-        if (auto decBtn = slider->getDecrementButton()) {
-         
-        }
-        if (auto incBtn = slider->getIncrementButton()) {
-           // incBtn->// Ustaw kolor etykiety na zielony
-        }
-
-        slider->setOnChangeCallback([](GUIElement* element) {
+        slider->setOnChangeCallback([valueLabelPtr](GUIElement* element) {
             Slider* slider_ptr = static_cast<Slider*>(element);
-            if (slider_ptr) {
-                std::cout << "Slider value changed: " << slider_ptr->getValue() << std::endl;
+            if (slider_ptr && valueLabelPtr) {
+                valueLabelPtr->setText(std::to_string(slider_ptr->getValue()));
             }
         });
-
         guiManager.addElement(std::move(slider));
 
         bool quit = false;
@@ -45,9 +40,7 @@ int main(int, char**) {
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             SDL_RenderClear(renderer);
-
             guiManager.render();
-
             SDL_RenderPresent(renderer);
         }
     } catch (const std::runtime_error& e) {

@@ -14,7 +14,6 @@ public:
     void setText(const char* text);
     const std::string& getText() const;
 
-    void setTextColor(const SDL_Color& color);
     void setWordWrap(bool enabled);
     bool getWordWrap() const;
 
@@ -32,7 +31,6 @@ private:
     std::string m_text;
     std::vector<std::string> m_lines;
     bool m_wordWrap = true;
-    SDL_Color m_textColor = {0, 0, 0, 255};
     std::string m_font_path;
     int m_font_size;
     

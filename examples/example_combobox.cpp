@@ -1,5 +1,4 @@
 #include "SDL_log.h"
-#include "gui.hpp"
 #include "gui_manager.hpp"
 #include "combobox.hpp"
 #include "helpers/sdl_app.hpp"
@@ -40,9 +39,7 @@ int main(int, char**) {
 
             SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
             SDL_RenderClear(renderer);
-
             guiManager.render();
-
             SDL_RenderPresent(renderer);
         }
     } catch (const std::runtime_error& e) {

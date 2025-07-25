@@ -7,10 +7,12 @@
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
 #include "timer_manager.hpp"
+#include "theme.hpp"
 import std.compat;
 
 class TimerManager;
 class GUIElement;
+class Theme;
 
 class GUIManager {
 public:
@@ -49,20 +51,25 @@ public:
     // Tooltip
     void showTooltip(GUIElement* target, const std::string& text);
     void hideTooltip();
+// Metoda do uzyskiwania dostępu do elementów (potrzebna do ręcznej obsługi zdarzeń)
+const std::vector<std::unique_ptr<GUIElement>>& getElements() const { return m_elements; }
 
-    // Metoda do uzyskiwania dostępu do elementów (potrzebna do ręcznej obsługi zdarzeń)
-    const std::vector<std::unique_ptr<GUIElement>>& getElements() const { return m_elements; }
+// --- Zarządzanie motywem ---
+void setTheme(Theme theme);
+Theme& getTheme();
+
 private:
-    // Kontener na unikalne wskaźniki do elementów GUI
-    std::vector<std::unique_ptr<GUIElement>> m_elements;
-    std::unique_ptr<GUIElement> tooltipElement;
+// Kontener na unikalne wskaźniki do elementów GUI
+std::vector<std::unique_ptr<GUIElement>> m_elements;
+std::unique_ptr<GUIElement> tooltipElement;
 
 
-    // Kontekst aplikacji
-    SDL_Renderer* m_renderer;
-    FontManager m_fontManager;
-    TextureManager m_textureManager;
-    std::unique_ptr<TimerManager> timerManager;
+// Kontekst aplikacji
+SDL_Renderer* m_renderer;
+FontManager m_fontManager;
+TextureManager m_textureManager;
+std::unique_ptr<TimerManager> timerManager;
+Theme m_theme;
 };
 
 #endif // GUI_MANAGER_HPP

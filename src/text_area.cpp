@@ -34,10 +34,6 @@ const std::string& TextArea::getText() const {
     return m_text;
 }
 
-void TextArea::setTextColor(const SDL_Color& color) {
-    m_textColor = color;
-    m_needs_texture_update = true;
-}
 void TextArea::setWordWrap(bool enabled) {
     m_wordWrap = enabled;
     m_needs_texture_update = true;
@@ -48,6 +44,9 @@ bool TextArea::getWordWrap() const {
 }
 
 void TextArea::draw() {
+    // Rysowanie tła i ramki jest teraz obsługiwane przez styl
+    GUIElement::draw();
+
     if (m_needs_texture_update) {
         recalculateLines();
         refreshTextures();
@@ -56,14 +55,6 @@ void TextArea::draw() {
 
     auto* renderer = m_manager.getRenderer();
     auto bounds = SDL_Rect{getAbsolutePosition().x, getAbsolutePosition().y, m_width, m_height};
-
-    // Tło
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &bounds);
-
-    // Ramka
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderDrawRect(renderer, &bounds);
 
     // Tekst
     // Tekst
@@ -199,11 +190,14 @@ void TextArea::refreshTextures() {
     auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
     if (!font) return;
 
+    const auto style = getResolvedStyle();
+    SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
+
     for (const auto& line : m_lines) {
         if (line.empty()) {
             m_line_textures.push_back(nullptr);
         } else {
-            auto lineTexture = m_manager.getTextureManager().createTextureFromText(line, font, m_textColor);
+            auto lineTexture = m_manager.getTextureManager().createTextureFromText(line, font, color);
             m_line_textures.push_back(lineTexture);
         }
     }
@@ -237,7 +231,9 @@ void TextArea::renderCursor() {
     y = currentLineIndex * TTF_FontHeight(font.get());
 
     auto cursorRect = SDL_Rect{ getAbsolutePosition().x + 2 + x + m_text_offset_x, getAbsolutePosition().y + 2 + y, 2, TTF_FontHeight(font.get()) };
-    SDL_SetRenderDrawColor(m_manager.getRenderer(), m_textColor.r, m_textColor.g, m_textColor.b, m_textColor.a);
+    const auto style = getResolvedStyle();
+    SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
+    SDL_SetRenderDrawColor(m_manager.getRenderer(), color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(m_manager.getRenderer(), &cursorRect);
 }
 

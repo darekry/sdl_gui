@@ -1,24 +1,11 @@
 #include "panel.hpp"
-#include "gui.hpp" // Dla GUIElement::render
 #include "gui_manager.hpp"
-import std.compat;
 
 // Implementacja klasy Panel
 Panel::Panel(GUIManager& manager, int x, int y, int width, int height)
     : GUIElement(manager, x, y, width, height) {
-    // Dodatkowa inicjalizacja dla Panelu, jeśli potrzebna
 }
 
-void Panel::setBorderColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-    m_borderColor = {r, g, b, a};
-}
-
-void Panel::setBorderThickness(int thickness) {
-    m_borderWidth = thickness;
-}
-void  Panel::setBackgroundColor(const SDL_Color& color) {
-    m_backgroundColor = color;
-}
 void Panel::setDraggable(bool draggable) {
     m_is_draggable = draggable;
 }
@@ -28,17 +15,13 @@ bool Panel::handleEvent(const SDL_Event& event) {
         return false;
     }
 
-    // 1. Najpierw przekaż zdarzenie do dzieci.
     if (GUIElement::handleEvent(event)) {
-        return true; // Jeśli dziecko obsłużyło zdarzenie, zakończ.
+        return true;
     }
 
-    // 2. Jeśli żadne dziecko nie obsłużyło zdarzenia, obsłuż przeciąganie.
     if (m_is_draggable) {
         if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
             auto mousePos = SDL_Point{event.button.x, event.button.y};
-            // Sprawdź, czy kliknięcie jest w obrębie samego panelu (bez dzieci)
-            // Ta uproszczona wersja zakłada, że kliknięcie w dowolnym miejscu panelu rozpoczyna przeciąganie.
             auto absPos = getAbsolutePosition();
             auto panelRect = SDL_Rect{absPos.x, absPos.y, m_width, m_height};
 
@@ -46,7 +29,7 @@ bool Panel::handleEvent(const SDL_Event& event) {
                 m_is_dragging = true;
                 m_drag_offset.x = mousePos.x - absPos.x;
                 m_drag_offset.y = mousePos.y - absPos.y;
-                return true; // Zdarzenie obsłużone przez rozpoczęcie przeciągania.
+                return true;
             }
         } else if (event.type == SDL_MOUSEMOTION && m_is_dragging) {
             auto mouseX = 0;
@@ -54,36 +37,24 @@ bool Panel::handleEvent(const SDL_Event& event) {
             SDL_GetMouseState(&mouseX, &mouseY);
             setPosition(mouseX - m_drag_offset.x - (m_parent ? m_parent->getAbsolutePosition().x : 0),
                         mouseY - m_drag_offset.y - (m_parent ? m_parent->getAbsolutePosition().y : 0));
-            return true; // Zdarzenie obsłużone przez przeciąganie.
+            return true;
         } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
             if (m_is_dragging) {
                 m_is_dragging = false;
-                return true; // Zdarzenie obsłużone przez zakończenie przeciągania.
+                return true;
             }
         }
     }
 
-    // Żadne zdarzenie nie zostało obsłużone.
     return false;
 }
 
+const char* Panel::getComponentType() const {
+    return "Panel";
+}
+
 void Panel::draw() {
-    auto* renderer = m_manager.getRenderer();
-    
-    auto absPos = getAbsolutePosition();
-    auto panelRect = SDL_Rect{ absPos.x, absPos.y, m_width, m_height };
-
-    // Rysuj tło panelu
-    SDL_SetRenderDrawColor(renderer, m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b, m_backgroundColor.a);
-    SDL_RenderFillRect(renderer, &panelRect);
-
-    // Rysuj obramowanie (jeśli jest grubsze niż 0)
-    if (m_borderWidth > 0) {
-        SDL_SetRenderDrawColor(renderer, m_borderColor.r, m_borderColor.g, m_borderColor.b, m_borderColor.a);
-        for (int i = 0; i < m_borderWidth; ++i) {
-            auto borderRect = SDL_Rect{absPos.x + i, absPos.y + i, m_width - 2 * i, m_height - 2 * i};
-            SDL_RenderDrawRect(renderer, &borderRect);
-        }
-    }
-    // Dzieci są renderowane przez pętlę w GUIElement::render() po wywołaniu draw().
+    // Ta metoda jest teraz pusta, ponieważ całe rysowanie jest obsługiwane
+    // przez GUIElement::draw() i system motywów.
+    // Zachowujemy ją, aby klasy pochodne mogły ją nadpisać w razie potrzeby.
 }

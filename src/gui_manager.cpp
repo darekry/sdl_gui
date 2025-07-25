@@ -7,7 +7,7 @@
 import std.compat;
 
 GUIManager::GUIManager(SDL_Renderer* renderer)
-    : m_renderer(renderer), m_fontManager(), m_textureManager(renderer) {
+    : m_renderer(renderer), m_fontManager(), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {
     timerManager = std::make_unique<TimerManager>();
     tooltipElement = nullptr;
     // Załaduj domyślną czcionkę
@@ -98,11 +98,13 @@ void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
 
     // Utwórz panel
     auto panel = std::make_unique<Panel>(*this, x, y, textWidth + 2 * padding, textHeight + 2 * padding);
-    panel->setBorderThickness(1);
-    panel->setBackgroundColor({255, 255, 225, 255}); // Jasnożółte tło
+    Style tooltip_style;
+    tooltip_style.borderWidth = 1;
+    tooltip_style.backgroundColor = {255, 255, 225, 255};
+    panel->setStyle(ElementState::Normal, tooltip_style);
 
     // Utwórz etykietę i dodaj ją do panelu
-    auto label = std::make_unique<Label>(*this, padding, padding, text, fontSize, SDL_Color{0, 0, 0, 255});
+    auto label = std::make_unique<Label>(*this, padding, padding, text, fontSize);
     panel->addChild(std::move(label));
 
     tooltipElement = std::move(panel);
@@ -115,6 +117,14 @@ void GUIManager::hideTooltip() {
 
 TimerManager* GUIManager::getTimerManager() {
     return timerManager.get();
+}
+
+void GUIManager::setTheme(Theme theme) {
+    m_theme = std::move(theme);
+}
+
+Theme& GUIManager::getTheme() {
+    return m_theme;
 }
 
 

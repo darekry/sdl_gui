@@ -1,4 +1,3 @@
-
 #include "gui_manager.hpp"
 #include "radio_button.hpp"
 #include "radio_group.hpp"
@@ -17,23 +16,28 @@ int main(int, char**) {
 
         // 1. Utwórz RadioGroup jako kontener Panel
         auto radioGroup = std::make_unique<RadioGroup>(guiManager, 100, 100, 250, 200);
-        radioGroup->setBackgroundColor({40, 40, 40, 255});
-        radioGroup->setBorderColor(100, 100, 100, 255);
-        radioGroup->setBorderThickness(2);
-
-        // 2. Utwórz i dodaj RadioButton jako dzieci RadioGroup
-        auto rb1 = std::make_unique<RadioButton>(guiManager, 20, 20, "Opcja 1 po polsku");
-        radioGroup->addChild(std::move(rb1));
-
-        auto rb2 = std::make_unique<RadioButton>(guiManager, 20, 60, "Opcja 2");
-        rb2->setSelected(true); // Ustaw domyślnie zaznaczony
-        radioGroup->addChild(std::move(rb2));
+        radioGroup->setStyle(ElementState::Normal, {.backgroundColor = {{40, 40, 40, 255}}, .textColor = std::nullopt, .texture = std::nullopt});
+        radioGroup->setBorder(ElementState::Normal, {100, 100, 100, 255}, 2);
         
-        auto rb3 = std::make_unique<RadioButton>(guiManager, 20, 100, "Opcja 3");
+        // 2. Utwórz i dodaj RadioButton jako dzieci RadioGroup
+        auto rb1 = std::make_unique<RadioButton>(guiManager, 20, 20, 20, 20);
+        auto label1 = std::make_unique<Label>(guiManager, 45, 20, "Opcja 1 po polsku", 16);
+        radioGroup->addChild(std::move(rb1));
+        radioGroup->addChild(std::move(label1));
+
+        auto rb2 = std::make_unique<RadioButton>(guiManager, 20, 60, 20, 20);
+        rb2->setSelected(true); // Ustaw domyślnie zaznaczony
+        auto label2 = std::make_unique<Label>(guiManager, 45, 60, "Opcja 2", 16);
+        radioGroup->addChild(std::move(rb2));
+        radioGroup->addChild(std::move(label2));
+        
+        auto rb3 = std::make_unique<RadioButton>(guiManager, 20, 100, 20, 20);
+        auto label3 = std::make_unique<Label>(guiManager, 45, 100, "Opcja 3", 16);
         radioGroup->addChild(std::move(rb3));
+        radioGroup->addChild(std::move(label3));
 
         // Dodaj etykietę informacyjną do RadioGroup
-        auto infoLabel = std::make_unique<Label>(guiManager, 20, 150, "Wybierz jedną opcję:", 14, SDL_Color{200, 200, 200, 255});
+        auto infoLabel = std::make_unique<Label>(guiManager, 20, 150, "Wybierz jedną opcję:", 14);
         radioGroup->addChild(std::move(infoLabel));
         
         // Przekaż własność RadioGroup do GUIManager

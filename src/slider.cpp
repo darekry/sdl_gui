@@ -1,5 +1,6 @@
 #include "slider.hpp"
 #include "gui_manager.hpp"
+#include "label.hpp"
 import std.compat;
 
 Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation)
@@ -8,147 +9,159 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
       m_minValue(minValue),
       m_maxValue(maxValue),
       m_currentValue(std::clamp(initialValue, minValue, maxValue)) {
-    // Ustawienie koloru tła jest dziedziczone z Panel
-    setBackgroundColor({150, 150, 150, 255});
-    setClipChildren(false);
-    // Określ rozmiar przycisków na podstawie orientacji suwaka
-    auto buttonSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
 
-    if (m_orientation == Orientation::Horizontal) { // Poziomy suwak
-        m_decreaseButton = std::make_unique<Button>(manager, -buttonSize, 0, buttonSize, getHeight());
-        m_increaseButton = std::make_unique<Button>(manager, getWidth(), 0, buttonSize, getHeight());
-    } else { // Pionowy suwak
-        m_decreaseButton = std::make_unique<Button>(manager, 0, -buttonSize, getWidth(), buttonSize);
-        m_increaseButton = std::make_unique<Button>(manager, 0, getHeight(), getWidth(), buttonSize);
+    setClipChildren(true);
+    auto buttonSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
+    
+    if (m_orientation == Orientation::Horizontal) {
+        m_trackOffsetX = buttonSize;
+        m_trackSize = getWidth() - 2 * buttonSize;
+        m_decreaseButton = std::make_unique<Button>(manager, 0, 0, buttonSize, getHeight());
+        m_increaseButton = std::make_unique<Button>(manager, getWidth() - buttonSize, 0, buttonSize, getHeight());
+    } else { // Vertical
+        m_trackOffsetY = buttonSize;
+        m_trackSize = getHeight() - 2 * buttonSize;
+        m_decreaseButton = std::make_unique<Button>(manager, 0, 0, getWidth(), buttonSize);
+        m_increaseButton = std::make_unique<Button>(manager, 0, getHeight() - buttonSize, getWidth(), buttonSize);
     }
     
     decrementButton = m_decreaseButton.get();
     incrementButton = m_increaseButton.get();
 
-    decrementButton->setLabel("<", 12, {255, 255, 255, 255});
-    incrementButton->setLabel(">", 12, {255, 255, 255, 255});
+    auto decLabel = std::make_unique<Label>(manager, 0, 0, "<", 12);
+    decLabel->setPosition((decrementButton->getWidth() - decLabel->getWidth()) / 2, (decrementButton->getHeight() - decLabel->getHeight()) / 2);
+    decrementButton->addChild(std::move(decLabel));
+
+    auto incLabel = std::make_unique<Label>(manager, 0, 0, ">", 12);
+    incLabel->setPosition((incrementButton->getWidth() - incLabel->getWidth()) / 2, (incrementButton->getHeight() - incLabel->getHeight()) / 2);
+    incrementButton->addChild(std::move(incLabel));
  
-      // Ustaw callbacki dla przycisków
-      m_decreaseButton->setOnClickCallback([this](GUIElement*) {
-          auto oldValue = m_currentValue;
-          m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue);
-          if (m_onChange && m_currentValue != oldValue) {
-              m_onChange(this);
-          }
-      });
+    m_decreaseButton->setOnClickCallback([this](GUIElement*) {
+        auto oldValue = m_currentValue;
+        m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue);
+        if (m_onChange && m_currentValue != oldValue) {
+            m_onChange(this);
+        }
+    });
  
-      m_increaseButton->setOnClickCallback([this](GUIElement*) {
-          auto oldValue = m_currentValue;
-          m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue);
-          if (m_onChange && m_currentValue != oldValue) {
-              m_onChange(this);
-          }
-      });
+    m_increaseButton->setOnClickCallback([this](GUIElement*) {
+        auto oldValue = m_currentValue;
+        m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue);
+        if (m_onChange && m_currentValue != oldValue) {
+            m_onChange(this);
+        }
+    });
  
-      // Dodaj przyciski jako dzieci suwaka, przenosząc własność
-      addChild(std::move(m_decreaseButton));
-      addChild(std::move(m_increaseButton));
-  }
+    addChild(std::move(m_decreaseButton));
+    addChild(std::move(m_increaseButton));
+}
+
+void Slider::updateValueFromMouse(int mouseX, int mouseY) {
+    auto absPos = getAbsolutePosition();
+    float ratio = 0.0f;
+
+    if (m_orientation == Orientation::Horizontal) {
+        float relativeMouseX = static_cast<float>(mouseX - (absPos.x + m_trackOffsetX));
+        ratio = std::clamp(relativeMouseX / m_trackSize, 0.0f, 1.0f);
+    } else {
+        float relativeMouseY = static_cast<float>(mouseY - (absPos.y + m_trackOffsetY));
+        ratio = std::clamp(relativeMouseY / m_trackSize, 0.0f, 1.0f);
+    }
+
+    auto oldValue = m_currentValue;
+    m_currentValue = m_minValue + static_cast<int>(ratio * (m_maxValue - m_minValue));
+    m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
+
+    if (m_onChange && m_currentValue != oldValue) {
+        m_onChange(this);
+    }
+}
 
 bool Slider::handleEvent(const SDL_Event& e) {
-    if (!m_enabled) {
-        return false;
-    }
+    if (!m_enabled) return false;
 
-    // Najpierw przekaż zdarzenie do dzieci (przycisków)
     if (GUIElement::handleEvent(e)) {
-        return true; // Jeśli dziecko obsłużyło zdarzenie, zakończ
+        return true;
     }
+    
+    auto absPos = getAbsolutePosition();
+    SDL_Rect trackArea;
+    if (m_orientation == Orientation::Horizontal) {
+        trackArea = {absPos.x + m_trackOffsetX, absPos.y, m_trackSize, getHeight()};
+    } else {
+        trackArea = {absPos.x, absPos.y + m_trackOffsetY, getWidth(), m_trackSize};
+    }
+    
+    SDL_Point mousePoint = {e.button.x, e.button.y};
 
-    // Następnie obsłuż logikę przeciągania suwaka
-    if (e.type == SDL_MOUSEBUTTONDOWN) {
-        if (e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
+    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+        if (SDL_PointInRect(&mousePoint, &trackArea)) {
             m_isDragging = true;
-            auto oldValue = m_currentValue;
-            auto mouseX = e.button.x - getAbsolutePosition().x;
-            auto mouseY = e.button.y - getAbsolutePosition().y;
-            if (m_orientation == Orientation::Horizontal) {
-                auto ratio = static_cast<float>(mouseX) / getWidth();
-                m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
-            } else {
-                auto ratio = static_cast<float>(mouseY) / getHeight();
-                m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
-            }
-            m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
-            if (m_onChange && m_currentValue != oldValue) {
-                m_onChange(this);
-            }
+            updateValueFromMouse(e.button.x, e.button.y);
             return true;
         }
-    } else if (e.type == SDL_MOUSEBUTTONUP) {
-        if (e.button.button == SDL_BUTTON_LEFT && m_isDragging) {
+    } else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+        if (m_isDragging) {
             m_isDragging = false;
             return true;
         }
     } else if (e.type == SDL_MOUSEMOTION) {
         if (m_isDragging) {
-            auto oldValue = m_currentValue;
-            auto mouseX = e.motion.x - getAbsolutePosition().x;
-            auto mouseY = e.motion.y - getAbsolutePosition().y;
-            if (m_orientation == Orientation::Horizontal) {
-                auto ratio = static_cast<float>(mouseX) / getWidth();
-                m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
-            } else {
-                auto ratio = static_cast<float>(mouseY) / getHeight();
-                m_currentValue = m_minValue + ratio * (m_maxValue - m_minValue);
-            }
-            m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
-            if (m_onChange && m_currentValue != oldValue) {
-                m_onChange(this);
-            }
+            updateValueFromMouse(e.motion.x, e.motion.y);
             return true;
         }
     }
-return false;
+    return false;
+}
+
+const char* Slider::getComponentType() const {
+    return "Slider";
 }
 
 void Slider::draw() {
-    // Krok 3a: Standardowe sprawdzenie widoczności.
-    if (!isVisible()) return;
+    Panel::draw();
 
-    SDL_RenderSetClipRect(m_manager.getRenderer(), nullptr);
-
-    // Krok 3b: Pobierz wskaźnik na renderer.
     auto* renderer = m_manager.getRenderer();
-    auto absPos = getAbsolutePosition();
-    auto rect = SDL_Rect{absPos.x, absPos.y, getWidth(), getHeight()};
+    const auto style = getResolvedStyle();
+    const auto absPos = getAbsolutePosition();
 
-    // Krok 3c: Rysuj tło Slidera.
-    SDL_SetRenderDrawColor(renderer, m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b, m_backgroundColor.a);
-    SDL_RenderFillRect(renderer, &rect);
-
-    // Krok 3d: Rysuj "kciuk" Slidera.
-    SDL_Rect thumbRect;
-    int thumbSize = (m_orientation == Orientation::Horizontal) ? getHeight() : getWidth();
-    
-    if (m_orientation == Orientation::Horizontal) {
-        int thumbX = absPos.x + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getWidth() - thumbSize));
-        thumbRect = {.x=thumbX, .y=absPos.y, .w=thumbSize, .h=getHeight()};
+    SDL_Color trackColor;
+    if (style.backgroundColor) {
+        trackColor = *style.backgroundColor;
+        trackColor.r = std::max(0, trackColor.r - 20);
+        trackColor.g = std::max(0, trackColor.g - 20);
+        trackColor.b = std::max(0, trackColor.b - 20);
     } else {
-        int thumbY = absPos.y + (int)(((float)(m_currentValue - m_minValue) / (m_maxValue - m_minValue)) * (getHeight() - thumbSize));
-        thumbRect = {.x=absPos.x, .y=thumbY, .w=getWidth(), .h=thumbSize};
+        trackColor = {200, 200, 200, 255};
     }
-
-    // Użyj koloru `foregroundColor` dla kciuka.
-    SDL_SetRenderDrawColor(renderer, m_foregroundColor.r, m_foregroundColor.g, m_foregroundColor.b, m_foregroundColor.a);
-    SDL_RenderFillRect(renderer, &thumbRect);
+    SDL_SetRenderDrawColor(renderer, trackColor.r, trackColor.g, trackColor.b, trackColor.a);
     
-    // Krok 3e: Rysuj obramowanie.
-    if (m_borderWidth > 0) {
-        SDL_SetRenderDrawColor(renderer, m_borderColor.r, m_borderColor.g, m_borderColor.b, m_borderColor.a);
-        for (int i = 0; i < m_borderWidth; ++i) {
-            SDL_Rect borderRect = {rect.x + i, rect.y + i, rect.w - 2 * i, rect.h - 2 * i};
-            SDL_RenderDrawRect(renderer, &borderRect);
-        }
+    SDL_Rect trackRect;
+    const int trackThickness = 4;
+    if (m_orientation == Orientation::Horizontal) {
+        trackRect = {absPos.x + m_trackOffsetX, absPos.y + getHeight() / 2 - trackThickness / 2, m_trackSize, trackThickness};
+    } else {
+        trackRect = {absPos.x + getWidth() / 2 - trackThickness / 2, absPos.y + m_trackOffsetY, trackThickness, m_trackSize};
     }
+    SDL_RenderFillRect(renderer, &trackRect);
 
-    // Krok 3f: Rysowanie dzieci (przycisków) jest obsługiwane przez GUIElement::render() po wywołaniu tej metody.
-    // Nie ma potrzeby dodawać tutaj pętli.
+    SDL_Color thumbColor = style.borderColor.value_or(SDL_Color{100, 100, 100, 255});
+    SDL_SetRenderDrawColor(renderer, thumbColor.r, thumbColor.g, thumbColor.b, thumbColor.a);
+
+    SDL_Rect thumbRect;
+    int thumbSize = (m_orientation == Orientation::Horizontal) ? std::min(getHeight(), 20) : std::min(getWidth(), 20);
+    
+    float ratio = (m_maxValue > m_minValue) ? static_cast<float>(m_currentValue - m_minValue) / (m_maxValue - m_minValue) : 0.0f;
+
+    if (m_orientation == Orientation::Horizontal) {
+        int thumbX = (absPos.x + m_trackOffsetX) + static_cast<int>(ratio * (m_trackSize - thumbSize));
+        thumbRect = {thumbX, absPos.y + getHeight() / 2 - thumbSize / 2, thumbSize, thumbSize};
+    } else {
+        int thumbY = (absPos.y + m_trackOffsetY) + static_cast<int>(ratio * (m_trackSize - thumbSize));
+        thumbRect = {absPos.x + getWidth() / 2 - thumbSize / 2, thumbY, thumbSize, thumbSize};
+    }
+    
+    SDL_RenderFillRect(renderer, &thumbRect);
 }
 
 Button* Slider::getDecrementButton() {
