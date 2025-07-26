@@ -6,10 +6,12 @@ CC = clang-20
 CXX    = clang++-20
 FLAGS  = -Wall
 FLAGS += -Wextra
-FLAGS += -O3
+# FLAGS += -O3
+
 FLAGS += $(shell sdl2-config --cflags)
 FLAGS += -march=native
-#FLAGS += -g
+FLAGS += -fsanitize=address,undefined
+FLAGS += -g
 FLAGS += -flto
 # FLAGS += -fmodules
 #define any compile-time flags for C
