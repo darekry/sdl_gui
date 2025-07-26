@@ -9,6 +9,7 @@ import std.compat;
 GUIManager::GUIManager(SDL_Renderer* renderer)
     : m_renderer(renderer), m_fontManager(), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {
     timerManager = std::make_unique<TimerManager>();
+    animation_manager = std::make_unique<AnimationManager>();
     tooltipElement = nullptr;
     // Załaduj domyślną czcionkę
     m_fontManager.loadDefaultFont("assets/fonts/font.ttf", 24);
@@ -59,8 +60,9 @@ void GUIManager::render() {
 }
 
 void GUIManager::cleanup() {
-    // Zaktualizuj timery
+    // Zaktualizuj timery i animacje
     timerManager->update();
+    animation_manager->update();
 
     if (tooltipElement && tooltipElement->isMarkedForDeletion()) {
         tooltipElement.reset();
@@ -125,6 +127,10 @@ void GUIManager::setTheme(Theme theme) {
 
 Theme& GUIManager::getTheme() {
     return m_theme;
+}
+
+AnimationManager* GUIManager::getAnimationManager() {
+    return animation_manager.get();
 }
 
 

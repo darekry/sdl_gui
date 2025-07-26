@@ -8,9 +8,11 @@
 #include "texture_manager.hpp"
 #include "timer_manager.hpp"
 #include "theme.hpp"
+#include "animation_manager.hpp"
 import std.compat;
 
 class TimerManager;
+class AnimationManager;
 class GUIElement;
 class Theme;
 
@@ -47,6 +49,7 @@ public:
     TextureManager& getTextureManager() { return m_textureManager; }
     const TextureManager& getTextureManager() const { return m_textureManager; }
     TimerManager* getTimerManager();
+    AnimationManager* getAnimationManager();
     
     // Tooltip
     void showTooltip(GUIElement* target, const std::string& text);
@@ -69,6 +72,7 @@ SDL_Renderer* m_renderer;
 FontManager m_fontManager;
 TextureManager m_textureManager;
 std::unique_ptr<TimerManager> timerManager;
+std::unique_ptr<AnimationManager> animation_manager;
 Theme m_theme;
 };
 
