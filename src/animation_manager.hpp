@@ -1,7 +1,9 @@
 #pragma once
-import std.compat;
-#include "easing.hpp"
+
 #include <SDL.h>
+#include "easing.hpp"
+import std.compat;
+
 
 struct Animation {
     using CompleteCallback = std::function<void()>;
@@ -10,8 +12,8 @@ struct Animation {
     float start_value = 0.0f;
     float end_value = 0.0f;
     
-    Uint64 start_time = 0;
-    Uint32 duration_ms = 0;
+    uint64_t start_time = 0;
+    uint32_t duration_ms = 0;
     
     std::function<float(float)> easing_function = Easing::linear;
     CompleteCallback on_complete_callback = nullptr;
@@ -37,7 +39,7 @@ public:
         float* target_property,
         float start_value,
          float end_value,
-         Uint32 duration,
+         uint32_t duration,
          std::function<float(float)> easing = Easing::linear,
          Animation::CompleteCallback on_complete = nullptr,
          std::function<void()> on_update = nullptr

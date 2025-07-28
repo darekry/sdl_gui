@@ -1,6 +1,6 @@
 #include "animation_manager.hpp"
-import std.compat;
 #include <SDL.h>
+import std.compat;
 
 void AnimationManager::createAnimation(
     float* target_property,

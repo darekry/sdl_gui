@@ -1,9 +1,9 @@
 # define the C compiler to use
 # CC = gcc
-CC = clang-20
+CC = clang-22
 # define the Cpp compiler to use
 # CXX    = g++
-CXX    = clang++-20
+CXX    = clang++-22
 FLAGS  = -Wall
 FLAGS += -Wextra
 # FLAGS += -O3
@@ -13,7 +13,7 @@ FLAGS += -march=native
 FLAGS += -fsanitize=address,undefined
 FLAGS += -g
 FLAGS += -flto
-# FLAGS += -fmodules
+#FLAGS += -fmodules
 #define any compile-time flags for C
 CFLAGS := $(FLAGS)
 
@@ -47,6 +47,10 @@ INCLUDE := include
 LIB := lib
 
 # --- Konfiguracja modułów C++23 ---
+
+MODULE_STD_CPPM   := /usr/lib/llvm-22/share/libc++/v1/std.cppm
+MODULE_STDCOMPAT_CPPM   := /usr/lib/llvm-22/share/libc++/v1/std.compat.cppm
+
 MODULE_CACHE_DIR := modules_cache
 STD_PCM := $(MODULE_CACHE_DIR)/std.pcm
 STD_COMPAT_PCM := $(MODULE_CACHE_DIR)/std.compat.pcm
@@ -122,12 +126,10 @@ modules: $(MODULE_PCMS)
 
 $(STD_PCM): | $(MODULE_CACHE_DIR)
 	@echo "Kompilowanie modułu std..."
-	$(CXX) -std=c++23 -stdlib=libc++ -Wno-reserved-identifier -Wno-reserved-module-identifier -march=native -O3 --precompile -o $@ /usr/lib/llvm-20/share/libc++/v1/std.cppm
-
+	$(CXX) -std=c++23 -stdlib=libc++  -march=native -O3 --precompile -o $@ $(MODULE_STD_CPPM)
 $(STD_COMPAT_PCM): $(STD_PCM) | $(MODULE_CACHE_DIR)
 	@echo "Kompilowanie modułu std.compat..."
-	$(CXX) -std=c++23 -stdlib=libc++ -fmodule-file=std=$(STD_PCM) -Wno-reserved-identifier -Wno-reserved-module-identifier -march=native -O3 --precompile -o $@ /usr/lib/llvm-20/share/libc++/v1/std.compat.cppm
-
+	$(CXX) -std=c++23 -stdlib=libc++ -fmodule-file=std=$(STD_PCM)  -march=native -O3 --precompile -o $@ $(MODULE_STDCOMPAT_CPPM)
 $(MODULE_CACHE_DIR):
 	@mkdir -p $@
 
