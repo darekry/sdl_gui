@@ -1,7 +1,7 @@
 #include "slider.hpp"
 #include "gui_manager.hpp"
 #include "label.hpp"
-import std.compat;
+
 
 Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation)
     : Panel(manager, x, y, width, height),

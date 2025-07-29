@@ -1,6 +1,6 @@
 #include "label.hpp"
 #include "gui_manager.hpp"
-import std.compat;
+
 
 Label::Label(GUIManager& manager, int x, int y, std::string_view text, int font_size)
     : GUIElement(manager, x, y, 0, 0), m_text(text), m_font_size(font_size) {

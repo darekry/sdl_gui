@@ -2,7 +2,7 @@
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include "SDL2/SDL.h"
-import std.compat;
+
 
 // Implementacja klasy GUIElement
 GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)

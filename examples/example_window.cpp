@@ -5,7 +5,7 @@
 #include "helpers/sdl_app.hpp"
 #include "SDL_log.h"
 #include "label.hpp"
-import std.compat;
+
 
 // Helper function to create a 1x1 texture of a specific color
 SDL_Texture* createColorTexture(SDL_Renderer* renderer, SDL_Color color) {
@@ -25,7 +25,7 @@ int main() {
 
         // Main window panel
         auto windowPanel = std::make_unique<Panel>(guiManager, 100, 100, 300, 200);
-        windowPanel->setStyle(ElementState::Normal, {.texture = guiManager.getTextureManager().addTexture("window_bg", createColorTexture(renderer, {200, 200, 200, 255}))});
+        windowPanel->setStyle(ElementState::Normal, {.texture = guiManager.getTextureManager().addTexture("window_bg", createColorTexture(renderer, {.r=200, .g=200, .b=200, .a=255}))});
         Panel* windowPanelPtr = windowPanel.get();
 
         // Title bar

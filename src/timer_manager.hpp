@@ -2,7 +2,7 @@
 
 
 #include <SDL.h>
-import std.compat;
+
 
 class GUIElement;
 

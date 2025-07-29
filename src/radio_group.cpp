@@ -1,6 +1,6 @@
 #include "radio_group.hpp"
 #include "radio_button.hpp"
-import std.compat;
+
 
 RadioGroup::RadioGroup(GUIManager& manager, int x, int y, int w, int h)
     : Panel(manager, x, y, w, h) {

@@ -5,7 +5,9 @@
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_ttf.h"
 #include "font_manager.hpp" // Potrzebne do stworzenia domyślnej tekstury
-import std.compat;
+#include <memory>
+#include <string_view>
+
 
 // Typ dla współdzielonego wskaźnika na teksturę
 using SharedTexture = std::shared_ptr<SDL_Texture>;

@@ -1,7 +1,7 @@
 #include "radio_button.hpp"
 #include "gui_manager.hpp"
 #include "radio_group.hpp"
-import std.compat;
+
 namespace {
     // Funkcja pomocnicza do rysowania wypełnionego okręgu
     void drawFilledCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {

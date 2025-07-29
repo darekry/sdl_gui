@@ -3,7 +3,8 @@
 
 #include "texture_manager.hpp"
 #include <SDL2/SDL_pixels.h>
-import std.compat;
+#include <optional>
+
 
 // Definiuje stany, w jakich może znaleźć się element interfejsu.
 enum class ElementState {

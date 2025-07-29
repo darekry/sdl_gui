@@ -3,7 +3,7 @@
 
 #include "gui.hpp"
 #include "gui_manager.hpp"
-import std.compat;
+
 
 class TextArea : public GUIElement {
 public:

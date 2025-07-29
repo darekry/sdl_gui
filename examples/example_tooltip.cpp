@@ -4,7 +4,7 @@
 #include "helpers/sdl_app.hpp"
 #include "slider.hpp"
 #include "label.hpp"
-import std.compat;
+
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;

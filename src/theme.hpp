@@ -2,7 +2,9 @@
 #define THEME_HPP
 
 #include "style.hpp"
-import std.compat;
+#include <map>
+#include <string>
+
 // Klasa Theme przechowuje domyślne style dla wszystkich typów komponentów.
 // Umożliwia globalną zmianę wyglądu aplikacji.
 class Theme {

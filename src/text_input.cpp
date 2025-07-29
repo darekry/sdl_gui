@@ -2,7 +2,7 @@
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
-import std.compat;
+
 
 TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h), m_text(""), m_textColor({0, 0, 0, 255}),

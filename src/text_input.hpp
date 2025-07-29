@@ -4,7 +4,7 @@
 
 #include "gui.hpp"
 #include "sdl_deleters.hpp"
-import std.compat;
+
 class TextInput : public GUIElement {
 public:
     TextInput(GUIManager& manager, int x, int y, int w, int h);

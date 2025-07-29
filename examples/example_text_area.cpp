@@ -3,7 +3,7 @@
 #include "gui_manager.hpp"
 #include "text_area.hpp"
 #include "helpers/sdl_app.hpp"
-import std.compat;
+
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     try {

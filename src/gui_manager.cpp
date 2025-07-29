@@ -4,7 +4,7 @@
 #include "timer_manager.hpp"
 #include "panel.hpp"
 #include "label.hpp"
-import std.compat;
+
 
 GUIManager::GUIManager(SDL_Renderer* renderer)
     : m_renderer(renderer), m_fontManager(), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {

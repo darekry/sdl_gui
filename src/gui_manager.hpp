@@ -9,7 +9,7 @@
 #include "timer_manager.hpp"
 #include "theme.hpp"
 #include "animation_manager.hpp"
-import std.compat;
+
 
 class TimerManager;
 class AnimationManager;

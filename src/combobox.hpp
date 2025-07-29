@@ -5,7 +5,7 @@
 #include "panel.hpp"
 #include "gui.hpp"
 #include "label.hpp" // Dodano
-import std.compat;
+
 
 class ComboBox : public GUIElement {
 public:

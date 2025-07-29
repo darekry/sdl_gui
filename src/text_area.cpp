@@ -1,9 +1,10 @@
 #include "text_area.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
+#include <algorithm>
 
-import std.compat;
-
+#include <string>
+#include <sstream>
 TextArea::TextArea(GUIManager& manager, int x, int y, int w, int h, std::string_view font_path, int font_size)
     : GUIElement(manager, x, y, w, h), m_font_path(font_path), m_font_size(font_size) {
     

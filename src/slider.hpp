@@ -4,7 +4,7 @@
 #include "button.hpp"
 #include "panel.hpp"
 #include "label.hpp"
-import std.compat;
+
 
 enum class Orientation : uint8_t {
     Horizontal,

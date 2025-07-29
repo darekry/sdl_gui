@@ -1,6 +1,6 @@
 #include "timer_manager.hpp"
 #include "gui.hpp"
-import std.compat;
+
 
 uint32_t TimerManager::addTimer(GUIElement* target, uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback) {
     TimerEvent newTimer;

@@ -2,7 +2,7 @@
 #define RADIOGROUP_HPP
 
 #include "panel.hpp"
-import std.compat;
+
 
 class RadioButton;
 

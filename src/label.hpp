@@ -3,7 +3,7 @@
 
 #include "gui.hpp"
 #include "texture_manager.hpp"
-import std.compat;
+
 
 class Label : public GUIElement {
 public:
