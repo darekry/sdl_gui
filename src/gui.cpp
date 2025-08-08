@@ -137,6 +137,47 @@ void GUIElement::render(SDL_Renderer* renderer) {
         return;
     }
 
+    // Jeśli element wspiera rysowanie bezpośrednie (no-cache), zawsze rysujemy bezpośrednio
+    // (nie korzystamy z m_cachedTexture), niezależnie od stanu m_isDirty.
+    if (wantsDirectRender()) {
+        // Przygotuj clipping tak jak dla standardowej ścieżki
+        SDL_Rect old_clip_rect;
+        SDL_bool clip_was_enabled = SDL_RenderIsClipEnabled(renderer);
+        if (clip_was_enabled) {
+            SDL_RenderGetClipRect(renderer, &old_clip_rect);
+        }
+
+        if (m_clip_children) {
+            auto abs_pos = getAbsolutePosition();
+            SDL_Rect element_rect = {abs_pos.x, abs_pos.y, m_width, m_height};
+            if (clip_was_enabled) {
+                SDL_IntersectRect(&old_clip_rect, &element_rect, &element_rect);
+            }
+            SDL_RenderSetClipRect(renderer, &element_rect);
+        }
+
+        // Rysuj element bezpośrednio na rendererze (zawsze, nawet gdy nie jest "brudny")
+        drawDirect(renderer);
+        // Po direct render oznaczamy element jako czysty (cache nie jest używany)
+        m_isDirty = false;
+
+        // Renderuj dzieci
+        for (auto& child : m_children) {
+            if (child && child->isVisible()) {
+                child->render(renderer);
+            }
+        }
+
+        // Przywróć clip
+        if (clip_was_enabled) {
+            SDL_RenderSetClipRect(renderer, &old_clip_rect);
+        } else if (m_clip_children) {
+            SDL_RenderSetClipRect(renderer, nullptr);
+        }
+        return;
+    }
+
+    // Standardowa ścieżka: z buforowaniem do m_cachedTexture
     if (m_isDirty) {
         renderToCache();
     }
@@ -147,7 +188,7 @@ void GUIElement::render(SDL_Renderer* renderer) {
         SDL_RenderCopy(renderer, m_cachedTexture.get(), nullptr, &destRect);
     }
 
-    // Clipping i renderowanie dzieci
+    // Clipping i renderowanie dzieci (jak wcześniej)
     SDL_Rect old_clip_rect;
     SDL_bool clip_was_enabled = SDL_RenderIsClipEnabled(renderer);
     if(clip_was_enabled) {

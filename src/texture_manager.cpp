@@ -163,3 +163,19 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
 SharedTexture TextureManager::getDefaultTexture() const {
     return m_defaultTexture;
 }
+
+bool TextureManager::queryTexture(std::string_view path, int& width, int& height) {
+    // If texture already loaded, use it; otherwise attempt to load (which will cache it)
+    SharedTexture tex = getTexture(path);
+    if (!tex) {
+        tex = loadTexture(path);
+        if (!tex) {
+            return false;
+        }
+    }
+    if (SDL_QueryTexture(tex.get(), nullptr, nullptr, &width, &height) != 0) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: SDL_QueryTexture failed for %.*s: %s", static_cast<int>(path.size()), path.data(), SDL_GetError());
+        return false;
+    }
+    return true;
+}

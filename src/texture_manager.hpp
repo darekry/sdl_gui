@@ -33,13 +33,17 @@ public:
 
     // Metoda do pobierania tekstury po kluczu
     SharedTexture getTexture(std::string_view key) const;
-
+    
     // Metoda do sprawdzania, czy tekstura o danym kluczu istnieje
     bool hasTexture(std::string_view key) const;
 
+    // Metoda do zapytania rozmiaru tekstury (ładuje teksturę jeśli nie jest załadowana)
+    // Zwraca true oraz ustawia width/height jeśli tekstura jest dostępna; w przeciwnym razie false.
+    bool queryTexture(std::string_view key, int& width, int& height);
+    
     // Metoda do tworzenia domyślnej tekstury
     void createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, std::string_view text);
-
+    
     // Metoda do pobierania domyślnej tekstury
     SharedTexture getDefaultTexture() const;
 

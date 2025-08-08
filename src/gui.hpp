@@ -78,6 +78,12 @@ protected:
     
     bool m_clip_children = true;
     virtual void draw(SDL_Renderer* renderer) = 0;
+
+    // Rozszerzenie: możliwość rysowania bezpośrednio (bez buforowania).
+    // Domyślnie elementy nie korzystają z drawDirect — zwracają false w wantsDirectRender().
+    virtual bool wantsDirectRender() const { return false; }
+    virtual void drawDirect(SDL_Renderer* renderer) { /* domyślnie brak */ }
+
     Style resolveStyle(const Style& base, const std::optional<Style>& override) const;
 
     GUIManager& m_manager;
