@@ -36,7 +36,7 @@ private:
     std::vector<std::string> m_options;
     int m_selected_index;
 
-    Button* m_main_button;
+    //Button* m_main_button;
     Panel* m_dropdown_panel;
     bool m_needs_update;
 };

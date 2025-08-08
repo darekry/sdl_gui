@@ -11,7 +11,7 @@
 
 class SDLApp {
 public:
-    SDLApp(const char* title, int width, int height) {
+    SDLApp(const char* title, int width, int height, SDL_RendererFlags rendeerFlags = SDL_RENDERER_ACCELERATED) {
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
             std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
             throw std::runtime_error("SDL_Init failed");
@@ -39,7 +39,7 @@ public:
             throw std::runtime_error("SDL_CreateWindow failed");
         }
 
-        m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_PRESENTVSYNC);
+        m_renderer = SDL_CreateRenderer(m_window, -1, rendeerFlags);
         if (!m_renderer) {
             std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
             SDL_DestroyWindow(m_window);

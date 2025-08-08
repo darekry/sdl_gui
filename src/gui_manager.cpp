@@ -1,28 +1,29 @@
-#include "gui_manager.hpp"
 #include <iostream>
 #include "SDL2/SDL.h"
+#include "gui_manager.hpp"
 #include "gui.hpp"
 #include "timer_manager.hpp"
 #include "panel.hpp"
 #include "label.hpp"
 
+static constexpr int DEFAULT_FONT_SIZE = 24;
+static constexpr int TOOLTIP_FONT_SIZE = 14;
+static constexpr int TOOLTIP_PADDING = 5;
+static const SDL_Color TOOLTIP_BG_COLOR = {.r=255, .g=255, .b=225, .a=255};
 
 GUIManager::GUIManager(SDL_Renderer* renderer)
-    : m_renderer(renderer), m_fontManager(), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {
+    : tooltipElement(nullptr), m_renderer(renderer), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {
     timerManager = std::make_unique<TimerManager>();
     animation_manager = std::make_unique<AnimationManager>();
-    tooltipElement = nullptr;
+
     // Załaduj domyślną czcionkę
-    m_fontManager.loadDefaultFont("assets/fonts/font.ttf", 24);
+    m_fontManager.loadDefaultFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
 
     // Utwórz domyślną teksturę zastępczą
     m_textureManager.createDefaultTexture(m_renderer, m_fontManager, "No Texture");
 }
 
-GUIManager::~GUIManager() {
-    // Obiekty m_fontManager i m_textureManager są automatycznie niszczone,
-    // a unique_ptrs w m_elements dbają o zwolnienie pamięci po elementach GUI.
-}
+GUIManager::~GUIManager() = default;
 
 
 GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
@@ -34,11 +35,11 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     return nullptr;
 }
 
-bool GUIManager::processEvent(const SDL_Event& e) {
+bool GUIManager::processEvent(const SDL_Event& event) {
     // Przekaż zdarzenie do wszystkich elementów najwyższego poziomu.
     // Pętla zatrzyma się, gdy któryś element "skonsumuje" zdarzenie.
     for (const auto& element : m_elements) {
-        if (element && element->handleEvent(e)) {
+        if (element && element->handleEvent(event)) {
             // Jeśli element obsłużył zdarzenie, zwracamy true.
             return true;
         }
@@ -88,34 +89,37 @@ auto new_end = std::remove_if(m_elements.begin(), m_elements.end(),
     return element->isMarkedForDeletion();
 });
 
-if (std::distance(m_elements.begin(), new_end) < m_elements.size()) {
-   m_elements.erase(new_end, m_elements.end());
+std::size_t prefix_distance = static_cast<std::size_t>(std::distance(m_elements.begin(), new_end));
+if (prefix_distance < m_elements.size())
+{
+    m_elements.erase(new_end, m_elements.end());
 }
 
 if (total_removed_count > 0) {
-    std::cout << "[DEBUG] GUIManager::cleanup(): Removed " << total_removed_count << " elements in total." << std::endl;
+    std::cout << "[DEBUG] GUIManager::cleanup(): Removed " << total_removed_count << " elements in total." << '\n';
 }
 }
 
 void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
     if (!target) return;
 
-    const int fontSize = 14;
-    const int padding = 5;
+    const int fontSize = TOOLTIP_FONT_SIZE;
+    const int padding = TOOLTIP_PADDING;
 
     // Precyzyjne obliczanie rozmiaru tekstu
-    int textWidth, textHeight;
+    int textWidth = 0;
+    int textHeight = 0;
     m_fontManager.getTextSize(text, "assets/fonts/font.ttf", fontSize, &textWidth, &textHeight);
     
     auto targetPos = target->getAbsolutePosition();
-    int x = targetPos.x;
-    int y = targetPos.y + target->getHeight();
+    int posX = targetPos.x;
+    int posY = targetPos.y + target->getHeight();
 
     // Utwórz panel
-    auto panel = std::make_unique<Panel>(*this, x, y, textWidth + 2 * padding, textHeight + 2 * padding);
+    auto panel = std::make_unique<Panel>(*this, posX, posY, (textWidth + (2 * padding)), (textHeight + (2 * padding)));
     Style tooltip_style;
     tooltip_style.borderWidth = 1;
-    tooltip_style.backgroundColor = {255, 255, 225, 255};
+    tooltip_style.backgroundColor = TOOLTIP_BG_COLOR;
     panel->setStyle(ElementState::Normal, tooltip_style);
 
     // Utwórz etykietę i dodaj ją do panelu
@@ -145,5 +149,3 @@ Theme& GUIManager::getTheme() {
 AnimationManager* GUIManager::getAnimationManager() {
     return animation_manager.get();
 }
-
-

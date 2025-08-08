@@ -7,7 +7,7 @@
 
 // Implementacja klasy GUIElement
 GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)
-    : m_manager(manager), m_x(x), m_y(y), m_width(width), m_height(height), m_parent(nullptr) {
+    : m_x(x), m_y(y), m_width(width), m_height(height), m_manager(manager), m_parent(nullptr) {
 }
 
 void GUIElement::setPosition(int x, int y) {
