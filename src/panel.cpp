@@ -1,10 +1,19 @@
 #include "panel.hpp"
+#include "SDL_rect.h"
 #include "gui_manager.hpp"
+#include "style.hpp"
+#include "texture_manager.hpp"
+#include "theme.hpp"
 
 // Implementacja klasy Panel
 Panel::Panel(GUIManager& manager, int x, int y, int width, int height)
     : GUIElement(manager, x, y, width, height) {
 }
+
+Panel::Panel(GUIManager& manager, SDL_Rect rect)
+    : GUIElement(manager, rect.x, rect.y, rect.w, rect.h) {
+}
+
 
 void Panel::setDraggable(bool draggable) {
     m_is_draggable = draggable;
@@ -53,8 +62,34 @@ const char* Panel::getComponentType() const {
     return "Panel";
 }
 
-void Panel::draw() {
-    // Ta metoda jest teraz pusta, ponieważ całe rysowanie jest obsługiwane
-    // przez GUIElement::draw() i system motywów.
-    // Zachowujemy ją, aby klasy pochodne mogły ją nadpisać w razie potrzeby.
+void Panel::draw(SDL_Renderer* renderer) {
+    const Style& resolvedStyle = getResolvedStyle();
+
+    // Rysuj tło
+    if (resolvedStyle.backgroundColor.has_value()) {
+        const auto& color = resolvedStyle.backgroundColor.value();
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+        SDL_Rect bgRect = {0, 0, m_width, m_height};
+        SDL_RenderFillRect(renderer, &bgRect);
+    }
+
+    // Rysuj teksturę
+    if (resolvedStyle.texture.has_value()) {
+        SDL_Rect destRect = {0, 0, m_width, m_height};
+        SDL_RenderCopy(renderer, resolvedStyle.texture.value().get(), nullptr, &destRect);
+    }
+    
+    // Rysuj ramkę
+    if (resolvedStyle.borderColor.has_value() && resolvedStyle.borderWidth.has_value()) {
+        const auto& color = resolvedStyle.borderColor.value();
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+        SDL_Rect borderRect = {0, 0, m_width, m_height};
+        for (int i = 0; i < resolvedStyle.borderWidth.value(); ++i) {
+            SDL_RenderDrawRect(renderer, &borderRect);
+            borderRect.x++;
+            borderRect.y++;
+            borderRect.w -= 2;
+            borderRect.h -= 2;
+        }
+    }
 }

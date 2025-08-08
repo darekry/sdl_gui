@@ -20,7 +20,7 @@ public:
     const char* getComponentType() const override;
 
 protected:
-    void draw() override;
+    void draw(SDL_Renderer* renderer) override;
 
 private:
     bool m_isSelected = false;

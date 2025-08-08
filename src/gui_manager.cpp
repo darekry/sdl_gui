@@ -1,4 +1,5 @@
 #include "gui_manager.hpp"
+#include <iostream>
 #include "SDL2/SDL.h"
 #include "gui.hpp"
 #include "timer_manager.hpp"
@@ -50,12 +51,12 @@ void GUIManager::render() {
     // Renderuj wszystkie zarządzane elementy
     for (const auto& element : m_elements) { // Iteracja po unique_ptr
         if (element) {
-            element->render();
+            element->render(m_renderer);
         }
     }
     
     if (tooltipElement) {
-        tooltipElement->render();
+        tooltipElement->render(m_renderer);
     }
 }
 
@@ -74,14 +75,26 @@ void GUIManager::cleanup() {
             element->cleanup();
         }
     }
+// Następnie usuń oznaczone elementy z głównego kontenera
+size_t total_removed_count = 0;
+for (const auto& element : m_elements) {
+    if (element && element->isMarkedForDeletion()) {
+        total_removed_count += 1 + element->countDescendants();
+    }
+}
 
-    // Następnie usuń oznaczone elementy z głównego kontenera
-    auto new_end = std::remove_if(m_elements.begin(), m_elements.end(),
-                                  [](const std::unique_ptr<GUIElement>& element) {
-        return element->isMarkedForDeletion();
-    });
-    
-    m_elements.erase(new_end, m_elements.end());
+auto new_end = std::remove_if(m_elements.begin(), m_elements.end(),
+                              [](const std::unique_ptr<GUIElement>& element) {
+    return element->isMarkedForDeletion();
+});
+
+if (std::distance(m_elements.begin(), new_end) < m_elements.size()) {
+   m_elements.erase(new_end, m_elements.end());
+}
+
+if (total_removed_count > 0) {
+    std::cout << "[DEBUG] GUIManager::cleanup(): Removed " << total_removed_count << " elements in total." << std::endl;
+}
 }
 
 void GUIManager::showTooltip(GUIElement* target, const std::string& text) {

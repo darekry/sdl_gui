@@ -26,6 +26,7 @@ bool RadioButton::isSelected() const {
 void RadioButton::setSelected(bool selected) {
     if (m_isSelected != selected) {
         m_isSelected = selected;
+        markDirty(); // Oznacz jako "brudny" do przerysowania
         if (m_onChange) {
             m_onChange(this, m_isSelected);
         }
@@ -60,20 +61,31 @@ bool RadioButton::handleEvent(const SDL_Event& e) {
 const char* RadioButton::getComponentType() const {
     return "RadioButton";
 }
+void RadioButton::draw(SDL_Renderer* renderer) {
+    const auto style = getResolvedStyle();
+    
+    if (style.backgroundColor) {
+        const auto& c = style.backgroundColor.value();
+        SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+        SDL_Rect bgRect = {0, 0, m_width, m_height};
+        SDL_RenderFillRect(renderer, &bgRect);
+    }
 
-void RadioButton::draw() {
-    GUIElement::draw(); // Rysuje tło i (opcjonalnie) ramkę
+    if (style.borderColor) {
+        const auto& c = style.borderColor.value();
+        SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+        SDL_Rect borderRect = {0, 0, m_width, m_height};
+        SDL_RenderDrawRect(renderer, &borderRect);
+    }
 
-    // Rysowanie "ptaszka" jeśli zaznaczony
     if (m_isSelected) {
-        auto* renderer = m_manager.getRenderer();
-        const auto style = getResolvedStyle();
-        const auto absPos = getAbsolutePosition();
-
-        if (style.textColor) { // Używamy koloru tekstu do rysowania kropki
+        if (style.texture) {
+            SDL_Rect indicatorRect = {0, 0, m_width, m_height};
+            SDL_RenderCopy(renderer, style.texture->get(), nullptr, &indicatorRect);
+        } else if (style.textColor) {
             const auto& c = style.textColor.value();
             SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
-            drawFilledCircle(renderer, absPos.x + m_width / 2, absPos.y + m_height / 2, m_width / 4);
+            drawFilledCircle(renderer, m_width / 2, m_height / 2, m_width / 4);
         }
     }
 }

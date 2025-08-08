@@ -41,6 +41,7 @@ int main(int, char**) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             SDL_RenderClear(renderer);
             guiManager.render();
+            guiManager.cleanup();
             SDL_RenderPresent(renderer);
         }
     } catch (const std::runtime_error& e) {

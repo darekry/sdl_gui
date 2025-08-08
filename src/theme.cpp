@@ -63,6 +63,16 @@ Theme Theme::createDefaultTheme() {
     Style slider_style = panel_style;
     theme.setStyle("Slider", ElementState::Normal, slider_style);
 
+    // --- Style dla Etykiety (Label) ---
+    Style label_style;
+    label_style.textColor = text_color;
+    theme.setStyle("Label", ElementState::Normal, label_style);
+    theme.setStyle("Label", ElementState::Hover, label_style);
+    theme.setStyle("Label", ElementState::Pressed, label_style);
+    Style label_disabled = label_style;
+    label_disabled.textColor = border_dark;
+    theme.setStyle("Label", ElementState::Disabled, label_disabled);
+
     return theme;
 }
 

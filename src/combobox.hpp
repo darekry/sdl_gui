@@ -24,7 +24,7 @@ public:
     std::function<void(int, const std::string&)> on_selection_changed;
 
 protected:
-    void draw() override;
+    void draw(SDL_Renderer* renderer) override;
 
 private:
     void toggleDropdown();

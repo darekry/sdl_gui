@@ -12,6 +12,7 @@ bool Checkbox::isChecked() const {
 void Checkbox::setChecked(bool checked) {
     if (m_isChecked != checked) {
         m_isChecked = checked;
+        markDirty();
         if (m_onChange) {
             m_onChange(this, m_isChecked);
         }
@@ -38,22 +39,35 @@ bool Checkbox::handleEvent(const SDL_Event& e) {
 const char* Checkbox::getComponentType() const {
     return "Checkbox";
 }
+void Checkbox::draw(SDL_Renderer* renderer) {
+    const auto style = getResolvedStyle();
 
-void Checkbox::draw() {
-    GUIElement::draw(); // Rysuje tło i ramkę
+    // 1. Rysowanie tła
+    if (style.backgroundColor) {
+        const auto& c = style.backgroundColor.value();
+        SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+        SDL_Rect bgRect = {0, 0, m_width, m_height};
+        SDL_RenderFillRect(renderer, &bgRect);
+    }
 
+    // 2. Rysowanie ramki
+    if (style.borderColor) {
+        const auto& c = style.borderColor.value();
+        SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+        SDL_Rect borderRect = {0, 0, m_width, m_height};
+        SDL_RenderDrawRect(renderer, &borderRect);
+    }
+    // 3. Rysowanie "ptaszka", jeśli zaznaczony
     if (m_isChecked) {
-        auto* renderer = m_manager.getRenderer();
-        const auto style = getResolvedStyle();
-        const auto absPos = getAbsolutePosition();
-
-        if (style.textColor) { // Używamy koloru tekstu do rysowania "ptaszka"
+        if (style.texture) {
+            SDL_RenderCopy(renderer, (*style.texture).get(), nullptr, nullptr);
+        } else if (style.textColor) {
             const auto& c = style.textColor.value();
             SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
 
-            // Rysowanie "ptaszka"
-            SDL_RenderDrawLine(renderer, absPos.x + 3, absPos.y + m_height / 2, absPos.x + m_height / 2, absPos.y + m_height - 3);
-            SDL_RenderDrawLine(renderer, absPos.x + m_height / 2, absPos.y + m_height - 3, absPos.x + m_height - 3, absPos.y + 3);
+            SDL_Rect checkRect = { 3, 3, m_width - 6, m_height - 6 };
+            SDL_RenderDrawLine(renderer, checkRect.x, checkRect.y + checkRect.h / 2, checkRect.x + checkRect.w / 2, checkRect.y + checkRect.h);
+            SDL_RenderDrawLine(renderer, checkRect.x + checkRect.w / 2, checkRect.y + checkRect.h, checkRect.x + checkRect.w, checkRect.y);
         }
     }
 }

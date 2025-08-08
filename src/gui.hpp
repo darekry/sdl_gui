@@ -40,12 +40,14 @@ public:
     void setSize(int width, int height);
     void setParent(GUIElement* parent);
     SDL_Point getAbsolutePosition() const;
+    SDL_Point getRelativePosition() const { return {m_x, m_y}; }
     bool contains(int x, int y) const;
     virtual bool handleEvent(const SDL_Event& e);
-    void render();
+    void render(SDL_Renderer* renderer);
+    void renderToCache();
     void setClipChildren(bool clip);
     void setTexture(const SharedTexture& texture);
-    void setLabel(std::string_view text, int font_size = -1);
+    
     void setEnabled(bool enabled) { m_enabled = enabled; }
     [[nodiscard]] bool isEnabled() const { return m_enabled; }
     void setVisible(bool visible) { m_visible = visible; }
@@ -60,6 +62,7 @@ public:
     void setBorder(ElementState state, SDL_Color color, int width);
     virtual const char* getComponentType() const;
     void markForDeletion();
+    void markDirty(bool cascadeToParents = true);
     bool isMarkedForDeletion() const;
     void cleanup();
 
@@ -67,13 +70,14 @@ public:
     void clearChildren();
     [[nodiscard]] GUIElement* getParent() const { return m_parent; }
     [[nodiscard]] const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
-
+size_t countDescendants() const;
+ 
 protected:
     uint32_t startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback);
     void stopTimer(uint32_t timerId);
     
     bool m_clip_children = true;
-    virtual void draw();
+    virtual void draw(SDL_Renderer* renderer) = 0;
     Style resolveStyle(const Style& base, const std::optional<Style>& override) const;
 
     GUIManager& m_manager;
@@ -81,7 +85,8 @@ protected:
     bool m_isMarkedForDeletion = false;
     GUIElement* m_parent;
     SharedTexture m_texture;
-    std::unique_ptr<GUIElement> m_label = nullptr;
+    bool m_isDirty = true;
+    std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_cachedTexture{nullptr, SDL_DestroyTexture};
     std::map<ElementState, Style> m_styles;
     ElementState m_currentState = ElementState::Normal;
     bool m_style_dirty = true;

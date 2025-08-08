@@ -69,6 +69,7 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to create texture from rendered text! SDL Error: %s", SDL_GetError());
         return nullptr;
     }
+    SDL_SetTextureBlendMode(textTexture, SDL_BLENDMODE_BLEND);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Texture created successfully from text.");
 
     return {textTexture, SDLTextureDeleter()};

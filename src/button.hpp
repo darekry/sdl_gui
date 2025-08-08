@@ -7,8 +7,8 @@
 class Button : public GUIElement {
 public:
     // Konstruktor
-    Button(GUIManager& manager, int x, int y, int width, int height, std::string_view label = "");
-
+    // Button(GUIManager& manager, int x, int y, int width, int height);
+     Button(GUIManager& manager, int x, int y, int width, int height, std::string_view label = "");
     // Destruktor
     ~Button() = default;
 
@@ -25,7 +25,7 @@ public:
     const char* getComponentType() const override;
 
 protected:
-    void draw() override;
+    void draw(SDL_Renderer* renderer) override;
 
 private:
     OnClickCallback m_onClick;

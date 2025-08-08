@@ -8,7 +8,7 @@
 // --- Implementacja TabControl ---
 
 TabControl::TabControl(GUIManager& manager, int x, int y, int width, int height, int tabButtonHeight)
-    : GUIElement(manager, x, y, width, height), m_tabButtonHeight(tabButtonHeight) {
+    : Panel(manager, x, y, width, height), m_tabButtonHeight(tabButtonHeight) {
 }
 
 #include "label.hpp"
@@ -39,6 +39,7 @@ Panel* TabControl::addTab(std::string_view title) {
     }
 
     reorderTabs();
+    markDirty();
     return panelPtr;
 }
 
@@ -64,6 +65,7 @@ void TabControl::setActiveTab(Button* tabButton) {
             break;
         }
     }
+    markDirty();
 }
 
 void TabControl::reorderTabs() {
@@ -74,6 +76,10 @@ void TabControl::reorderTabs() {
     }
 }
 
-void TabControl::draw() {
-    //
+void TabControl::draw(SDL_Renderer* renderer) {
+    Panel::draw(renderer);
+}
+
+const char* TabControl::getComponentType() const {
+    return "TabControl";
 }

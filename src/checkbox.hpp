@@ -17,8 +17,8 @@ public:
     bool handleEvent(const SDL_Event& e) override;
     const char* getComponentType() const override;
 
-protected:
-    void draw() override;
+public:
+    void draw(SDL_Renderer* renderer) override;
 
 private:
     bool m_isChecked;

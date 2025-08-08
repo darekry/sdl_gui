@@ -6,7 +6,7 @@
 #include "panel.hpp"
 
 
-class TabControl : public GUIElement {
+class TabControl : public Panel {
 public:
     TabControl(GUIManager& manager, int x, int y, int w, int h, int tabButtonHeight = 30);
 
@@ -16,8 +16,10 @@ public:
     // Ustawia aktywną zakładkę na podstawie wskaźnika na jej przycisk
     void setActiveTab(Button* tabButton);
 
+    const char* getComponentType() const override;
+
 protected:
-    void draw() override;
+    void draw(SDL_Renderer* renderer) override;
 
 private:
     void reorderTabs(); // Prywatna metoda do aktualizacji pozycji przycisków

@@ -1,58 +1,68 @@
 #include "label.hpp"
+#include "SDL_log.h"
 #include "gui_manager.hpp"
 
 
+void Label::recalculateSize() {
+    if (m_text.empty()) {
+        setSize(0, 0);
+        return;
+    }
+    const auto& resolvedStyle = getResolvedStyle();
+    int font_size = m_font_size > 0 ? m_font_size : (resolvedStyle.fontSize.value_or(m_manager.getTheme().getDefaultStyle().fontSize.value_or(16)));
+    auto& fontManager = m_manager.getFontManager();
+    auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
+    if (font) {
+        int textWidth, textHeight;
+        TTF_SizeText(font.get(), m_text.c_str(), &textWidth, &textHeight);
+        setSize(textWidth, textHeight);
+    }
+}
+
 Label::Label(GUIManager& manager, int x, int y, std::string_view text, int font_size)
     : GUIElement(manager, x, y, 0, 0), m_text(text), m_font_size(font_size) {
-    updateTexture();
+    recalculateSize();
+    markDirty();
 }
 
 void Label::setText(std::string_view text) {
-    m_text = text;
-    updateTexture();
+    if (m_text != text) {
+        m_text = text;
+        recalculateSize();
+        markDirty();
+    }
 }
 
-void Label::updateTexture() {
-    const auto resolvedStyle = getResolvedStyle();
-    if (!resolvedStyle.textColor) {
-        m_texture.reset();
-        setSize(0, 0);
+void Label::draw(SDL_Renderer* renderer) {
+    if (m_text.empty()) {
+        return;
+    }
+
+    const auto& resolvedStyle = getResolvedStyle();
+    if (!resolvedStyle.textColor.has_value()) {
+        SDL_Log("no text color");
+
         return;
     }
 
     int font_size = m_font_size > 0 ? m_font_size : (resolvedStyle.fontSize.value_or(m_manager.getTheme().getDefaultStyle().fontSize.value_or(16)));
-    
     auto& fontManager = m_manager.getFontManager();
     auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
-    if (font) {
-        auto& textureManager = m_manager.getTextureManager();
-        m_texture = textureManager.createTextureFromText(m_text, font, *resolvedStyle.textColor);
-        if (m_texture) {
-            int width, height;
-            SDL_QueryTexture(m_texture.get(), nullptr, nullptr, &width, &height);
-            setSize(width, height);
-        } else {
-            setSize(0,0);
-        }
-    } else {
-        setSize(0,0);
+    
+    if (!font) {
+        SDL_Log("no font");
+        return;
     }
-}
 
+    auto& textureManager = m_manager.getTextureManager();
+    SharedTexture textTexture = textureManager.createTextureFromText(m_text, font, resolvedStyle.textColor.value());
 
-void Label::draw() {
-    if (m_style_dirty) {
-        updateTexture();
-        m_style_dirty = false;
+    if (!textTexture) {
+        SDL_Log("no shared texture");
+
+        return;
     }
-    // Rysuj tło/ramkę z klasy bazowej
-    GUIElement::draw();
 
-    // A teraz narysuj teksturę tekstu na wierzchu
-    if (m_texture && isVisible()) {
-        auto renderer = m_manager.getRenderer();
-        auto absPos = getAbsolutePosition();
-        SDL_Rect dstRect = { absPos.x, absPos.y, m_width, m_height };
-        SDL_RenderCopy(renderer, m_texture.get(), nullptr, &dstRect);
-    }
+    SDL_Rect dstRect = {0, 0, m_width, m_height};
+    SDL_RenderCopy(renderer, textTexture.get(), nullptr, &dstRect);
 }

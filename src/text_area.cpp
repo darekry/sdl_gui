@@ -17,18 +17,21 @@ void TextArea::setText(std::string_view text) {
     m_text = text;
     m_cursorPos = std::min(m_cursorPos, m_text.length());
     m_needs_texture_update = true;
+    markDirty();
 }
 
 void TextArea::setText(std::string&& text) {
     m_text = std::move(text);
     m_cursorPos = std::min(m_cursorPos, m_text.length());
     m_needs_texture_update = true;
+    markDirty();
 }
 
 void TextArea::setText(const char* text) {
     m_text = text;
     m_cursorPos = std::min(m_cursorPos, m_text.length());
     m_needs_texture_update = true;
+    markDirty();
 }
 
 const std::string& TextArea::getText() const {
@@ -44,40 +47,55 @@ bool TextArea::getWordWrap() const {
     return m_wordWrap;
 }
 
-void TextArea::draw() {
-    // Rysowanie tła i ramki jest teraz obsługiwane przez styl
-    GUIElement::draw();
+void TextArea::draw(SDL_Renderer* renderer) {
+    const auto style = getResolvedStyle();
 
+    // Rysuj tło i ramkę (jak w Panel)
+    if (style.backgroundColor) {
+        SDL_SetRenderDrawColor(renderer, style.backgroundColor->r, style.backgroundColor->g, style.backgroundColor->b, style.backgroundColor->a);
+        SDL_Rect bgRect = {0, 0, m_width, m_height};
+        SDL_RenderFillRect(renderer, &bgRect);
+    }
+    if (style.borderColor && style.borderWidth.value_or(0) > 0) {
+        SDL_SetRenderDrawColor(renderer, style.borderColor->r, style.borderColor->g, style.borderColor->b, style.borderColor->a);
+        for (int i = 0; i < style.borderWidth.value_or(0); ++i) {
+            SDL_Rect rect = {i, i, m_width - 2 * i, m_height - 2 * i};
+            SDL_RenderDrawRect(renderer, &rect);
+        }
+    }
+
+    // Renderowanie tekstu
     if (m_needs_texture_update) {
         recalculateLines();
         refreshTextures();
         m_needs_texture_update = false;
     }
 
-    auto* renderer = m_manager.getRenderer();
-    auto bounds = SDL_Rect{getAbsolutePosition().x, getAbsolutePosition().y, m_width, m_height};
-
-    // Tekst
-    // Tekst
     auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
-     if (!font) {
-        return;
-    }
+    if (!font) return;
 
-    auto clip_rect = SDL_Rect{bounds.x + 2, bounds.y, bounds.w - 4, bounds.h};
+    auto clip_rect = SDL_Rect{2, 2, m_width - 4, m_height - 4};
     SDL_RenderSetClipRect(renderer, &clip_rect);
-    auto yOffset = 0;
+
+    int yOffset = m_scroll_offset_y;
     for (const auto& texture : m_line_textures) {
         if (texture) {
-            auto destRect = SDL_Rect{bounds.x + 2 + m_text_offset_x, bounds.y + yOffset + 2, 0, 0};
-            SDL_QueryTexture(texture.get(), nullptr, nullptr, &destRect.w, &destRect.h);
-             SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
+            int texW, texH;
+            SDL_QueryTexture(texture.get(), nullptr, nullptr, &texW, &texH);
+            SDL_Rect destRect = {2 + m_text_offset_x, yOffset + 2, texW, texH};
+
+            // Sprawdzenie, czy linia jest widoczna, zanim ją narysujemy
+            if (destRect.y + destRect.h > 0 && destRect.y < m_height) {
+                 SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
+            }
         }
         yOffset += TTF_FontHeight(font.get());
     }
-    if (m_showCursor) {
-        renderCursor();
+
+    if (m_isHovered && m_showCursor) {
+        renderCursor(); // renderCursor musi też rysować na cache
     }
+
     SDL_RenderSetClipRect(renderer, nullptr);
 }
 bool TextArea::handleEvent(const SDL_Event& e) {
@@ -92,17 +110,38 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             SDL_StartTextInput();
             m_showCursor = true;
             m_cursorBlinkTime = SDL_GetTicks();
+            markDirty();
             eventHandled = true;
         } else {
+            if(m_isHovered)
+            {
+                markDirty();
+            }
             m_isHovered = false;
             SDL_StopTextInput();
             m_showCursor = false;
+        }
+    } else if (e.type == SDL_MOUSEWHEEL) {
+        if (m_isHovered) {
+            auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
+            if (font) {
+                int line_height = TTF_FontHeight(font.get());
+                m_scroll_offset_y += e.wheel.y * line_height;
+
+                int max_scroll = (m_lines.size() * line_height) - m_height;
+                if (max_scroll < 0) max_scroll = 0;
+
+                m_scroll_offset_y = std::clamp(m_scroll_offset_y, -max_scroll, 0);
+                markDirty();
+                eventHandled = true;
+            }
         }
     } else if (e.type == SDL_TEXTINPUT && m_isHovered) {
         m_text.insert(m_cursorPos, e.text.text);
         m_cursorPos += strlen(e.text.text);
         m_needs_texture_update = true;
         update_text_offset();
+        markDirty();
         eventHandled = true;
     } else if (e.type == SDL_KEYDOWN && m_isHovered) {
         if (e.key.keysym.sym == SDLK_BACKSPACE && m_cursorPos > 0) {
@@ -120,15 +159,18 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         } else if (e.key.keysym.sym == SDLK_LEFT && m_cursorPos > 0) {
             m_cursorPos--;
             update_text_offset();
+            markDirty();
             eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_RIGHT && m_cursorPos < m_text.length()) {
             m_cursorPos++;
             update_text_offset();
+            markDirty();
             eventHandled = true;
         }
         if (eventHandled) {
             m_showCursor = true;
             m_cursorBlinkTime = SDL_GetTicks();
+            markDirty();
         }
     }
 
@@ -136,6 +178,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         if (SDL_GetTicks() - m_cursorBlinkTime > 500) {
             m_showCursor = !m_showCursor;
             m_cursorBlinkTime = SDL_GetTicks();
+            markDirty();
         }
     }
 
@@ -229,14 +272,15 @@ void TextArea::renderCursor() {
     auto textBeforeCursor = lineContent.substr(0, posInLines);
     TTF_SizeText(font.get(), textBeforeCursor.c_str(), &x, nullptr);
 
-    y = currentLineIndex * TTF_FontHeight(font.get());
+    y = currentLineIndex * TTF_FontHeight(font.get()) + m_scroll_offset_y;
 
-    auto cursorRect = SDL_Rect{ getAbsolutePosition().x + 2 + x + m_text_offset_x, getAbsolutePosition().y + 2 + y, 2, TTF_FontHeight(font.get()) };
+    auto cursorRect = SDL_Rect{ 2 + x + m_text_offset_x, 2 + y, 2, TTF_FontHeight(font.get()) };
     const auto style = getResolvedStyle();
     SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
     SDL_SetRenderDrawColor(m_manager.getRenderer(), color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(m_manager.getRenderer(), &cursorRect);
 }
+
 
 
 void TextArea::update_text_offset() {

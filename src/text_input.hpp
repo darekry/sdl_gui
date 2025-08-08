@@ -26,13 +26,11 @@ public:
     bool handleEvent(const SDL_Event& e) override;
 
 protected:
-    void draw() override;
+    void draw(SDL_Renderer* renderer) override;
 
 private:
-    void updateTextTexture();
     void update_text_offset();
-    void render_cursor();
-
+    
     std::string m_text;
     SDL_Color m_textColor;
     SDL_Color m_backgroundColor;

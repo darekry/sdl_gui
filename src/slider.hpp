@@ -16,6 +16,7 @@ public:
     Slider(GUIManager& manager, int x, int y, int width, int height, int minValue, int maxValue, int initialValue, Orientation orientation);
 
     int getValue() const { return m_currentValue; }
+    void setValue(int value);
 
     using OnChangeCallback = std::function<void(GUIElement*)>;
     void setOnChangeCallback(OnChangeCallback callback) { m_onChange = std::move(callback); }
@@ -27,7 +28,7 @@ public:
     const char* getComponentType() const override;
 
 protected:
-    void draw() override;
+    void draw(SDL_Renderer* renderer) override;
 
 private:
     void updateValueFromMouse(int mouseX, int mouseY);

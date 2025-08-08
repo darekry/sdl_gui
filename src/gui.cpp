@@ -1,3 +1,4 @@
+#include <iostream>
 #include "label.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
@@ -12,11 +13,13 @@ GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)
 void GUIElement::setPosition(int x, int y) {
     m_x = x;
     m_y = y;
+    markDirty();
 }
 
 void GUIElement::setSize(int width, int height) {
     m_width = width;
     m_height = height;
+    markDirty();
 }
 
 void GUIElement::setParent(GUIElement* parent) {
@@ -52,11 +55,13 @@ void GUIElement::addChild(std::unique_ptr<GUIElement> child) {
     if (child && child->m_parent != this) {
         child->m_parent = this;
         m_children.push_back(std::move(child));
+        markDirty();
     }
 }
 
 void GUIElement::clearChildren() {
     m_children.clear();
+    markDirty();
 }
 
 void GUIElement::setTooltip(const std::string& text) {
@@ -75,9 +80,14 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
     }
 
     if (!m_enabled) {
-        m_currentState = ElementState::Disabled;
+        if (m_currentState != ElementState::Disabled) {
+            m_currentState = ElementState::Disabled;
+            markDirty();
+        }
         return false;
     }
+
+    ElementState previousState = m_currentState;
 
     if (e.type == SDL_MOUSEMOTION) {
         int mouseX, mouseY;
@@ -115,76 +125,95 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
         m_currentState = ElementState::Normal;
     }
 
+    if (previousState != m_currentState) {
+        markDirty();
+    }
+
     return false;
 }
 
-void GUIElement::render() {
+void GUIElement::render(SDL_Renderer* renderer) {
     if (!m_visible) {
         return;
     }
-    auto* renderer = m_manager.getRenderer();
-    auto old_clip_rect = SDL_Rect{};
-    bool clipping_was_active = false;
 
-    if (m_clip_children) {
-        clipping_was_active = true;
+    if (m_isDirty) {
+        renderToCache();
+    }
+
+    if (m_cachedTexture) {
+        auto absPos = getAbsolutePosition();
+        SDL_Rect destRect = { absPos.x, absPos.y, m_width, m_height };
+        SDL_RenderCopy(renderer, m_cachedTexture.get(), nullptr, &destRect);
+    }
+
+    // Clipping i renderowanie dzieci
+    SDL_Rect old_clip_rect;
+    SDL_bool clip_was_enabled = SDL_RenderIsClipEnabled(renderer);
+    if(clip_was_enabled) {
         SDL_RenderGetClipRect(renderer, &old_clip_rect);
-        auto abs_pos = getAbsolutePosition();
-        auto new_clip_rect = SDL_Rect{abs_pos.x, abs_pos.y, m_width, m_height};
-
-        if (old_clip_rect.w != 0 || old_clip_rect.h != 0) {
-            SDL_IntersectRect(&old_clip_rect, &new_clip_rect, &new_clip_rect);
-        }
-        SDL_RenderSetClipRect(renderer, &new_clip_rect);
-    }
-    const auto& style = getResolvedStyle();
-    const auto absPos = getAbsolutePosition();
-    const auto renderQuad = SDL_Rect{absPos.x, absPos.y, m_width, m_height};
-
-    // 1. Renderuj tło (kolor)
-    if (style.backgroundColor) {
-        const auto& c = style.backgroundColor.value();
-        SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
-        SDL_RenderFillRect(renderer, &renderQuad);
-    }
-
-    // 2. Renderuj teksturę (jeśli istnieje)
-    if (style.texture && style.texture->get()) {
-        SDL_RenderCopy(renderer, style.texture->get(), nullptr, &renderQuad);
-    }
-
-    // 3. Renderuj ramkę
-    if (style.borderWidth.value_or(0) > 0 && style.borderColor) {
-        const auto& c = style.borderColor.value();
-        SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
-        for (int i = 0; i < style.borderWidth.value_or(0); ++i) {
-            SDL_Rect borderRect = {
-                absPos.x + i,
-                absPos.y + i,
-                m_width - 2 * i,
-                m_height - 2 * i
-            };
-            SDL_RenderDrawRect(renderer, &borderRect);
-        }
     }
     
-    // Narysuj zawartość specyficzną dla elementu (np. tekst w Label)
-    draw();
+    if (m_clip_children) {
+        auto abs_pos = getAbsolutePosition();
+        SDL_Rect element_rect = {abs_pos.x, abs_pos.y, m_width, m_height};
+        if (clip_was_enabled) {
+            SDL_IntersectRect(&old_clip_rect, &element_rect, &element_rect);
+        }
+        SDL_RenderSetClipRect(renderer, &element_rect);
+    }
 
     for (auto& child : m_children) {
         if (child && child->isVisible()) {
-            child->render();
+            child->render(renderer);
         }
     }
 
-    if (clipping_was_active) {
+    if (clip_was_enabled) {
         SDL_RenderSetClipRect(renderer, &old_clip_rect);
+    } else if (m_clip_children) {
+        SDL_RenderSetClipRect(renderer, nullptr);
     }
 }
-void GUIElement::draw() {
-    // Ta metoda jest teraz pusta dla bazowego GUIElement.
-    // Klasy pochodne (np. Label) mogą ją nadpisać, aby renderować
-    // swoją specyficzną zawartość po narysowaniu tła/ramki w render().
+
+void GUIElement::renderToCache() {
+    if (!m_visible || m_width <= 0 || m_height <= 0) {
+        if (m_cachedTexture) m_cachedTexture.reset();
+        return;
+    }
+
+    int tex_w = 0, tex_h = 0;
+    if (m_cachedTexture) {
+        SDL_QueryTexture(m_cachedTexture.get(), nullptr, nullptr, &tex_w, &tex_h);
+    }
+    if (!m_cachedTexture || tex_w != m_width || tex_h != m_height) {
+        m_cachedTexture.reset(SDL_CreateTexture(m_manager.getRenderer(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, m_width, m_height));
+        if (m_cachedTexture) {
+            SDL_SetTextureBlendMode(m_cachedTexture.get(), SDL_BLENDMODE_BLEND);
+        } else {
+            m_isDirty = false;
+            return;
+        }
+    }
+
+    SDL_Renderer* renderer = m_manager.getRenderer();
+    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, m_cachedTexture.get());
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+
+    draw(renderer);
+
+    SDL_SetRenderTarget(renderer, oldTarget);
+    m_isDirty = false;
+}
+
+void GUIElement::markDirty(bool cascadeToParents) {
+    m_isDirty = true;
+    if (cascadeToParents && m_parent) {
+        m_parent->markDirty(true);
+    }
 }
 
 void GUIElement::markForDeletion() {
@@ -194,18 +223,27 @@ void GUIElement::markForDeletion() {
 bool GUIElement::isMarkedForDeletion() const {
     return m_isMarkedForDeletion;
 }
-
 void GUIElement::cleanup() {
     for (const auto& child : m_children) {
         if (child) {
             child->cleanup();
         }
     }
+
+    const auto initial_size = m_children.size();
+
     auto new_end = std::remove_if(m_children.begin(), m_children.end(),
                                   [](const std::unique_ptr<GUIElement>& element) {
         return element->isMarkedForDeletion();
     });
+
     m_children.erase(new_end, m_children.end());
+
+    const auto removed_count = initial_size - m_children.size();
+    if (removed_count > 0) {
+        std::cout << "[DEBUG] GUIElement::cleanup(): Removed " << removed_count << " child elements." << std::endl;
+        markDirty();
+    }
 }
 
 uint32_t GUIElement::startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback) {
@@ -231,6 +269,7 @@ const char* GUIElement::getComponentType() const {
 
 void GUIElement::setStyle(ElementState state, Style style) {
     m_styles[state] = std::move(style);
+    markDirty();
 }
 
 std::optional<Style> GUIElement::getStyle(ElementState state) const {
@@ -274,33 +313,28 @@ Style GUIElement::resolveStyle(const Style& base, const std::optional<Style>& ov
 
 void GUIElement::setBackgroundColor(ElementState state, SDL_Color color) {
     m_styles[state].backgroundColor = color;
+    markDirty();
 }
 
 void GUIElement::setTextColor(ElementState state, SDL_Color color) {
     m_styles[state].textColor = color;
+    markDirty();
 }
 
 void GUIElement::setTexture(ElementState state, SharedTexture texture) {
     m_styles[state].texture = std::move(texture);
+    markDirty();
 }
 void GUIElement::setBorder(ElementState state, SDL_Color color, int width) {
     m_styles[state].borderColor = color;
     m_styles[state].borderWidth = width;
+    markDirty();
 }
 
-void GUIElement::setLabel(std::string_view text, int font_size) {
-    if (!m_label) {
-        m_label = std::make_unique<Label>(m_manager, 0, 0, text, font_size);
-        m_label->setParent(this);
-    } else {
-        static_cast<Label*>(m_label.get())->setText(text);
+size_t GUIElement::countDescendants() const {
+    size_t count = m_children.size();
+    for (const auto& child : m_children) {
+        count += child->countDescendants();
     }
-
-    if (m_label) {
-        int label_width, label_height;
-        m_label->getSize(label_width, label_height);
-        int label_x = (m_width - label_width) / 2;
-        int label_y = (m_height - label_height) / 2;
-        m_label->setPosition(label_x, label_y);
-    }
+    return count;
 }

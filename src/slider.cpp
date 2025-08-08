@@ -37,19 +37,11 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
     incrementButton->addChild(std::move(incLabel));
  
     m_decreaseButton->setOnClickCallback([this](GUIElement*) {
-        auto oldValue = m_currentValue;
-        m_currentValue = std::clamp(m_currentValue - 1, m_minValue, m_maxValue);
-        if (m_onChange && m_currentValue != oldValue) {
-            m_onChange(this);
-        }
+       setValue(m_currentValue - 1);
     });
  
     m_increaseButton->setOnClickCallback([this](GUIElement*) {
-        auto oldValue = m_currentValue;
-        m_currentValue = std::clamp(m_currentValue + 1, m_minValue, m_maxValue);
-        if (m_onChange && m_currentValue != oldValue) {
-            m_onChange(this);
-        }
+       setValue(m_currentValue + 1);
     });
  
     addChild(std::move(m_decreaseButton));
@@ -68,13 +60,8 @@ void Slider::updateValueFromMouse(int mouseX, int mouseY) {
         ratio = std::clamp(relativeMouseY / m_trackSize, 0.0f, 1.0f);
     }
 
-    auto oldValue = m_currentValue;
-    m_currentValue = m_minValue + static_cast<int>(ratio * (m_maxValue - m_minValue));
-    m_currentValue = std::clamp(m_currentValue, m_minValue, m_maxValue);
-
-    if (m_onChange && m_currentValue != oldValue) {
-        m_onChange(this);
-    }
+    int newValue = m_minValue + static_cast<int>(ratio * (m_maxValue - m_minValue));
+    setValue(newValue);
 }
 
 bool Slider::handleEvent(const SDL_Event& e) {
@@ -118,13 +105,23 @@ const char* Slider::getComponentType() const {
     return "Slider";
 }
 
-void Slider::draw() {
-    Panel::draw();
+void Slider::setValue(int value) {
+    auto oldValue = m_currentValue;
+    m_currentValue = std::clamp(value, m_minValue, m_maxValue);
+    if (m_currentValue != oldValue) {
+        markDirty();
+        if (m_onChange) {
+            m_onChange(this);
+        }
+    }
+}
 
-    auto* renderer = m_manager.getRenderer();
+void Slider::draw(SDL_Renderer* renderer) {
+    Panel::draw(renderer);
+    
     const auto style = getResolvedStyle();
-    const auto absPos = getAbsolutePosition();
-
+    
+    // Rysowanie na buforze, więc pozycje są względne (0,0)
     SDL_Color trackColor;
     if (style.backgroundColor) {
         trackColor = *style.backgroundColor;
@@ -139,9 +136,9 @@ void Slider::draw() {
     SDL_Rect trackRect;
     const int trackThickness = 4;
     if (m_orientation == Orientation::Horizontal) {
-        trackRect = {absPos.x + m_trackOffsetX, absPos.y + getHeight() / 2 - trackThickness / 2, m_trackSize, trackThickness};
+        trackRect = {m_trackOffsetX, getHeight() / 2 - trackThickness / 2, m_trackSize, trackThickness};
     } else {
-        trackRect = {absPos.x + getWidth() / 2 - trackThickness / 2, absPos.y + m_trackOffsetY, trackThickness, m_trackSize};
+        trackRect = {getWidth() / 2 - trackThickness / 2, m_trackOffsetY, trackThickness, m_trackSize};
     }
     SDL_RenderFillRect(renderer, &trackRect);
 
@@ -154,11 +151,11 @@ void Slider::draw() {
     float ratio = (m_maxValue > m_minValue) ? static_cast<float>(m_currentValue - m_minValue) / (m_maxValue - m_minValue) : 0.0f;
 
     if (m_orientation == Orientation::Horizontal) {
-        int thumbX = (absPos.x + m_trackOffsetX) + static_cast<int>(ratio * (m_trackSize - thumbSize));
-        thumbRect = {thumbX, absPos.y + getHeight() / 2 - thumbSize / 2, thumbSize, thumbSize};
+        int thumbX = m_trackOffsetX + static_cast<int>(ratio * (m_trackSize - thumbSize));
+        thumbRect = {thumbX, getHeight() / 2 - thumbSize / 2, thumbSize, thumbSize};
     } else {
-        int thumbY = (absPos.y + m_trackOffsetY) + static_cast<int>(ratio * (m_trackSize - thumbSize));
-        thumbRect = {absPos.x + getWidth() / 2 - thumbSize / 2, thumbY, thumbSize, thumbSize};
+        int thumbY = m_trackOffsetY + static_cast<int>(ratio * (m_trackSize - thumbSize));
+        thumbRect = {getWidth() / 2 - thumbSize / 2, thumbY, thumbSize, thumbSize};
     }
     
     SDL_RenderFillRect(renderer, &thumbRect);

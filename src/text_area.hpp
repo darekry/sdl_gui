@@ -20,7 +20,7 @@ public:
     bool handleEvent(const SDL_Event& e) override;
 
 protected:
-    void draw() override;
+    void draw(SDL_Renderer* renderer) override;
 
 private:
     void recalculateLines();
@@ -36,6 +36,7 @@ private:
     
     std::vector<std::shared_ptr<SDL_Texture>> m_line_textures;
     bool m_needs_texture_update = true;
+    int m_scroll_offset_y = 0;
 // Do obsługi kursora i wprowadzania tekstu
 size_t m_cursorPos = 0; // Pozycja kursora w m_text
 int m_text_offset_x = 0;

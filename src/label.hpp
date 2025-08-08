@@ -11,14 +11,13 @@ public:
 
     void setText(std::string_view text);
 
-protected:
-    void draw() override;
-    void updateTexture();
+public:
+    void draw(SDL_Renderer* renderer) override;
 
 private:
+    void recalculateSize();
     std::string m_text;
     int m_font_size;
-    SharedTexture m_texture;
 };
 
 #endif // LABEL_HPP

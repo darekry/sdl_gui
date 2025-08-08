@@ -29,9 +29,6 @@ public:
     // Metoda do dodawania elementów GUI do zarządzania, przejmując własność
     GUIElement* addElement(std::unique_ptr<GUIElement> element);
 
-    // Metoda do usuwania elementów GUI (opcjonalnie, na razie nie wymagane przez zadanie)
-    // void removeElement(GUIElement* element); // Usunięcie elementu z unique_ptr oznacza jego zniszczenie
-
     // Metoda do obsługi zdarzeń SDL i przekazywania ich do odpowiednich elementów GUI
     bool processEvent(const SDL_Event& e);
 
@@ -54,8 +51,6 @@ public:
     // Tooltip
     void showTooltip(GUIElement* target, const std::string& text);
     void hideTooltip();
-// Metoda do uzyskiwania dostępu do elementów (potrzebna do ręcznej obsługi zdarzeń)
-const std::vector<std::unique_ptr<GUIElement>>& getElements() const { return m_elements; }
 
 // --- Zarządzanie motywem ---
 void setTheme(Theme theme);
