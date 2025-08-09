@@ -55,4 +55,4 @@ dkms.conf
 assets/
 output/
 vendor/
-.*
+.cache/
