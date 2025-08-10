@@ -63,7 +63,7 @@ const char* Panel::getComponentType() const {
 }
 
 void Panel::draw(SDL_Renderer* renderer) {
-    const Style& resolvedStyle = getResolvedStyle();
+    const Style& resolvedStyle = getComposedStyle(m_state);
 
     // Rysuj tło
     if (resolvedStyle.backgroundColor.has_value()) {

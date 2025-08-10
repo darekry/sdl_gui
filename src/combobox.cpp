@@ -50,7 +50,7 @@ bool ComboBox::handleEvent(const SDL_Event& event) {
 }
 
 void ComboBox::draw(SDL_Renderer* renderer) {
-    auto style = getResolvedStyle();
+    auto style = getComposedStyle(m_state);
 
     if (style.backgroundColor.has_value()) {
         SDL_SetRenderDrawColor(renderer, style.backgroundColor->r, style.backgroundColor->g, style.backgroundColor->b, style.backgroundColor->a);

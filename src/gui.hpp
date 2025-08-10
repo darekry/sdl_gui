@@ -53,9 +53,8 @@ public:
     void setVisible(bool visible) { m_visible = visible; }
     [[nodiscard]] bool isVisible() const { return m_visible; }
     [[nodiscard]] bool isHovered() const { return m_isHovered; }
+    void setState(ElementState newState);
     void setStyle(ElementState state, Style style);
-    std::optional<Style> getStyle(ElementState state) const;
-    Style getResolvedStyle() const;
     void setBackgroundColor(ElementState state, SDL_Color color);
     void setTextColor(ElementState state, SDL_Color color);
     void setTexture(ElementState state, SharedTexture texture);
@@ -71,6 +70,9 @@ public:
     [[nodiscard]] GUIElement* getParent() const { return m_parent; }
     [[nodiscard]] const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
 size_t countDescendants() const;
+
+private:
+    void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
  
 protected:
     uint32_t startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback);
@@ -84,7 +86,7 @@ protected:
     virtual bool wantsDirectRender() const { return false; }
     virtual void drawDirect(SDL_Renderer* renderer) { /* domyślnie brak */ }
 
-    Style resolveStyle(const Style& base, const std::optional<Style>& override) const;
+        Style getComposedStyle(ElementState state) const;
 
     GUIManager& m_manager;
     bool m_isHovered = false;
@@ -92,9 +94,9 @@ protected:
     GUIElement* m_parent;
     SharedTexture m_texture;
     bool m_isDirty = true;
-    std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_cachedTexture{nullptr, SDL_DestroyTexture};
-    std::map<ElementState, Style> m_styles;
-    ElementState m_currentState = ElementState::Normal;
+        std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_cachedTexture{nullptr, SDL_DestroyTexture};
+        std::map<ElementState, Style> m_localStyles;
+        ElementState m_state = ElementState::Normal;
     bool m_style_dirty = true;
     std::vector<std::unique_ptr<GUIElement>> m_children;
 };

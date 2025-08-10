@@ -43,11 +43,11 @@ void RadioButton::setOnChange(OnChangeCallback callback) {
 }
 
 bool RadioButton::handleEvent(const SDL_Event& e) {
-    auto previousState = m_currentState;
+    auto previousState = m_state;
     GUIElement::handleEvent(e);
 
     if (m_enabled && m_visible) {
-        if (previousState == ElementState::Pressed && m_currentState == ElementState::Hover) {
+        if (previousState == ElementState::Pressed && m_state == ElementState::Hover) {
              if (!m_isSelected) {
                 setSelected(true);
             }
@@ -62,7 +62,7 @@ const char* RadioButton::getComponentType() const {
     return "RadioButton";
 }
 void RadioButton::draw(SDL_Renderer* renderer) {
-    const auto style = getResolvedStyle();
+    const auto& style = getComposedStyle(m_state);
     
     if (style.backgroundColor) {
         const auto& c = style.backgroundColor.value();

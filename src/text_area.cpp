@@ -48,7 +48,7 @@ bool TextArea::getWordWrap() const {
 }
 
 void TextArea::draw(SDL_Renderer* renderer) {
-    const auto style = getResolvedStyle();
+    const auto& style = getComposedStyle(m_state);
 
     // Rysuj tło i ramkę (jak w Panel)
     if (style.backgroundColor) {
@@ -234,7 +234,7 @@ void TextArea::refreshTextures() {
     auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
     if (!font) return;
 
-    const auto style = getResolvedStyle();
+    const auto style = getComposedStyle(m_state);
     SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
 
     for (const auto& line : m_lines) {
@@ -275,7 +275,7 @@ void TextArea::renderCursor() {
     y = currentLineIndex * TTF_FontHeight(font.get()) + m_scroll_offset_y;
 
     auto cursorRect = SDL_Rect{ 2 + x + m_text_offset_x, 2 + y, 2, TTF_FontHeight(font.get()) };
-    const auto style = getResolvedStyle();
+    const auto style = getComposedStyle(m_state);
     SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
     SDL_SetRenderDrawColor(m_manager.getRenderer(), color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(m_manager.getRenderer(), &cursorRect);

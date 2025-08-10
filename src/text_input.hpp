@@ -3,6 +3,7 @@
 
 
 #include "gui.hpp"
+#include "style.hpp"
 #include "sdl_deleters.hpp"
 
 class TextInput : public GUIElement {
@@ -16,6 +17,7 @@ public:
 
     void setTextColor(const SDL_Color& color);
     void setBackgroundColor(const SDL_Color& color);
+using GUIElement::setBorder;
     void setBorderColor(const SDL_Color& color);
     void setOnTextChanged(const std::function<void(TextInput*)>& callback);
     void setOnEnterPressed(const std::function<void(TextInput*)>& callback);
@@ -32,9 +34,6 @@ private:
     void update_text_offset();
     
     std::string m_text;
-    SDL_Color m_textColor;
-    SDL_Color m_backgroundColor;
-    SDL_Color m_borderColor;
     bool m_locked;
     bool m_active; // To indicate if the input field is currently active for typing
 

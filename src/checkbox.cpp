@@ -24,11 +24,11 @@ void Checkbox::setOnChange(OnChangeCallback callback) {
 }
 
 bool Checkbox::handleEvent(const SDL_Event& e) {
-    auto previousState = m_currentState;
+    auto previousState = m_state;
     GUIElement::handleEvent(e);
 
     if (m_enabled && m_visible) {
-        if (previousState == ElementState::Pressed && m_currentState == ElementState::Hover) {
+        if (previousState == ElementState::Pressed && m_state == ElementState::Hover) {
             setChecked(!m_isChecked);
             return true;
         }
@@ -40,7 +40,7 @@ const char* Checkbox::getComponentType() const {
     return "Checkbox";
 }
 void Checkbox::draw(SDL_Renderer* renderer) {
-    const auto style = getResolvedStyle();
+    const auto& style = getComposedStyle(m_state);
 
     // 1. Rysowanie tła
     if (style.backgroundColor) {

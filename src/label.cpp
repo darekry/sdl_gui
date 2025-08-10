@@ -8,7 +8,7 @@ void Label::recalculateSize() {
         setSize(0, 0);
         return;
     }
-    const auto& resolvedStyle = getResolvedStyle();
+    const auto& resolvedStyle = getComposedStyle(m_state);
     int font_size = m_font_size > 0 ? m_font_size : (resolvedStyle.fontSize.value_or(m_manager.getTheme().getDefaultStyle().fontSize.value_or(16)));
     auto& fontManager = m_manager.getFontManager();
     auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
@@ -38,7 +38,7 @@ void Label::draw(SDL_Renderer* renderer) {
         return;
     }
 
-    const auto& resolvedStyle = getResolvedStyle();
+    const auto& resolvedStyle = getComposedStyle(m_state);
     if (!resolvedStyle.textColor.has_value()) {
         SDL_Log("no text color");
 

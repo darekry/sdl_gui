@@ -14,7 +14,7 @@ public:
 
     // Pobiera domyślny styl dla danego typu komponentu i stanu.
     // Jeśli dla danego komponentu nie ma zdefiniowanego stylu, zwraca styl domyślny.
-    const Style& getStyle(const std::string& componentType, ElementState state) const;
+    Style getStyle(const std::string& componentType, ElementState state) const;
 
     // Metoda fabryczna tworząca domyślny motyw w stylu "Windows 95/98".
     static Theme createDefaultTheme();

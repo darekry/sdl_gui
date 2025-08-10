@@ -24,12 +24,12 @@ void Button::setOnMouseOverCallback(OnMouseOverCallback callback) {
 }
 
 bool Button::handleEvent(const SDL_Event& e) {
-    auto previousState = m_currentState;
+    auto previousState = m_state;
     GUIElement::handleEvent(e); // Pozwól klasie bazowej zaktualizować stan
 
     if (m_enabled && m_visible) {
         // Wywołaj callback onClick, jeśli stan zmienił się na Hover po wciśnięciu
-        if (previousState == ElementState::Pressed && m_currentState == ElementState::Hover) {
+        if (previousState == ElementState::Pressed && m_state == ElementState::Hover) {
             if (m_onClick) {
                 m_onClick(this);
                 return true; // Zdarzenie obsłużone
@@ -45,7 +45,7 @@ const char* Button::getComponentType() const {
 }
 
 void Button::draw(SDL_Renderer* renderer) {
-    const Style& resolvedStyle = getResolvedStyle();
+    const Style& resolvedStyle = getComposedStyle(m_state);
 
     // Rysuj tło
     if (resolvedStyle.backgroundColor.has_value()) {

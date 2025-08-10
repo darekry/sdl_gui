@@ -119,7 +119,7 @@ void Slider::setValue(int value) {
 void Slider::draw(SDL_Renderer* renderer) {
     Panel::draw(renderer);
     
-    const auto style = getResolvedStyle();
+    const auto& style = getComposedStyle(m_state);
     
     // Rysowanie na buforze, więc pozycje są względne (0,0)
     SDL_Color trackColor;

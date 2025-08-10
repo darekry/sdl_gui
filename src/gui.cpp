@@ -80,14 +80,9 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
     }
 
     if (!m_enabled) {
-        if (m_currentState != ElementState::Disabled) {
-            m_currentState = ElementState::Disabled;
-            markDirty();
-        }
+        setState(ElementState::Disabled);
         return false;
     }
-
-    ElementState previousState = m_currentState;
 
     if (e.type == SDL_MOUSEMOTION) {
         int mouseX, mouseY;
@@ -113,107 +108,66 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
 
     if (m_isHovered) {
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-            m_currentState = ElementState::Pressed;
+            setState(ElementState::Pressed);
         } else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
-            if (m_currentState == ElementState::Pressed) {
-                m_currentState = ElementState::Hover;
+            if (m_state == ElementState::Pressed) {
+                setState(ElementState::Hover);
             }
-        } else if (m_currentState != ElementState::Pressed) {
-            m_currentState = ElementState::Hover;
+        } else if (m_state != ElementState::Pressed) {
+            setState(ElementState::Hover);
         }
     } else {
-        m_currentState = ElementState::Normal;
+            setState(ElementState::Normal);
     }
 
-    if (previousState != m_currentState) {
-        markDirty();
-    }
-
+ 
     return false;
 }
 
 void GUIElement::render(SDL_Renderer* renderer) {
+    SDL_Rect viewport;
+    SDL_RenderGetViewport(renderer, &viewport);
+    render(renderer, viewport);
+}
+
+void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect) {
     if (!m_visible) {
         return;
     }
 
-    // Jeśli element wspiera rysowanie bezpośrednie (no-cache), zawsze rysujemy bezpośrednio
-    // (nie korzystamy z m_cachedTexture), niezależnie od stanu m_isDirty.
+    auto abs_pos = getAbsolutePosition();
+    SDL_Rect element_rect = {abs_pos.x, abs_pos.y, m_width, m_height};
+    SDL_Rect clipped_rect;
+
+    if (!SDL_IntersectRect(&element_rect, &parent_clip_rect, &clipped_rect)) {
+        return; // Element jest całkowicie poza obszarem przycinania
+    }
+
     if (wantsDirectRender()) {
-        // Przygotuj clipping tak jak dla standardowej ścieżki
-        SDL_Rect old_clip_rect;
-        SDL_bool clip_was_enabled = SDL_RenderIsClipEnabled(renderer);
-        if (clip_was_enabled) {
-            SDL_RenderGetClipRect(renderer, &old_clip_rect);
-        }
-
-        if (m_clip_children) {
-            auto abs_pos = getAbsolutePosition();
-            SDL_Rect element_rect = {abs_pos.x, abs_pos.y, m_width, m_height};
-            if (clip_was_enabled) {
-                SDL_IntersectRect(&old_clip_rect, &element_rect, &element_rect);
-            }
-            SDL_RenderSetClipRect(renderer, &element_rect);
-        }
-
-        // Rysuj element bezpośrednio na rendererze (zawsze, nawet gdy nie jest "brudny")
+        SDL_RenderSetClipRect(renderer, &clipped_rect);
         drawDirect(renderer);
-        // Po direct render oznaczamy element jako czysty (cache nie jest używany)
+        SDL_RenderSetClipRect(renderer, &parent_clip_rect);
         m_isDirty = false;
-
-        // Renderuj dzieci
-        for (auto& child : m_children) {
-            if (child && child->isVisible()) {
-                child->render(renderer);
-            }
+    } else {
+        if (m_isDirty) {
+            renderToCache();
         }
 
-        // Przywróć clip
-        if (clip_was_enabled) {
-            SDL_RenderSetClipRect(renderer, &old_clip_rect);
-        } else if (m_clip_children) {
-            SDL_RenderSetClipRect(renderer, nullptr);
+        if (m_cachedTexture) {
+            SDL_Rect src_rect;
+            src_rect.x = clipped_rect.x - abs_pos.x;
+            src_rect.y = clipped_rect.y - abs_pos.y;
+            src_rect.w = clipped_rect.w;
+            src_rect.h = clipped_rect.h;
+            SDL_RenderCopy(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
         }
-        return;
     }
 
-    // Standardowa ścieżka: z buforowaniem do m_cachedTexture
-    if (m_isDirty) {
-        renderToCache();
-    }
-
-    if (m_cachedTexture) {
-        auto absPos = getAbsolutePosition();
-        SDL_Rect destRect = { absPos.x, absPos.y, m_width, m_height };
-        SDL_RenderCopy(renderer, m_cachedTexture.get(), nullptr, &destRect);
-    }
-
-    // Clipping i renderowanie dzieci (jak wcześniej)
-    SDL_Rect old_clip_rect;
-    SDL_bool clip_was_enabled = SDL_RenderIsClipEnabled(renderer);
-    if(clip_was_enabled) {
-        SDL_RenderGetClipRect(renderer, &old_clip_rect);
-    }
-    
-    if (m_clip_children) {
-        auto abs_pos = getAbsolutePosition();
-        SDL_Rect element_rect = {abs_pos.x, abs_pos.y, m_width, m_height};
-        if (clip_was_enabled) {
-            SDL_IntersectRect(&old_clip_rect, &element_rect, &element_rect);
-        }
-        SDL_RenderSetClipRect(renderer, &element_rect);
-    }
-
+    SDL_Rect child_clip_rect = m_clip_children ? clipped_rect : parent_clip_rect;
     for (auto& child : m_children) {
         if (child && child->isVisible()) {
-            child->render(renderer);
+            child->render(renderer, child_clip_rect);
         }
-    }
-
-    if (clip_was_enabled) {
-        SDL_RenderSetClipRect(renderer, &old_clip_rect);
-    } else if (m_clip_children) {
-        SDL_RenderSetClipRect(renderer, nullptr);
     }
 }
 
@@ -308,67 +262,69 @@ const char* GUIElement::getComponentType() const {
     return "GUIElement";
 }
 
+void GUIElement::setState(ElementState newState) {
+    if (m_state == newState) {
+        return;
+    }
+
+    std::cout << "[Debug] setState for " << getComponentType() << " from " << (int)m_state << " to " << (int)newState << std::endl;
+
+        const auto oldStyle = getComposedStyle(m_state);
+        const auto newStyle = getComposedStyle(newState);
+
+    logStyle(oldStyle, "oldStyle");
+    logStyle(newStyle, "newStyle");
+
+    m_state = newState;
+
+    if (oldStyle != newStyle) {
+        std::cout << "[Debug] Styles are different, marking dirty." << std::endl;
+        markDirty();
+    } else {
+        std::cout << "[Debug] Styles are the same, not marking dirty." << std::endl;
+    }
+}
 void GUIElement::setStyle(ElementState state, Style style) {
-    m_styles[state] = std::move(style);
+    m_localStyles[state] = std::move(style);
     markDirty();
 }
+Style GUIElement::getComposedStyle(ElementState state) const {
+    const auto& themeStyle = m_manager.getTheme().getStyle(getComponentType(), state);
+    auto it = m_localStyles.find(state);
 
-std::optional<Style> GUIElement::getStyle(ElementState state) const {
-    auto it = m_styles.find(state);
-    if (it != m_styles.end()) {
-        return it->second;
+    if (it == m_localStyles.end()) {
+        return themeStyle;
     }
-    return std::nullopt;
-}
 
-Style GUIElement::getResolvedStyle() const {
-    const ElementState currentState = m_enabled ? m_currentState : ElementState::Disabled;
-    const auto& themeStyle = m_manager.getTheme().getStyle(getComponentType(), currentState);
+    Style composedStyle = themeStyle;
+    const Style& localStyle = it->second;
 
-    if (auto it = m_styles.find(currentState); it != m_styles.end()) {
-        return resolveStyle(themeStyle, it->second);
-    }
-    if (currentState != ElementState::Normal) {
-        if (auto it = m_styles.find(ElementState::Normal); it != m_styles.end()) {
-            return resolveStyle(themeStyle, it->second);
-        }
-    }
-    
-    return themeStyle;
-}
+    if (localStyle.backgroundColor) composedStyle.backgroundColor = localStyle.backgroundColor;
+    if (localStyle.textColor) composedStyle.textColor = localStyle.textColor;
+    if (localStyle.texture) composedStyle.texture = localStyle.texture;
+    if (localStyle.borderColor) composedStyle.borderColor = localStyle.borderColor;
+    if (localStyle.borderWidth) composedStyle.borderWidth = localStyle.borderWidth;
 
-Style GUIElement::resolveStyle(const Style& base, const std::optional<Style>& override) const {
-    if (!override) {
-        return base;
-    }
-    
-    Style resolved = base;
-    if (override->backgroundColor) resolved.backgroundColor = override->backgroundColor;
-    if (override->textColor) resolved.textColor = override->textColor;
-    if (override->texture) resolved.texture = override->texture;
-    if (override->borderColor) resolved.borderColor = override->borderColor;
-    if (override->borderWidth) resolved.borderWidth = override->borderWidth;
-    
-    return resolved;
+    return composedStyle;
 }
 
 void GUIElement::setBackgroundColor(ElementState state, SDL_Color color) {
-    m_styles[state].backgroundColor = color;
+    m_localStyles[state].backgroundColor = color;
     markDirty();
 }
 
 void GUIElement::setTextColor(ElementState state, SDL_Color color) {
-    m_styles[state].textColor = color;
+    m_localStyles[state].textColor = color;
     markDirty();
 }
 
 void GUIElement::setTexture(ElementState state, SharedTexture texture) {
-    m_styles[state].texture = std::move(texture);
+    m_localStyles[state].texture = std::move(texture);
     markDirty();
 }
 void GUIElement::setBorder(ElementState state, SDL_Color color, int width) {
-    m_styles[state].borderColor = color;
-    m_styles[state].borderWidth = width;
+    m_localStyles[state].borderColor = color;
+    m_localStyles[state].borderWidth = width;
     markDirty();
 }
 

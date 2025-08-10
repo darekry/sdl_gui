@@ -134,7 +134,7 @@ $(MODULE_CACHE_DIR):
 	@mkdir -p $@
 
 # Reguła dla unity build
-$(UNITY_OBJECT): $(UNITY_SOURCE) | modules
+$(UNITY_OBJECT): $(UNITY_SOURCE)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 

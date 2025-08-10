@@ -5,10 +5,17 @@ void Theme::setStyle(const std::string& componentType, ElementState state, Style
     styles[componentType][state] = std::move(style);
 }
 
-const Style& Theme::getStyle(const std::string& componentType, ElementState state) const {
-    if (auto it = styles.find(componentType); it != styles.end()) {
-        if (auto it2 = it->second.find(state); it2 != it->second.end()) {
-            return it2->second;
+Style Theme::getStyle(const std::string& componentType, ElementState state) const {
+    auto componentStylesIt = styles.find(componentType);
+    if (componentStylesIt != styles.end()) {
+        auto stateStyleIt = componentStylesIt->second.find(state);
+        if (stateStyleIt != componentStylesIt->second.end()) {
+            return stateStyleIt->second;
+        }
+        // Fallback to Normal state if the specific state is not defined
+        auto normalStyleIt = componentStylesIt->second.find(ElementState::Normal);
+        if (normalStyleIt != componentStylesIt->second.end()) {
+            return normalStyleIt->second;
         }
     }
     return defaultStyle;

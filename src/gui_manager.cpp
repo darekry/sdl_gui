@@ -117,10 +117,8 @@ void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
 
     // Utwórz panel
     auto panel = std::make_unique<Panel>(*this, posX, posY, (textWidth + (2 * padding)), (textHeight + (2 * padding)));
-    Style tooltip_style;
-    tooltip_style.borderWidth = 1;
-    tooltip_style.backgroundColor = TOOLTIP_BG_COLOR;
-    panel->setStyle(ElementState::Normal, tooltip_style);
+    panel->setBackgroundColor(ElementState::Normal, TOOLTIP_BG_COLOR);
+    panel->setBorder(ElementState::Normal, {0, 0, 0, 255}, 1);
 
     // Utwórz etykietę i dodaj ją do panelu
     auto label = std::make_unique<Label>(*this, padding, padding, text, fontSize);

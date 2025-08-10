@@ -1,13 +1,13 @@
 #include "text_input.hpp"
+#include "style.hpp"
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
-#include "texture_manager.hpp"
+#include "theme.hpp"
 #include "theme.hpp"
 
 
 TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
-    : GUIElement(manager, x, y, w, h), m_text(""), m_textColor({0, 0, 0, 255}),
-      m_backgroundColor({255, 255, 255, 255}), m_borderColor({0, 0, 0, 255}),
+    : GUIElement(manager, x, y, w, h), m_text(""),
       m_locked(false), m_active(false) {
     m_cursor_pos = 0;
     m_text_offset_x = 0;
@@ -45,18 +45,21 @@ const std::string& TextInput::getText() const {
 }
 
 void TextInput::setTextColor(const SDL_Color& color) {
-    m_textColor = color;
-    markDirty();
+    GUIElement::setTextColor(ElementState::Normal, color);
+    GUIElement::setTextColor(ElementState::Hover, color);
+    GUIElement::setTextColor(ElementState::Pressed, color);
 }
 
 void TextInput::setBackgroundColor(const SDL_Color& color) {
-    m_backgroundColor = color;
-    markDirty();
+    GUIElement::setBackgroundColor(ElementState::Normal, color);
+    GUIElement::setBackgroundColor(ElementState::Hover, color);
+    GUIElement::setBackgroundColor(ElementState::Pressed, color);
 }
 
 void TextInput::setBorderColor(const SDL_Color& color) {
-    m_borderColor = color;
-    markDirty();
+    setBorder(ElementState::Normal, color, 1);
+    setBorder(ElementState::Hover, color, 1);
+    setBorder(ElementState::Pressed, color, 1);
 }
 
 void TextInput::setOnTextChanged(const std::function<void(TextInput*)>& callback) {
@@ -110,27 +113,27 @@ void TextInput::update_text_offset() {
 
 
 void TextInput::draw(SDL_Renderer* renderer) {
-    auto resolved_style = getResolvedStyle();
+    const auto& style = getComposedStyle(m_state);
     auto rect = SDL_Rect{0, 0, getWidth(), getHeight()};
 
     // Background
-    if (resolved_style.backgroundColor) {
-        auto color = resolved_style.backgroundColor.value();
+    if (style.backgroundColor) {
+        auto color = style.backgroundColor.value();
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
         SDL_RenderFillRect(renderer, &rect);
     }
 
     // Border
-    if (resolved_style.borderColor) {
-        auto color = resolved_style.borderColor.value();
+    if (style.borderColor) {
+        auto color = style.borderColor.value();
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
         SDL_RenderDrawRect(renderer, &rect);
     }
 
     // Text
     auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
-    if (!m_text.empty() && font && resolved_style.textColor) {
-        auto text_texture = m_manager.getTextureManager().createTextureFromText(m_text, font, resolved_style.textColor.value());
+    if (!m_text.empty() && font && style.textColor) {
+        auto text_texture = m_manager.getTextureManager().createTextureFromText(m_text, font, style.textColor.value());
         if (text_texture) {
             int textWidth = 0, textHeight = 0;
             SDL_QueryTexture(text_texture.get(), nullptr, nullptr, &textWidth, &textHeight);
@@ -146,7 +149,7 @@ void TextInput::draw(SDL_Renderer* renderer) {
     }
 
     // Cursor
-    if (m_active && resolved_style.textColor) {
+    if (m_active && style.textColor) {
         if (SDL_GetTicks() - m_cursor_blink_time > 500) {
             m_show_cursor = !m_show_cursor;
             m_cursor_blink_time = SDL_GetTicks();
@@ -164,7 +167,7 @@ void TextInput::draw(SDL_Renderer* renderer) {
                 2,
                 TTF_FontHeight(font.get())
             };
-            auto color = resolved_style.textColor.value();
+            auto color = style.textColor.value();
             SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
             SDL_RenderFillRect(renderer, &cursor_rect);
         }
