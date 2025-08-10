@@ -1,7 +1,7 @@
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include "slider.hpp"
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 
 
 const int SCREEN_WIDTH = 800;

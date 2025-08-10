@@ -2,7 +2,7 @@
 #include "SDL_stdinc.h"
 #include "gui_manager.hpp"
 #include "text_area.hpp"
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {

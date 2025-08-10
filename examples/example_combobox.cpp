@@ -1,7 +1,7 @@
 #include "SDL_log.h"
 #include "gui_manager.hpp"
 #include "combobox.hpp"
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 
 
 const int SCREEN_WIDTH = 800;

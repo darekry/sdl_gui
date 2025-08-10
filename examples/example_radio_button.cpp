@@ -2,7 +2,7 @@
 #include "radio_button.hpp"
 #include "radio_group.hpp"
 #include "label.hpp"
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 
 
 const int SCREEN_WIDTH = 800;

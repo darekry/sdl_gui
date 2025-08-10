@@ -21,7 +21,7 @@ Konstrukcja i podstawowe użycie
 Przykład minimalnego użycia (kompilowalny fragment):
 
 ```cpp
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "animated_image.hpp"
 

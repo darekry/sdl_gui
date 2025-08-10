@@ -156,7 +156,7 @@ Biblioteka oferuje zestaw gotowych do użycia, w pełni konfigurowalnych kompone
 Zalecanym sposobem jest użycie klasy pomocniczej `SDLApp` (`examples/helpers/sdl_app.hpp`).
 
 ```cpp
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "panel.hpp" 
 // ... inne komponenty

@@ -1,7 +1,7 @@
 #include "../src/gui.hpp"
 #include "../src/gui_manager.hpp"
 #include "../src/text_input.hpp"
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 
 
 

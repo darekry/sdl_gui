@@ -2,7 +2,7 @@
 #include "panel.hpp"
 #include "button.hpp"
 #include "checkbox.hpp"
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 #include "SDL_log.h"
 #include "label.hpp"
 

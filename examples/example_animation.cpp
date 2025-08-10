@@ -1,4 +1,4 @@
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "panel.hpp"
 #include "button.hpp"

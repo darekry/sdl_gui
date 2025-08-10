@@ -1,6 +1,6 @@
 #include "gui_manager.hpp"
 #include "checkbox.hpp"
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 #include "label.hpp"
 #include "panel.hpp"
 

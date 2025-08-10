@@ -1,7 +1,7 @@
 #include "button.hpp"
 #include "checkbox.hpp"
 #include "gui_manager.hpp"
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 #include "slider.hpp"
 #include "label.hpp"
 

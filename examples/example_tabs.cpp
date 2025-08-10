@@ -4,7 +4,7 @@
 #include "text_input.hpp"
 #include "button.hpp" // Dodano
 #include "label.hpp" // Dodano
-#include "helpers/sdl_app.hpp"
+#include "sdl_app.hpp"
 
 
 const int SCREEN_WIDTH = 800;
