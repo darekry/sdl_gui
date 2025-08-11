@@ -93,7 +93,7 @@ EXAMPLE_EXECS     := $(patsubst examples/%.cpp,$(OUTPUT)/%,$(EXAMPLE_SRC_FILES))
 # --- Główne cele ---
 
 examples: $(EXAMPLE_EXECS)
-all: modules examples test
+all:  examples test
 
 # Cel do tradycyjnej kompilacji (non-unity)
 # Buduje wszystkie pliki obiektowe, ale nie linkuje ich.
@@ -113,16 +113,15 @@ test: modules $(UNITY_OBJECT) $(TEST_EXECS)
 
 # Pliki wykonywalne testów
 # Każdy test jest linkowany z całą biblioteką i pomocnikiem testów
-$(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(UNITY_OBJECT) $(TEST_HELPER_OBJ) $(OUTPUT)/catch_amalgamated.o | modules
+$(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(UNITY_OBJECT) $(TEST_HELPER_OBJ) $(OUTPUT)/catch_amalgamated.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Pliki wykonywalne przykładów
-$(OUTPUT)/example_%: examples/example_%.cpp $(UNITY_OBJECT) | modules
+$(OUTPUT)/example_%: examples/example_%.cpp $(UNITY_OBJECT)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Cel do kompilacji modułów
-.PHONY: modules
-modules: $(MODULE_PCMS)
+
 
 $(STD_PCM): | $(MODULE_CACHE_DIR)
 	@echo "Kompilowanie modułu std..."

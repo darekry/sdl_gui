@@ -2,6 +2,8 @@
 
 
 #include <SDL.h>
+#include <functional>
+#include <vector>
 
 
 class GUIElement;
