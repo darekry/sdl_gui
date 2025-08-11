@@ -1,4 +1,3 @@
-#include <iostream>
 #include "label.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
@@ -236,7 +235,7 @@ void GUIElement::cleanup() {
 
     const auto removed_count = initial_size - m_children.size();
     if (removed_count > 0) {
-        std::cout << "[DEBUG] GUIElement::cleanup(): Removed " << removed_count << " child elements." << std::endl;
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "GUIElement::cleanup(): Removed %zu child elements.", removed_count);
         markDirty();
     }
 }
@@ -267,7 +266,7 @@ void GUIElement::setState(ElementState newState) {
         return;
     }
 
-    std::cout << "[Debug] setState for " << getComponentType() << " from " << (int)m_state << " to " << (int)newState << std::endl;
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "setState for %s from %d to %d", getComponentType(), (int)m_state, (int)newState);
 
         const auto oldStyle = getComposedStyle(m_state);
         const auto newStyle = getComposedStyle(newState);
@@ -278,10 +277,10 @@ void GUIElement::setState(ElementState newState) {
     m_state = newState;
 
     if (oldStyle != newStyle) {
-        std::cout << "[Debug] Styles are different, marking dirty." << std::endl;
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Styles are different, marking dirty.");
         markDirty();
     } else {
-        std::cout << "[Debug] Styles are the same, not marking dirty." << std::endl;
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Styles are the same, not marking dirty.");
     }
 }
 void GUIElement::setStyle(ElementState state, Style style) {
@@ -326,6 +325,30 @@ void GUIElement::setBorder(ElementState state, SDL_Color color, int width) {
     m_localStyles[state].borderColor = color;
     m_localStyles[state].borderWidth = width;
     markDirty();
+}
+
+void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
+    const Style& style = getComposedStyle(m_state);
+
+    // Rysowanie tła
+    if (style.backgroundColor) {
+        SDL_SetRenderDrawColor(renderer, style.backgroundColor->r, style.backgroundColor->g, style.backgroundColor->b, style.backgroundColor->a);
+        SDL_Rect bgRect = {0, 0, m_width, m_height};
+        SDL_RenderFillRect(renderer, &bgRect);
+    }
+
+    // Rysowanie obramowania
+    if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
+        SDL_SetRenderDrawColor(renderer, style.borderColor->r, style.borderColor->g, style.borderColor->b, style.borderColor->a);
+        SDL_Rect borderRect = {0, 0, m_width, m_height};
+        for (int i = 0; i < *style.borderWidth; ++i) {
+            SDL_RenderDrawRect(renderer, &borderRect);
+            borderRect.x++;
+            borderRect.y++;
+            borderRect.w -= 2;
+            borderRect.h -= 2;
+        }
+    }
 }
 
 size_t GUIElement::countDescendants() const {

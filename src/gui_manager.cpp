@@ -1,4 +1,3 @@
-#include <iostream>
 #include "SDL2/SDL.h"
 #include "gui_manager.hpp"
 #include "gui.hpp"
@@ -96,7 +95,7 @@ if (prefix_distance < m_elements.size())
 }
 
 if (total_removed_count > 0) {
-    std::cout << "[DEBUG] GUIManager::cleanup(): Removed " << total_removed_count << " elements in total." << '\n';
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "GUIManager::cleanup(): Removed %zu elements in total.", total_removed_count);
 }
 }
 

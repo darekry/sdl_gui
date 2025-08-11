@@ -11,19 +11,29 @@
 // Typ dla współdzielonego wskaźnika na czcionkę
 using SharedFont = std::shared_ptr<TTF_Font>;
 // Klucz dla mapy cache'u czcionek (ścieżka + rozmiar)
-struct FontKey {
-    std::string path;
-    int size;
+using FontKey = std::pair<std::string, int>;
 
-    FontKey(std::string_view p, int s) : path(p), size(s) {}
-    FontKey(std::string&& p, int s) : path(std::move(p)), size(s) {}
+// Komparator dla klucza cache'u czcionek, umożliwiający transparentne wyszukiwanie
+struct FontCacheKeyCompare {
+    using is_transparent = void;
 
-    // Operator porównania dla użycia w std::map
-    bool operator<(const FontKey& other) const {
-        if (path != other.path) {
-            return path < other.path;
-        }
-        return size < other.size;
+    // Porównanie dwóch pełnych kluczy
+    bool operator()(const FontKey& lhs, const FontKey& rhs) const {
+        return lhs < rhs;
+    }
+
+    // Porównanie pełnego klucza z parą (string_view, int)
+    bool operator()(const FontKey& lhs, const std::pair<std::string_view, int>& rhs) const {
+        if (lhs.first < rhs.first) return true;
+        if (rhs.first < lhs.first) return false;
+        return lhs.second < rhs.second;
+    }
+
+    // Porównanie pary (string_view, int) z pełnym kluczem
+    bool operator()(const std::pair<std::string_view, int>& lhs, const FontKey& rhs) const {
+        if (lhs.first < rhs.first) return true;
+        if (rhs.first < lhs.first) return false;
+        return lhs.second < rhs.second;
     }
 };
 
@@ -53,7 +63,7 @@ public:
     void getTextSize(std::string_view text, std::string_view fontPath, int fontSize, int* width, int* height);
 
 private:
-    std::map<FontKey, SharedFont> m_fonts; // Mapa przechowująca załadowane czcionki
+    std::map<FontKey, SharedFont, FontCacheKeyCompare> m_fontCache; // Mapa przechowująca załadowane czcionki
     SharedFont m_defaultFont; // Domyślna czcionka
 };
 

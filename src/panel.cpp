@@ -63,33 +63,13 @@ const char* Panel::getComponentType() const {
 }
 
 void Panel::draw(SDL_Renderer* renderer) {
-    const Style& resolvedStyle = getComposedStyle(m_state);
+    drawBackgroundAndBorder(renderer);
 
-    // Rysuj tło
-    if (resolvedStyle.backgroundColor.has_value()) {
-        const auto& color = resolvedStyle.backgroundColor.value();
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_Rect bgRect = {0, 0, m_width, m_height};
-        SDL_RenderFillRect(renderer, &bgRect);
-    }
+    const Style& resolvedStyle = getComposedStyle(m_state);
 
     // Rysuj teksturę
     if (resolvedStyle.texture.has_value()) {
         SDL_Rect destRect = {0, 0, m_width, m_height};
         SDL_RenderCopy(renderer, resolvedStyle.texture.value().get(), nullptr, &destRect);
-    }
-    
-    // Rysuj ramkę
-    if (resolvedStyle.borderColor.has_value() && resolvedStyle.borderWidth.has_value()) {
-        const auto& color = resolvedStyle.borderColor.value();
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_Rect borderRect = {0, 0, m_width, m_height};
-        for (int i = 0; i < resolvedStyle.borderWidth.value(); ++i) {
-            SDL_RenderDrawRect(renderer, &borderRect);
-            borderRect.x++;
-            borderRect.y++;
-            borderRect.w -= 2;
-            borderRect.h -= 2;
-        }
     }
 }

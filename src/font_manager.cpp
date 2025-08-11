@@ -17,22 +17,29 @@ FontManager::~FontManager() {
     // TTF_Quit();
 }
 SharedFont FontManager::loadFont(std::string_view path, int size) {
-    auto key = FontKey{std::string(path), size};
-    auto it = m_fonts.find(key);
-    if (it != m_fonts.end()) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Loading font from cache: %s (size %d)", key.path.c_str(), size);
+    // Tworzymy klucz jako std::pair do wyszukiwania
+    auto key_sv = std::make_pair(path, size);
+    
+    // Używamy find z kluczem std::pair<std::string_view, int>, co jest możliwe dzięki transparentnemu komparatorowi.
+    // To pozwala uniknąć tworzenia std::string.
+    auto it = m_fontCache.find(key_sv);
+
+    if (it != m_fontCache.end()) {
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Loading font from cache: %s (size %d)", it->first.first.c_str(), size);
         return it->second;
     }
 
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Loading font from file: %s (size %d)", key.path.c_str(), size);
-    auto* loadedFont = TTF_OpenFont(key.path.c_str(), size);
+    std::string path_str(path);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Loading font from file: %s (size %d)", path_str.c_str(), size);
+    auto* loadedFont = TTF_OpenFont(path_str.c_str(), size);
     if (!loadedFont) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FontManager ERROR: Unable to load font %s with size %d! SDL_ttf Error: %s", key.path.c_str(), size, TTF_GetError());
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FontManager ERROR: Unable to load font %s with size %d! SDL_ttf Error: %s", path_str.c_str(), size, TTF_GetError());
         return nullptr;
     }
 
     auto sharedNewFont = SharedFont(loadedFont, TTFFontDeleter());
-    auto [inserted_it, success] = m_fonts.emplace(std::move(key), sharedNewFont);
+    // Klucz do wstawienia musi być już typu std::string
+    auto [inserted_it, success] = m_fontCache.emplace(FontKey(std::move(path_str), size), sharedNewFont);
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Font loaded and cached successfully.");
 
     return inserted_it->second;

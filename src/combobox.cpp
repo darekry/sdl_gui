@@ -50,18 +50,8 @@ bool ComboBox::handleEvent(const SDL_Event& event) {
 }
 
 void ComboBox::draw(SDL_Renderer* renderer) {
+    drawBackgroundAndBorder(renderer);
     auto style = getComposedStyle(m_state);
-
-    if (style.backgroundColor.has_value()) {
-        SDL_SetRenderDrawColor(renderer, style.backgroundColor->r, style.backgroundColor->g, style.backgroundColor->b, style.backgroundColor->a);
-        SDL_Rect bgRect = {0, 0, m_width, m_height};
-        SDL_RenderFillRect(renderer, &bgRect);
-    }
-    if (style.borderColor.has_value()) {
-        SDL_SetRenderDrawColor(renderer, style.borderColor->r, style.borderColor->g, style.borderColor->b, style.borderColor->a);
-        SDL_Rect borderRect = {0, 0, m_width, m_height};
-        SDL_RenderDrawRect(renderer, &borderRect);
-    }
 
     // 2. Draw selected text
     if (m_selected_index != -1 && !m_options.empty()) {

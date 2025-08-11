@@ -21,8 +21,8 @@ TextureManager::~TextureManager() {
 
 SharedTexture TextureManager::loadTexture(std::string_view path) {
     // Używamy find, aby uniknąć tworzenia std::string, jeśli to możliwe
-    auto it = m_textures.find(path);
-    if (it != m_textures.end()) {
+    auto it = m_textureCache.find(path);
+    if (it != m_textureCache.end()) {
         return it->second;
     }
 
@@ -42,7 +42,7 @@ SharedTexture TextureManager::loadTexture(std::string_view path) {
     }
 
     auto sharedNewTexture = SharedTexture(newTexture, SDLTextureDeleter());
-    auto [inserted_it, success] = m_textures.emplace(std::move(path_str), sharedNewTexture);
+    auto [inserted_it, success] = m_textureCache.emplace(std::move(path_str), sharedNewTexture);
     
     return inserted_it->second;
 }
@@ -76,8 +76,8 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
 }
 
 SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* texture) {
-    auto it = m_textures.find(key);
-    if (it != m_textures.end()) {
+    auto it = m_textureCache.find(key);
+    if (it != m_textureCache.end()) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
         return it->second;
     }
@@ -86,13 +86,13 @@ SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* text
         return nullptr;
     }
     auto shared = SharedTexture(texture, SDLTextureDeleter());
-    auto [inserted_it, success] = m_textures.emplace(key, shared);
+    auto [inserted_it, success] = m_textureCache.emplace(key, shared);
     return inserted_it->second;
 }
 
 SharedTexture TextureManager::addTexture(std::string_view key, SharedTexture texture) {
-    auto it = m_textures.find(key);
-    if (it != m_textures.end()) {
+    auto it = m_textureCache.find(key);
+    if (it != m_textureCache.end()) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
         return it->second;
     }
@@ -101,20 +101,20 @@ SharedTexture TextureManager::addTexture(std::string_view key, SharedTexture tex
         return nullptr;
     }
 
-    auto [inserted_it, success] = m_textures.emplace(key, texture);
+    auto [inserted_it, success] = m_textureCache.emplace(key, texture);
     return inserted_it->second;
 }
 
 SharedTexture TextureManager::getTexture(std::string_view key) const {
-    auto it = m_textures.find(key);
-    if (it != m_textures.end()) {
+    auto it = m_textureCache.find(key);
+    if (it != m_textureCache.end()) {
         return it->second;
     }
     return nullptr;
 }
 
 bool TextureManager::hasTexture(std::string_view key) const {
-    return m_textures.contains(key);
+    return m_textureCache.contains(key);
 }
 
 

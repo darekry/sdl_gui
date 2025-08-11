@@ -113,22 +113,8 @@ void TextInput::update_text_offset() {
 
 
 void TextInput::draw(SDL_Renderer* renderer) {
+    drawBackgroundAndBorder(renderer);
     const auto& style = getComposedStyle(m_state);
-    auto rect = SDL_Rect{0, 0, getWidth(), getHeight()};
-
-    // Background
-    if (style.backgroundColor) {
-        auto color = style.backgroundColor.value();
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_RenderFillRect(renderer, &rect);
-    }
-
-    // Border
-    if (style.borderColor) {
-        auto color = style.borderColor.value();
-        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-        SDL_RenderDrawRect(renderer, &rect);
-    }
 
     // Text
     auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);

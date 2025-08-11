@@ -5,7 +5,7 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <iostream>
+#include <SDL2/SDL_log.h>
 
 struct SDL_Texture;
 using SharedTexture = std::shared_ptr<SDL_Texture>;
@@ -66,42 +66,42 @@ struct Style {
 
 // Funkcja do logowania właściwości obiektu Style
 inline void logStyle(const Style& style, const char* styleName) {
-    std::cout << "--- Logging Style: " << styleName << " ---\n";
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "--- Logging Style: %s ---", styleName);
     if (style.backgroundColor.has_value()) {
         const auto& c = style.backgroundColor.value();
-        std::cout << "  BackgroundColor: (" << (int)c.r << ", " << (int)c.g << ", " << (int)c.b << ", " << (int)c.a << ")\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BackgroundColor: (%d, %d, %d, %d)", c.r, c.g, c.b, c.a);
     } else {
-        std::cout << "  BackgroundColor: nullopt\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BackgroundColor: nullopt");
     }
     if (style.textColor.has_value()) {
         const auto& c = style.textColor.value();
-        std::cout << "  TextColor: (" << (int)c.r << ", " << (int)c.g << ", " << (int)c.b << ", " << (int)c.a << ")\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  TextColor: (%d, %d, %d, %d)", c.r, c.g, c.b, c.a);
     } else {
-        std::cout << "  TextColor: nullopt\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  TextColor: nullopt");
     }
-    std::cout << "  Texture: " << (style.texture.has_value() ? "set" : "nullopt") << "\n";
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Texture: %s", (style.texture.has_value() ? "set" : "nullopt"));
     if (style.borderColor.has_value()) {
         const auto& c = style.borderColor.value();
-        std::cout << "  BorderColor: (" << (int)c.r << ", " << (int)c.g << ", " << (int)c.b << ", " << (int)c.a << ")\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderColor: (%d, %d, %d, %d)", c.r, c.g, c.b, c.a);
     } else {
-        std::cout << "  BorderColor: nullopt\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderColor: nullopt");
     }
     if (style.borderWidth.has_value()) {
-        std::cout << "  BorderWidth: " << style.borderWidth.value() << "\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderWidth: %d", style.borderWidth.value());
     } else {
-        std::cout << "  BorderWidth: nullopt\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderWidth: nullopt");
     }
     if (style.fontSize.has_value()) {
-        std::cout << "  FontSize: " << style.fontSize.value() << "\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  FontSize: %d", style.fontSize.value());
     } else {
-        std::cout << "  FontSize: nullopt\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  FontSize: nullopt");
     }
     if (style.fontName.has_value()) {
-        std::cout << "  FontName: " << style.fontName.value() << "\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  FontName: %s", style.fontName.value().c_str());
     } else {
-        std::cout << "  FontName: nullopt\n";
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  FontName: nullopt");
     }
-    std::cout << "--------------------------------------\n";
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "--------------------------------------");
 }
 
 #endif // STYLE_HPP

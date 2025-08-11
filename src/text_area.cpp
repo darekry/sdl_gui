@@ -48,21 +48,7 @@ bool TextArea::getWordWrap() const {
 }
 
 void TextArea::draw(SDL_Renderer* renderer) {
-    const auto& style = getComposedStyle(m_state);
-
-    // Rysuj tło i ramkę (jak w Panel)
-    if (style.backgroundColor) {
-        SDL_SetRenderDrawColor(renderer, style.backgroundColor->r, style.backgroundColor->g, style.backgroundColor->b, style.backgroundColor->a);
-        SDL_Rect bgRect = {0, 0, m_width, m_height};
-        SDL_RenderFillRect(renderer, &bgRect);
-    }
-    if (style.borderColor && style.borderWidth.value_or(0) > 0) {
-        SDL_SetRenderDrawColor(renderer, style.borderColor->r, style.borderColor->g, style.borderColor->b, style.borderColor->a);
-        for (int i = 0; i < style.borderWidth.value_or(0); ++i) {
-            SDL_Rect rect = {i, i, m_width - 2 * i, m_height - 2 * i};
-            SDL_RenderDrawRect(renderer, &rect);
-        }
-    }
+    drawBackgroundAndBorder(renderer);
 
     // Renderowanie tekstu
     if (m_needs_texture_update) {

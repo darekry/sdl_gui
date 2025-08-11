@@ -49,7 +49,7 @@ public:
 
 private:
     SDL_Renderer* m_renderer;
-    std::map<std::string, SharedTexture, std::less<>> m_textures; // Mapa przechowująca załadowane tekstury
+    std::map<std::string, SharedTexture, std::less<>> m_textureCache; // Mapa przechowująca załadowane tekstury
     SharedTexture m_defaultTexture; // Domyślna tekstura
 };
 #endif // TEXTURE_MANAGER_HPP
