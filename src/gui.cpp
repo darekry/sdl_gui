@@ -358,3 +358,15 @@ size_t GUIElement::countDescendants() const {
     }
     return count;
 }
+
+bool GUIElement::canGetKeyboardFocus() const {
+    return m_canGetKeyboardFocus;
+}
+
+void GUIElement::setCanGetKeyboardFocus(bool canFocus) {
+    m_canGetKeyboardFocus = canFocus;
+}
+
+bool GUIElement::hasKeyboardFocus() const {
+    return m_manager.getKeyboardFocus() == this;
+}

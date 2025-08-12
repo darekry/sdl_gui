@@ -26,23 +26,18 @@ int main() {
         // Main window panel
         auto windowPanel = std::make_unique<Panel>(guiManager, 100, 100, 300, 200);
         windowPanel->setStyle(ElementState::Normal, {.texture = guiManager.getTextureManager().addTexture("window_bg", createColorTexture(renderer, {.r=200, .g=200, .b=200, .a=255}))});
-        Panel* windowPanelPtr = windowPanel.get();
-
+        windowPanel->setDraggable(true);
+        auto *windowPanel_p = windowPanel.get();
         // Title bar
         auto titleBar = std::make_unique<Panel>(guiManager, 0, 0, 300, 30);
         titleBar->setStyle(ElementState::Normal, {.texture = guiManager.getTextureManager().addTexture("title_bg", createColorTexture(renderer, {100, 100, 150, 255}))});
-        auto titleLabel = std::make_unique<Label>(guiManager, 0, 0, "Window Title", 16);
-        titleLabel->setPosition((titleBar->getWidth() - titleLabel->getWidth())/2, (titleBar->getHeight() - titleLabel->getHeight())/2);
+        auto titleLabel = std::make_unique<Label>(guiManager, 5, 5, "Window Title", 16);
         titleBar->addChild(std::move(titleLabel));
-        titleBar->setDraggable(true);
 
         // Close button
-        auto closeButton = std::make_unique<Button>(guiManager, 270, 5, 25, 20);
-        auto closeLabel = std::make_unique<Label>(guiManager, 0, 0, "X", 14);
-        closeLabel->setPosition((closeButton->getWidth() - closeLabel->getWidth())/2, (closeButton->getHeight() - closeLabel->getHeight())/2);
-        closeButton->addChild(std::move(closeLabel));
-        closeButton->setOnClickCallback([windowPanelPtr](GUIElement*){
-            windowPanelPtr->markForDeletion();
+        auto closeButton = std::make_unique<Button>(guiManager, 270, 5, 25, 20,"X");
+        closeButton->setOnClickCallback([windowPanel_p](GUIElement*){
+            windowPanel_p->markForDeletion();
             std::cout << "Window marked for deletion.\n";
         });
 

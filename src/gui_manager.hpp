@@ -53,14 +53,24 @@ public:
     void hideTooltip();
 
 // --- Zarządzanie motywem ---
+// --- Zarządzanie motywem ---
 void setTheme(Theme theme);
 Theme& getTheme();
+
+// --- Zarządzanie fokusem i przechwytywaniem ---
+void captureMouse(GUIElement* element);
+void releaseMouse();
+void setKeyboardFocus(GUIElement* element);
+[[nodiscard]] GUIElement* getKeyboardFocus() const;
 
 private:
 // Kontener na unikalne wskaźniki do elementów GUI
 std::vector<std::unique_ptr<GUIElement>> m_elements;
 std::unique_ptr<GUIElement> tooltipElement;
 
+// Stan fokusu i przechwytywania
+GUIElement* m_mouseCaptureElement = nullptr;
+GUIElement* m_keyboardFocusElement = nullptr;
 
 // Kontekst aplikacji
 SDL_Renderer* m_renderer;

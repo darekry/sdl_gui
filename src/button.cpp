@@ -24,19 +24,37 @@ void Button::setOnMouseOverCallback(OnMouseOverCallback callback) {
 }
 
 bool Button::handleEvent(const SDL_Event& e) {
-    auto previousState = m_state;
-    GUIElement::handleEvent(e); // Pozwól klasie bazowej zaktualizować stan
+    if (!m_enabled || !m_visible) {
+        return false;
+    }
 
-    if (m_enabled && m_visible) {
-        // Wywołaj callback onClick, jeśli stan zmienił się na Hover po wciśnięciu
-        if (previousState == ElementState::Pressed && m_state == ElementState::Hover) {
-            if (m_onClick) {
+    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
+        setState(ElementState::Pressed);
+        m_manager.captureMouse(this);
+        return true;
+    }
+
+    if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+        if (m_state == ElementState::Pressed) {
+            m_manager.releaseMouse();
+            setState(ElementState::Hover);
+            if (contains(e.button.x, e.button.y) && m_onClick) {
                 m_onClick(this);
-                return true; // Zdarzenie obsłużone
+            }
+            return true;
+        }
+    }
+
+    if (e.type == SDL_MOUSEMOTION) {
+        if (m_state != ElementState::Pressed) {
+            if (contains(e.motion.x, e.motion.y)) {
+                setState(ElementState::Hover);
+            } else {
+                setState(ElementState::Normal);
             }
         }
     }
-    
+
     return false;
 }
 

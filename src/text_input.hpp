@@ -26,6 +26,8 @@ using GUIElement::setBorder;
     bool isLocked() const;
 
     bool handleEvent(const SDL_Event& e) override;
+    void onFocusGained() override;
+    void onFocusLost() override;
 
 protected:
     void draw(SDL_Renderer* renderer) override;
@@ -35,7 +37,6 @@ private:
     
     std::string m_text;
     bool m_locked;
-    bool m_active; // To indicate if the input field is currently active for typing
 
     size_t m_cursor_pos = 0;
     int m_text_offset_x = 0;

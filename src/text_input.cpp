@@ -8,7 +8,8 @@
 
 TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h), m_text(""),
-      m_locked(false), m_active(false) {
+      m_locked(false) {
+    setCanGetKeyboardFocus(true);
     m_cursor_pos = 0;
     m_text_offset_x = 0;
     m_show_cursor = false;
@@ -69,11 +70,12 @@ void TextInput::setOnTextChanged(const std::function<void(TextInput*)>& callback
 void TextInput::setOnEnterPressed(const std::function<void(TextInput*)>& callback) {
     m_onEnterPressed = callback;
 }
-
 void TextInput::setLocked(bool isLocked) {
     m_locked = isLocked;
     if (m_locked) {
-        m_active = false;
+        if (hasKeyboardFocus()) {
+            m_manager.setKeyboardFocus(nullptr);
+        }
     }
     markDirty();
 }
@@ -135,7 +137,7 @@ void TextInput::draw(SDL_Renderer* renderer) {
     }
 
     // Cursor
-    if (m_active && style.textColor) {
+    if (hasKeyboardFocus() && style.textColor) {
         if (SDL_GetTicks() - m_cursor_blink_time > 500) {
             m_show_cursor = !m_show_cursor;
             m_cursor_blink_time = SDL_GetTicks();
@@ -159,71 +161,69 @@ void TextInput::draw(SDL_Renderer* renderer) {
         }
     }
 }
+void TextInput::onFocusGained() {
+    SDL_StartTextInput();
+    m_show_cursor = true;
+    m_cursor_blink_time = SDL_GetTicks();
+    markDirty();
+}
+
+void TextInput::onFocusLost() {
+    SDL_StopTextInput();
+    m_show_cursor = false;
+    markDirty();
+}
 
 bool TextInput::handleEvent(const SDL_Event& e) {
     if (m_locked || !m_enabled) {
         return false;
     }
-    auto eventHandled = false;
-    if (e.type == SDL_MOUSEBUTTONDOWN) {
-        if (contains(e.button.x, e.button.y)) {
-            if (!m_active) {
-                m_active = true;
-                SDL_StartTextInput();
-                m_show_cursor = true;
-                m_cursor_blink_time = SDL_GetTicks();
-                markDirty();
-                eventHandled = true;
-            }
-        } else {
-            if (m_active) {
-                m_active = false;
-                SDL_StopTextInput();
-                m_show_cursor = false;
-                markDirty();
-            }
-        }
-    } else if (m_active && e.type == SDL_TEXTINPUT) {
+
+    if (e.type == SDL_MOUSEBUTTONDOWN && contains(e.button.x, e.button.y)) {
+        m_manager.setKeyboardFocus(this);
+        return true;
+    }
+
+    if (!hasKeyboardFocus()) {
+        return false;
+    }
+
+    bool eventHandled = false;
+    if (e.type == SDL_TEXTINPUT) {
         m_text.insert(m_cursor_pos, e.text.text);
         m_cursor_pos += strlen(e.text.text);
         update_text_offset();
-        markDirty();
         if (m_onTextChanged) m_onTextChanged(this);
         eventHandled = true;
-    } else if (m_active && e.type == SDL_KEYDOWN) {
+    } else if (e.type == SDL_KEYDOWN) {
         if (e.key.keysym.sym == SDLK_BACKSPACE && m_cursor_pos > 0) {
             m_text.erase(m_cursor_pos - 1, 1);
             m_cursor_pos--;
             update_text_offset();
-            markDirty();
             if (m_onTextChanged) m_onTextChanged(this);
             eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_RETURN) {
             if (m_onEnterPressed) m_onEnterPressed(this);
-            m_active = false;
-            SDL_StopTextInput();
-            markDirty();
+            m_manager.setKeyboardFocus(nullptr); // Utrata fokusu po wciśnięciu Enter
             eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_LEFT && m_cursor_pos > 0) {
             m_cursor_pos--;
             update_text_offset();
-            markDirty();
             eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_RIGHT && m_cursor_pos < m_text.length()) {
             m_cursor_pos++;
             update_text_offset();
-            markDirty();
             eventHandled = true;
-        }
-
-        if (eventHandled) {
-            m_show_cursor = true;
-            m_cursor_blink_time = SDL_GetTicks();
-            markDirty();
         }
     }
 
-    if (m_active) {
+    if (eventHandled) {
+        m_show_cursor = true;
+        m_cursor_blink_time = SDL_GetTicks();
+        markDirty();
+    }
+    
+    if (hasKeyboardFocus()) {
         markDirty(); // Keep dirty for cursor blinking
     }
 

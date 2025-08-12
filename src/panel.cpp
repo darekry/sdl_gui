@@ -24,35 +24,52 @@ bool Panel::handleEvent(const SDL_Event& event) {
         return false;
     }
 
-    if (GUIElement::handleEvent(event)) {
+    // Przekaż zdarzenie do dzieci. Jeśli któreś je obsłuży, nie rób nic więcej.
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+        if ((*it)->handleEvent(event)) {
+            return true;
+        }
+    }
+
+    // Logika przeciągania - aktywowana tylko jeśli żadne dziecko nie obsłużyło zdarzenia
+    if (m_is_draggable) {
+        if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT && contains(event.button.x, event.button.y)) {
+            m_is_dragging = true;
+            auto absPos = getAbsolutePosition();
+            m_drag_offset.x = event.button.x - absPos.x;
+            m_drag_offset.y = event.button.y - absPos.y;
+            m_manager.captureMouse(this);
+            return true;
+        }
+    }
+    
+    // Logika dla samego panelu (np. hover), jeśli zdarzenie nie zostało przechwycone przez dzieci
+    // Wywołujemy bazową implementację, ale bez ponownej propagacji do dzieci
+    if (event.type == SDL_MOUSEMOTION) {
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        bool currentlyHovered = contains(mouseX, mouseY);
+
+        if (currentlyHovered && !m_isHovered) {
+            m_isHovered = true;
+            setState(ElementState::Hover);
+        } else if (!currentlyHovered && m_isHovered) {
+            m_isHovered = false;
+            setState(ElementState::Normal);
+        }
+    }
+    
+    if (m_is_dragging && event.type == SDL_MOUSEMOTION) {
+        int parentX = m_parent ? m_parent->getAbsolutePosition().x : 0;
+        int parentY = m_parent ? m_parent->getAbsolutePosition().y : 0;
+        setPosition(event.motion.x - parentX - m_drag_offset.x, event.motion.y - parentY - m_drag_offset.y);
         return true;
     }
 
-    if (m_is_draggable) {
-        if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
-            auto mousePos = SDL_Point{event.button.x, event.button.y};
-            auto absPos = getAbsolutePosition();
-            auto panelRect = SDL_Rect{absPos.x, absPos.y, m_width, m_height};
-
-            if (SDL_PointInRect(&mousePos, &panelRect)) {
-                m_is_dragging = true;
-                m_drag_offset.x = mousePos.x - absPos.x;
-                m_drag_offset.y = mousePos.y - absPos.y;
-                return true;
-            }
-        } else if (event.type == SDL_MOUSEMOTION && m_is_dragging) {
-            auto mouseX = 0;
-            auto mouseY = 0;
-            SDL_GetMouseState(&mouseX, &mouseY);
-            setPosition(mouseX - m_drag_offset.x - (m_parent ? m_parent->getAbsolutePosition().x : 0),
-                        mouseY - m_drag_offset.y - (m_parent ? m_parent->getAbsolutePosition().y : 0));
-            return true;
-        } else if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
-            if (m_is_dragging) {
-                m_is_dragging = false;
-                return true;
-            }
-        }
+    if (m_is_dragging && event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+        m_is_dragging = false;
+        m_manager.releaseMouse();
+        return true;
     }
 
     return false;

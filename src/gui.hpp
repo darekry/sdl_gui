@@ -69,7 +69,17 @@ public:
     void clearChildren();
     [[nodiscard]] GUIElement* getParent() const { return m_parent; }
     [[nodiscard]] const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
-size_t countDescendants() const;
+    size_t countDescendants() const;
+
+    // Focus and Capture API
+    virtual void onFocusGained() {}
+    virtual void onFocusLost() {}
+    virtual void onMouseCaptureGained() {}
+    virtual void onMouseCaptureLost() {}
+
+    [[nodiscard]] bool canGetKeyboardFocus() const;
+    void setCanGetKeyboardFocus(bool canFocus);
+    [[nodiscard]] bool hasKeyboardFocus() const;
 
 private:
     void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
@@ -78,6 +88,7 @@ protected:
     uint32_t startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback);
     void stopTimer(uint32_t timerId);
     
+    bool m_canGetKeyboardFocus = false;
     bool m_clip_children = true;
     virtual void draw(SDL_Renderer* renderer) = 0;
 

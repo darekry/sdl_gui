@@ -35,15 +35,50 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
 }
 
 bool GUIManager::processEvent(const SDL_Event& event) {
-    // Przekaż zdarzenie do wszystkich elementów najwyższego poziomu.
-    // Pętla zatrzyma się, gdy któryś element "skonsumuje" zdarzenie.
-    for (const auto& element : m_elements) {
-        if (element && element->handleEvent(event)) {
-            // Jeśli element obsłużył zdarzenie, zwracamy true.
+    // 1. Zdarzenia myszy
+    if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+        if (m_mouseCaptureElement) {
+            // Jeśli element przechwycił mysz, wysyłaj zdarzenia tylko do niego
+            return m_mouseCaptureElement->handleEvent(event);
+        }
+    }
+    // 2. Zdarzenia klawiatury
+    else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP || event.type == SDL_TEXTINPUT) {
+        if (m_keyboardFocusElement) {
+            // Jeśli element ma fokus klawiatury, wysyłaj zdarzenia tylko do niego
+            return m_keyboardFocusElement->handleEvent(event);
+        }
+        // Jeśli żaden element nie ma fokusu, zdarzenia klawiatury są ignorowane przez GUI
+        return false;
+    }
+
+    // 3. Standardowa propagacja dla zdarzeń nieprzechwyconych
+    if (tooltipElement && tooltipElement->isVisible() && tooltipElement->handleEvent(event)) {
+        return true;
+    }
+
+    for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it) {
+        if ((*it)->handleEvent(event)) {
             return true;
         }
     }
-    // Żaden element nie obsłużył zdarzenia.
+
+    // Specjalna obsługa kliknięcia poza elementami z focusem
+    if (event.type == SDL_MOUSEBUTTONDOWN && m_keyboardFocusElement) {
+        bool click_on_focusable = false;
+        for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it) {
+            if ((*it)->contains(event.button.x, event.button.y)) {
+                // To jest uproszczenie, idealnie byłoby sprawdzić, czy kliknięty element
+                // faktycznie może otrzymać fokus.
+                click_on_focusable = true;
+                break;
+            }
+        }
+        if (!click_on_focusable) {
+            setKeyboardFocus(nullptr);
+        }
+    }
+
     return false;
 }
 
@@ -67,6 +102,14 @@ void GUIManager::cleanup() {
 
     if (tooltipElement && tooltipElement->isMarkedForDeletion()) {
         tooltipElement.reset();
+    }
+
+    // Sprawdź, czy elementy z fokusem/przechwyceniem nie są usuwane
+    if (m_keyboardFocusElement && m_keyboardFocusElement->isMarkedForDeletion()) {
+        setKeyboardFocus(nullptr);
+    }
+    if (m_mouseCaptureElement && m_mouseCaptureElement->isMarkedForDeletion()) {
+        releaseMouse();
     }
     
     // Najpierw rekurencyjnie wywołaj cleanup dla wszystkich elementów
@@ -141,6 +184,40 @@ void GUIManager::setTheme(Theme theme) {
 
 Theme& GUIManager::getTheme() {
     return m_theme;
+}
+
+void GUIManager::captureMouse(GUIElement* element) {
+    if (m_mouseCaptureElement && m_mouseCaptureElement != element) {
+        m_mouseCaptureElement->onMouseCaptureLost();
+    }
+    m_mouseCaptureElement = element;
+    if (m_mouseCaptureElement) {
+        m_mouseCaptureElement->onMouseCaptureGained();
+    }
+}
+
+void GUIManager::releaseMouse() {
+    if (m_mouseCaptureElement) {
+        m_mouseCaptureElement->onMouseCaptureLost();
+    }
+    m_mouseCaptureElement = nullptr;
+}
+
+void GUIManager::setKeyboardFocus(GUIElement* element) {
+    if (m_keyboardFocusElement == element) {
+        return;
+    }
+    if (m_keyboardFocusElement) {
+        m_keyboardFocusElement->onFocusLost();
+    }
+    m_keyboardFocusElement = element;
+    if (m_keyboardFocusElement) {
+        m_keyboardFocusElement->onFocusGained();
+    }
+}
+
+GUIElement* GUIManager::getKeyboardFocus() const {
+    return m_keyboardFocusElement;
 }
 
 AnimationManager* GUIManager::getAnimationManager() {

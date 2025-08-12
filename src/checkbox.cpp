@@ -24,15 +24,37 @@ void Checkbox::setOnChange(OnChangeCallback callback) {
 }
 
 bool Checkbox::handleEvent(const SDL_Event& e) {
-    auto previousState = m_state;
-    GUIElement::handleEvent(e);
+    if (!m_enabled || !m_visible) {
+        return false;
+    }
 
-    if (m_enabled && m_visible) {
-        if (previousState == ElementState::Pressed && m_state == ElementState::Hover) {
-            setChecked(!m_isChecked);
+    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
+        setState(ElementState::Pressed);
+        m_manager.captureMouse(this);
+        return true;
+    }
+
+    if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+        if (m_state == ElementState::Pressed) {
+            m_manager.releaseMouse();
+            setState(ElementState::Hover);
+            if (contains(e.button.x, e.button.y)) {
+                setChecked(!m_isChecked);
+            }
             return true;
         }
     }
+
+    if (e.type == SDL_MOUSEMOTION) {
+        if (m_state != ElementState::Pressed) {
+            if (contains(e.motion.x, e.motion.y)) {
+                setState(ElementState::Hover);
+            } else {
+                setState(ElementState::Normal);
+            }
+        }
+    }
+
     return false;
 }
 
