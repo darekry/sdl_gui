@@ -10,7 +10,7 @@ FLAGS += -O3
 
 FLAGS += $(shell sdl2-config --cflags)
 FLAGS += -march=native
-# FLAGS += -fsanitize=address,undefined
+FLAGS += -fsanitize=address,undefined
 FLAGS += -g
 FLAGS += -flto
 #FLAGS += -fmodules

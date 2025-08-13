@@ -210,6 +210,16 @@ void GUIElement::markDirty(bool cascadeToParents) {
     }
 }
 
+void GUIElement::markDirtyRecursively() {
+    m_isDirty = true;
+    for (auto& child : m_children) {
+        if (child) {
+            child->markDirtyRecursively();
+        }
+    }
+}
+
+
 void GUIElement::markForDeletion() {
     m_isMarkedForDeletion = true;
 }
@@ -288,23 +298,30 @@ void GUIElement::setStyle(ElementState state, Style style) {
     markDirty();
 }
 Style GUIElement::getComposedStyle(ElementState state) const {
-    const auto& themeStyle = m_manager.getTheme().getStyle(getComponentType(), state);
-    auto it = m_localStyles.find(state);
+    // 1. Pobierz styl bazowy dla tego typu widgetu z motywu.
+    //    Ten styl jest już połączony ze stylem domyślnym motywu.
+    Style finalStyle = m_manager.getTheme().getStyle(getComponentType());
 
-    if (it == m_localStyles.end()) {
-        return themeStyle;
+    // 2. Znajdź styl lokalny dla konkretnego stanu i połącz go.
+    auto it = m_localStyles.find(state);
+    if (it != m_localStyles.end()) {
+        // Styl lokalny ma pierwszeństwo, więc najpierw go kopiujemy,
+        // a potem uzupełniamy brakujące pola ze stylu z motywu.
+        Style localCopy = it->second;
+        localCopy.mergeWith(finalStyle);
+        return localCopy;
+    }
+    
+    // 3. Jeśli nie ma stylu lokalnego dla tego stanu, spróbuj stanu Normal.
+    it = m_localStyles.find(ElementState::Normal);
+    if (it != m_localStyles.end()) {
+        Style localCopy = it->second;
+        localCopy.mergeWith(finalStyle);
+        return localCopy;
     }
 
-    Style composedStyle = themeStyle;
-    const Style& localStyle = it->second;
-
-    if (localStyle.backgroundColor) composedStyle.backgroundColor = localStyle.backgroundColor;
-    if (localStyle.textColor) composedStyle.textColor = localStyle.textColor;
-    if (localStyle.texture) composedStyle.texture = localStyle.texture;
-    if (localStyle.borderColor) composedStyle.borderColor = localStyle.borderColor;
-    if (localStyle.borderWidth) composedStyle.borderWidth = localStyle.borderWidth;
-
-    return composedStyle;
+    // 4. Jeśli brak jakiegokolwiek stylu lokalnego, zwróć styl z motywu.
+    return finalStyle;
 }
 
 void GUIElement::setBackgroundColor(ElementState state, SDL_Color color) {

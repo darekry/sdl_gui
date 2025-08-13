@@ -28,7 +28,7 @@ using GUIElement::setBorder;
     bool handleEvent(const SDL_Event& e) override;
     void onFocusGained() override;
     void onFocusLost() override;
-
+    const char* getComponentType() const;
 protected:
     void draw(SDL_Renderer* renderer) override;
 

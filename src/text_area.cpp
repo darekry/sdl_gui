@@ -267,7 +267,9 @@ void TextArea::renderCursor() {
     SDL_RenderFillRect(m_manager.getRenderer(), &cursorRect);
 }
 
-
+const char* TextArea::getComponentType() const {
+    return "TextArea";
+}
 
 void TextArea::update_text_offset() {
     auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);

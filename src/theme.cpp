@@ -1,24 +1,25 @@
 #include "theme.hpp"
 
-
-void Theme::setStyle(const std::string& componentType, ElementState state, Style style) {
-    styles[componentType][state] = std::move(style);
+void Theme::setStyle(const std::string& type, Style style) {
+    m_styles[type] = std::move(style);
 }
 
-Style Theme::getStyle(const std::string& componentType, ElementState state) const {
-    auto componentStylesIt = styles.find(componentType);
-    if (componentStylesIt != styles.end()) {
-        auto stateStyleIt = componentStylesIt->second.find(state);
-        if (stateStyleIt != componentStylesIt->second.end()) {
-            return stateStyleIt->second;
-        }
-        // Fallback to Normal state if the specific state is not defined
-        auto normalStyleIt = componentStylesIt->second.find(ElementState::Normal);
-        if (normalStyleIt != componentStylesIt->second.end()) {
-            return normalStyleIt->second;
-        }
+Style Theme::getStyle(const std::string& type) const {
+    auto it = m_styles.find(type);
+    if (it != m_styles.end()) {
+        Style specificStyle = it->second; // Kopia
+        specificStyle.mergeWith(m_defaultStyle);
+        return specificStyle;
     }
-    return defaultStyle;
+    return m_defaultStyle;
+}
+
+void Theme::setDefaultStyle(Style style) {
+    m_defaultStyle = std::move(style);
+}
+
+const Style& Theme::getDefaultStyle() const {
+    return m_defaultStyle;
 }
 
 Theme Theme::createDefaultTheme() {
@@ -30,59 +31,43 @@ Theme Theme::createDefaultTheme() {
     const SDL_Color border_dark = {128, 128, 128, 255};  // Ciemnoszary
 
     // --- Domyślny styl bazowy ---
-    theme.defaultStyle.backgroundColor = bg_color;
-    theme.defaultStyle.textColor = text_color;
-    theme.defaultStyle.borderColor = border_dark;
-    theme.defaultStyle.borderWidth = 0;
-    theme.defaultStyle.fontSize = 16;
-    theme.defaultStyle.fontName = "assets/fonts/font.ttf";
+    Style defaultStyle;
+    defaultStyle.backgroundColor = bg_color;
+    defaultStyle.textColor = text_color;
+    defaultStyle.borderColor = border_dark;
+    defaultStyle.borderWidth = 0;
+    defaultStyle.fontSize = 16;
+    defaultStyle.fontName = "assets/fonts/font.ttf";
+    theme.setDefaultStyle(defaultStyle);
 
     // --- Style dla przycisku (Button) ---
-    Style button_normal;
-    button_normal.backgroundColor = bg_color;
-    button_normal.textColor = text_color;
-    button_normal.borderColor = border_dark;
-    button_normal.borderWidth = 2;
-
-    Style button_hover = button_normal;
-    // (Można dodać subtelne podświetlenie, jeśli zajdzie potrzeba)
-
-    Style button_pressed = button_normal;
-    button_pressed.borderColor = {0, 0, 0, 255}; // Ciemniejsza ramka po wciśnięciu
-
-    Style button_disabled = button_normal;
-    button_disabled.textColor = border_dark; // Szary tekst
-
-    theme.setStyle("Button", ElementState::Normal, button_normal);
-    theme.setStyle("Button", ElementState::Hover, button_hover);
-    theme.setStyle("Button", ElementState::Pressed, button_pressed);
-    theme.setStyle("Button", ElementState::Disabled, button_disabled);
+    Style button_style;
+    button_style.borderWidth = 2;
+    theme.setStyle("Button", button_style);
 
     // --- Style dla Panelu ---
     Style panel_style;
-    panel_style.backgroundColor = bg_color;
-    panel_style.borderColor = border_dark;
     panel_style.borderWidth = 1;
-    theme.setStyle("Panel", ElementState::Normal, panel_style);
+    theme.setStyle("Panel", panel_style);
     
     // Slider dziedziczy po Panelu, więc otrzyma jego styl
     // Możemy zdefiniować dodatkowe style dla "Slider", jeśli potrzebujemy
-    Style slider_style = panel_style;
-    theme.setStyle("Slider", ElementState::Normal, slider_style);
+    theme.setStyle("Slider", panel_style);
+
+    // --- Style dla pola tekstowego (TextInput) ---
+    Style textInputStyle;
+    textInputStyle.backgroundColor = {255, 255, 255, 255}; // Białe tło
+    theme.setStyle("TextInput", textInputStyle);
+
+    // --- Style dla pola tekstowego wieloliniowego (TextArea) ---
+    Style textAreaStyle;
+    textAreaStyle.borderWidth=2;
+    textAreaStyle.backgroundColor = {255, 255, 255, 255}; // Białe tło
+    theme.setStyle("TextArea", textAreaStyle);
+    theme.setStyle("TextInput", textAreaStyle);
 
     // --- Style dla Etykiety (Label) ---
-    Style label_style;
-    label_style.textColor = text_color;
-    theme.setStyle("Label", ElementState::Normal, label_style);
-    theme.setStyle("Label", ElementState::Hover, label_style);
-    theme.setStyle("Label", ElementState::Pressed, label_style);
-    Style label_disabled = label_style;
-    label_disabled.textColor = border_dark;
-    theme.setStyle("Label", ElementState::Disabled, label_disabled);
-
+    // Etykieta nie ma żadnych specjalnych stylów, więc będzie w pełni dziedziczyć z domyślnego.
+    
     return theme;
-}
-
-const Style& Theme::getDefaultStyle() const {
-    return defaultStyle;
 }

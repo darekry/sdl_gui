@@ -180,6 +180,11 @@ TimerManager* GUIManager::getTimerManager() {
 
 void GUIManager::setTheme(Theme theme) {
     m_theme = std::move(theme);
+    for (const auto& element : m_elements) {
+        if (element) {
+            element->markDirtyRecursively();
+        }
+    }
 }
 
 Theme& GUIManager::getTheme() {

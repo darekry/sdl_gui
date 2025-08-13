@@ -40,28 +40,14 @@ void TextInput::setText(std::string&& newText) {
         }
     }
 }
+const char* TextInput::getComponentType() const {
+    return "TextInput";
+}
 
 const std::string& TextInput::getText() const {
     return m_text;
 }
 
-void TextInput::setTextColor(const SDL_Color& color) {
-    GUIElement::setTextColor(ElementState::Normal, color);
-    GUIElement::setTextColor(ElementState::Hover, color);
-    GUIElement::setTextColor(ElementState::Pressed, color);
-}
-
-void TextInput::setBackgroundColor(const SDL_Color& color) {
-    GUIElement::setBackgroundColor(ElementState::Normal, color);
-    GUIElement::setBackgroundColor(ElementState::Hover, color);
-    GUIElement::setBackgroundColor(ElementState::Pressed, color);
-}
-
-void TextInput::setBorderColor(const SDL_Color& color) {
-    setBorder(ElementState::Normal, color, 1);
-    setBorder(ElementState::Hover, color, 1);
-    setBorder(ElementState::Pressed, color, 1);
-}
 
 void TextInput::setOnTextChanged(const std::function<void(TextInput*)>& callback) {
     m_onTextChanged = callback;

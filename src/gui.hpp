@@ -62,6 +62,7 @@ public:
     virtual const char* getComponentType() const;
     void markForDeletion();
     void markDirty(bool cascadeToParents = true);
+    void markDirtyRecursively();
     bool isMarkedForDeletion() const;
     void cleanup();
 

@@ -9,25 +9,19 @@
 // Umożliwia globalną zmianę wyglądu aplikacji.
 class Theme {
 public:
-    // Ustawia domyślny styl dla danego typu komponentu i stanu.
-    void setStyle(const std::string& componentType, ElementState state, Style style);
+    void setStyle(const std::string& type, Style style);
+    Style getStyle(const std::string& type) const;
 
-    // Pobiera domyślny styl dla danego typu komponentu i stanu.
-    // Jeśli dla danego komponentu nie ma zdefiniowanego stylu, zwraca styl domyślny.
-    Style getStyle(const std::string& componentType, ElementState state) const;
+    void setDefaultStyle(Style style);
+    const Style& getDefaultStyle() const;
 
     // Metoda fabryczna tworząca domyślny motyw w stylu "Windows 95/98".
     static Theme createDefaultTheme();
 
-    // Pobiera domyślny styl bazowy.
-    const Style& getDefaultStyle() const;
-
 private:
-    // Mapa: Typ komponentu -> Mapa: Stan -> Styl
-    std::map<std::string, std::map<ElementState, Style>> styles;
-    
-    // Styl używany, gdy dla danego komponentu brakuje specyficznego stylu.
-    Style defaultStyle;
+    // Mapa: Typ komponentu -> Styl
+    std::map<std::string, Style> m_styles;
+    Style m_defaultStyle;
 };
 
 #endif // THEME_HPP

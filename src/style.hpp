@@ -34,6 +34,30 @@ struct Style {
     std::optional<int> fontSize;
     std::optional<std::string> fontName;
 
+    void mergeWith(const Style& base) {
+        if (!backgroundColor.has_value() && base.backgroundColor.has_value()) {
+            backgroundColor = base.backgroundColor;
+        }
+        if (!textColor.has_value() && base.textColor.has_value()) {
+            textColor = base.textColor;
+        }
+        if (!texture.has_value() && base.texture.has_value()) {
+            texture = base.texture;
+        }
+        if (!borderColor.has_value() && base.borderColor.has_value()) {
+            borderColor = base.borderColor;
+        }
+        if (!borderWidth.has_value() && base.borderWidth.has_value()) {
+            borderWidth = base.borderWidth;
+        }
+        if (!fontSize.has_value() && base.fontSize.has_value()) {
+            fontSize = base.fontSize;
+        }
+        if (!fontName.has_value() && base.fontName.has_value()) {
+            fontName = base.fontName;
+        }
+    }
+
     bool operator==(const Style& other) const {
         if (backgroundColor.has_value() != other.backgroundColor.has_value()) { return false; }
         if (backgroundColor && !(*backgroundColor == *other.backgroundColor)) { return false; }
