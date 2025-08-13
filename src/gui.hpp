@@ -6,6 +6,13 @@
 #include "SDL2/SDL.h"
 #include "animation_manager.hpp"
 #include "style.hpp"
+
+#if DEBUG
+#include <SDL2/SDL_log.h>
+#define LOG_DEBUG(...) SDL_Log(__VA_ARGS__)
+#else
+#define LOG_DEBUG(...)
+#endif
 #include <functional>
 #include <optional>
 #include <map>

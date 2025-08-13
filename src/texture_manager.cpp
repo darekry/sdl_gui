@@ -1,6 +1,7 @@
 #include "texture_manager.hpp"
 #include "sdl_deleters.hpp"
 #include <SDL2/SDL.h>
+#include "gui.hpp"
 
 
 
@@ -9,7 +10,7 @@ TextureManager::TextureManager(SDL_Renderer* renderer) : m_renderer(renderer) {
     // Sprawdzamy, czy wymagane formaty są już załadowane
     const auto imgFlags = IMG_INIT_PNG; // Można dodać więcej formatów, np. IMG_INIT_JPG
     if (!(IMG_Init(imgFlags) & imgFlags)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_image could not initialize! SDL_image Error: %s", IMG_GetError());
+        LOG_DEBUG("SDL_image could not initialize! SDL_image Error: %s", IMG_GetError());
         // W przypadku błędu inicjalizacji, można podjąć odpowiednie działania, np. rzucić wyjątek
     }
 }
@@ -29,7 +30,7 @@ SharedTexture TextureManager::loadTexture(std::string_view path) {
     const std::string path_str(path);
     auto* loadedSurface = IMG_Load(path_str.c_str());
     if (!loadedSurface) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to load image %s! SDL_image Error: %s", path_str.c_str(), IMG_GetError());
+        LOG_DEBUG("Unable to load image %s! SDL_image Error: %s", path_str.c_str(), IMG_GetError());
         return nullptr;
     }
     
@@ -37,7 +38,7 @@ SharedTexture TextureManager::loadTexture(std::string_view path) {
     SDL_FreeSurface(loadedSurface);
 
     if (!newTexture) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unable to create texture from %s! SDL Error: %s", path_str.c_str(), SDL_GetError());
+        LOG_DEBUG("Unable to create texture from %s! SDL Error: %s", path_str.c_str(), SDL_GetError());
         return nullptr;
     }
 
@@ -49,28 +50,28 @@ SharedTexture TextureManager::loadTexture(std::string_view path) {
 
 
 SharedTexture TextureManager::createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color) {
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempting to create texture for text: \"%s\"", std::string(text).c_str());
+    LOG_DEBUG("TextureManager: Attempting to create texture for text: \"%s\"", std::string(text).c_str());
     if (!font) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Font is not loaded!");
+        LOG_DEBUG("TextureManager ERROR: Font is not loaded!");
         return nullptr;
     }
 
     auto* textSurface = TTF_RenderUTF8_Blended(font.get(), std::string(text).c_str(), color);
     if (!textSurface) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to render text surface! SDL_ttf Error: %s", TTF_GetError());
+        LOG_DEBUG("TextureManager ERROR: Unable to render text surface! SDL_ttf Error: %s", TTF_GetError());
         return nullptr;
     }
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Text surface created successfully (w: %d, h: %d).", textSurface->w, textSurface->h);
+    LOG_DEBUG("TextureManager: Text surface created successfully (w: %d, h: %d).", textSurface->w, textSurface->h);
 
     auto* textTexture = SDL_CreateTextureFromSurface(m_renderer, textSurface);
     SDL_FreeSurface(textSurface);
 
     if (!textTexture) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to create texture from rendered text! SDL Error: %s", SDL_GetError());
+        LOG_DEBUG("TextureManager ERROR: Unable to create texture from rendered text! SDL Error: %s", SDL_GetError());
         return nullptr;
     }
     SDL_SetTextureBlendMode(textTexture, SDL_BLENDMODE_BLEND);
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Texture created successfully from text.");
+    LOG_DEBUG("TextureManager: Texture created successfully from text.");
 
     return {textTexture, SDLTextureDeleter()};
 }
@@ -78,7 +79,7 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
 SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* texture) {
     auto it = m_textureCache.find(key);
     if (it != m_textureCache.end()) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
+        LOG_DEBUG("TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
         return it->second;
     }
 
@@ -93,7 +94,7 @@ SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* text
 SharedTexture TextureManager::addTexture(std::string_view key, SharedTexture texture) {
     auto it = m_textureCache.find(key);
     if (it != m_textureCache.end()) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
+        LOG_DEBUG("TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
         return it->second;
     }
 
@@ -121,14 +122,14 @@ bool TextureManager::hasTexture(std::string_view key) const {
 void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, std::string_view text) {
     auto defaultFont = fontManager.getDefaultFont();
     if (!defaultFont) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Default font not loaded. Cannot create default texture.");
+        LOG_DEBUG("TextureManager ERROR: Default font not loaded. Cannot create default texture.");
         return;
     }
 
     // Utwórz powierzchnię tła
     auto* bgSurface = SDL_CreateRGBSurface(0, 100, 30, 32, 0, 0, 0, 0);
     if (!bgSurface) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Could not create background surface for default texture.");
+        LOG_DEBUG("TextureManager ERROR: Could not create background surface for default texture.");
         return;
     }
     SDL_FillRect(bgSurface, NULL, SDL_MapRGB(bgSurface->format, 200, 200, 200)); // Szare tło
@@ -137,7 +138,7 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
     auto textColor = SDL_Color{ 0, 0, 0, 255 }; // Czarny
     auto* textSurface = TTF_RenderUTF8_Blended(defaultFont.get(), std::string(text).c_str(), textColor);
     if (!textSurface) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to render text for default texture. SDL_ttf Error: %s", TTF_GetError());
+        LOG_DEBUG("TextureManager ERROR: Unable to render text for default texture. SDL_ttf Error: %s", TTF_GetError());
         SDL_FreeSurface(bgSurface);
         return;
     }
@@ -152,12 +153,12 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
     SDL_FreeSurface(bgSurface);
 
     if (!finalTexture) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager ERROR: Unable to create default texture. SDL Error: %s", SDL_GetError());
+        LOG_DEBUG("TextureManager ERROR: Unable to create default texture. SDL Error: %s", SDL_GetError());
         return;
     }
 
     m_defaultTexture = SharedTexture(finalTexture, SDLTextureDeleter());
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: Default texture created successfully.");
+    LOG_DEBUG("TextureManager: Default texture created successfully.");
 }
 
 SharedTexture TextureManager::getDefaultTexture() const {
@@ -174,7 +175,7 @@ bool TextureManager::queryTexture(std::string_view path, int& width, int& height
         }
     }
     if (SDL_QueryTexture(tex.get(), nullptr, nullptr, &width, &height) != 0) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TextureManager: SDL_QueryTexture failed for %.*s: %s", static_cast<int>(path.size()), path.data(), SDL_GetError());
+        LOG_DEBUG("TextureManager: SDL_QueryTexture failed for %.*s: %s", static_cast<int>(path.size()), path.data(), SDL_GetError());
         return false;
     }
     return true;

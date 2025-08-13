@@ -138,7 +138,7 @@ if (prefix_distance < m_elements.size())
 }
 
 if (total_removed_count > 0) {
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "GUIManager::cleanup(): Removed %zu elements in total.", total_removed_count);
+    LOG_DEBUG("GUIManager::cleanup(): Removed %zu elements in total.", total_removed_count);
 }
 }
 

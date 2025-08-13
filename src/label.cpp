@@ -1,6 +1,7 @@
 #include "label.hpp"
 #include "SDL_log.h"
 #include "gui_manager.hpp"
+#include "gui.hpp"
 
 
 void Label::recalculateSize() {
@@ -40,7 +41,7 @@ void Label::draw(SDL_Renderer* renderer) {
 
     const auto& resolvedStyle = getComposedStyle(m_state);
     if (!resolvedStyle.textColor.has_value()) {
-        SDL_Log("no text color");
+        LOG_DEBUG("no text color");
 
         return;
     }
@@ -50,7 +51,7 @@ void Label::draw(SDL_Renderer* renderer) {
     auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
     
     if (!font) {
-        SDL_Log("no font");
+        LOG_DEBUG("no font");
         return;
     }
 
@@ -58,7 +59,7 @@ void Label::draw(SDL_Renderer* renderer) {
     SharedTexture textTexture = textureManager.createTextureFromText(m_text, font, resolvedStyle.textColor.value());
 
     if (!textTexture) {
-        SDL_Log("no shared texture");
+        LOG_DEBUG("no shared texture");
 
         return;
     }

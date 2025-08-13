@@ -245,7 +245,7 @@ void GUIElement::cleanup() {
 
     const auto removed_count = initial_size - m_children.size();
     if (removed_count > 0) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "GUIElement::cleanup(): Removed %zu child elements.", removed_count);
+        LOG_DEBUG("GUIElement::cleanup(): Removed %zu child elements.", removed_count);
         markDirty();
     }
 }
@@ -276,7 +276,7 @@ void GUIElement::setState(ElementState newState) {
         return;
     }
 
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "setState for %s from %d to %d", getComponentType(), (int)m_state, (int)newState);
+    LOG_DEBUG("setState for %s from %d to %d", getComponentType(), (int)m_state, (int)newState);
 
         const auto oldStyle = getComposedStyle(m_state);
         const auto newStyle = getComposedStyle(newState);
@@ -287,10 +287,10 @@ void GUIElement::setState(ElementState newState) {
     m_state = newState;
 
     if (oldStyle != newStyle) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Styles are different, marking dirty.");
+        LOG_DEBUG("Styles are different, marking dirty.");
         markDirty();
     } else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Styles are the same, not marking dirty.");
+        LOG_DEBUG("Styles are the same, not marking dirty.");
     }
 }
 void GUIElement::setStyle(ElementState state, Style style) {

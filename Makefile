@@ -4,26 +4,49 @@ CC = clang-22
 # define the Cpp compiler to use
 # CXX    = g++
 CXX    = clang++-22
-FLAGS  = -Wall
-FLAGS += -Wextra
-FLAGS += -O3
+# Flagi wspólne dla obu trybów
+COMMON_FLAGS = -Wall
+COMMON_FLAGS += -Wextra
+COMMON_FLAGS += -Wshadow
+COMMON_FLAGS += -Wconversion
+COMMON_FLAGS += -Wsign-conversion
+COMMON_FLAGS += -Wfloat-equal
+COMMON_FLAGS += -Wformat=2
+COMMON_FLAGS += -Wnon-virtual-dtor
+COMMON_FLAGS += -Wold-style-cast
+COMMON_FLAGS += -Woverloaded-virtual
+COMMON_FLAGS += -Wreorder
+COMMON_FLAGS += -Wzero-as-null-pointer-constant
+COMMON_FLAGS += -Wunreachable-code
+COMMON_FLAGS += -Wstrict-aliasing
+COMMON_FLAGS += -Wpedantic
+COMMON_FLAGS += $(shell sdl2-config --cflags)
+COMMON_FLAGS += -stdlib=libc++
+COMMON_FLAGS += -std=c++23
 
-FLAGS += $(shell sdl2-config --cflags)
-FLAGS += -march=native
-FLAGS += -fsanitize=address,undefined
-FLAGS += -g
-FLAGS += -flto
-#FLAGS += -fmodules
-#define any compile-time flags for C
-CFLAGS := $(FLAGS)
+# Flagi specyficzne dla trybu Release
+RELEASE_FLAGS = -O3
+RELEASE_FLAGS += -march=native
+RELEASE_FLAGS += -flto
+RELEASE_FLAGS += -DNDEBUG
 
-# define any compile-time flags for C++
-CXXFLAGS  := -std=c++23
-#CXXFLAGS += -Wnon-virtual-dtor
-CXXFLAGS  += $(FLAGS)
-CXXFLAGS  += -stdlib=libc++
-CXXFLAGS  +=-fmodule-file=std=modules_cache/std.pcm
-CXXFLAGS  +=-fmodule-file=std.compat=modules_cache/std.compat.pcm
+# Flagi specyficzne dla trybu Debug
+DEBUG_FLAGS = -g
+DEBUG_FLAGS += -O0
+DEBUG_FLAGS += -fsanitize=address,undefined
+DEBUG_FLAGS += -DDEBUG=1
+
+# Ustaw CXXFLAGS w zależności od zmiennej DEBUG
+ifeq ($(RELEASE),1)
+    # Tryb Release
+    CXXFLAGS := $(COMMON_FLAGS) $(RELEASE_FLAGS)
+else
+    # Domyślny tryb Debug
+    CXXFLAGS := $(COMMON_FLAGS) $(DEBUG_FLAGS)
+endif
+
+# define any compile-time flags for C
+CFLAGS := $(CXXFLAGS) # Zakładam, że CFLAGS mogą być takie same jak CXXFLAGS, lub zostaną usunięte/dostosowane
 
 # define C Preprocessor flags
 CPPFLAGS := -Isrc
@@ -46,15 +69,6 @@ INCLUDE := include
 # define lib directory
 LIB := lib
 
-# --- Konfiguracja modułów C++23 ---
-
-MODULE_STD_CPPM   := /usr/lib/llvm-22/share/libc++/v1/std.cppm
-MODULE_STDCOMPAT_CPPM   := /usr/lib/llvm-22/share/libc++/v1/std.compat.cppm
-
-MODULE_CACHE_DIR := modules_cache
-STD_PCM := $(MODULE_CACHE_DIR)/std.pcm
-STD_COMPAT_PCM := $(MODULE_CACHE_DIR)/std.compat.pcm
-MODULE_PCMS := $(STD_PCM) $(STD_COMPAT_PCM)
 
  # Define unity build files
 UNITY_SOURCE := $(OUTPUT)/all.cpp
@@ -92,8 +106,8 @@ EXAMPLE_EXECS     := $(patsubst examples/%.cpp,$(OUTPUT)/%,$(EXAMPLE_SRC_FILES))
 
 # --- Główne cele ---
 
-examples: $(EXAMPLE_EXECS)
-all:  examples test
+examples: $(UNITY_OBJECT) $(EXAMPLE_EXECS)
+all:  examples
 
 # Cel do tradycyjnej kompilacji (non-unity)
 # Buduje wszystkie pliki obiektowe, ale nie linkuje ich.
@@ -102,7 +116,7 @@ non_unity: $(NON_UNITY_OBJECTS)
 	@echo "Tradycyjna kompilacja (non-unity) zakończona. Obiekty znajdują się w $(OUTPUT)/"
 
 # Cel do uruchamiania testów
-test: modules $(UNITY_OBJECT) $(TEST_EXECS)
+test: $(UNITY_OBJECT) $(TEST_EXECS)
 	@echo "Running all tests..."
 	@for t in $(TEST_EXECS); do \
 		./$$t || exit 1; \
@@ -120,17 +134,6 @@ $(OUTPUT)/test_%: $(TESTS_DIR)/test_%.cpp $(UNITY_OBJECT) $(TEST_HELPER_OBJ) $(O
 $(OUTPUT)/example_%: examples/example_%.cpp $(UNITY_OBJECT)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Cel do kompilacji modułów
-
-
-$(STD_PCM): | $(MODULE_CACHE_DIR)
-	@echo "Kompilowanie modułu std..."
-	$(CXX) -std=c++23 -stdlib=libc++  -march=native -O3 --precompile -o $@ $(MODULE_STD_CPPM)
-$(STD_COMPAT_PCM): $(STD_PCM) | $(MODULE_CACHE_DIR)
-	@echo "Kompilowanie modułu std.compat..."
-	$(CXX) -std=c++23 -stdlib=libc++ -fmodule-file=std=$(STD_PCM)  -march=native -O3 --precompile -o $@ $(MODULE_STDCOMPAT_CPPM)
-$(MODULE_CACHE_DIR):
-	@mkdir -p $@
 
 # Reguła dla unity build
 $(UNITY_OBJECT): $(UNITY_SOURCE)
@@ -159,18 +162,15 @@ $(OUTPUT)/catch_amalgamated.o: $(LIB)/catch_amalgamated.cpp $(LIB)/catch_amalgam
 
 # --- Inne cele ---
 
-.PHONY: clean run debug non_unity
+.PHONY: clean run non_unity modules
 
 run:
 	@echo "No main executable to run. Run examples individually, e.g., ./output/example_button"
 
-debug:
-	@echo "No main executable to debug. Debug examples individually."
 
 clean:
 	rm -rf $(OUTPUT)
 	rm -f $(TEST_EXECS) $(UNITY_SOURCE) $(UNITY_OBJECT)
-	# rm -f $(MODULE_CACHE_DIR)/*.pcm
 	@echo "Cleanup complete!"
 
 $(OUTPUT):

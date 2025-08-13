@@ -1,13 +1,14 @@
 #include "font_manager.hpp"
 #include "SDL2/SDL.h" // Potrzebne do SDL_GetError()
 #include "SDL2/SDL_log.h"
+#include "gui.hpp"
 
 
 
 FontManager::FontManager() {
     // Inicjalizacja SDL_ttf, jeśli nie została jeszcze zainicjowana
     if (TTF_Init() == -1) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_ttf could not initialize! SDL_ttf Error: %s", TTF_GetError());
+        LOG_DEBUG("SDL_ttf could not initialize! SDL_ttf Error: %s", TTF_GetError());
         // W przypadku błędu inicjalizacji, można podjąć odpowiednie działania, np. rzucić wyjątek
     }
 }
@@ -25,22 +26,22 @@ SharedFont FontManager::loadFont(std::string_view path, int size) {
     auto it = m_fontCache.find(key_sv);
 
     if (it != m_fontCache.end()) {
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Loading font from cache: %s (size %d)", it->first.first.c_str(), size);
+        LOG_DEBUG("FontManager: Loading font from cache: %s (size %d)", it->first.first.c_str(), size);
         return it->second;
     }
 
     std::string path_str(path);
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Loading font from file: %s (size %d)", path_str.c_str(), size);
+    LOG_DEBUG("FontManager: Loading font from file: %s (size %d)", path_str.c_str(), size);
     auto* loadedFont = TTF_OpenFont(path_str.c_str(), size);
     if (!loadedFont) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FontManager ERROR: Unable to load font %s with size %d! SDL_ttf Error: %s", path_str.c_str(), size, TTF_GetError());
+        LOG_DEBUG("FontManager ERROR: Unable to load font %s with size %d! SDL_ttf Error: %s", path_str.c_str(), size, TTF_GetError());
         return nullptr;
     }
 
     auto sharedNewFont = SharedFont(loadedFont, TTFFontDeleter());
     // Klucz do wstawienia musi być już typu std::string
     auto [inserted_it, success] = m_fontCache.emplace(FontKey(std::move(path_str), size), sharedNewFont);
-    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "FontManager: Font loaded and cached successfully.");
+    LOG_DEBUG("FontManager: Font loaded and cached successfully.");
 
     return inserted_it->second;
 }
@@ -48,7 +49,7 @@ SharedFont FontManager::loadFont(std::string_view path, int size) {
 void FontManager::loadDefaultFont(std::string_view path, int size) {
     m_defaultFont = loadFont(path, size);
     if (!m_defaultFont) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FontManager ERROR: Failed to load default font from %s", std::string(path).c_str());
+        LOG_DEBUG("FontManager ERROR: Failed to load default font from %s", std::string(path).c_str());
     }
 }
 
@@ -74,7 +75,7 @@ void FontManager::getTextSize(std::string_view text, std::string_view fontPath, 
     auto font = loadFont(fontPath, fontSize);
     if (font) {
         if (TTF_SizeUTF8(font.get(), text.data(), width, height) != 0) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "TTF_SizeUTF8 failed: %s", TTF_GetError());
+            LOG_DEBUG("TTF_SizeUTF8 failed: %s", TTF_GetError());
             *width = 0;
             *height = 0;
         }
