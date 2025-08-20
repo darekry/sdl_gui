@@ -8,12 +8,8 @@
 
 TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h), m_text(""),
-      m_locked(false) {
+             m_locked(false), m_cursor_pos(0), m_text_offset_x(0), m_show_cursor(false), m_cursor_blink_time(0) {
     setCanGetKeyboardFocus(true);
-    m_cursor_pos = 0;
-    m_text_offset_x = 0;
-    m_show_cursor = false;
-    m_cursor_blink_time = 0;
     markDirty();
 }
 

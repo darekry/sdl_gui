@@ -53,7 +53,6 @@ public:
     void hideTooltip();
 
 // --- Zarządzanie motywem ---
-// --- Zarządzanie motywem ---
 void setTheme(Theme theme);
 Theme& getTheme();
 

@@ -15,10 +15,6 @@ public:
     void setText(std::string&& text);
     const std::string& getText() const;
 
-    void setTextColor(const SDL_Color& color);
-    void setBackgroundColor(const SDL_Color& color);
-using GUIElement::setBorder;
-    void setBorderColor(const SDL_Color& color);
     void setOnTextChanged(const std::function<void(TextInput*)>& callback);
     void setOnEnterPressed(const std::function<void(TextInput*)>& callback);
 
@@ -28,7 +24,7 @@ using GUIElement::setBorder;
     bool handleEvent(const SDL_Event& e) override;
     void onFocusGained() override;
     void onFocusLost() override;
-    const char* getComponentType() const;
+    const char* getComponentType() const override;
 protected:
     void draw(SDL_Renderer* renderer) override;
 
