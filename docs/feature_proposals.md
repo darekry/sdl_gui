@@ -5,7 +5,7 @@ Poniższa lista zawiera zebrane propozycje nowych funkcji i ulepszeń dla biblio
 ## Propozycje Użytkownika
 
 1.  **Obsługa wklejania tekstu (Clipboard)**: Umożliwienie wklejania tekstu do kontrolek typu `TextInput` i `TextArea` za pomocą `SDL_SetClipboardText()` i `SDL_GetClipboardText()`.
-2.  **Menu kontekstowe**: Widget pojawiający się po kliknięciu prawym przyciskiem myszy na elemencie, który ma zdefiniowane takie menu. Powinien być w pełni konfigurowalny i obsługiwać akcje dla swoich pozycji.
+2.  **Menu kontekstowe**: Widget pojawiający się po kliknięciu prawym przyciskiem myszy na elemencie, który ma zdefiniowane takie menu. Powinien być w pełni konfigurowalny i obsługiwać akcje dla swoich pozycji. **[ZAIMPLEMENTOWANE]**
 3.  **Combobox "do góry"**: Rozszerzenie `Combobox`, aby automatycznie otwierał listę opcji w górę, jeśli brakuje mu miejsca pod spodem w kontenerze-rodzicu.
 
 ## Propozycje Dodatkowe

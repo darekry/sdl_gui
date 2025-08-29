@@ -172,5 +172,63 @@ while (!quit) {
     setBackgroundColor(ElementState::Pressed, {180, 180, 180, 255});
     ```
 *   **Korzystaj z `TextureManager`:** Do rysowania obrazów zamiast prostych kształtów, użyj `GUIManager::getTextureManager()`, aby załadować teksturę, a następnie przypisz ją do widżetu za pomocą metody `setTexture()`.
+## Przykład: ContextMenu
+
+ContextMenu to doskonały przykład widgetu, który rozszerza `GUIElement` i wykorzystuje inne komponenty (takie jak `Panel` i `Button`) do stworzenia złożonej funkcjonalności. Oto jak został zaimplementowany:
+
+### Struktura ContextMenu
+
+ContextMenu używa wzorca kompozytowego, gdzie:
+- Główny `ContextMenu` dziedziczy po `GUIElement`
+- Wewnętrzny `Panel` służy jako kontener dla elementów menu
+- Poszczególne pozycje menu są implementowane jako `Button` (dla elementów klikalnych) lub `Panel` (dla separatorów)
+
+### Kluczowe aspekty implementacji
+
+1. **Zarządzanie cyklem życia**: ContextMenu automatycznie pokazuje/ukrywa się i zarządza swoimi elementami-dziećmi.
+
+2. **Opóźnione tworzenie**: Przyciski menu są tworzone dopiero przy pierwszym wywołaniu `showAt()`, co oszczędza zasoby.
+
+3. **Pozycjonowanie automatyczne**: Metoda `positionMenu()` automatycznie dostosowuje pozycję menu, aby nie wychodziło poza granice okna.
+
+4. **Obsługa zdarzeń**: ContextMenu przechwytuje kliknięcia poza swoim obszarem i automatycznie się zamyka.
+
+### Przykładowy kod użycia
+
+```cpp
+// Tworzenie menu kontekstowego
+auto contextMenu = std::make_unique<ContextMenu>(manager);
+ContextMenu* menuPtr = contextMenu.get();
+
+// Dodawanie pozycji menu
+menuPtr->addItem("Copy", []() {
+    std::cout << "Copy action!" << std::endl;
+});
+
+menuPtr->addItem("Paste", []() {
+    std::cout << "Paste action!" << std::endl;
+}, false); // disabled
+
+menuPtr->addSeparator();
+
+menuPtr->addItem("Delete", []() {
+    std::cout << "Delete action!" << std::endl;
+});
+
+// Pokazywanie menu na pozycji kursora
+menuPtr->showAt(mouseX, mouseY);
+
+// Dodanie do managera
+manager.addElement(std::move(contextMenu));
+```
+
+### Wskazówki projektowe
+
+- **Użyj kompozycji**: ContextMenu pokazuje, jak łączyć proste widgety w bardziej złożone komponenty.
+- **Lazy initialization**: Nie twórz zasobów, dopóki nie są potrzebne.
+- **Automatyczne zarządzanie**: Implementuj automatyczne zachowania (jak zamykanie po kliknięciu poza obszarem).
+- **Zachowaj prostotę API**: Użytkownik nie musi znać wewnętrznej struktury - API powinno być intuicyjne.
+
+Pełną implementację ContextMenu można znaleźć w [`src/context_menu.hpp`](src/context_menu.hpp) i [`src/context_menu.cpp`](src/context_menu.cpp), a przykład użycia w [`examples/example_context_menu.cpp`](examples/example_context_menu.cpp).
 *   **Dodawaj callbacki:** Wzorując się na klasie `Button`, możesz dodać `std::function` jako pole `MyWidget`, aby umożliwić użytkownikom przypisywanie własnych akcji na zdarzenie kliknięcia.
 *   **Zarządzanie dziećmi:** Jeśli twój widżet ma być kontenerem na inne, użyj metody `addChild(std::unique_ptr<GUIElement> child)`. Klasa bazowa automatycznie zajmie się ich renderowaniem i przekazywaniem zdarzeń.
