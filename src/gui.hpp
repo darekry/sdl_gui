@@ -112,7 +112,6 @@ protected:
     bool m_isHovered = false;
     bool m_isMarkedForDeletion = false;
     GUIElement* m_parent;
-    SharedTexture m_texture;
     bool m_isDirty = true;
         std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_cachedTexture{nullptr, SDL_DestroyTexture};
         std::map<ElementState, Style> m_localStyles;

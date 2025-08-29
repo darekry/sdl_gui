@@ -46,8 +46,8 @@ int main(int, char**) {
         auto container = std::make_unique<Panel>(gui, containerX, containerY, containerW, containerH);
         {
             Style s;
-            s.backgroundColor = SDL_Color{235, 235, 235, 255};
-            s.borderColor = SDL_Color{100, 100, 100, 255};
+            s.backgroundColor = {.r=235, .g=235, .b=235, .a=255};
+            s.borderColor ={.r=100, .g=100, .b=100, .a=255};
             s.borderWidth = 1;
             container->setStyle(ElementState::Normal, s);
         }
@@ -57,8 +57,8 @@ int main(int, char**) {
         auto viewport = std::make_unique<Panel>(gui, viewportX, viewportY, viewportW, viewportH);
         {
             Style s;
-            s.backgroundColor = SDL_Color{250, 250, 255, 255};
-            s.borderColor = SDL_Color{120, 160, 220, 255};
+            s.backgroundColor = {.r=250, .g=250, .b=255, .a=255};
+            s.borderColor = {.r=120, .g=160, .b=220, .a=255};
             s.borderWidth = 1;
             viewport->setStyle(ElementState::Normal, s);
         }
@@ -69,8 +69,8 @@ int main(int, char**) {
         auto content = std::make_unique<Panel>(gui, 0, 0, contentW, contentH);
         {
             Style s;
-            s.backgroundColor = SDL_Color{245, 245, 245, 255};
-            s.borderColor = SDL_Color{180, 180, 180, 255};
+            s.backgroundColor = {.r=245, .g=245, .b=245, .a=255};
+            s.borderColor = {.r=180, .g=180, .b=180, .a=255};
             s.borderWidth = 1;
             content->setStyle(ElementState::Normal, s);
         }
@@ -83,7 +83,7 @@ int main(int, char**) {
                 std::string text = "Wiersz " + std::to_string(i + 1);
                 auto rowLabel = std::make_unique<Label>(gui, 12, y, text, 16);
                 // Kolor tekstu dla czytelności
-                rowLabel->setTextColor(ElementState::Normal, SDL_Color{25, 25, 25, 255});
+                rowLabel->setTextColor(ElementState::Normal, SDL_Color{.r=25, .g=25, .b=25, .a=255});
                 content_p->addChild(std::move(rowLabel));
                 y += itemH + itemSpacing;
             }
@@ -94,8 +94,8 @@ int main(int, char**) {
         {
             // Delikatny styl tła toru uzyskamy z tła panelu Slidera
             Style s;
-            s.backgroundColor = SDL_Color{230, 230, 230, 255};
-            s.borderColor = SDL_Color{150, 150, 150, 255};
+            s.backgroundColor = SDL_Color{.r=230, .g=230, .b=230, .a=255};
+            s.borderColor = SDL_Color{.r=150, .g=150, .b=150, .a=255};
             s.borderWidth = 1;
             slider->setStyle(ElementState::Normal, s);
         }
