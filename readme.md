@@ -1,172 +1,184 @@
-# Biblioteka GUI dla SDL2
+# SDL2 GUI Library
 
-## Opis
+English is the authoritative language for this repository (Profile A). The Polish mirror of this page is available at: [`README.pl.md`](README.pl.md)
 
-Prosta i rozszerzalna biblioteka GUI zbudowana w oparciu o SDL2 w standardzie C++23, umożliwiająca łatwe tworzenie interaktywnych elementów interfejsu użytkownika. Biblioteka została zaprojektowana z myślą o spójności, bezpieczeństwie pamięci i łatwości użycia.
+## Overview
 
-## Architektura
+A simple and extensible GUI library built on SDL2 with C++23, designed for clarity, safe memory management, and ease of use. It provides a lightweight set of widgets, resource managers, and a consistent architecture centered around a context manager.
 
-Architektura biblioteki opiera się na kilku kluczowych klasach i wzorcach projektowych, które zapewniają elastyczność, reużywalność kodu i centralne zarządzanie zasobami.
+Key source files:
+- Core element base: [`src/gui.hpp`](src/gui.hpp:19), implementation: [`src/gui.cpp`](src/gui.cpp:8)
+- Manager: [`src/gui_manager.hpp`](src/gui_manager.hpp:19), implementation: [`src/gui_manager.cpp`](src/gui_manager.cpp:14)
+- Textures: [`src/texture_manager.hpp`](src/texture_manager.hpp:15), implementation: [`src/texture_manager.cpp`](src/texture_manager.cpp:1)
+- Fonts: [`src/font_manager.hpp`](src/font_manager.hpp:30), implementation: [`src/font_manager.cpp`](src/font_manager.cpp:7)
+- Theme and style: [`src/theme.hpp`](src/theme.hpp:10), [`src/style.hpp`](src/style.hpp:17)
+- Timers and animations: [`src/timer_manager.hpp`](src/timer_manager.hpp:18), [`src/animation_manager.hpp`](src/animation_manager.hpp:24)
 
-### `GUIElement` - Klasa Bazowa
+## Architecture
 
-Sercem biblioteki jest abstrakcyjna klasa `GUIElement`, która definiuje wspólny interfejs i zachowanie dla wszystkich komponentów interfejsu.
+The library architecture focuses on reusability, central resource management, and efficient rendering (including caching).
 
-*   **Hierarchia i własność:** Zarządza relacją rodzic-dziecko za pomocą `std::vector<std::unique_ptr<GUIElement>>`. Użycie `std::unique_ptr` zapewnia automatyczne i kaskadowe zwalnianie pamięci (RAII), co eliminuje ryzyko wycieków.
-*   **Dostęp do kontekstu:** Każdy element przechowuje referencję do `GUIManager`, co daje mu dostęp do globalnych zasobów, takich jak renderer i managery.
-*   **Podstawowe atrybuty:** Definiuje podstawowe właściwości, takie jak pozycja (`x`, `y`), rozmiar (`width`, `height`), widoczność (`m_visible`), aktywność (`m_enabled`), stan najechania myszą (`m_isHovered`).
-*   **Obsługa zdarzeń:** Wirtualna metoda `handleEvent(const SDL_Event& e)` propaguje zdarzenia w dół drzewa komponentów. Komponenty mogą "skonsumować" zdarzenie, zatrzymując dalszą propagację.
-*   **Renderowanie:** Metoda `render()` odpowiada za rysowanie elementu i jego dzieci. Wywołuje wirtualną metodę `draw()`, którą klasy pochodne muszą zaimplementować. Renderowanie uwzględnia również przycinanie (`clipping`) do granic rodzica.
-*   **Odroczone usuwanie:** Mechanizm `markForDeletion()` pozwala na bezpieczne usuwanie elementów w głównej pętli aplikacji.
-*   **Podpowiedzi (Tooltips):** Wbudowana obsługa tooltipów z wykorzystaniem `TimerManager` do opóźnionego wyświetlania.
+### [`GUIElement`](src/gui.hpp:19) — Base Class
 
-### `GUIManager` - Centralny Zarządca
+An abstract base class that defines a common interface and behavior for all widgets.
 
-`GUIManager` pełni rolę głównego zarządcy i "dostawcy kontekstu" dla całej biblioteki.
+- Hierarchy and ownership: parent–child managed via `std::vector<std::unique_ptr<GUIElement>>` (RAII, safe destruction).
+- Context access: each element references the global manager [`GUIManager`](src/gui_manager.hpp:19) for access to renderer and resource managers.
+- Core properties: position, size, visibility, enabled state, hover/press state tracking.
+- Event handling: a virtual `handleEvent(const SDL_Event&)` propagates events down the widget tree; widgets can consume events to stop propagation.
+- Rendering: `render()` draws the element and its children. The widget-specific drawing logic lives in `draw()` or (optionally) in a direct path `drawDirect()` when bypassing cache.
+- Deferred deletion: elements can be safely removed via a mark-and-cleanup phase.
+- Tooltips: built-in tooltip support using [`TimerManager`](src/timer_manager.hpp:18).
 
-*   **Zarządzanie cyklem życia:** Przechowuje elementy GUI najwyższego poziomu i jest odpowiedzialny za inicjowanie procesów obsługi zdarzeń (`processEvent`), renderowania (`render`) i czyszczenia (`cleanup`).
-*   **Dostawca Kontekstu:** W konstruktorze tworzy instancje `FontManager`, `TextureManager` i `TimerManager`. Przechowuje również wskaźnik na `SDL_Renderer`. Każdy `GUIElement` ma dostęp do `GUIManager`, a przez niego do tych zasobów.
-*   **Propagacja zdarzeń:** Metoda `processEvent(const SDL_Event& e)` odbiera zdarzenia z głównej pętli aplikacji i przekazuje je do zarządzanych elementów.
-*   **Globalne funkcje:** Zarządza globalnymi elementami, takimi jak dynamicznie tworzone podpowiedzi.
+### [`GUIManager`](src/gui_manager.hpp:19) — Central Context
 
-### Managery Zasobów
+The central controller and provider of shared resources.
 
-Aby zoptymalizować użycie pamięci i unikać wielokrotnego ładowania tych samych zasobów, biblioteka wykorzystuje dedykowane managery.
+- Life-cycle management: owns top-level GUI elements and coordinates event processing, rendering, and cleanup.
+- Global services: constructs and owns [`FontManager`](src/font_manager.hpp:30), [`TextureManager`](src/texture_manager.hpp:15), and [`TimerManager`](src/timer_manager.hpp:18); stores a pointer to `SDL_Renderer`.
+- Event propagation: receives SDL events from the main loop and forwards them to elements.
+- Global utilities: e.g., dynamic tooltips.
 
-*   **`FontManager`:** Zarządza czcionkami TTF. Cache'uje załadowane czcionki (`std::shared_ptr<TTF_Font>`), zapewniając automatyczne zwalnianie pamięci.
-*   **`TextureManager`:** Zarządza teksturami `SDL_Texture`. Cache'uje tekstury (`std::shared_ptr<SDL_Texture>`) i pozwala na dodawanie tekstur stworzonych przez użytkownika (`addTexture`).
-*   **`TimerManager`:** Zapewnia bezpieczną obsługę zdarzeń czasowych (timerów) w głównym wątku aplikacji, co jest używane m.in. do implementacji tooltipów.
+### Resource Managers
 
-## Dostępne Komponenty
+Optimized memory and resource management to avoid redundant loads.
 
-Biblioteka oferuje zestaw gotowych do użycia, w pełni konfigurowalnych komponentów.
+- [`FontManager`](src/font_manager.hpp:30): caches TTF fonts as `std::shared_ptr<TTF_Font>` and provides precise text measurement.
+- [`TextureManager`](src/texture_manager.hpp:15): loads and caches `SDL_Texture` as `std::shared_ptr<SDL_Texture>`; can accept user-provided textures (e.g., via add methods).
+- [`TimerManager`](src/timer_manager.hpp:18): safe timer handling on the main thread (single-shot and interval), used by tooltips, animations, etc.
 
-### `Panel`
-*   **Przeznaczenie:** Kontener do grupowania innych elementów, idealny jako tło dla okien lub sekcji interfejsu.
-*   **Przykład użycia:**
-    ```cpp
-    auto panel = std::make_unique<Panel>(50, 50, 300, 200);
-    panel->setBackgroundColor({200, 200, 200, 255});
-    panel->setBorder(2, {100, 100, 100, 255});
-    panel->setDraggable(true);
-    guiManager.addElement(std::move(panel));
-    ```
+## Available Widgets
 
-### `Label`
-*   **Przeznaczenie:** Statyczna etykieta tekstowa.
-*   **Przykład użycia:**
-    ```cpp
-    auto label = std::make_unique<Label>(100, 100, "Witaj, świecie!", 24, SDL_Color{0, 0, 0, 255});
-    guiManager.addElement(std::move(label));
-    ```
+A set of ready-to-use, configurable widgets.
 
-### `Button`
-*   **Przeznaczenie:** Standardowy przycisk reagujący na kliknięcia.
-*   **Przykład użycia:**
-    ```cpp
-    auto button = std::make_unique<Button>(100, 150, 120, 40, "Kliknij mnie");
-    button->setOnClickCallback([](GUIElement*){ 
-        // Logika po kliknięciu
-    });
-    guiManager.addElement(std::move(button));
-    ```
+### Panel
+- Purpose: container for grouping other elements (windows, panels, sections).
+- Example:
+```cpp
+auto panel = std::make_unique<Panel>(50, 50, 300, 200);
+panel->setBackgroundColor(SDL_Color{200, 200, 200, 255});
+panel->setBorder(2, SDL_Color{100, 100, 100, 255});
+panel->setDraggable(true);
+guiManager.addElement(std::move(panel));
+```
 
-### `Checkbox`
-*   **Przeznaczenie:** Pole wyboru (zaznaczone/odznaczone).
-*   **Przykład użycia:**
-    ```cpp
-    auto checkbox = std::make_unique<Checkbox>(100, 200, "Zgoda na warunki");
-    checkbox->setOnChange([](Checkbox* cb, bool isChecked){
-        // Logika po zmianie stanu
-    });
-    guiManager.addElement(std::move(checkbox));
-    ```
+### Label
+- Purpose: static text label.
+- Example:
+```cpp
+auto label = std::make_unique<Label>(100, 100, "Hello, world!", 24, SDL_Color{0, 0, 0, 255});
+guiManager.addElement(std::move(label));
+```
 
-### `RadioButton` i `RadioGroup`
-*   **Przeznaczenie:** Grupa przycisków, z których tylko jeden może być zaznaczony.
-*   **Przykład użycia:**
-    ```cpp
-    auto radioGroup = std::make_unique<RadioGroup>(100, 250, 200, 100);
-    radioGroup->addChild(std::make_unique<RadioButton>(10, 10, "Opcja 1", true)); // Domyślnie zaznaczony
-    radioGroup->addChild(std::make_unique<RadioButton>(10, 40, "Opcja 2"));
-    guiManager.addElement(std::move(radioGroup));
-    ```
+### Button
+- Purpose: clickable button.
+- Example:
+```cpp
+auto button = std::make_unique<Button>(100, 150, 120, 40, "Click me");
+button->setOnClickCallback([](GUIElement*) {
+    // Click handler
+});
+guiManager.addElement(std::move(button));
+```
 
-### `Slider`
-*   **Przeznaczenie:** Suwak do wybierania wartości z przedziału.
-*   **Przykład użycia:**
-    ```cpp
-    auto slider = std::make_unique<Slider>(100, 380, 200, 20, 0, 100);
-    slider->setOnChangeCallback([](int value){
-        // Logika po zmianie wartości
-    });
-    guiManager.addElement(std::move(slider));
-    ```
+### Checkbox
+- Purpose: on/off toggle.
+- Example:
+```cpp
+auto checkbox = std::make_unique<Checkbox>(100, 200, "I agree");
+checkbox->setOnChange([](Checkbox* cb, bool isChecked){
+    // State changed
+});
+guiManager.addElement(std::move(checkbox));
+```
 
-### `TextInput`
-*   **Przeznaczenie:** Jednoliniowe pole do wprowadzania tekstu.
-*   **Przykład użycia:**
-    ```cpp
-    auto textInput = std::make_unique<TextInput>(100, 420, 200, 30);
-    textInput->setOnEnterPressed([](const std::string& text){
-        // Logika po wciśnięciu Enter
-    });
-    guiManager.addElement(std::move(textInput));
-    ```
+### RadioButton and RadioGroup
+- Purpose: mutually-exclusive options.
+- Example:
+```cpp
+auto radioGroup = std::make_unique<RadioGroup>(100, 250, 200, 100);
+radioGroup->addChild(std::make_unique<RadioButton>(10, 10, "Option 1", true)); // default selected
+radioGroup->addChild(std::make_unique<RadioButton>(10, 40, "Option 2"));
+guiManager.addElement(std::move(radioGroup));
+```
 
-### `TextArea`
-*   **Przeznaczenie:** Wieloliniowe pole tekstowe z zawijaniem wierszy.
-*   **Przykład użycia:**
-    ```cpp
-    auto textArea = std::make_unique<TextArea>(400, 50, 300, 200);
-    textArea->setText("To jest wieloliniowy\ntekst z obsługą\nzawijania wierszy.");
-    textArea->setWordWrap(true);
-    guiManager.addElement(std::move(textArea));
-    ```
+### Slider
+- Purpose: value selection from a range.
+- Example:
+```cpp
+auto slider = std::make_unique<Slider>(100, 380, 200, 20, 0, 100);
+slider->setOnChangeCallback([](int value){
+    // Value changed
+});
+guiManager.addElement(std::move(slider));
+```
 
-### `ComboBox`
-*   **Przeznaczenie:** Rozwijana lista opcji.
-*   **Przykład użycia:**
-    ```cpp
-    auto comboBox = std::make_unique<ComboBox>(400, 280, 150, 30);
-    comboBox->addItem("Opcja A");
-    comboBox->addItem("Opcja B");
-    comboBox->addItem("Opcja C");
-    comboBox->on_selection_changed = [](int index, const std::string& item){
-        // Logika po wybraniu opcji
-    };
-    guiManager.addElement(std::move(comboBox));
-    ```
+### TextInput
+- Purpose: single-line text input.
+- Example:
+```cpp
+auto textInput = std::make_unique<TextInput>(100, 420, 200, 30);
+textInput->setOnEnterPressed([](const std::string& text){
+    // Enter pressed
+});
+guiManager.addElement(std::move(textInput));
+```
 
-### `TabControl`
-*   **Przeznaczenie:** Kontener z zakładkami do przełączania widoków.
-*   **Przykład użycia:**
-    ```cpp
-    auto tabControl = std::make_unique<TabControl>(400, 330, 300, 150);
-    Panel* tab1 = tabControl->addTab("Zakładka 1");
-    tab1->addChild(std::make_unique<Label>(10, 10, "Zawartość pierwszej zakładki."));
-    Panel* tab2 = tabControl->addTab("Zakładka 2");
-    tab2->addChild(std::make_unique<Button>(10, 10, 100, 30, "Przycisk"));
-    guiManager.addElement(std::move(tabControl));
-    ```
+### TextArea
+- Purpose: multi-line text input with word wrapping.
+- Example:
+```cpp
+auto textArea = std::make_unique<TextArea>(400, 50, 300, 200);
+textArea->setText("This is a multi-line\ntext with\nword-wrapping.");
+textArea->setWordWrap(true);
+guiManager.addElement(std::move(textArea));
+```
 
-## Jak Używać
+### ComboBox
+- Purpose: dropdown list of options.
+- Example:
+```cpp
+auto comboBox = std::make_unique<ComboBox>(400, 280, 150, 30);
+comboBox->addItem("Option A");
+comboBox->addItem("Option B");
+comboBox->addItem("Option C");
+comboBox->on_selection_changed = [](int index, const std::string& item){
+    // Selection changed
+};
+guiManager.addElement(std::move(comboBox));
+```
 
-### Inicjalizacja
-Zalecanym sposobem jest użycie klasy pomocniczej `SDLApp` (`examples/helpers/sdl_app.hpp`).
+### TabControl
+- Purpose: tabbed container to switch views.
+- Example:
+```cpp
+auto tabControl = std::make_unique<TabControl>(400, 330, 300, 150);
+Panel* tab1 = tabControl->addTab("Tab 1");
+tab1->addChild(std::make_unique<Label>(10, 10, "First tab content."));
+Panel* tab2 = tabControl->addTab("Tab 2");
+tab2->addChild(std::make_unique<Button>(10, 10, 100, 30, "Button"));
+guiManager.addElement(std::move(tabControl));
+```
+
+## How to Use
+
+### Initialization
+
+The recommended entry-point helper is provided in [`src/sdl_app.hpp`](src/sdl_app.hpp:1).
 
 ```cpp
 #include "sdl_app.hpp"
 #include "gui_manager.hpp"
-#include "panel.hpp" 
-// ... inne komponenty
+#include "panel.hpp"
+// ... other widgets
 
-SDLApp app("Moja Aplikacja", 800, 600);
+SDLApp app("My Application", 800, 600);
 GUIManager guiManager(app.getRenderer());
 ```
 
-### Główna Pętla Aplikacji
-Pętla zdarzeń jest odpowiedzialnością aplikacji, co daje większą elastyczność.
+### Main Application Loop
+
+Your application owns the SDL event loop, which provides maximum flexibility.
 
 ```cpp
 bool quit = false;
@@ -177,10 +189,12 @@ while (!quit) {
         if (e.type == SDL_QUIT) {
             quit = true;
         }
+        // Forward events to the GUI
         guiManager.processEvent(e);
     }
 
-    guiManager.cleanup(); // Bezpieczne usuwanie elementów
+    // Safe removal of elements and upkeep
+    guiManager.cleanup();
 
     SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);
     SDL_RenderClear(app.getRenderer());
@@ -189,27 +203,44 @@ while (!quit) {
 }
 ```
 
-## Kompilacja
+## Build
 
-Projekt wykorzystuje `Makefile` i *unity build* dla szybkiej kompilacji.
+The project uses a Makefile and a unity build to speed up compilation.
 
-### Wymagania
-*   SDL2, SDL2_image, SDL2_ttf
-*   Kompilator C++23 (rekomendowany Clang++)
-*   `make`
+### Requirements
 
-### Polecenia
-*   `make all`: Kompiluje przykłady i testy.
-*   `make examples`: Kompiluje tylko przykłady.
-*   `make test`: Kompiluje i uruchamia testy.
-*   `make clean`: Usuwa skompilowane pliki.
+- SDL2, SDL2_image, SDL2_ttf
+- C++23 compiler (Clang++ recommended)
+- `make`
 
-Aby uruchomić przykład:
+### Commands
+
+- `make all`: builds examples and tests
+- `make examples`: builds only examples
+- `make test`: builds and runs tests
+- `make clean`: removes build outputs
+
+Run an example:
 ```bash
 make examples
 ./output/example_button
 ```
 
-## Testowanie
+## Testing
 
-Biblioteka wykorzystuje framework **Catch2** do testów jednostkowych. Testy znajdują się w katalogu `tests/` i można je uruchomić za pomocą `make test`.
+The project uses **Catch2** for unit testing. Tests reside in [`tests/`](tests/:1) and can be run with:
+```bash
+make test
+```
+
+## Notes on Rendering and Caching
+
+- Render path: the manager iterates over top-level elements and calls their render entry point (see [`src/gui_manager.cpp`](src/gui_manager.cpp:51), [`src/gui.cpp`](src/gui.cpp:135)).
+- Cached rendering: when the widget does not opt into direct rendering, its content is drawn into a cached texture and then blitted to the main renderer; cache is invalidated on changes.
+- Direct rendering: for rapidly changing widgets, `drawDirect()` may be used by returning true from the direct-render path; this bypasses the off-screen cache and draws straight to the renderer.
+
+For more details on design and coding guidelines, see the translation and terminology guide: [`docs/translation_guidelines.md`](docs/translation_guidelines.md)
+
+## Documentation Indexes
+- Archive (EN): [docs/en/archive/README.md](docs/en/archive/README.md)
+- Archiwum (PL): [docs/pl/archive/README.md](docs/pl/archive/README.md)
