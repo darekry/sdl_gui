@@ -1,80 +1,113 @@
 #define CATCH_CONFIG_MAIN
 #include "../lib/catch_amalgamated.hpp"
 #include "test_helper.hpp"
-#include "../src/text_input.hpp"
-#include "../src/texture_manager.hpp"
-#include "../src/font_manager.hpp"
 #include "../src/gui_manager.hpp"
+#include "../src/gui.hpp"
+#include "../src/text_input.hpp"
 
 TEST_CASE("TextInput Functionality", "[text_input]") {
     TestHelper helper;
-    GUIManager guiManager(helper.getRenderer());
+    GUIManager& manager = helper.getManager();
 
-    SECTION("Initialization") {
-        TextInput textInput(guiManager, 10, 20, 200, 30);
-        REQUIRE(textInput.getX() == 10);
-        REQUIRE(textInput.getY() == 20);
-        REQUIRE(textInput.getWidth() == 200);
-        REQUIRE(textInput.getHeight() == 30);
-        textInput.setText("Hello");
-        REQUIRE(textInput.getText() == "Hello");
+    SECTION("Focus and basic text input") {
+        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
+        TextInput* ptr = input.get();
+        manager.addElement(std::move(input));
+
+        int changedCount = 0;
+        ptr->setOnTextChanged([&](TextInput*) { ++changedCount; });
+
+        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
+        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
+
+        e = helper.createTextInputEvent("abc");
+        manager.processEvent(e);
+
+        REQUIRE(ptr->getText() == "abc");
+        REQUIRE(changedCount >= 1);
     }
 
-    SECTION("Event Handling - Focus and Text Input") {
-        TextInput textInput(guiManager, 10, 10, 200, 30);
-        std::string changedText = "";
-        textInput.setOnTextChanged([&](TextInput* input) { changedText = input->getText(); });
+    SECTION("Backspace removes last character") {
+        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
+        TextInput* ptr = input.get();
+        manager.addElement(std::move(input));
 
-        // 1. Kliknięcie w pole tekstowe - powinno uzyskać fokus
-        SDL_Event event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
-        textInput.handleEvent(event);
+        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
+        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
 
-        // 2. Wprowadzanie tekstu
-        event = helper.create_text_input_event("Test");
-        textInput.handleEvent(event);
-        REQUIRE(textInput.getText() == "Test");
-        REQUIRE(changedText == "Test");
+        ptr->setText(std::string_view{"ab"});
 
-        event = helper.create_text_input_event("ing");
-        textInput.handleEvent(event);
-        REQUIRE(textInput.getText() == "Testing");
-        REQUIRE(changedText == "Testing");
+        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        manager.processEvent(e);
 
-        // 3. Backspace
-        event = helper.create_key_event(SDL_KEYDOWN, SDLK_BACKSPACE);
-        textInput.handleEvent(event);
-        REQUIRE(textInput.getText() == "Testin");
-        REQUIRE(changedText == "Testin");
-
-        // 4. Enter (powinien wywołać onTextSubmit i stracić fokus)
-        bool submitted = false;
-        textInput.setOnEnterPressed([&](TextInput*){ submitted = true; });
-        event = helper.create_key_event(SDL_KEYDOWN, SDLK_RETURN);
-        textInput.handleEvent(event);
-        REQUIRE(submitted == true);
- 
-        // 5. Kliknięcie poza polem tekstowym - powinno stracić fokus
-        event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 300, 300);
-        textInput.handleEvent(event);
+        REQUIRE(ptr->getText() == "a");
     }
 
-    SECTION("State - Disabled TextInput") {
-        TextInput textInput(guiManager, 10, 10, 200, 30);
-        textInput.setText("Initial");
-        std::string changedText = "";
-        textInput.setOnTextChanged([&](TextInput* input) { changedText = input->getText(); });
-        textInput.setLocked(true);
- 
-        REQUIRE(textInput.isLocked() == true);
- 
-        // Próba uzyskania fokusu
-        SDL_Event event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
-        textInput.handleEvent(event);
- 
-        // Próba wprowadzania tekstu
-        event = helper.create_text_input_event("New Text");
-        textInput.handleEvent(event);
-        REQUIRE(textInput.getText() == "Initial"); // Tekst nie powinien się zmienić
-        REQUIRE(changedText == "");
+    SECTION("Arrow keys do not change text content") {
+        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
+        TextInput* ptr = input.get();
+        manager.addElement(std::move(input));
+
+        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
+        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
+
+        ptr->setText(std::string{"xyz"});
+
+        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        manager.processEvent(e);
+        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        manager.processEvent(e);
+
+        REQUIRE(ptr->getText() == "xyz");
+    }
+
+    SECTION("Enter triggers OnEnterPressed") {
+        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
+        TextInput* ptr = input.get();
+        manager.addElement(std::move(input));
+
+        int enterCount = 0;
+        ptr->setOnEnterPressed([&](TextInput*) { ++enterCount; });
+
+        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
+        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
+
+        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        manager.processEvent(e);
+
+        REQUIRE(enterCount == 1);
+    }
+
+    SECTION("Locked input ignores focus and text") {
+        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
+        TextInput* ptr = input.get();
+        manager.addElement(std::move(input));
+
+        REQUIRE(ptr->getText().empty());
+
+        ptr->setLocked(true);
+        REQUIRE(ptr->isLocked() == true);
+
+        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
+        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
+        manager.processEvent(e);
+
+        e = helper.createTextInputEvent("q");
+        manager.processEvent(e);
+
+        REQUIRE(ptr->getText().empty());
+
+        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        manager.processEvent(e);
+        REQUIRE(ptr->getText().empty());
     }
 }

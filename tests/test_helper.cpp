@@ -1,12 +1,9 @@
 #include "test_helper.hpp"
+#include <cstring> // std::strncpy
+#include "../src/sdl_deleters.hpp"
+#include "../src/gui_manager.hpp"
 #include "../src/font_manager.hpp"
 #include "../src/texture_manager.hpp"
-#include "../src/gui_manager.hpp"
-#include "test_helper.hpp"
-#include "../src/font_manager.hpp"
-#include "../src/texture_manager.hpp"
-#include "../src/gui_manager.hpp"
-
 
 TestHelper::TestHelper() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -29,7 +26,6 @@ TestHelper::TestHelper() {
         throw std::runtime_error("Renderer could not be created! SDL_Error: " + std::string(SDL_GetError()));
     }
 
-   
     m_guiManager = std::make_unique<GUIManager>(m_renderer);
 }
 
@@ -45,31 +41,98 @@ TestHelper::~TestHelper() {
     SDL_Quit();
 }
 
+// ---- Accessors ----
+GUIManager& TestHelper::getManager() {
+    return *m_guiManager;
+}
+
+// ---- New unified API implementations ----
+SDL_Event TestHelper::createMouseButton(Uint32 type, Uint8 button, int x, int y) {
+    SDL_Event e;
+    SDL_memset(&e, 0, sizeof(e));
+    e.type = type;
+    e.button.type = type;
+    e.button.button = button;
+    e.button.state = (type == SDL_MOUSEBUTTONDOWN ? SDL_PRESSED : SDL_RELEASED);
+    e.button.clicks = 1;
+    e.button.x = x;
+    e.button.y = y;
+    return e;
+}
+
+SDL_Event TestHelper::createMouseMotion(int x, int y, Uint32 state) {
+    SDL_Event e;
+    SDL_memset(&e, 0, sizeof(e));
+    e.type = SDL_MOUSEMOTION;
+    e.motion.type = SDL_MOUSEMOTION;
+    e.motion.x = x;
+    e.motion.y = y;
+    e.motion.state = state;
+    return e;
+}
+
+SDL_Event TestHelper::createKeyEvent(Uint32 type, SDL_Keycode key) {
+    SDL_Event e;
+    SDL_memset(&e, 0, sizeof(e));
+    e.type = type;
+    e.key.type = type;
+    e.key.keysym.sym = key;
+    e.key.state = (type == SDL_KEYDOWN ? SDL_PRESSED : SDL_RELEASED);
+    return e;
+}
+
+SDL_Event TestHelper::createTextInputEvent(const char* text) {
+    SDL_Event e;
+    SDL_memset(&e, 0, sizeof(e));
+    e.type = SDL_TEXTINPUT;
+    if (text) {
+        std::strncpy(e.text.text, text, SDL_TEXTINPUTEVENT_TEXT_SIZE - 1);
+        e.text.text[SDL_TEXTINPUTEVENT_TEXT_SIZE - 1] = '\0';
+    }
+    return e;
+}
+
+// ---- Backward-compat alias ----
+SDL_Event TestHelper::createMouseEvent(Uint32 type, Uint8 button, int x, int y) {
+    if (type == SDL_MOUSEMOTION) {
+        return createMouseMotion(x, y, 0);
+    }
+    return createMouseButton(type, button, x, y);
+}
+
+// ---- Legacy snake_case wrappers (backward compatibility) ----
 SDL_Event TestHelper::create_mouse_event(Uint32 type, Uint8 button, int x, int y) {
-    SDL_Event event;
-    SDL_memset(&event, 0, sizeof(event)); // Użyj SDL_memset do poprawnego wyzerowania
-    event.button.type = type;
-    event.button.timestamp = SDL_GetTicks();
-    event.button.windowID = SDL_GetWindowID(m_window);
-    event.button.which = 0; // Użyj standardowego ID myszy
-    event.button.button = button;
-    event.button.state = SDL_PRESSED;
-    event.button.clicks = 1;
-    event.button.x = x;
-    event.button.y = y;
-    event.type = type;
-    return event;
+    return createMouseEvent(type, button, x, y);
 }
 
 SDL_Event TestHelper::create_key_event(Uint32 type, SDL_Keycode key) {
-    SDL_Event event;
-    event.type = type;
-    event.key.keysym.sym = key;
-    return event;
+    return createKeyEvent(type, key);
 }
+
 SDL_Event TestHelper::create_text_input_event(const char* text) {
-    SDL_Event event;
-    event.type = SDL_TEXTINPUT;
-    strncpy(event.text.text, text, sizeof(event.text.text));
-    return event;
+    return createTextInputEvent(text);
+}
+
+// ---- Stub resources ----
+SharedTexture TestHelper::makeStubTexture(int w, int h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+    if (!m_renderer) return nullptr;
+    SDL_Texture* raw = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (!raw) {
+        return nullptr;
+    }
+    SDL_SetTextureBlendMode(raw, SDL_BLENDMODE_BLEND);
+
+    // Fill with color to make it visible in tests
+    SDL_Texture* prevTarget = SDL_GetRenderTarget(m_renderer);
+    SDL_SetRenderTarget(m_renderer, raw);
+    SDL_SetRenderDrawColor(m_renderer, r, g, b, a);
+    SDL_RenderClear(m_renderer);
+    SDL_SetRenderTarget(m_renderer, prevTarget);
+
+    return SharedTexture(raw, SDLTextureDeleter());
+}
+
+void TestHelper::primeTextureAs(std::string_view key, SharedTexture tex) {
+    if (!m_guiManager || !tex) return;
+    m_guiManager->getTextureManager().addTexture(key, tex);
 }

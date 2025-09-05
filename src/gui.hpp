@@ -61,6 +61,7 @@ public:
     [[nodiscard]] bool isVisible() const { return m_visible; }
     [[nodiscard]] bool isHovered() const { return m_isHovered; }
     void setState(ElementState newState);
+    [[nodiscard]] ElementState getState() const { return m_state; }
     void setStyle(ElementState state, Style style);
     void setBackgroundColor(ElementState state, SDL_Color color);
     void setTextColor(ElementState state, SDL_Color color);

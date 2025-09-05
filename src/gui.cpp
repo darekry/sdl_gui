@@ -116,7 +116,10 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
             setState(ElementState::Hover);
         }
     } else {
+        // Only change to Normal if not currently pressed (to handle drag scenarios)
+        if (m_state != ElementState::Pressed) {
             setState(ElementState::Normal);
+        }
     }
 
  
