@@ -72,7 +72,7 @@ bool ContextMenu::handleEvent(const SDL_Event& event) {
     return GUIElement::handleEvent(event);
 }
 
-void ContextMenu::draw(SDL_Renderer* renderer) {
+void ContextMenu::draw([[maybe_unused]] SDL_Renderer* renderer) {
     // ContextMenu itself doesn't draw anything directly
     // All rendering is handled by the Panel and its children
     if (m_needsUpdate && m_visible) {
@@ -91,7 +91,7 @@ void ContextMenu::createMenuButtons() {
     int currentY = 0;
     int menuWidth = 200; // Default width
 
-    for (size_t i = 0; i < m_items.size(); ++i) {
+    for (size_t i = static_cast<size_t>(0); i < m_items.size(); ++i) {
         const auto& item = m_items[i];
 
         if (item.separator) {
@@ -128,7 +128,7 @@ void ContextMenu::positionMenu(int x, int y) {
     int windowHeight = 600; // Default, could be made configurable
 
     int menuWidth = 200;
-    int menuHeight = m_items.size() * m_itemHeight;
+    int menuHeight = static_cast<int>(m_items.size()) * m_itemHeight;
 
     // Adjust position to stay within window bounds
     if (x + menuWidth > windowWidth) {

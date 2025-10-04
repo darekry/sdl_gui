@@ -16,7 +16,7 @@ int main(int, char**) {
 
         // 1. Utwórz RadioGroup jako kontener Panel
         auto radioGroup = std::make_unique<RadioGroup>(guiManager, 100, 100, 250, 200);
-        radioGroup->setStyle(ElementState::Normal, {.backgroundColor = {{40, 40, 40, 255}}, .textColor = std::nullopt, .texture = std::nullopt});
+        radioGroup->setStyle(ElementState::Normal, {.backgroundColor = {{40, 40, 40, 255}}, .textColor = std::nullopt, .texture = std::nullopt, .borderColor = std::nullopt, .borderWidth = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
         radioGroup->setBorder(ElementState::Normal, {100, 100, 100, 255}, 2);
         
         // 2. Utwórz i dodaj RadioButton jako dzieci RadioGroup

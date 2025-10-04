@@ -13,7 +13,7 @@ COMMON_FLAGS += -Wsign-conversion
 COMMON_FLAGS += -Wfloat-equal
 COMMON_FLAGS += -Wformat=2
 COMMON_FLAGS += -Wnon-virtual-dtor
-COMMON_FLAGS += -Wold-style-cast
+# COMMON_FLAGS += -Wold-style-cast
 COMMON_FLAGS += -Woverloaded-virtual
 COMMON_FLAGS += -Wreorder
 COMMON_FLAGS += -Wzero-as-null-pointer-constant

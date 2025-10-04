@@ -279,7 +279,7 @@ void GUIElement::setState(ElementState newState) {
         return;
     }
 
-    LOG_DEBUG("setState for %s from %d to %d", getComponentType(), (int)m_state, (int)newState);
+    LOG_DEBUG("setState for %s from %d to %d", getComponentType(), static_cast<int>(m_state), static_cast<int>(newState));
 
         const auto oldStyle = getComposedStyle(m_state);
         const auto newStyle = getComposedStyle(newState);

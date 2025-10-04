@@ -73,7 +73,7 @@ Theme createDarkTheme() {
     return theme;
 }
 
-int main(int argc, char* argv[]) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     try {
         SDLApp app("Theme Switching Example", 800, 600);
         SDL_Renderer* renderer = app.getRenderer();
@@ -106,13 +106,13 @@ int main(int argc, char* argv[]) {
         
         auto radio_light = std::make_unique<RadioButton>(manager, 10, 10, 180, 30);
         radio_light->addChild(std::make_unique<Label>(manager, 5, 5, "Light Theme"));
-        radio_light->setOnChange([&, light_theme](RadioButton* rb, bool selected){
+        radio_light->setOnChange([&, light_theme]([[maybe_unused]] RadioButton* rb, bool selected){
             if (selected) manager.setTheme(light_theme);
         });
-        
+
         auto radio_dark = std::make_unique<RadioButton>(manager, 10, 50, 180, 30);
         radio_dark->addChild(std::make_unique<Label>(manager, 5, 5, "Dark Theme"));
-        radio_dark->setOnChange([&, dark_theme](RadioButton* rb, bool selected){
+        radio_dark->setOnChange([&, dark_theme]([[maybe_unused]] RadioButton* rb, bool selected){
             if (selected) manager.setTheme(dark_theme);
         });
 

@@ -125,11 +125,11 @@ void Slider::draw(SDL_Renderer* renderer) {
     SDL_Color trackColor;
     if (style.backgroundColor) {
         trackColor = *style.backgroundColor;
-        trackColor.r = std::max(0, trackColor.r - 20);
-        trackColor.g = std::max(0, trackColor.g - 20);
-        trackColor.b = std::max(0, trackColor.b - 20);
+        trackColor.r = std::max<uint8_t>(uint8_t{0}, trackColor.r - 20);
+        trackColor.g = std::max<uint8_t>(uint8_t{0}, trackColor.g - 20);
+        trackColor.b = std::max<uint8_t>(uint8_t{0}, trackColor.b - 20);
     } else {
-        trackColor = {200, 200, 200, 255};
+        trackColor = {.r=200, .g=200, .b=200, .a=255};
     }
     SDL_SetRenderDrawColor(renderer, trackColor.r, trackColor.g, trackColor.b, trackColor.a);
     
@@ -152,10 +152,10 @@ void Slider::draw(SDL_Renderer* renderer) {
 
     if (m_orientation == Orientation::Horizontal) {
         int thumbX = m_trackOffsetX + static_cast<int>(ratio * (m_trackSize - thumbSize));
-        thumbRect = {thumbX, getHeight() / 2 - thumbSize / 2, thumbSize, thumbSize};
+        thumbRect = {.x=thumbX, .y=getHeight() / 2 - thumbSize / 2, .w=thumbSize, .h=thumbSize};
     } else {
         int thumbY = m_trackOffsetY + static_cast<int>(ratio * (m_trackSize - thumbSize));
-        thumbRect = {getWidth() / 2 - thumbSize / 2, thumbY, thumbSize, thumbSize};
+        thumbRect = {.x=getWidth() / 2 - thumbSize / 2, .y=thumbY, .w=thumbSize, .h=thumbSize};
     }
     
     SDL_RenderFillRect(renderer, &thumbRect);

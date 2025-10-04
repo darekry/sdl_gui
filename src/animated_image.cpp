@@ -115,16 +115,16 @@ void AnimatedImage::draw(SDL_Renderer* renderer) {
     } else { // Fit
         // preserve aspect optionally
         if (m_preserveAspect) {
-            float srcRatio = (m_frameW > 0) ? (static_cast<float>(m_frameW) / m_frameH) : 1.0f;
-            float dstRatio = (m_height > 0) ? (static_cast<float>(m_width) / m_height) : srcRatio;
+            float srcRatio = (m_frameW > 0) ? (static_cast<float>(m_frameW) / static_cast<float>(m_frameH)) : 1.0f;
+            float dstRatio = (m_height > 0) ? (static_cast<float>(m_width) / static_cast<float>(m_height)) : srcRatio;
             if (srcRatio > dstRatio) {
                 // limited by width
                 dst.w = m_width;
-                dst.h = static_cast<int>(std::round(m_width / srcRatio));
+                dst.h = static_cast<int>(std::round(static_cast<float>(m_width) / srcRatio));
                 dst.y = (m_height - dst.h) / 2;
             } else {
                 dst.h = m_height;
-                dst.w = static_cast<int>(std::round(m_height * srcRatio));
+                dst.w = static_cast<int>(std::round(static_cast<float>(m_height) * srcRatio));
                 dst.x = (m_width - dst.w) / 2;
             }
         } else {
@@ -173,16 +173,16 @@ void AnimatedImage::drawDirect(SDL_Renderer* renderer) {
         dst.y = absPos.y + (m_height - dst.h) / 2;
     } else { // Fit
         if (m_preserveAspect) {
-            float srcRatio = (m_frameW > 0) ? (static_cast<float>(m_frameW) / m_frameH) : 1.0f;
-            float dstRatio = (m_height > 0) ? (static_cast<float>(m_width) / m_height) : srcRatio;
+            float srcRatio = (m_frameW > 0) ? (static_cast<float>(m_frameW) / static_cast<float>(m_frameH)) : 1.0f;
+            float dstRatio = (m_height > 0) ? (static_cast<float>(m_width) / static_cast<float>(m_height)) : srcRatio;
             if (srcRatio > dstRatio) {
                 dst.w = m_width;
-                dst.h = static_cast<int>(std::round(m_width / srcRatio));
+                dst.h = static_cast<int>(std::round(static_cast<float>(m_width) / srcRatio));
                 dst.x = absPos.x;
                 dst.y = absPos.y + (m_height - dst.h) / 2;
             } else {
                 dst.h = m_height;
-                dst.w = static_cast<int>(std::round(m_height * srcRatio));
+                dst.w = static_cast<int>(std::round(static_cast<float>(m_height) * srcRatio));
                 dst.x = absPos.x + (m_width - dst.w) / 2;
                 dst.y = absPos.y;
             }

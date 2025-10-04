@@ -61,7 +61,7 @@ void ComboBox::draw(SDL_Renderer* renderer) {
             auto font = fontManager.loadFont(style.fontName.value_or("assets/fonts/font.ttf"), font_size);
             if (font) {
                 auto& textureManager = m_manager.getTextureManager();
-                SharedTexture textTexture = textureManager.createTextureFromText(m_options[m_selected_index], font, *style.textColor);
+                SharedTexture textTexture = textureManager.createTextureFromText(m_options[static_cast<size_t>(m_selected_index)], font, *style.textColor);
                 if (textTexture) {
                     int text_w, text_h;
                     SDL_QueryTexture(textTexture.get(), nullptr, nullptr, &text_w, &text_h);
@@ -123,7 +123,7 @@ void ComboBox::addItem(const char* item) {
 
 std::string ComboBox::getSelectedItem() const {
     if (m_selected_index >= 0 && static_cast<size_t>(m_selected_index) < m_options.size()) {
-        return m_options[m_selected_index];
+        return m_options[static_cast<size_t>(m_selected_index)];
     }
     return "";
 }
@@ -137,7 +137,7 @@ void ComboBox::setSelectedIndex(int index) {
         if (m_selected_index != index) {
             m_selected_index = index;
              if (on_selection_changed) {
-                on_selection_changed(m_selected_index, m_options[m_selected_index]);
+                on_selection_changed(m_selected_index, m_options[static_cast<size_t>(m_selected_index)]);
             }
             markDirty();
         }
@@ -165,7 +165,7 @@ void ComboBox::createDropdownButtons() {
     m_dropdown_panel->clearChildren();
 
     const int item_h = 30;
-    m_dropdown_panel->setSize(getWidth(), item_h * m_options.size());
+    m_dropdown_panel->setSize(getWidth(), item_h * static_cast<int>(m_options.size()));
 
     for (size_t i = 0; i < m_options.size(); ++i) {
         auto option_button = std::make_unique<Button>(m_manager, 0, i * item_h, getWidth(), item_h, m_options[i]);
@@ -173,7 +173,7 @@ void ComboBox::createDropdownButtons() {
        //  option_button->setLabel(m_options[i], 16);
         option_button->setVisible(true);
         option_button->setOnClickCallback([this, i](GUIElement*){
-            selectItem(i);
+            selectItem(static_cast<int>(i));
         });
         m_dropdown_panel->addChild(std::move(option_button));
     }

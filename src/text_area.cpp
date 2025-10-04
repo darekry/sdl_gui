@@ -15,21 +15,21 @@ TextArea::TextArea(GUIManager& manager, int x, int y, int w, int h, std::string_
 
 void TextArea::setText(std::string_view text) {
     m_text = text;
-    m_cursorPos = std::min(m_cursorPos, m_text.length());
+    m_cursorPos = std::min(m_cursorPos, (m_text.length()));
     m_needs_texture_update = true;
     markDirty();
 }
 
 void TextArea::setText(std::string&& text) {
     m_text = std::move(text);
-    m_cursorPos = std::min(m_cursorPos, m_text.length());
+    m_cursorPos = std::min(m_cursorPos, (m_text.length()));
     m_needs_texture_update = true;
     markDirty();
 }
 
 void TextArea::setText(const char* text) {
     m_text = text;
-    m_cursorPos = std::min(m_cursorPos, m_text.length());
+    m_cursorPos = std::min(m_cursorPos, (m_text.length()));
     m_needs_texture_update = true;
     markDirty();
 }
@@ -115,7 +115,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
                 m_scroll_offset_y += e.wheel.y * line_height;
 
                 int max_scroll = (m_lines.size() * line_height) - m_height;
-                if (max_scroll < 0) max_scroll = 0;
+                max_scroll = std::max(max_scroll, 0);
 
                 m_scroll_offset_y = std::clamp(m_scroll_offset_y, -max_scroll, 0);
                 markDirty();
@@ -123,8 +123,8 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             }
         }
     } else if (e.type == SDL_TEXTINPUT && m_isHovered) {
-        m_text.insert(m_cursorPos, e.text.text);
-        m_cursorPos += strlen(e.text.text);
+        m_text.insert(static_cast<size_t>(m_cursorPos), e.text.text);
+        m_cursorPos += (strlen(e.text.text));
         m_needs_texture_update = true;
         update_text_offset();
         markDirty();
@@ -133,7 +133,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         if (e.key.keysym.sym == SDLK_BACKSPACE && m_cursorPos > 0) {
             m_text.erase(m_cursorPos - 1, 1);
             m_cursorPos--;
-            m_needs_texture_update = true;
+            m_needs_texture_update = true; 
             update_text_offset();
             eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_RETURN) {
@@ -174,7 +174,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
 void TextArea::recalculateLines() {
     m_lines.clear();
     if (m_text.empty()) {
-        m_lines.push_back("");
+        m_lines.emplace_back("");
         return;
     }
 
@@ -182,8 +182,8 @@ void TextArea::recalculateLines() {
     if (!font) return;
 
     auto currentLine = std::string{};
-    auto startPos = 0uz;
-    auto endPos = 0uz;
+    auto startPos = 0UZ;
+    auto endPos = 0UZ;
 
     while ((endPos = m_text.find('\n', startPos)) != std::string::npos) {
         m_lines.push_back(m_text.substr(startPos, endPos - startPos));
@@ -242,23 +242,24 @@ void TextArea::renderCursor() {
     auto tempPos = 0uz;
 
     for(size_t i = 0; i < m_lines.size(); ++i) {
-        const auto lineLengthWithNewline = m_lines[i].length() + (i < m_lines.size() - 1 ? 1 : 0);
-        if (m_cursorPos >= tempPos && m_cursorPos <= tempPos + lineLengthWithNewline) {
-            currentLineIndex = i;
-            posInLines = m_cursorPos - tempPos;
+        const auto lineLengthWithNewline = static_cast<size_t>(m_lines[i].length()) + (i < m_lines.size() - 1 ? 1uz : 0uz);
+        if (static_cast<size_t>(m_cursorPos) >= tempPos && static_cast<size_t>(m_cursorPos) <= tempPos + lineLengthWithNewline) {
+            currentLineIndex = static_cast<int>(i);
+            posInLines = static_cast<size_t>(m_cursorPos) - tempPos;
             break;
         }
         tempPos += lineLengthWithNewline;
     }
 
-    auto x = 0, y = 0;
+    auto x = 0;
+    auto y = 0;
     const auto& lineContent = m_lines[currentLineIndex];
-    if (posInLines > lineContent.length()) posInLines = lineContent.length();
+    posInLines = std::min(posInLines, lineContent.length());
 
     auto textBeforeCursor = lineContent.substr(0, posInLines);
     TTF_SizeText(font.get(), textBeforeCursor.c_str(), &x, nullptr);
 
-    y = currentLineIndex * TTF_FontHeight(font.get()) + m_scroll_offset_y;
+    y = (currentLineIndex * TTF_FontHeight(font.get())) + m_scroll_offset_y;
 
     auto cursorRect = SDL_Rect{ 2 + x + m_text_offset_x, 2 + y, 2, TTF_FontHeight(font.get()) };
     const auto style = getComposedStyle(m_state);
@@ -273,14 +274,15 @@ const char* TextArea::getComponentType() const {
 
 void TextArea::update_text_offset() {
     auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
-    if (!font) return;
+    if (!font) { return;
+}
 
-    auto current_line_idx = 0;
+    size_t current_line_idx = 0;
     auto pos_in_lines = 0uz;
     auto temp_pos = 0uz;
 
     for (size_t i = 0; i < m_lines.size(); ++i) {
-        auto line_len = m_lines[i].length() + (i < m_lines.size() - 1 ? 1 : 0);
+        auto line_len = static_cast<size_t>(m_lines[i].length()) + (i < m_lines.size() - 1 ? 1UZ : 0UZ);
         if (m_cursorPos >= temp_pos && m_cursorPos <= temp_pos + line_len) {
             current_line_idx = i;
             pos_in_lines = m_cursorPos - temp_pos;
@@ -295,7 +297,7 @@ void TextArea::update_text_offset() {
 
 
     auto padding = 2;
-    auto visible_width = getWidth() - 2 * padding;
+    auto visible_width = getWidth() - (2 * padding);
 
     if (cursor_pos_x + m_text_offset_x > visible_width) {
         m_text_offset_x = visible_width - cursor_pos_x;

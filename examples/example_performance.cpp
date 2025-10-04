@@ -33,7 +33,6 @@ static void create_n_items(TabData* tab, int n) {
     const int margin = 10;
 
     int containerW = tab->container->getWidth();
-    int containerH = tab->container->getHeight();
 
     int cols = std::max(1, (containerW - 2*margin + spacing) / (btnW + spacing));
     // compute starting index

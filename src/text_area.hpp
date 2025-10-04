@@ -18,7 +18,7 @@ public:
     bool getWordWrap() const;
 
     bool handleEvent(const SDL_Event& e) override;
-    const char* getComponentType() const ;
+    [[nodiscard]] const char* getComponentType() const override;
 protected:
     void draw(SDL_Renderer* renderer) override;
 

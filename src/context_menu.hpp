@@ -19,7 +19,7 @@ struct ContextMenuItem {
         : text(text), action(action), enabled(enabled), separator(false) {}
 
     ContextMenuItem(bool separator)
-        : separator(separator), enabled(false) {}
+        : text(""), action(nullptr), enabled(false), separator(separator) {}
 };
 
 class ContextMenu : public GUIElement {
@@ -39,7 +39,7 @@ public:
     const char* getComponentType() const override;
 
 protected:
-    void draw(SDL_Renderer* renderer) override;
+    void draw([[maybe_unused]] SDL_Renderer* renderer) override;
 
 private:
     // Private methods

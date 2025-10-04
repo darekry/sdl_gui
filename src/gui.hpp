@@ -104,7 +104,7 @@ protected:
     // Rozszerzenie: możliwość rysowania bezpośrednio (bez buforowania).
     // Domyślnie elementy nie korzystają z drawDirect — zwracają false w wantsDirectRender().
     virtual bool wantsDirectRender() const { return false; }
-    virtual void drawDirect(SDL_Renderer* renderer) { /* domyślnie brak */ }
+    virtual void drawDirect([[maybe_unused]] SDL_Renderer* renderer) { /* domyślnie brak */ }
     void drawBackgroundAndBorder(SDL_Renderer* renderer);
 
         Style getComposedStyle(ElementState state) const;
