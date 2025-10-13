@@ -37,6 +37,8 @@ public:
     virtual ~GUIElement() = default;
 
     void setTooltip(const std::string& text);
+    void setID(std::string_view id);
+    [[nodiscard]] std::string_view getID() const;
     [[nodiscard]] int getX() const { return m_x; }
     int getY() const { return m_y; }
     int getWidth() const { return m_width; }
@@ -97,6 +99,7 @@ protected:
     uint32_t startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback);
     void stopTimer(uint32_t timerId);
     
+    std::string m_id;
     bool m_canGetKeyboardFocus = false;
     bool m_clip_children = true;
     virtual void draw(SDL_Renderer* renderer) = 0;

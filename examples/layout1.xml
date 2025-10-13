@@ -1,0 +1,4 @@
+<Panel id="main_panel" x="10" y="10" width="400" height="300">
+    <Button id="ok_button" x="50" y="250" width="100" height="40" text="OK" />
+    <Button id="cancel_button" x="250" y="250" width="100" height="40" text="Anuluj" />
+</Panel>

@@ -67,6 +67,14 @@ void GUIElement::setTooltip(const std::string& text) {
     this->tooltip = text;
 }
 
+void GUIElement::setID(std::string_view id) {
+    m_id = id;
+}
+
+std::string_view GUIElement::getID() const {
+    return m_id;
+}
+
 bool GUIElement::handleEvent(const SDL_Event& e) {
     if (!m_visible) {
         return false;

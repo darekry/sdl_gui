@@ -1,0 +1,6 @@
+<Panel id="main_panel" x="0" y="0" width="500" height="400">
+    <Panel id="top_bar" x="10" y="10" width="480" height="50">
+        <Button id="file_button" x="5" y="5" width="80" height="40" text="Plik" />
+    </Panel>
+    <Button id="exit_button" x="200" y="350" width="100" height="40" text="Wyjście" />
+</Panel>
