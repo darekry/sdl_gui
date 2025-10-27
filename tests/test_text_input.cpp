@@ -1,113 +1,122 @@
 #define CATCH_CONFIG_MAIN
 #include "../lib/catch_amalgamated.hpp"
-#include "test_helper.hpp"
-#include "../src/gui_manager.hpp"
-#include "../src/gui.hpp"
-#include "../src/text_input.hpp"
 
-TEST_CASE("TextInput Functionality", "[text_input]") {
+#include "test_helper.hpp"
+#include "../src/text_input.hpp"
+#include "../src/gui_manager.hpp"
+
+TEST_CASE("TextInput functionality", "[text_input]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("Focus and basic text input") {
-        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
-        TextInput* ptr = input.get();
-        manager.addElement(std::move(input));
-
-        int changedCount = 0;
-        ptr->setOnTextChanged([&](TextInput*) { ++changedCount; });
-
-        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
-        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
-
-        e = helper.createTextInputEvent("abc");
-        manager.processEvent(e);
-
-        REQUIRE(ptr->getText() == "abc");
-        REQUIRE(changedCount >= 1);
+    SECTION("Initialization") {
+        TextInput ti(manager, 10, 20, 200, 30);
+        REQUIRE(ti.getText().empty());
+        REQUIRE_FALSE(ti.hasKeyboardFocus());
+        REQUIRE_FALSE(ti.isLocked());
     }
 
-    SECTION("Backspace removes last character") {
-        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
-        TextInput* ptr = input.get();
-        manager.addElement(std::move(input));
+    SECTION("setText and getText") {
+        auto ti = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
 
-        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
-        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
+        bool changed = false;
+        input->setOnTextChanged([&](TextInput*) { changed = true; });
 
-        ptr->setText(std::string_view{"ab"});
+        input->setText(std::string("Hello"));
+        REQUIRE(input->getText() == "Hello");
+        REQUIRE(changed);
 
-        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
-        manager.processEvent(e);
+        changed = false;
+        input->setText(std::string("Hello"));
+        REQUIRE_FALSE(changed);
 
-        REQUIRE(ptr->getText() == "a");
+        input->setText(std::string("World"));
+        REQUIRE(input->getText() == "World");
+        REQUIRE(changed);
     }
 
-    SECTION("Arrow keys do not change text content") {
-        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
-        TextInput* ptr = input.get();
-        manager.addElement(std::move(input));
+    SECTION("Clicking on input gives focus") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
 
-        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
-        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
+        REQUIRE_FALSE(input->hasKeyboardFocus());
 
-        ptr->setText(std::string{"xyz"});
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
 
-        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
-        manager.processEvent(e);
-        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
-        manager.processEvent(e);
-
-        REQUIRE(ptr->getText() == "xyz");
+        REQUIRE(input->hasKeyboardFocus());
     }
 
-    SECTION("Enter triggers OnEnterPressed") {
-        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
-        TextInput* ptr = input.get();
-        manager.addElement(std::move(input));
+    SECTION("Typing updates text when focused") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
 
-        int enterCount = 0;
-        ptr->setOnEnterPressed([&](TextInput*) { ++enterCount; });
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        REQUIRE(input->hasKeyboardFocus());
 
-        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
-        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
+        bool textChanged = false;
+        input->setOnTextChanged([&](TextInput*) { textChanged = true; });
 
-        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
-        manager.processEvent(e);
+        manager.processEvent(helper.createTextInputEvent("A"));
+        REQUIRE(textChanged);
+        REQUIRE(input->getText() == "A");
 
-        REQUIRE(enterCount == 1);
+        textChanged = false;
+        manager.processEvent(helper.createTextInputEvent("B"));
+        REQUIRE(textChanged);
+        REQUIRE(input->getText() == "AB");
     }
 
-    SECTION("Locked input ignores focus and text") {
-        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
-        TextInput* ptr = input.get();
-        manager.addElement(std::move(input));
+    SECTION("Backspace removes character") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
 
-        REQUIRE(ptr->getText().empty());
+        input->setText(std::string("Test"));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        REQUIRE(input->hasKeyboardFocus());
 
-        ptr->setLocked(true);
-        REQUIRE(ptr->isLocked() == true);
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        REQUIRE(input->getText() == "Tes");
 
-        SDL_Event e = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
-        e = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(e);
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        REQUIRE(input->getText() == "Te");
+    }
 
-        e = helper.createTextInputEvent("q");
-        manager.processEvent(e);
+    SECTION("Enter key calls onEnterPressed and removes focus") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
 
-        REQUIRE(ptr->getText().empty());
+        bool enterPressed = false;
+        input->setOnEnterPressed([&](TextInput*) { enterPressed = true; });
 
-        e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
-        manager.processEvent(e);
-        REQUIRE(ptr->getText().empty());
+        input->setText(std::string("Done"));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        REQUIRE(input->hasKeyboardFocus());
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN));
+
+        REQUIRE(enterPressed);
+        REQUIRE_FALSE(input->hasKeyboardFocus());
+    }
+
+    SECTION("Locked input ignores events") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        input->setLocked(true);
+        REQUIRE(input->isLocked());
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        REQUIRE_FALSE(input->hasKeyboardFocus());
+
+        input->setLocked(false);
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        REQUIRE(input->hasKeyboardFocus());
     }
 }

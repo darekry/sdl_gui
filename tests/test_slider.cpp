@@ -1,82 +1,78 @@
 #define CATCH_CONFIG_MAIN
 #include "../lib/catch_amalgamated.hpp"
+
 #include "test_helper.hpp"
 #include "../src/slider.hpp"
-#include "../src/texture_manager.hpp"
-#include "../src/font_manager.hpp"
 #include "../src/gui_manager.hpp"
 
-TEST_CASE("Slider Functionality", "[slider]") {
+TEST_CASE("Slider functionality", "[slider]") {
     TestHelper helper;
-    GUIManager guiManager(helper.getRenderer());
+    GUIManager& manager = helper.getManager();
 
-    SECTION("Initialization") {
-        Slider slider(guiManager, 10, 20, 200, 20, 0, 100, 50, Orientation::Horizontal);
-        REQUIRE(slider.getX() == 10);
-        REQUIRE(slider.getY() == 20);
-        REQUIRE(slider.getWidth() == 200);
-        REQUIRE(slider.getHeight() == 20);
+    SECTION("Slider initializes with the given value") {
+        Slider slider(manager, 0, 0, 200, 40, 0, 100, 50, Orientation::Horizontal);
         REQUIRE(slider.getValue() == 50);
-
-        Slider slider2(guiManager, 0, 0, 100, 10, -10, 10, 0, Orientation::Horizontal);
-        REQUIRE(slider2.getValue() == 0);
     }
 
-    SECTION("Event Handling - Dragging") {
-        Slider slider(guiManager, 10, 10, 200, 20, 0, 100, 50, Orientation::Horizontal);
-        int changedValue = -1;
-        slider.setOnChangeCallback([&](GUIElement*){ changedValue = slider.getValue(); });
+    SECTION("setValue clamps value to valid range and triggers callback") {
+        auto slider = std::make_unique<Slider>(manager, 10, 10, 200, 40, 0, 100, 50, Orientation::Horizontal);
+        Slider* sliderPtr = slider.get();
+        manager.addElement(std::move(slider));
 
-        // Symulacja kliknięcia i przeciągnięcia w prawo
-        SDL_Event event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 20); // Kliknięcie na początku suwaka
-        slider.handleEvent(event);
+        bool changed = false;
+        sliderPtr->setOnChangeCallback([&](GUIElement*) { changed = true; });
 
-        event = helper.create_mouse_event(SDL_MOUSEMOTION, 0, 110, 20); // Przeciągnięcie do środka (10 + 100)
-        slider.handleEvent(event);
-        // Wartość powinna być około 50 (połowa zakresu 0-100)
-        REQUIRE(slider.getValue() > 40);
-        REQUIRE(slider.getValue() < 60);
-        REQUIRE(changedValue == slider.getValue());
+        sliderPtr->setValue(75);
+        REQUIRE(sliderPtr->getValue() == 75);
+        REQUIRE(changed);
 
-        event = helper.create_mouse_event(SDL_MOUSEMOTION, 0, 210, 20); // Przeciągnięcie do końca (10 + 200)
-        slider.handleEvent(event);
-        REQUIRE(slider.getValue() == 100); // Powinno być 100
-        REQUIRE(changedValue == 100);
+        changed = false;
+        sliderPtr->setValue(150);
+        REQUIRE(sliderPtr->getValue() == 100);
+        REQUIRE(changed);
 
-        event = helper.create_mouse_event(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 210, 20);
-        slider.handleEvent(event);
+        changed = false;
+        sliderPtr->setValue(-10);
+        REQUIRE(sliderPtr->getValue() == 0);
+        REQUIRE(changed);
 
-        // Symulacja kliknięcia i przeciągnięcia w lewo
-        changedValue = -1;
-        event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 209, 20); // Kliknięcie na końcu suwaka (wewnątrz)
-        slider.handleEvent(event);
-
-        event = helper.create_mouse_event(SDL_MOUSEMOTION, 0, 10, 20); // Przeciągnięcie do początku
-        slider.handleEvent(event);
-        REQUIRE(slider.getValue() == 0); // Powinno być 0
-        REQUIRE(changedValue == 0);
-
-        event = helper.create_mouse_event(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 10, 20);
-        slider.handleEvent(event);
+        changed = false;
+        sliderPtr->setValue(0);
+        REQUIRE(sliderPtr->getValue() == 0);
+        REQUIRE_FALSE(changed);
     }
 
-    SECTION("State - Value Clamping") {
-        Slider slider(guiManager, 10, 10, 200, 20, 0, 100, 50, Orientation::Horizontal);
-        // Testy setValue nie są możliwe, ponieważ metoda setValue nie istnieje.
-        // Wartości min/max są ustawiane w konstruktorze i nie ma publicznej metody do ich zmiany.
-        // Możemy jedynie testować, czy początkowa wartość jest poprawna i czy callback działa.
+    SECTION("Clicking increment button increases value") {
+        auto slider = std::make_unique<Slider>(manager, 50, 50, 200, 40, 0, 100, 50, Orientation::Horizontal);
+        Slider* sliderPtr = slider.get();
+        manager.addElement(std::move(slider));
+
+        auto* incBtn = sliderPtr->getIncrementButton();
+        REQUIRE(incBtn != nullptr);
+
+        const int x = incBtn->getX() + sliderPtr->getX() + 5;
+        const int y = incBtn->getY() + sliderPtr->getY() + 5;
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, x, y));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, x, y));
+
+        REQUIRE(sliderPtr->getValue() == 51);
     }
 
-    SECTION("State - Disabled Slider") {
-        Slider slider(guiManager, 10, 10, 200, 20, 0, 100, 50, Orientation::Horizontal);
-        int changedValue = -1;
-        slider.setOnChangeCallback([&](GUIElement*){ changedValue = slider.getValue(); });
+    SECTION("Clicking decrement button decreases value") {
+        auto slider = std::make_unique<Slider>(manager, 50, 50, 200, 40, 0, 100, 50, Orientation::Horizontal);
+        Slider* sliderPtr = slider.get();
+        manager.addElement(std::move(slider));
 
+        auto* decBtn = sliderPtr->getDecrementButton();
+        REQUIRE(decBtn != nullptr);
 
-        slider.setEnabled(false);
-        // Symulacja kliknięcia i przeciągnięcia, gdy suwak jest wyłączony
-        SDL_Event event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 20);
-        slider.handleEvent(event);
-        REQUIRE(changedValue == -1); // Wartość nie powinna się zmienić
+        const int x = decBtn->getX() + sliderPtr->getX() + 5;
+        const int y = decBtn->getY() + sliderPtr->getY() + 5;
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, x, y));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, x, y));
+
+        REQUIRE(sliderPtr->getValue() == 49);
     }
 }

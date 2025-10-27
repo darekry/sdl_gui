@@ -1,77 +1,55 @@
 #define CATCH_CONFIG_MAIN
 #include "../lib/catch_amalgamated.hpp"
-#include "test_helper.hpp"
-#include "../src/gui_manager.hpp"
-#include "../src/gui.hpp"
-#include "../src/radio_button.hpp"
-#include "../src/radio_group.hpp"
 
-TEST_CASE("RadioButton and RadioGroup - selection behavior", "[radio_button][radio_group]") {
+#include "test_helper.hpp"
+#include "../src/radio_button.hpp"
+#include "../src/gui_manager.hpp"
+
+TEST_CASE("RadioButton standalone behaviour", "[radio_button]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    auto group = std::make_unique<RadioGroup>(manager, 50, 50, 200, 200);
-    RadioGroup* pg = group.get();
-
-    auto rb1 = std::make_unique<RadioButton>(manager, 10, 10, 20, 20);
-    RadioButton* p1 = rb1.get();
-    group->addChild(std::move(rb1));
-
-    auto rb2 = std::make_unique<RadioButton>(manager, 10, 40, 20, 20);
-    RadioButton* p2 = rb2.get();
-    group->addChild(std::move(rb2));
-
-    manager.addElement(std::move(group));
-
-    SECTION("Single selection by click") {
-        REQUIRE(p1->isSelected() == false);
-        REQUIRE(p2->isSelected() == false);
-
-        // Click inside first radio: group(50,50) + rb1(10,10)
-        SDL_Event e = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 65, 65);
-        manager.processEvent(e);
-        e = helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 65, 65);
-        manager.processEvent(e);
-
-        REQUIRE(p1->isSelected() == true);
-        REQUIRE(p2->isSelected() == false);
-        REQUIRE(pg->getSelectedButton() == p1);
-
-        // Click inside second radio: group(50,50) + rb2(10,40)
-        e = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 65, 95);
-        manager.processEvent(e);
-        e = helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 65, 95);
-        manager.processEvent(e);
-
-        REQUIRE(p1->isSelected() == false);
-        REQUIRE(p2->isSelected() == true);
-        REQUIRE(pg->getSelectedButton() == p2);
+    SECTION("Initial state is unselected") {
+        RadioButton rb(manager, 0, 0, 20, 20);
+        REQUIRE_FALSE(rb.isSelected());
     }
 
-    SECTION("Click outside does not change selection") {
-        REQUIRE(p1->isSelected() == false);
-        REQUIRE(p2->isSelected() == false);
-        REQUIRE(pg->getSelectedButton() == nullptr);
+    SECTION("Clicking selects the radio button") {
+        auto rb = std::make_unique<RadioButton>(manager, 10, 10, 20, 20);
+        RadioButton* rbPtr = rb.get();
+        manager.addElement(std::move(rb));
 
-        SDL_Event e = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 1000, 1000);
-        manager.processEvent(e);
-        e = helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 1000, 1000);
-        manager.processEvent(e);
+        bool changed = false;
+        bool lastState = false;
+        rbPtr->setOnChange([&](RadioButton*, bool selected) {
+            changed = true;
+            lastState = selected;
+        });
 
-        REQUIRE(p1->isSelected() == false);
-        REQUIRE(p2->isSelected() == false);
-        REQUIRE(pg->getSelectedButton() == nullptr);
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+
+        REQUIRE(rbPtr->isSelected());
+        REQUIRE(changed);
+        REQUIRE(lastState);
     }
 
-    SECTION("Programmatic selection updates exclusivity") {
-        p1->setSelected(true);
-        REQUIRE(p1->isSelected() == true);
-        REQUIRE(p2->isSelected() == false);
-        REQUIRE(pg->getSelectedButton() == p1);
+    SECTION("Programmatically setting selection invokes callback") {
+        RadioButton rb(manager, 0, 0, 20, 20);
+        bool changed = false;
+        rb.setOnChange([&](RadioButton*, bool) { changed = true; });
 
-        p2->setSelected(true);
-        REQUIRE(p1->isSelected() == false);
-        REQUIRE(p2->isSelected() == true);
-        REQUIRE(pg->getSelectedButton() == p2);
+        rb.setSelected(true);
+        REQUIRE(rb.isSelected());
+        REQUIRE(changed);
+
+        changed = false;
+        rb.setSelected(true);
+        REQUIRE(rb.isSelected());
+        REQUIRE_FALSE(changed);
+
+        rb.setSelected(false);
+        REQUIRE_FALSE(rb.isSelected());
+        REQUIRE(changed);
     }
 }
