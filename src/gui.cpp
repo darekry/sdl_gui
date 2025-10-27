@@ -398,3 +398,17 @@ void GUIElement::setCanGetKeyboardFocus(bool canFocus) {
 bool GUIElement::hasKeyboardFocus() const {
     return m_manager.getKeyboardFocus() == this;
 }
+
+GUIElement* GUIElement::findElementAt(int x, int y) {
+    if (!m_visible || !contains(x, y)) {
+        return nullptr;
+    }
+
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+        if (auto* found = (*it)->findElementAt(x, y)) {
+            return found;
+        }
+    }
+
+    return this;
+}

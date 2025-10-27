@@ -81,6 +81,7 @@ public:
     [[nodiscard]] GUIElement* getParent() const { return m_parent; }
     [[nodiscard]] const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
     size_t countDescendants() const;
+    GUIElement* findElementAt(int x, int y);
 
     // Focus and Capture API
     virtual void onFocusGained() {}

@@ -9,12 +9,14 @@
 #include "timer_manager.hpp"
 #include "theme.hpp"
 #include "animation_manager.hpp"
+#include "mouse_cursor.hpp"
 
 
 class TimerManager;
 class AnimationManager;
 class GUIElement;
 class Theme;
+class MouseCursor;
 
 class GUIManager {
 public:
@@ -56,6 +58,12 @@ public:
 void setTheme(Theme theme);
 Theme& getTheme();
 
+// --- Zarządzanie kursorem myszy ---
+MouseCursor* getMouseCursor();
+void setCustomCursorEnabled(bool enabled);
+bool isCustomCursorEnabled() const;
+GUIElement* findElementAt(int x, int y);
+
 // --- Zarządzanie fokusem i przechwytywaniem ---
 void captureMouse(GUIElement* element);
 void releaseMouse();
@@ -77,6 +85,11 @@ FontManager m_fontManager;
 TextureManager m_textureManager;
 std::unique_ptr<TimerManager> timerManager;
 std::unique_ptr<AnimationManager> animation_manager;
+std::unique_ptr<MouseCursor> m_mouseCursor;
+bool m_customCursorEnabled = false;
+
+void updateMouseCursorState(const SDL_Event* event);
+
 Theme m_theme;
 };
 
