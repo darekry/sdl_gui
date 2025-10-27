@@ -75,9 +75,14 @@ TEST_CASE("TextInput functionality", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        input->setText(std::string("Test"));
         manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE(input->hasKeyboardFocus());
+
+        manager.processEvent(helper.createTextInputEvent("T"));
+        manager.processEvent(helper.createTextInputEvent("e"));
+        manager.processEvent(helper.createTextInputEvent("s"));
+        manager.processEvent(helper.createTextInputEvent("t"));
+        REQUIRE(input->getText() == "Test");
 
         manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
         REQUIRE(input->getText() == "Tes");

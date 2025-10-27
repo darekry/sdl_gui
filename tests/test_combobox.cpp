@@ -39,14 +39,18 @@ TEST_CASE("ComboBox behaviour", "[combobox]") {
             callbackLabel = label;
         };
 
-        auto insideMainX = kComboX + 5;
-        auto insideMainY = kComboY + 5;
+        const int insideMainX = kComboX + 5;
+        const int insideMainY = kComboY + 5;
+        manager.processEvent(helper.createMouseMotion(insideMainX, insideMainY));
         manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideMainX, insideMainY));
         manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideMainX, insideMainY));
         REQUIRE(cb->isExpanded());
 
-        auto optionX = kComboX + 10;
-        auto optionY = kComboY + kComboHeight + kItemHeight / 2 + kItemHeight; // second entry
+        // Ensure dropdown children are created
+        manager.render();
+
+        const int optionX = kComboX + 10;
+        const int optionY = kComboY + kComboHeight + kItemHeight / 2 + kItemHeight; // second entry
         manager.processEvent(helper.createMouseMotion(optionX, optionY));
         manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, optionX, optionY));
         manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, optionX, optionY));
@@ -60,9 +64,11 @@ TEST_CASE("ComboBox behaviour", "[combobox]") {
 
     SECTION("Clicking outside while expanded collapses the dropdown without changing selection") {
         manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, kComboX + 5, kComboY + 5));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, kComboX + 5, kComboY + 5));
         REQUIRE(cb->isExpanded());
 
         manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, kComboX - 20, kComboY - 20));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, kComboX - 20, kComboY - 20));
         REQUIRE_FALSE(cb->isExpanded());
         REQUIRE(cb->getSelectedIndex() == 0);
     }
