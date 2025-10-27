@@ -1,9 +1,9 @@
 # define the C compiler to use
 # CC = gcc
-CC = clang-22
+CC = clang
 # define the Cpp compiler to use
 # CXX    = g++
-CXX    = clang++-22
+CXX    = clang++
 # Flagi wspólne dla obu trybów
 COMMON_FLAGS = -Wall
 COMMON_FLAGS += -Wextra
@@ -131,7 +131,7 @@ non_unity: $(NON_UNITY_OBJECTS)
 test: $(TEST_UNITY_OBJECT) $(TEST_EXECS)
 	@echo "Running all tests..."
 	@for t in $(TEST_EXECS); do \
-		ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 ./$$t || exit 1; \
+	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 ./$$t || exit 1; \
 	done
 	@echo "All tests passed successfully."
 

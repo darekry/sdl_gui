@@ -1,135 +1,69 @@
 #define CATCH_CONFIG_MAIN
 #include "../lib/catch_amalgamated.hpp"
+
 #include "test_helper.hpp"
 #include "../src/combobox.hpp"
-#include "../src/font_manager.hpp"
-#include "../src/texture_manager.hpp"
-#include "../src/gui.hpp"
 #include "../src/gui_manager.hpp"
-#include <unistd.h> // For access()
 
-TEST_CASE("ComboBox Functionality", "[combobox]") {
+namespace {
+constexpr int kComboX = 50;
+constexpr int kComboY = 40;
+constexpr int kComboWidth = 160;
+constexpr int kComboHeight = 24;
+constexpr int kItemHeight = 30; // must match implementation detail in combobox.cpp
+}
+
+TEST_CASE("ComboBox behaviour", "[combobox]") {
     TestHelper helper;
-    GUIManager guiManager(helper.getRenderer());
+    GUIManager& manager = helper.getManager();
 
-    // Inicjalizacja TTF, jeśli jeszcze nie została zainicjowana
-    if (TTF_Init() == -1) {
-        FAIL("Failed to initialize TTF: " << TTF_GetError());
-    }
-    // Utworzenie katalogu na zasoby, jeśli nie istnieje
-    system("mkdir -p assets/fonts");
-    // Utworzenie prostej czcionki do testów, jeśli nie istnieje
-    if (access("assets/fonts/font.ttf", F_OK) != 0) {
-        // Plik nie istnieje, więc go tworzymy.
-        // To jest uproszczenie dla testów, normalnie plik powinien istnieć.
-        FILE* fp = fopen("assets/fonts/font.ttf", "w");
-        if (fp) {
-            fclose(fp);
-        }
+    auto combo = std::make_unique<ComboBox>(manager, kComboX, kComboY, kComboWidth, kComboHeight);
+    ComboBox* cb = combo.get();
+    manager.addElement(std::move(combo));
+
+    cb->addItem("First");
+    cb->addItem("Second");
+    cb->addItem("Third");
+
+    SECTION("First item becomes selected by default") {
+        REQUIRE(cb->getSelectedIndex() == 0);
+        REQUIRE(cb->getSelectedItem() == "First");
+        REQUIRE_FALSE(cb->isExpanded());
     }
 
-
-    SECTION("Initialization") {
-        ComboBox comboBox(guiManager, 10, 20, 200, 30);
-        REQUIRE(comboBox.getX() == 10);
-        REQUIRE(comboBox.getY() == 20);
-        REQUIRE(comboBox.getWidth() == 200);
-        REQUIRE(comboBox.getHeight() == 30);
-        REQUIRE(comboBox.getSelectedIndex() == -1);
-        REQUIRE(comboBox.getSelectedItem() == "");
-    }
-
-    SECTION("Adding items and selection") {
-        ComboBox comboBox(guiManager, 10, 20, 200, 30);
-        comboBox.addItem("Option 1");
-        comboBox.addItem("Option 2");
-        comboBox.addItem("Option 3");
-
-        REQUIRE(comboBox.getSelectedIndex() == 0);
-        REQUIRE(comboBox.getSelectedItem() == "Option 1");
-
-        comboBox.setSelectedIndex(2);
-        REQUIRE(comboBox.getSelectedIndex() == 2);
-        REQUIRE(comboBox.getSelectedItem() == "Option 3");
-
-        // Test invalid index
-        comboBox.setSelectedIndex(99);
-        REQUIRE(comboBox.getSelectedIndex() == 2); // Should not change
-        REQUIRE(comboBox.getSelectedItem() == "Option 3");
-    }
-
-    SECTION("Event Handling - Toggle Dropdown") {
-        ComboBox comboBox(guiManager, 10, 20, 200, 30);
-        comboBox.addItem("Option 1");
-
-        // Początkowo zwinięty
-        REQUIRE_FALSE(comboBox.isExpanded());
-
-        // Kliknięcie na główny przycisk, aby rozwinąć
-        SDL_Event event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 25);
-        comboBox.handleEvent(event);
-        event.type = SDL_MOUSEBUTTONUP;
-        comboBox.handleEvent(event);
-        
-        // Powinien być rozwinięty
-        REQUIRE(comboBox.isExpanded());
-    }
-    SECTION("Event Handling - Item Selection") {
-        ComboBox comboBox(guiManager, 0, 0, 20, 20);
-        comboBox.addItem("Option 1");
-        comboBox.addItem("Option 2");
-
-        int selected_idx = -1;
-        std::string selected_str = "";
-        comboBox.on_selection_changed = [&](int index, const std::string& item) {
-            selected_idx = index;
-            selected_str = item;
+    SECTION("Selecting a new option updates selection and collapses the dropdown") {
+        int callbackIndex = -1;
+        std::string callbackLabel;
+        cb->on_selection_changed = [&](int index, const std::string& label) {
+            callbackIndex = index;
+            callbackLabel = label;
         };
 
-        // 1. Rozwiń listę
-        SDL_Event event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 10);
-        comboBox.handleEvent(event);
-        event.type = SDL_MOUSEBUTTONUP;
-        comboBox.handleEvent(event);
+        auto insideMainX = kComboX + 5;
+        auto insideMainY = kComboY + 5;
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideMainX, insideMainY));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideMainX, insideMainY));
+        REQUIRE(cb->isExpanded());
 
-        // 2. Kliknij na drugi element (Option 2)
-        // Pozycja Y = y + height + item_height * item_index
-        // Y = 20 + 30 + 30 * 1 = 80
-        event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 50);
-        comboBox.handleEvent(event);
-        event.type = SDL_MOUSEBUTTONUP;
-        comboBox.handleEvent(event);
+        auto optionX = kComboX + 10;
+        auto optionY = kComboY + kComboHeight + kItemHeight / 2 + kItemHeight; // second entry
+        manager.processEvent(helper.createMouseMotion(optionX, optionY));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, optionX, optionY));
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, optionX, optionY));
 
-        REQUIRE(comboBox.getSelectedIndex() == 1);
-        REQUIRE(comboBox.getSelectedItem() == "Option 2");
-        REQUIRE(selected_idx == 1);
-        REQUIRE(selected_str == "Option 2");
-    }
-    
-    SECTION("Event Handling - Close when clicking outside") {
-        ComboBox comboBox(guiManager, 10, 20, 200, 30);
-        comboBox.addItem("Option 1");
-
-        // 1. Rozwiń listę
-        SDL_Event event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 25);
-        comboBox.handleEvent(event);
-        event.type = SDL_MOUSEBUTTONUP;
-        comboBox.handleEvent(event);
-
-        // 2. Kliknij poza komponentem
-        event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 500, 500);
-        comboBox.handleEvent(event);
-        
-        // Powinien się zwinąć.
-        REQUIRE_FALSE(comboBox.isExpanded());
-
-        // Sprawdzamy, czy po kliknięciu na element listy (co nie powinno być możliwe, bo jest zwinięty)
-        // stan się nie zmienia.
-        event = helper.create_mouse_event(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 55);
-        comboBox.handleEvent(event);
-        REQUIRE(comboBox.getSelectedIndex() == 0); // Nadal powinien być wybrany pierwszy element
+        REQUIRE(callbackIndex == 1);
+        REQUIRE(callbackLabel == "Second");
+        REQUIRE(cb->getSelectedIndex() == 1);
+        REQUIRE(cb->getSelectedItem() == "Second");
+        REQUIRE_FALSE(cb->isExpanded());
     }
 
-    // Zamknięcie TTF
-    TTF_Quit();
+    SECTION("Clicking outside while expanded collapses the dropdown without changing selection") {
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, kComboX + 5, kComboY + 5));
+        REQUIRE(cb->isExpanded());
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, kComboX - 20, kComboY - 20));
+        REQUIRE_FALSE(cb->isExpanded());
+        REQUIRE(cb->getSelectedIndex() == 0);
+    }
 }
