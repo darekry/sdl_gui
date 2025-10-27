@@ -4,7 +4,6 @@
 #include "test_helper.hpp"
 #include "../src/checkbox.hpp"
 #include "../src/gui_manager.hpp"
-#include "../src/style.hpp"
 
 TEST_CASE("Checkbox functionality", "[checkbox]") {
     TestHelper helper;
