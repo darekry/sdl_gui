@@ -1,9 +1,9 @@
 # define the C compiler to use
 # CC = gcc
-CC = clang
+CC = clang-22
 # define the Cpp compiler to use
 # CXX    = g++
-CXX    = clang++
+CXX    = clang++-22
 # Flagi wspólne dla obu trybów
 COMMON_FLAGS = -Wall
 COMMON_FLAGS += -Wextra

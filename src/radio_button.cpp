@@ -85,7 +85,7 @@ void RadioButton::draw(SDL_Renderer* renderer) {
         } else if (style.textColor) {
             const auto& c = style.textColor.value();
             SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
-            drawFilledCircle(renderer, m_width / 2, m_height / 2, m_width / 4);
+            drawFilledCircle(renderer, m_width / 2, m_height / 2, m_height / 4);
         }
     }
 }

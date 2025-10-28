@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Panel id="main_panel" x="10" y="10" width="780" height="580">
+    <Label text="Comprehensive SGML Parser Test" x="250" y="10" />
+
+    <!-- Basic Controls -->
+    <Panel id="basic_controls" x="10" y="40" width="370" height="250" borderWidth="1">
+        <Label text="Basic Controls" x="10" y="5" />
+        <Button id="ok_button" x="10" y="30" width="100" height="30" text="Click Me" onClick="on_ok_clicked" />
+        <Checkbox id="enable_feature_check" x="120" y="35" text="Enable Feature" onChange="on_feature_toggled" />
+        <Slider id="volume_slider" x="10" y="70" width="200" height="20" value="50" onChange="on_volume_changed" />
+        <Label id="volume_label" x="220" y="70" text="Volume: 50" />
+        <TextInput id="name_input" x="10" y="100" width="200" height="30" text="Enter name" onEnter="on_name_entered" onTextChanged="on_name_changed" />
+        <TextArea id="log_area" x="10" y="140" width="350" height="100" text="Log messages will appear here..." />
+    </Panel>
+
+    <!-- Selection Controls -->
+    <Panel id="selection_controls" x="390" y="40" width="380" height="250" borderWidth="1">
+        <Label text="Selection Controls" x="10" y="5" />
+        <ComboBox id="item_selector" x="10" y="30" width="150" height="30" onSelectionChanged="on_item_selected">
+            <Item text="Option 1" />
+            <Item text="Option 2" />
+            <Item text="Option 3" />
+        </ComboBox>
+        <RadioGroup id="color_group" x="10" y="70" onSelectionChanged="on_color_selected">
+            <RadioButton text="Red" x="0" y="0" />
+            <RadioButton text="Green" x="0" y="30" />
+            <RadioButton text="Blue" x="0" y="60" selected="true" />
+        </RadioGroup>
+    </Panel>
+
+    <!-- Advanced Controls -->
+    <Panel id="advanced_controls" x="10" y="300" width="760" height="270" borderWidth="1">
+        <Label text="Advanced Controls" x="10" y="5" />
+        <AnimatedImage id="test_animation" x="10" y="30" width="64" height="64" texturePath="assets/explosion.png" frameWidth="64" frameHeight="64" frameCount="16" loop="false" onAnimationEnd="on_anim_finished" />
+        <TabControl id="main_tabs" x="100" y="30" width="650" height="230">
+            <Tab title="First Tab">
+                <Panel>
+                    <Label text="This is the first tab." x="10" y="10" />
+                    <Button text="Tab 1 Button" x="10" y="40" width="120" height="30" />
+                </Panel>
+            </Tab>
+            <Tab title="Second Tab">
+                <Panel>
+                    <Label text="This is the second tab with more controls." x="10" y="10" />
+                    <Checkbox text="Another checkbox" x="10" y="40" />
+                </Panel>
+            </Tab>
+        </TabControl>
+    </Panel>
+</Panel>
