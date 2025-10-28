@@ -4,7 +4,6 @@
 #include "timer_manager.hpp"
 #include "panel.hpp"
 #include "label.hpp"
-#include "mouse_cursor.hpp"
 
 #include <string_view>
 
@@ -17,9 +16,6 @@ GUIManager::GUIManager(SDL_Renderer* renderer)
     : tooltipElement(nullptr), m_renderer(renderer), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {
     timerManager = std::make_unique<TimerManager>();
     animation_manager = std::make_unique<AnimationManager>();
-
-    m_mouseCursor = std::make_unique<MouseCursor>(*this);
-    m_customCursorEnabled = false;
 
     // Załaduj domyślną czcionkę
     m_fontManager.loadDefaultFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
@@ -89,9 +85,9 @@ bool GUIManager::processEvent(const SDL_Event& event) {
 }
 
 void GUIManager::render() {
-    // Renderuj wszystkie zarządzane elementy
-    for (const auto& element : m_elements) { // Iteracja po unique_ptr
-        if (element) {
+    // Renderuj wszystkie zarządzane elementy które nie są overlay
+    for (const auto& element : m_elements) {
+        if (element && !element->isOverlay()) {
             element->render(m_renderer);
         }
     }
@@ -99,9 +95,12 @@ void GUIManager::render() {
     if (tooltipElement) {
         tooltipElement->render(m_renderer);
     }
-
-    if (m_customCursorEnabled && m_mouseCursor) {
-        m_mouseCursor->render(m_renderer);
+    
+    // Renderuj overlay elementy na samym końcu (np. kursor)
+    for (const auto& element : m_elements) {
+        if (element && element->isOverlay()) {
+            element->renderOverlay(m_renderer);
+        }
     }
 }
 
@@ -109,10 +108,6 @@ void GUIManager::cleanup() {
     // Zaktualizuj timery i animacje
     timerManager->update();
     animation_manager->update();
-
-    if (m_mouseCursor) {
-        m_mouseCursor->update();
-    }
 
     if (tooltipElement && tooltipElement->isMarkedForDeletion()) {
         tooltipElement.reset();
@@ -241,19 +236,6 @@ GUIElement* GUIManager::getKeyboardFocus() const {
 
 AnimationManager* GUIManager::getAnimationManager() {
     return animation_manager.get();
-}
-
-MouseCursor* GUIManager::getMouseCursor() {
-    return m_mouseCursor.get();
-}
-
-void GUIManager::setCustomCursorEnabled(bool enabled) {
-    m_customCursorEnabled = enabled;
-    SDL_ShowCursor(enabled ? SDL_DISABLE : SDL_ENABLE);
-}
-
-bool GUIManager::isCustomCursorEnabled() const {
-    return m_customCursorEnabled;
 }
 
 GUIElement* GUIManager::findElementAt(int x, int y) {

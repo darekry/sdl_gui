@@ -1,6 +1,6 @@
 #include "sdl_app.hpp"
 #include "gui_manager.hpp"
-#include "mouse_cursor.hpp"
+#include "cursor.hpp"
 #include "panel.hpp"
 #include "button.hpp"
 #include "label.hpp"
@@ -12,8 +12,9 @@ int main() {
         SDLApp app("Przykład - MouseCursor", 800, 600);
         GUIManager gui(app.getRenderer());
 
-        gui.setCustomCursorEnabled(true);
-        MouseCursor* cursor = gui.getMouseCursor();
+        auto cursorPtr = std::make_unique<Cursor>(gui);
+        Cursor* cursor = cursorPtr.get();
+        gui.addElement(std::move(cursorPtr));
 
         cursor->setCursorTexture(CursorState::Normal, "assets/button1.png", 8, 8);
         cursor->setCursorTexture(CursorState::Hover, "assets/button2.png", 16, 16);

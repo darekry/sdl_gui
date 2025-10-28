@@ -54,8 +54,10 @@ public:
     virtual bool handleEvent(const SDL_Event& e);
     void render(SDL_Renderer* renderer);
     void renderToCache();
+    virtual bool isOverlay() const { return false; }
+    virtual void renderOverlay(SDL_Renderer* renderer);
     void setClipChildren(bool clip);
-    void setTexture(const SharedTexture& texture);
+
     
     void setEnabled(bool enabled) { m_enabled = enabled; }
     [[nodiscard]] bool isEnabled() const { return m_enabled; }
