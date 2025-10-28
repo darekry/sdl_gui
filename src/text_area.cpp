@@ -114,7 +114,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
                 int line_height = TTF_FontHeight(font.get());
                 m_scroll_offset_y += e.wheel.y * line_height;
 
-                int max_scroll = (m_lines.size() * line_height) - m_height;
+                int max_scroll = static_cast<int>(m_lines.size() * static_cast<size_t>(line_height)) - m_height;
                 max_scroll = std::max(max_scroll, 0);
 
                 m_scroll_offset_y = std::clamp(m_scroll_offset_y, -max_scroll, 0);
@@ -253,7 +253,7 @@ void TextArea::renderCursor() {
 
     auto x = 0;
     auto y = 0;
-    const auto& lineContent = m_lines[currentLineIndex];
+    const auto& lineContent = m_lines[static_cast<size_t>(currentLineIndex)];
     posInLines = std::min(posInLines, lineContent.length());
 
     auto textBeforeCursor = lineContent.substr(0, posInLines);

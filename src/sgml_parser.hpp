@@ -5,7 +5,7 @@
 #include <memory>
 #include <functional>
 #include <map>
-#include "../lib/tinyxml2.h"
+#include <tinyxml2.h>
 
 class GUIManager;
 class GUIElement;

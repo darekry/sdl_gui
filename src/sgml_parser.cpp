@@ -25,7 +25,7 @@ std::unique_ptr<GUIElement> SGMLParser::loadLayout(const std::string& file_path)
 std::unique_ptr<GUIElement> SGMLParser::parseNode(tinyxml2::XMLElement* xmlNode) {
     std::map<std::string, std::function<std::unique_ptr<GUIElement>(tinyxml2::XMLElement*)>> factory;
 
-    factory["Panel"] = [this](tinyxml2::XMLElement* el) {
+    factory["Panel"] = [this](tinyxml2::XMLElement*) {
         return std::make_unique<Panel>(m_guiManager, 0, 0, 0, 0);
     };
 
