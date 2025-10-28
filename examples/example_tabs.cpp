@@ -24,9 +24,9 @@ int main(int, char**) {
         Panel* tab2Panel = tabControl->addTab("Tab 2");
         Panel* tab3Panel = tabControl->addTab("Tab 3");
 
-        tab1Panel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .borderColor={{255, 0, 0, 128}}, .borderWidth=5});
-        tab2Panel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .borderColor={{0, 255, 0, 128}}, .borderWidth=5});
-        tab3Panel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .borderColor={{0, 0, 255, 128}}, .borderWidth=5});
+        tab1Panel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = std::nullopt, .borderColor={{255, 0, 0, 128}}, .borderWidth=5, .fontSize = std::nullopt, .fontName = std::nullopt});
+        tab2Panel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = std::nullopt, .borderColor={{0, 255, 0, 128}}, .borderWidth=5, .fontSize = std::nullopt, .fontName = std::nullopt});
+        tab3Panel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = std::nullopt, .borderColor={{0, 0, 255, 128}}, .borderWidth=5, .fontSize = std::nullopt, .fontName = std::nullopt});
 
         // Dodawanie zawartości do zakładek
         auto button1 = std::make_unique<Button>(guiManager, 50, 50, 150, 50);

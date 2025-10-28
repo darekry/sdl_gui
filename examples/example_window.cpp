@@ -25,12 +25,12 @@ int main() {
 
         // Main window panel
         auto windowPanel = std::make_unique<Panel>(guiManager, 100, 100, 300, 200);
-        windowPanel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = guiManager.getTextureManager().addTexture("window_bg", createColorTexture(renderer, {.r=200, .g=200, .b=200, .a=255}))});
+        windowPanel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = guiManager.getTextureManager().addTexture("window_bg", createColorTexture(renderer, {.r=200, .g=200, .b=200, .a=255})), .borderColor = std::nullopt, .borderWidth = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
         windowPanel->setDraggable(true);
         auto *windowPanel_p = windowPanel.get();
         // Title bar
         auto titleBar = std::make_unique<Panel>(guiManager, 0, 0, 300, 30);
-        titleBar->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = guiManager.getTextureManager().addTexture("title_bg", createColorTexture(renderer, {100, 100, 150, 255}))});
+        titleBar->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = guiManager.getTextureManager().addTexture("title_bg", createColorTexture(renderer, {100, 100, 150, 255})), .borderColor = std::nullopt, .borderWidth = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
         auto titleLabel = std::make_unique<Label>(guiManager, 5, 5, "Window Title", 16);
         titleBar->addChild(std::move(titleLabel));
 
@@ -43,7 +43,7 @@ int main() {
 
         // Content panel
         auto contentPanel = std::make_unique<Panel>(guiManager, 5, 35, 290, 160);
-        contentPanel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = guiManager.getTextureManager().addTexture("content_bg", createColorTexture(renderer, {220, 220, 220, 255}))});
+        contentPanel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = guiManager.getTextureManager().addTexture("content_bg", createColorTexture(renderer, {220, 220, 220, 255})), .borderColor = std::nullopt, .borderWidth = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
         auto contentLabel = std::make_unique<Label>(guiManager, 5, 5, "This is the content area.", 14);
         contentPanel->addChild(std::move(contentLabel));
 

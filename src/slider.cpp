@@ -54,13 +54,13 @@ void Slider::updateValueFromMouse(int mouseX, int mouseY) {
 
     if (m_orientation == Orientation::Horizontal) {
         float relativeMouseX = static_cast<float>(mouseX - (absPos.x + m_trackOffsetX));
-        ratio = std::clamp(relativeMouseX / m_trackSize, 0.0f, 1.0f);
+        ratio = std::clamp(relativeMouseX / static_cast<float>(m_trackSize), 0.0f, 1.0f);
     } else {
         float relativeMouseY = static_cast<float>(mouseY - (absPos.y + m_trackOffsetY));
-        ratio = std::clamp(relativeMouseY / m_trackSize, 0.0f, 1.0f);
+        ratio = std::clamp(relativeMouseY / static_cast<float>(m_trackSize), 0.0f, 1.0f);
     }
 
-    int newValue = m_minValue + static_cast<int>(ratio * (m_maxValue - m_minValue));
+    int newValue = m_minValue + static_cast<int>(ratio * static_cast<float>(m_maxValue - m_minValue));
     setValue(newValue);
 }
 
@@ -148,13 +148,13 @@ void Slider::draw(SDL_Renderer* renderer) {
     SDL_Rect thumbRect;
     int thumbSize = (m_orientation == Orientation::Horizontal) ? std::min(getHeight(), 20) : std::min(getWidth(), 20);
     
-    float ratio = (m_maxValue > m_minValue) ? static_cast<float>(m_currentValue - m_minValue) / (m_maxValue - m_minValue) : 0.0f;
+    float ratio = (m_maxValue > m_minValue) ? static_cast<float>(m_currentValue - m_minValue) / static_cast<float>(m_maxValue - m_minValue) : 0.0f;
 
     if (m_orientation == Orientation::Horizontal) {
-        int thumbX = m_trackOffsetX + static_cast<int>(ratio * (m_trackSize - thumbSize));
+        int thumbX = m_trackOffsetX + static_cast<int>(ratio * static_cast<float>(m_trackSize - thumbSize));
         thumbRect = {.x=thumbX, .y=getHeight() / 2 - thumbSize / 2, .w=thumbSize, .h=thumbSize};
     } else {
-        int thumbY = m_trackOffsetY + static_cast<int>(ratio * (m_trackSize - thumbSize));
+        int thumbY = m_trackOffsetY + static_cast<int>(ratio * static_cast<float>(m_trackSize - thumbSize));
         thumbRect = {.x=getWidth() / 2 - thumbSize / 2, .y=thumbY, .w=thumbSize, .h=thumbSize};
     }
     

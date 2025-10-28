@@ -59,7 +59,7 @@ TEST_CXXFLAGS := $(filter-out $(SANITIZE_FLAGS),$(CXXFLAGS)) $(TEST_SANITIZE_FLA
 CFLAGS := $(CXXFLAGS) # Zakładam, że CFLAGS mogą być takie same jak CXXFLAGS, lub zostaną usunięte/dostosowane
 
 # define C Preprocessor flags
-CPPFLAGS := -Isrc -Ilib
+CPPFLAGS := -Isrc -isystem lib
 
 # define library paths in addition to /usr/lib
 LDFLAGS  = $(shell sdl2-config --libs)
