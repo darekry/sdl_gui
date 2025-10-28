@@ -1,15 +1,10 @@
-#ifndef MOUSE_CURSOR_HPP
-#define MOUSE_CURSOR_HPP
+#ifndef CURSOR_HPP
+#define CURSOR_HPP
 
-#include "SDL2/SDL.h"
-#include "texture_manager.hpp"
-#include "animation_manager.hpp"
+#include "gui.hpp"
 #include <string>
 #include <map>
-#include <memory>
 #include <functional>
-
-class GUIManager;
 
 enum class CursorState {
     Normal,
@@ -23,10 +18,10 @@ enum class CursorState {
     Custom3
 };
 
-class MouseCursor {
+class Cursor : public GUIElement {
 public:
-    explicit MouseCursor(GUIManager& manager);
-    ~MouseCursor();
+    explicit Cursor(GUIManager& manager);
+    ~Cursor() override;
 
     void setCursorTexture(CursorState state, const std::string& path, int hotspotX = 0, int hotspotY = 0);
     
@@ -36,19 +31,22 @@ public:
     void setState(CursorState state);
     CursorState getState() const { return m_currentState; }
     
-    void setVisible(bool visible);
-    bool isVisible() const { return m_visible; }
-    
     void setOffset(int offsetX, int offsetY);
     void getOffset(int& offsetX, int& offsetY) const;
     
     void setScale(float scale);
     float getScale() const { return m_scale; }
     
-    void update();
-    void render(SDL_Renderer* renderer);
-    
     void setOnStateChanged(std::function<void(CursorState)> callback);
+
+    bool handleEvent(const SDL_Event& event) override;
+    const char* getComponentType() const override;
+    void setVisible(bool visible);
+    bool isOverlay() const override { return true; }
+    void renderOverlay(SDL_Renderer* renderer) override;
+
+    protected:
+    void draw(SDL_Renderer* renderer) override;
 
 private:
     struct CursorData {
@@ -72,14 +70,12 @@ private:
     void renderCursor(SDL_Renderer* renderer, const CursorData& data, int mouseX, int mouseY);
     SDL_Rect getSrcRect(const CursorData& data) const;
 
-    GUIManager& m_manager;
     std::map<CursorState, CursorData> m_cursors;
     CursorState m_currentState = CursorState::Normal;
-    bool m_visible = true;
     int m_offsetX = 0;
     int m_offsetY = 0;
     float m_scale = 1.0f;
     std::function<void(CursorState)> m_onStateChanged;
 };
 
-#endif // MOUSE_CURSOR_HPP
+#endif // CURSOR_HPP

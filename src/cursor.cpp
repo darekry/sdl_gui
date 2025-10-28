@@ -1,19 +1,22 @@
-#include "mouse_cursor.hpp"
+#include "cursor.hpp"
 #include "gui_manager.hpp"
 #include <algorithm>
 #include <cmath>
-#include <utility>
 
 namespace {
 constexpr float kDefaultFPS = 12.0f;
 }
 
-MouseCursor::MouseCursor(GUIManager& manager)
-    : m_manager(manager) {}
+Cursor::Cursor(GUIManager& manager)
+    : GUIElement(manager, 0, 0, 1, 1) {
+    SDL_ShowCursor(SDL_DISABLE);
+}
 
-MouseCursor::~MouseCursor() = default;
+Cursor::~Cursor() {
+    SDL_ShowCursor(SDL_ENABLE);
+}
 
-void MouseCursor::setCursorTexture(CursorState state, const std::string& path, int hotspotX, int hotspotY) {
+void Cursor::setCursorTexture(CursorState state, const std::string& path, int hotspotX, int hotspotY) {
     CursorData& data = m_cursors[state];
     data.texture = m_manager.getTextureManager().loadTexture(path);
     data.hotspotX = hotspotX;
@@ -22,8 +25,8 @@ void MouseCursor::setCursorTexture(CursorState state, const std::string& path, i
     data.totalFrames = 0;
 }
 
-void MouseCursor::setAnimatedCursor(CursorState state, const std::string& path, int totalFrames, int rows,
-                                   float fps, int hotspotX, int hotspotY) {
+void Cursor::setAnimatedCursor(CursorState state, const std::string& path, int totalFrames, int rows,
+                               float fps, int hotspotX, int hotspotY) {
     if (totalFrames <= 0) {
         setCursorTexture(state, path, hotspotX, hotspotY);
         return;
@@ -51,7 +54,7 @@ void MouseCursor::setAnimatedCursor(CursorState state, const std::string& path, 
     }
 }
 
-void MouseCursor::setState(CursorState state) {
+void Cursor::setState(CursorState state) {
     if (m_currentState == state) {
         return;
     }
@@ -66,40 +69,67 @@ void MouseCursor::setState(CursorState state) {
     }
 }
 
-void MouseCursor::setVisible(bool visible) {
-    m_visible = visible;
-}
-
-void MouseCursor::setOffset(int offsetX, int offsetY) {
+void Cursor::setOffset(int offsetX, int offsetY) {
     m_offsetX = offsetX;
     m_offsetY = offsetY;
 }
 
-void MouseCursor::getOffset(int& offsetX, int& offsetY) const {
+void Cursor::getOffset(int& offsetX, int& offsetY) const {
     offsetX = m_offsetX;
     offsetY = m_offsetY;
 }
 
-void MouseCursor::setScale(float scale) {
+void Cursor::setScale(float scale) {
     m_scale = std::max(0.1f, scale);
 }
 
-void MouseCursor::update() {
-    if (!m_visible) {
+void Cursor::setOnStateChanged(std::function<void(CursorState)> callback) {
+    m_onStateChanged = std::move(callback);
+}
+
+bool Cursor::handleEvent(const SDL_Event& /*event*/) {
+    return false;
+}
+
+const char* Cursor::getComponentType() const {
+    return "Cursor";
+}
+
+void Cursor::setVisible(bool visible) {
+    if (m_visible == visible) {
         return;
     }
+    GUIElement::setVisible(visible);
+    SDL_ShowCursor(visible ? SDL_DISABLE : SDL_ENABLE);
+}
+
+void Cursor::draw(SDL_Renderer* /*renderer*/) {
+    // Cursor does not use cached drawing.
+}
+
+void Cursor::renderOverlay(SDL_Renderer* renderer) {
+    if (!isVisible()) {
+        return;
+    }
+
+    int mouseX = 0;
+    int mouseY = 0;
+    SDL_GetMouseState(&mouseX, &mouseY);
 
     auto it = m_cursors.find(m_currentState);
     if (it == m_cursors.end()) {
         return;
     }
 
-    if (it->second.isAnimated) {
-        updateAnimation(it->second);
+    CursorData& data = it->second;
+    if (data.isAnimated) {
+        updateAnimation(data);
     }
+
+    renderCursor(renderer, data, mouseX, mouseY);
 }
 
-void MouseCursor::updateAnimation(CursorData& data) {
+void Cursor::updateAnimation(CursorData& data) {
     if (!data.texture) {
         return;
     }
@@ -113,24 +143,7 @@ void MouseCursor::updateAnimation(CursorData& data) {
     }
 }
 
-void MouseCursor::render(SDL_Renderer* renderer) {
-    if (!m_visible) {
-        return;
-    }
-
-    int mouseX = 0;
-    int mouseY = 0;
-    SDL_GetMouseState(&mouseX, &mouseY);
-
-    auto it = m_cursors.find(m_currentState);
-    if (it == m_cursors.end()) {
-        return;
-    }
-
-    renderCursor(renderer, it->second, mouseX, mouseY);
-}
-
-void MouseCursor::renderCursor(SDL_Renderer* renderer, const CursorData& data, int mouseX, int mouseY) {
+void Cursor::renderCursor(SDL_Renderer* renderer, const CursorData& data, int mouseX, int mouseY) {
     if (!data.texture) {
         return;
     }
@@ -146,7 +159,7 @@ void MouseCursor::renderCursor(SDL_Renderer* renderer, const CursorData& data, i
     SDL_RenderCopy(renderer, data.texture.get(), &src, &dst);
 }
 
-SDL_Rect MouseCursor::getSrcRect(const CursorData& data) const {
+SDL_Rect Cursor::getSrcRect(const CursorData& data) const {
     if (!data.isAnimated || data.totalFrames <= 1 || data.cols <= 0 || data.rows <= 0) {
         int texW = 0;
         int texH = 0;
@@ -164,8 +177,4 @@ SDL_Rect MouseCursor::getSrcRect(const CursorData& data) const {
     src.w = data.frameW;
     src.h = data.frameH;
     return src;
-}
-
-void MouseCursor::setOnStateChanged(std::function<void(CursorState)> callback) {
-    m_onStateChanged = std::move(callback);
 }
