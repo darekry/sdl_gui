@@ -56,3 +56,8 @@ assets/
 output/
 vendor/
 .cache/
+# Build logs
+*.log
+
+# Temporary files
+tmp.cpp
