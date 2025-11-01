@@ -1,345 +1,833 @@
-# Przewodnik użycia SDL GUI do budowy gry RTS
+# SDL GUI dla Gier RTS
 
-## Krótkie wprowadzenie i cel dokumentu
+## Wprowadzenie
 
-Ten dokument ma na celu dostarczyć kompletne, techniczne i przystępne wprowadzenie dla zespołu programistów, którzy chcą zbudować prostą grę RTS wykorzystując bibliotekę SDL GUI zawartą w tym repozytorium. Zawiera instrukcje szybkiego startu, opis architektury, przepływu renderowania, zarządzania zasobami, animacji, timerów, obsługi zdarzeń oraz przykładowy plan projektu RTS.
+SDL GUI to kompletna biblioteka do tworzenia interfejsów użytkownika w grach RTS, oparta na SDL2. Biblioteka została zaprojektowana z myślą o prostocie i wydajności, dostarczając wszystkie niezbędne narzędzia do budowy profesjonalnych interfejsów gier strategicznych.
 
-Biblioteka i kluczowe pliki źródłowe znajdują się w katalogu [`src`](src/:1). Najważniejsze odniesienia użyte w tym dokumencie:
-- Menedżer GUI: [`src/gui_manager.hpp`](src/gui_manager.hpp:19), [`src/gui_manager.cpp`](src/gui_manager.cpp:14)
-- Baza elementów GUI: [`src/gui.hpp`](src/gui.hpp:19), [`src/gui.cpp`](src/gui.cpp:8)
-- TextureManager: [`src/texture_manager.hpp`](src/texture_manager.hpp:15), [`src/texture_manager.cpp`](src/texture_manager.cpp:1)
-- FontManager: [`src/font_manager.hpp`](src/font_manager.hpp:30), [`src/font_manager.cpp`](src/font_manager.cpp:7)
-- AnimationManager: [`src/animation_manager.hpp`](src/animation_manager.hpp:24)
-- TimerManager: [`src/timer_manager.hpp`](src/timer_manager.hpp:18), [`src/timer_manager.cpp`](src/timer_manager.cpp:1)
-- Styl i motyw: [`src/style.hpp`](src/style.hpp:17), [`src/theme.hpp`](src/theme.hpp:10)
-- Przykłady: katalog [`examples/`](examples/:1) (zawiera m.in. [`examples/example_button.cpp`](examples/example_button.cpp:1), [`examples/example_animation.cpp`](examples/example_animation.cpp:1))
+### Kluczowe Możliwości
 
-## Szybki start: minimalny krok-po-kroku
+**🎨 Animacje i efekty wizualne**
+- System animacji z funkcjami easing dla płynnych przejść
+- AnimatedImage dla animacji sprite'ów jednostek
+- AnimationManager z automatycznym zarządzaniem cyklem życia
 
-Wymagania środowiskowe:
-- SDL2 (biblioteka developerska)
-- SDL_image
-- SDL_ttf
+**🖱️ Obsługa custom kursorów**
+- Cursor - klasa do zarządzania kursorami z wieloma stanami
+- Ładowanie tekstur kursorów z ustawianiem hotspot
+- Animowane kursory dla różnych akcji (budowanie, atak, ruch)
 
-Najszybszy sposób uruchomienia przykładów:
-1. Zainstaluj zależności systemowe (np. na Debian/Ubuntu):
-   sudo apt-get install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev
-2. Przejdź do katalogu projektu i zbuduj:
-   make
-   (Szczegóły kompilacji i targetów zawiera [`Makefile`](Makefile:1))
-3. Uruchom przykład, np.:
-   ./output/example_button
+**⚡ System cache'owania dla wydajności**
+- TextureManager - cache'owanie tekstur
+- FontManager - cache'owanie czcionek
+- Renderowanie cache per-element dla optymalizacji
+- Direct rendering dla dynamicznych elementów
 
-Pliki przykładowe można przeglądać w [`examples/`](examples/:1). Przydatne: [`examples/example_button.cpp`](examples/example_button.cpp:1), [`examples/example_animation.cpp`](examples/example_animation.cpp:1), [`examples/example_panel.cpp`](examples/example_panel.cpp:1).
+## Animacje
 
-Uwaga: jeśli CI lub środowisko jest headless, zobacz strategię testów w [`.kilocode/rules/memory-bank/testing_strategy.md`](.kilocode/rules/memory-bank/testing_strategy.md:1) oraz użyj Xvfb do uruchamiania renderingu w trybie headless.
+### AnimationManager
 
-## Architektura biblioteki — kluczowe komponenty i pliki
+AnimationManager to serce systemu animacji biblioteki SDL GUI. Zarządza wszystkimi animacjami w aplikacji i udostępnia prosty API do tworzenia płynnych efektów wizualnych.
 
-1) GUIManager
-- Centralny punkt aplikacji — inicjalizuje SDL renderer, menedżery zasobów i zarządza top-level elementami GUI.
-- Główne pliki: [`src/gui_manager.hpp`](src/gui_manager.hpp:19), [`src/gui_manager.cpp`](src/gui_manager.cpp:14)
-- Metody: inicjalizacja, `render()`, `pollEvents()` i `addElement()` — rejestracja widgetów w menedżerze.
+```cpp
+// Przykład użycia AnimationManager
+auto& animationManager = guiManager.getAnimationManager();
 
-2) GUIElement
-- Abstrakcyjna baza dla widgetów: pozycja, rozmiar, widoczność, hierarchia rodzic-dziecko.
-- Pliki: [`src/gui.hpp`](src/gui.hpp:19), [`src/gui.cpp`](src/gui.cpp:8)
-- Kluczowe koncepcje: markDirty, markForDeletion, wantsDirectRender(), draw()/drawDirect(), renderToCache(), `m_cachedTexture`.
+// Animacja pozycji jednostki
+animationManager.createAnimation(
+    &unit.position.x,  // wskaźnik do animowanej właściwości
+    unit.position.x,   // wartość początkowa
+    targetX,           // wartość końcowa
+    1000,              // czas trwania w ms
+    Easing::Type::Linear  // funkcja easing
+);
 
-3) TextureManager
-- Ładowanie obrazów i tworzenie `SharedTexture` z cache.
-- Pliki: [`src/texture_manager.hpp`](src/texture_manager.hpp:15), [`src/texture_manager.cpp`](src/texture_manager.cpp:1)
-- Zapewnia funkcje: loadTexture(path), getTexture(key), createDefaultTexture().
+// Animacja z callback'iem po zakończeniu
+animationManager.createAnimation(
+    &healthBar.width,
+    currentWidth,
+    newWidth,
+    500,
+    Easing::Type::EaseOutQuad,
+    [this]() { // callback po zakończeniu
+        onHealthAnimationComplete();
+    }
+);
+```
 
-4) FontManager
-- Cache czcionek i pomocnicze API do mierzenia rozmiaru tekstu (`getTextSize`).
-- Pliki: [`src/font_manager.hpp`](src/font_manager.hpp:30), [`src/font_manager.cpp`](src/font_manager.cpp:7)
+### AnimatedImage
 
-5) AnimationManager
-- System animacji operujący na polach typu int/float/variant oraz easing.
-- Plik: [`src/animation_manager.hpp`](src/animation_manager.hpp:24)
+AnimatedImage to specjalizowany widget do animacji sprite'ów, idealny dla animacji jednostek w grach RTS.
 
-6) TimerManager
-- Harmonogram zdarzeń czasowych (single-shot, interval) powiązanych z elementami GUI.
-- Pliki: [`src/timer_manager.hpp`](src/timer_manager.hpp:18), [`src/timer_manager.cpp`](src/timer_manager.cpp:1)
+```cpp
+// Tworzenie animowanej jednostki
+auto soldier = std::make_unique<AnimatedImage>(guiManager, 100, 100, 64, 64);
 
-7) Style i Theme
-- Centralizacja stylów i motywów: [`src/style.hpp`](src/style.hpp:17), [`src/theme.hpp`](src/theme.hpp:10)
+// Konfiguracja sprite sheet (9 klatek w poziomie)
+soldier->setSpriteSheet("assets/units/soldier_walk.png", 9, 1);
+soldier->setFPS(12.0f);  // 12 klatek na sekundę
+soldier->setLoop(true);
+soldier->play();
 
-8) Przykładowe widgety i wykorzystanie
-- Przykład tworzenia widgetu: [`examples/example_button.cpp`](examples/example_button.cpp:1)
-- Animacje: [`examples/example_animation.cpp`](examples/example_animation.cpp:1)
-- Więcej przykładów: [`examples/`](examples/:1)
+// Przełączanie animacji w zależności od stanu jednostki
+if (unitState == UnitState::WALKING) {
+    soldier->setSpriteSheet("assets/units/soldier_walk.png", 6, 1);
+    soldier->setFPS(8.0f);
+} else if (unitState == UnitState::ATTACKING) {
+    soldier->setSpriteSheet("assets/units/soldier_attack.png", 4, 1);
+    soldier->setFPS(15.0f);
+}
+```
 
-## Przepływ renderowania i lifecycle elementów
+### Funkcje Easing
 
-Zarys:
-- `GUIManager::render()` iteruje po top-level elementach i wywołuje `GUIElement::render()` — zobacz [`src/gui_manager.cpp`](src/gui_manager.cpp:51) i [`src/gui.cpp`](src/gui.cpp:135).
-- `GUIElement::render()` sprawdza `wantsDirectRender()`:
-  - Jeśli true: ustawia clipping i wywołuje `drawDirect(renderer)`, renderuje dzieci bez cache.
-  - Jeśli false: jeśli `m_isDirty` -> `renderToCache()` (ustawia render target na `m_cachedTexture`), wywołuje `draw(renderer)` i resetuje target. Implementacja znajduje się w [`src/gui.cpp`](src/gui.cpp:135).
-- Po wyrenderowaniu `m_cachedTexture` jest kopiowany na główny renderer (SDL_RenderCopy) a następnie element renderuje dzieci z odpowiednim clippingiem.
-- Cleanup: `GUIElement::cleanup()` i `GUIManager::cleanup()` usuwają elementy oznaczone jako do usunięcia (markForDeletion) i zwalniają timery/animacje — zobacz [`src/gui.cpp`](src/gui.cpp:267) oraz [`src/gui_manager.cpp`](src/gui_manager.cpp:64).
+Biblioteka dostarcza różne funkcje easing dla naturalnych animacji:
 
-Wnioski praktyczne:
-- Używaj cache'owania (`m_cachedTexture`) dla skomplikowanych, rzadko zmieniających się widgetów (mapy, HUD), aby zredukować koszt draw() każdego frame.
-- Użyj `drawDirect()`/wantsDirectRender() dla dynamicznych elementów interaktywnych, które wymagają rysowania dzieci w kontekście frame (np. kursory, efekty cząsteczkowe).
-- Zadbaj o rekreację cache przy zmianie rozmiaru widgetu — implementacja w [`src/gui.cpp`](src/gui.cpp:220).
+```cpp
+namespace Easing {
+    enum class Type {
+        Linear,      // Równomierny ruch
+        EaseInQuad,  // Przyspieszenie (początek wolny, koniec szybki)
+        EaseOutQuad, // Hamowanie (początek szybki, koniec wolny)
+        EaseInOutQuad // Kombinacja przyspieszenia i hamowania
+    };
+    
+    template<typename T>
+    T interpolate(const T& start, const T& end, float progress, Type type);
+}
+```
 
-## Zarządzanie zasobami: TextureManager i FontManager
+**Praktyczne zastosowania w RTS:**
+- Ruch kamery: `EaseInOutQuad` dla płynnych przejść
+- Animacje menu: `EaseOutQuad` dla pojawiania się
+- Ruchy jednostek: `Linear` dla precyzyjnego pathfinding
+- Efekty budowania: `EaseInQuad` dla narastających efektów
 
-TextureManager:
-- API: ładowanie przez `loadTexture(path)` i odpytywanie `getTexture(key)` — definicje w [`src/texture_manager.hpp`](src/texture_manager.hpp:15).
-- Zwraca `SharedTexture` (std::shared_ptr<SDL_Texture>) i przechowuje mapę cache.
-- Najlepsze praktyki:
-  - Używaj spójnych kluczy/ścieżek zasobów (np. "units/soldier.png").
-  - Twórz atlasy tekstur tam, gdzie to możliwe, aby ograniczyć przełączanie tekstur renderer'a.
-  - Zarejestruj domyślną teksturę do gui w `GUIManager` — zobacz [`src/gui_manager.cpp`](src/gui_manager.cpp:14).
-- Debugowanie problemów z assetami:
-  - Sprawdź czy plik istnieje i ścieżka jest poprawna.
-  - Zaloguj wynik `SDL_LogError` z TextureManager (menedżer powinien logować błędy).
-  - Jeśli tekstura nie powstaje, sprawdź inicjalizację `SDL_image`.
-  - Ścieżka domyślnej czcionki/assetów: np. `assets/fonts/font.ttf` — TODO: weryfikacja dokładnej polityki publikacji zasobów (zaznaczono dalej).
+## Obsługa Kursorów
 
-FontManager:
-- API: `loadFont(path, size)` i `getTextSize(font, text)` — definicje w [`src/font_manager.hpp`](src/font_manager.hpp:30).
-- Cache: `SharedFont` w mapie, synchronizacja z `SDL_ttf`.
-- Debug: błędy inicjalizacji `TTF_OpenFont` są typowe — sprawdź logi i czy plik czcionki jest dostępny.
+### Custom Cursors
 
-## System animacji
+Klasa `Cursor` w [`src/cursor.hpp`](src/cursor.hpp:21) umożliwia tworzenie zaawansowanych systemów kursorów dostosowanych do różnych stanów gry.
 
-- AnimationManager obsługuje animacje prostych właściwości (int/float/variant) oraz easing. Główne API w [`src/animation_manager.hpp`](src/animation_manager.hpp:24).
-- Właściwości wspierane:
-  - Liczby całkowite i zmiennoprzecinkowe
-  - std::variant do reprezentacji wartości heterogenicznych
-  - Easing: podstawowe funkcje easing (patrz [`src/easing.hpp`](src/easing.hpp:1))
-- Lifecycle animacji:
-  - Tworzenie animacji: zarejestruj cel, wartość początkową, końcową, czas trwania, easing oraz optional callback on_complete.
-  - Aktualizacja: `AnimationManager::update(dt)` jest wywoływany codziennie (Frame tick) przez `GUIManager`.
-  - Usuwanie: animacje kończą się i są usuwane automatycznie po wykonczeniu lub mogą być przerwane.
-- Praktyczny przykład znajdziesz w [`examples/example_animation.cpp`](examples/example_animation.cpp:1).
+```cpp
+// Inicjalizacja systemu kursorów
+auto cursor = std::make_unique<Cursor>(guiManager);
+Cursor* cursorPtr = cursor.get();
+guiManager.addElement(std::move(cursor));
 
-Wskazówki projektowe:
-- Używaj animacji dla przejść stanów jednostek (idle -> walk -> attack) i dla płynnych ruchów kamery.
-- Synchronizuj klatki animacji z teksturami przez `TextureManager` (np. atlas animacji) i aktualizację indeksu klatki w callbacku animacji.
+// Konfiguracja kursorów dla różnych stanów
+cursorPtr->setCursorTexture(CursorState::Normal, "assets/cursors/normal.png", 8, 8);
+cursorPtr->setCursorTexture(CursorState::Hover, "assets/cursors/hover.png", 8, 8);
+cursorPtr->setCursorTexture(CursorState::Pressed, "assets/cursors/pressed.png", 8, 8);
 
-## TimerManager: użycie timerów w logice gry
+// Animowany kursor dla stanu "zajęty"
+cursorPtr->setAnimatedCursor(
+    CursorState::Busy, 
+    "assets/cursors/busy.png",    // plik sprite sheet
+    4,                            // liczba klatek w poziomie
+    2,                            // liczba klatek w pionie
+    8.0f,                         // FPS animacji
+    16, 16                        // wymiary pojedynczej klatki
+);
 
-- TimerManager udostępnia timery typu single-shot i interval (cykliczne). Zobacz [`src/timer_manager.hpp`](src/timer_manager.hpp:18).
-- API typowo: `startTimer(ownerId, intervalMs, singleShot, callback)` i `stopTimer(id)`.
-- Powiązanie z GUIElementami:
-  - Elementy GUI mogą uruchamiać timery przez `startTimer`, a TimerManager powiadamia callback powiązany z elementem.
-  - Timery używane do: ruchu jednostek (ticks), cooldownów ataku, AI ticków, animacji sterowanych czasem.
+// Callback dla zmiany stanu kursora
+cursorPtr->setOnStateChanged([](CursorState state) {
+    switch (state) {
+        case CursorState::Normal: 
+            setGameCursor(CursorType::DEFAULT); break;
+        case CursorState::Hover:
+            setGameCursor(CursorType::SELECT); break;
+        case CursorState::Busy:
+            setGameCursor(CursorType::BUILDING); break;
+    }
+});
+```
 
-Przykład użycia: patrolująca jednostka może uruchamiać timer o interwale 50ms by aktualizować pozycję i uruchamiać odpowiednie animacje.
+### Dynamic Cursor States
 
-## Obsługa zdarzeń i klikalność
+Kursory mogą automatycznie zmieniać się w zależności od kontekstu:
 
-- Bazowy typ `GUIElement` w [`src/gui.hpp`](src/gui.hpp:19) udostępnia mechanizmy detekcji zdarzeń i domyślne hooki.
-- Integracja z pętlą zdarzeń SDL: `GUIManager` integruje SDL event loop i przekazuje zdarzenia do elementów (zobacz [`src/gui_manager.hpp`](src/gui_manager.hpp:19)).
-- Przykłady:
-  - Przycisk: [`examples/example_button.cpp`](examples/example_button.cpp:1) pokazuje, jak zarejestrować callback kliknięcia.
-  - Checkbox, slider i inne widgety znajdują się w [`examples/`](examples/:1).
+```cpp
+// Automatyczna zmiana kursora na podstawie interakcji
+void updateCursorState(int mouseX, int mouseY) {
+    // Sprawdź czy kursor znajduje się nad jednostką
+    if (isOverUnit(mouseX, mouseY)) {
+        cursor->setState(CursorState::Hover);
+    }
+    // Sprawdź czy można budować w tym miejscu
+    else if (canBuildAt(mouseX, mouseY)) {
+        cursor->setState(CursorState::Normal);
+    }
+    // Sprawdź czy jest jakaś akcja w toku
+    else if (isActionInProgress()) {
+        cursor->setState(CursorState::Busy);
+    }
+    else {
+        cursor->setState(CursorState::Normal);
+    }
+}
 
-Implementacja klikalnych jednostek:
-- Dziedzicz po `GUIElement` i nadpisz metody obsługi zdarzeń (np. onMouseDown/onMouseUp/onMouseMove) — sekcja kodu poniżej zawiera przykład.
-- Drag selection (selektowanie przez przeciągnięcie): implementuj prosty rectangle selection w globalnych współrzędnych świata, rysuj overlay w `drawDirect()` i podczas mouse up przelicz które jednostki są w prostokącie.
-- Mapowanie współrzędnych: przemapuj współrzędne ekranu (pixel window) na world-coordinates używając transformacji kamery (offset + scale) — zobacz przykładowy pseudokod.
+// Skalowanie kursora dla różnych rozdzielczości
+cursor->setScale(0.5f);  // Dla wysokich rozdzielczości
+cursor->setScale(1.0f);  // Dla standardowych rozdzielczości
+```
 
-Fragmenty referencyjne: [`examples/example_button.cpp`](examples/example_button.cpp:1) i [`docs/creating_new_widget.md`](docs/creating_new_widget.md:1) zawierają praktyczne wskazówki.
+## Widgety dla RTS
 
-## Przykładowy projekt RTS — architektura i pseudokod
+### Panel (HUD Containers)
 
-Proponowana struktura klas:
-- UnitWidget : dziedziczy po [`src/gui.hpp`](src/gui.hpp:19)
-- BuildingWidget : dziedziczy po [`src/gui.hpp`](src/gui.hpp:19)
-- HUD : panel z elementami GUI (pasek zasobów, przyciski) — extends [`src/panel.hpp`](src/panel.hpp:1)
-- Minimap : lekki panel rysujący mapę świata bezpośrednio (może używać `drawDirect()`)
+Panel to podstawowy kontener dla wszystkich elementów HUD w grze RTS.
 
-Rejestracja elementów:
-- Dodaj elementy do menedżera przez `GUIManager::addElement(element)` — implementacja w [`src/gui_manager.hpp`](src/gui_manager.hpp:19) / [`src/gui_manager.cpp`](src/gui_manager.cpp:14).
+```cpp
+// Główny panel HUD
+auto hudPanel = std::make_unique<Panel>(guiManager, 0, 540, 800, 60);
+hudPanel->setBackgroundColor(ElementState::Normal, SDL_Color{50, 50, 60, 200});
+hudPanel->setBorder(ElementState::Normal, SDL_Color{100, 100, 120, 255}, 2);
 
-Inicjalizacja zasobów (przykład):
-- Load tekstury jednostek:
-  auto soldierTex = guiManager.textureManager.loadTexture("assets/units/soldier.png");
-- Load atlas animacji i zainicjuj animacje poprzez AnimationManager.
-- Przykładowe pliki referencyjne: [`src/texture_manager.hpp`](src/texture_manager.hpp:15), [`examples/example_animation.cpp`](examples/example_animation.cpp:1).
+// Panel zasobów (lewy dolny róg)
+auto resourcesPanel = std::make_unique<Panel>(guiManager, 10, 550, 200, 40);
+resourcesPanel->setBackgroundColor(ElementState::Normal, SDL_Color{80, 80, 40, 255});
 
-Logika klikalności i issue commands:
-- Wybieranie: kliknięcie `onMouseDown` pojedynczej jednostki ustawia selected = true.
-- Grupowanie: shift+click dodaje do selekcji, drag-selection wybiera wiele jednostek na prostokącie.
-- Issue command (move/attack): klik na pusty teren -> oblicz punkt docelowy w world-coordinates i ustaw dla każdej wybranej jednostki cel ruchu.
-- Mapowanie click -> world:
-  worldX = (screenX / zoom) + cameraOffsetX
-  worldY = (screenY / zoom) + cameraOffsetY
+// Dodaj ikonki zasobów i liczniki
+auto goldIcon = std::make_unique<Label>(guiManager, 10, 555, "💰", 24);
+auto goldAmount = std::make_unique<Label>(guiManager, 40, 555, "1000", 16);
+resourcesPanel->addChild(std::move(goldIcon));
+resourcesPanel->addChild(std::move(goldAmount));
+```
 
-Ruch jednostek — uproszczona symulacja:
-- Użyj `TimerManager` do ticków ruchu (np. 30-60ms) lub animacji movement z `AnimationManager`.
-- Prosty algorytm:
-  - compute direction = normalize(target - pos)
-  - pos += direction * (speed * dt)
-  - jeśli dist(pos, target) < threshold => stop, change state to idle
-- Synchronizuj stan z `AnimationManager` (walk->idle).
+### ContextMenu (Unit Menus)
 
-Synchronizacja animacji z atlasem:
-- Trzymaj indeks klatki animacji w UnitWidget i zmieniaj go w callbacku animacji albo w ticku TimerManager.
-- TextureManager może przechowywać atlas oraz zwracać subrecty dla każdej klatki.
+Menu kontekstowe dla jednostek i budynków.
 
-Timery używane w AI / pathfinding / attack cooldown:
-- AI tick: intervalowy timer (np. 200ms) do aktualizacji decyzji.
-- Pathfinding tick: timer inicjowany gdy jednostka ma cel, aktualizuje pozycję co n ms.
-- Attack cooldown: single-shot timer z callbackiem resetującym możliwość ataku.
+```cpp
+// Tworzenie menu kontekstowego dla jednostki
+auto unitMenu = std::make_unique<ContextMenu>(guiManager);
+ContextMenu* menuPtr = unitMenu.get();
 
-Minimalny, kompilowalny pseudokod C++ (schematyczny)
-
-#include "src/gui.hpp"
-#include "src/gui_manager.hpp"
-
-class UnitWidget : public GUIElement {
-public:
-  UnitWidget(GUIManager* mgr) : GUIElement(), manager(mgr) {
-    tex = manager->textureManager.loadTexture("assets/units/soldier.png");
-  }
-  void draw(SDL_Renderer* r) override {
-    // rysuj aktualną ramkę z tex
-    SDL_Rect dst{int(pos.x), int(pos.y), w, h};
-    // zakładamy, że tex zawiera atlas i metoda getFrameRect zwraca SDL_Rect
-    auto frame = manager->textureManager.getFrameRect("soldier_walk", frameIndex);
-    SDL_RenderCopy(r, tex.get(), &frame, &dst);
-  }
-  void onMouseDown(int sx, int sy) override {
-    selected = true;
-  }
-  void moveTo(float x, float y) {
-    target = {x,y};
-    // uruchom timer ruchu
-    manager->timerManager.startTimer(this, 50, false, [this](int){ tickMove(); });
-    // uruchom animację walk
-    manager->animationManager.animate(&frameIndex, frameIndex, 10, 300, easing::linear);
-  }
-private:
-  void tickMove() {
-    // prosty krok ruchu
-  }
-  GUIManager* manager;
-  SharedTexture tex;
-  int frameIndex = 0;
-  bool selected = false;
-  Vec2 pos, target;
-};
-
-// Rejestracja:
-auto unit = std::make_shared<UnitWidget>(&guiManager);
-guiManager.addElement(unit);
-
-## Praktyczne fragmenty kodu i wzorce użycia
-
-1) Tworzenie klasy jednostki dziedziczącej po GUIElement  
-Zobacz przykład powyżej i bazę [`src/gui.hpp`](src/gui.hpp:19).
-
-2) Zarejestrowanie i użycie TextureManager i FontManager  
-auto& texMgr = guiManager.textureManager; // referencja  
-auto tex = texMgr.loadTexture("assets/units/soldier.png");  
-auto& fontMgr = guiManager.fontManager;  
-auto font = fontMgr.loadFont("assets/fonts/font.ttf", 14);
-
-3) Uruchomienie animacji przez AnimationManager  
-manager->animationManager.animate(&pos.x, pos.x, dest.x, durationMs, easing::linear, on_complete);
-
-4) Ustawienie i obsługa timera przez TimerManager  
-manager->timerManager.startTimer(this, 100, false, [this](int id){
-  // tick logic
+// Dodaj opcje menu z callback'ami
+menuPtr->addItem("Atak", [this]() {
+    issueAttackCommand();
 });
 
-5) Obsługa kliknięcia / drag selection i mapowanie koordynatów
-// przy mouse down
-int sx, sy; // screen coords
-float worldX = (sx / camera.zoom) + camera.offsetX;
-float worldY = (sy / camera.zoom) + camera.offsetY;
-// potem sprawdz czy punkt należy do elementu: element->contains(worldX, worldY)
+menuPtr->addItem("Ruch", [this]() {
+    issueMoveCommand();
+});
 
-## Optymalizacje i ograniczenia
+menuPtr->addSeparator();
 
-- Cache'owanie (`m_cachedTexture`) i kiedy użyć `drawDirect`:
-  - Użyj cache dla statycznych lub rzadko zmieniających się widgetów (mapa, HUD). Implementacja w [`src/gui.cpp`](src/gui.cpp:135).
-  - `drawDirect` gdy element potrzebuje natychmiastowego rysowania bez kopii do textury.
-- Zalecenia dotyczące tekstur:
-  - Rozmiary tekstur: trzymać je w mocno ograniczonych rozmiarach (potrzebny mipmaping/wielkość tekstury zależy od platformy).
-  - Używaj atlasów, aby minimalizować przełączanie tekstury i draw calls.
-  - Batchuj rysowania kiedy to możliwe.
-- Minimalizacja zmian targetu renderera: tworzenie/rekreowanie tekstury celów jest kosztowne — unikaj tego w gorącej ścieżce.
-- Testy i CI (headless): sprawdź [`.kilocode/rules/memory-bank/testing_strategy.md`](.kilocode/rules/memory-bank/testing_strategy.md:1) — użyj Xvfb w CI.
+menuPtr->addItem("Zatrzymaj", [this]() {
+    issueStopCommand();
+});
 
-## Debugowanie i typowe problemy
+menuPtr->addItem("Właściwości", [this]() {
+    showUnitProperties();
+}, true); // opcja włączona domyślnie
 
-- Nieudane tworzenie tekstury:
-  - Sprawdź logi SDL_LogError; sprawdź zwracane nullptr z `SDL_CreateTexture`.
-  - Upewnij się, że renderer został poprawnie utworzony przed wywołaniem TextureManager.
-- Brak fontów:
-  - Sprawdź ścieżkę do `assets/fonts/font.ttf`. Jeśli występuje błąd, FontManager powinien logować problem.
-- Błędy inicjalizacji SDL_image/SDL_ttf:
-  - Upewnij się, że `IMG_Init(...)` i `TTF_Init()` zwróciły sukces, loguj odpowiednio.
-- Problemy z cache'owaniem:
-  - Jeśli widget nie odświeża się po zmianie danych, sprawdź czy wywoływane jest `markDirty()` i czy wielkość `m_cachedTexture` odpowiada nowemu rozmiarowi (patrz [`src/gui.cpp`](src/gui.cpp:220)).
+// Wyświetlanie menu
+void showContextMenu(int x, int y, Unit* unit) {
+    menuPtr->showAt(x, y);
+    selectedUnit = unit;
+}
+```
 
-## Checklisty i best-practices dla zespołu RTS
+### TabControl (Multi-page Panels)
 
-- Nazewnictwo zasobów:
-  - assets/units/<unit_name>_walk_0.png, ... _n.png lub atlas: assets/units/<unit_name>.atlas.png
-- Separacja logiki gry od widoku:
-  - Trzymaj logikę AI/pathfinding w niezależnych klasach/service'ach; GUIElement powinien jedynie wizualizować stan.
-- Lifecycle: zawsze oznacz element do usunięcia przez `markForDeletion()` zamiast natychmiastowego delete; GUIManager wykona cleanup (`src/gui.cpp` i `src/gui_manager.cpp`).
-- Testy jednostkowe: dodaj testy dla managers (TextureManager, FontManager, AnimationManager, TimerManager).
+Kontrolki z zakładkami do organizacji złożonych interfejsów.
 
-## Linki do plików referencyjnych w repozytorium
-- [`Makefile`](Makefile:1)
-- [`src/gui_manager.hpp`](src/gui_manager.hpp:19)
-- [`src/gui_manager.cpp`](src/gui_manager.cpp:14)
-- [`src/gui.hpp`](src/gui.hpp:19)
-- [`src/gui.cpp`](src/gui.cpp:135)
-- [`src/texture_manager.hpp`](src/texture_manager.hpp:15)
-- [`src/texture_manager.cpp`](src/texture_manager.cpp:1)
-- [`src/font_manager.hpp`](src/font_manager.hpp:30)
-- [`src/font_manager.cpp`](src/font_manager.cpp:7)
-- [`src/animation_manager.hpp`](src/animation_manager.hpp:24)
-- [`src/timer_manager.hpp`](src/timer_manager.hpp:18)
-- [`src/style.hpp`](src/style.hpp:17)
-- [`src/theme.hpp`](src/theme.hpp:10)
-- Przykłady: [`examples/example_button.cpp`](examples/example_button.cpp:1), [`examples/example_animation.cpp`](examples/example_animation.cpp:1), [`examples/example_panel.cpp`](examples/example_panel.cpp:1)
-- Memory bank test strategy: [`.kilocode/rules/memory-bank/testing_strategy.md`](.kilocode/rules/memory-bank/testing_strategy.md:1)
+```cpp
+// Tworzenie panelu z zakładkami dla zarządzania jednostkami
+auto unitManagement = std::make_unique<TabControl>(guiManager, 100, 100, 600, 400);
 
-## Gotowy przykład — plan działania (kroki do natychmiastowego startu)
+// Dodaj zakładki
+Panel* infantryTab = unitManagement->addTab("Piechota");
+Panel* vehiclesTab = unitManagement->addTab("Pojazdy");
+Panel* buildingsTab = unitManagement->addTab("Budynki");
 
-Szybki plan (pierwszy sprint, 2 tygodnie, zespół 3-5 osób):
-1. Loader zasobów
-   - Task: Zaimplementować loader i strukturę katalogu assets; zapewnić fallbacky w TextureManager/FontManager.
-   - Referencje: [`src/texture_manager.hpp`](src/texture_manager.hpp:15), [`src/font_manager.hpp`](src/font_manager.hpp:30)
-2. System jednostek (pozycja, render, selekcja)
-   - Task: UnitWidget, podstawowa logika wyboru i renderu.
-   - Referencje: [`src/gui.hpp`](src/gui.hpp:19), [`examples/example_button.cpp`](examples/example_button.cpp:1)
-3. Selektowanie i grupowanie
-   - Task: Drag selection + shift+click.
-4. Ruch jednostek i prosta symulacja (timer/animation)
-   - Task: TimerManager tick do aktualizacji pozycji, AnimationManager do zmian stanu.
-   - Referencje: [`src/timer_manager.hpp`](src/timer_manager.hpp:18), [`src/animation_manager.hpp`](src/animation_manager.hpp:24)
-5. HUD i podstawowy interfejs
-   - Task: Panel zasobów, przyciski produkcji.
-6. Minimap i kamera
-   - Task: Minimap z bezpośrednim rysowaniem i zoom/pan kamery.
+// Zawartość zakładki piechoty
+auto soldierList = std::make_unique<Panel>(guiManager, 10, 30, 580, 360);
+auto createSoldierBtn = std::make_unique<Button>(guiManager, 10, 10, 150, 30, "Utwórz Żołnierza");
+createSoldierBtn->setOnClickCallback([](GUIElement*) {
+    createSoldier();
+});
+soldierList->addChild(std::move(createSoldierBtn));
+infantryTab->addChild(std::move(soldierList));
+```
 
-Minimalny backlog zadań (konkretne story):
-- [ ] Przygotować strukturę assets i przykładowe tekstury (soldier, building).
-- [ ] Dodać UnitWidget example w `examples/` oraz test integracyjny podstawowego selekcjonowania.
-- [ ] Implementować TimerManager-driven movement dla jednostek.
-- [ ] Podstawowy HUD z kilkoma przyciskami i licznikiem zasobów.
+### Button (Action Commands)
 
-## TODOs i kwestie do weryfikacji
+Przyciski dla komend akcji - podstawa interakcji w RTS.
 
-- TODO: weryfikacja dokładnej polityki publikacji zasobów i przykładowej ścieżki `assets/fonts/font.ttf`.
-- TODO: sprawdzić dokładne linie implementacji cache w [`src/gui.cpp`](src/gui.cpp:135) i ewentualnie zaktualizować ten dokument, jeśli implementacja się zmieni.
+```cpp
+// Przycisk produkcji jednostki
+auto trainButton = std::make_unique<Button>(guiManager, 50, 50, 120, 40, "Żołnierz");
+trainButton->setOnClickCallback([this](GUIElement*) {
+    if (canTrainUnit(UnitType::SOLDIER)) {
+        trainUnit(UnitType::SOLDIER);
+    }
+});
 
-------------------------------------------------------------
+// Style przycisku w różnych stanach
+trainButton->setBackgroundColor(ElementState::Normal, SDL_Color{60, 120, 60, 255});
+trainButton->setBackgroundColor(ElementState::Hover, SDL_Color{80, 150, 80, 255});
+trainButton->setBackgroundColor(ElementState::Pressed, SDL_Color{40, 100, 40, 255});
+trainButton->setTextColor(ElementState::Normal, SDL_Color{255, 255, 255, 255});
 
-Dokument przygotowany jako kompletny przewodnik startowy dla zespołu RTS używającego SDL GUI. Wszystkie referencje do plików źródłowych i przykładów umieszczono jako odnośniki do repozytorium.
+// Ikona na przycisku
+auto soldierIcon = std::make_unique<Label>(guiManager, 5, 10, "⚔️", 24);
+trainButton->addChild(std::move(soldierIcon));
+```
 
-Koniec dokumentu.
+### TextInput (Player/Unit Names)
+
+Pola tekstowe do wprowadzania nazw graczy i jednostek.
+
+```cpp
+// Pole do nazwy gracza
+auto playerNameInput = std::make_unique<TextInput>(guiManager, 200, 50, 200, 30);
+playerNameInput->setPlaceholder("Wpisz nazwę gracza...");
+playerNameInput->setMaxLength(20);
+playerNameInput->setOnTextChanged([](const std::string& text) {
+    validatePlayerName(text);
+});
+
+// Pole do nazwy jednostki
+auto unitNameInput = std::make_unique<TextInput>(guiManager, 200, 100, 200, 30);
+unitNameInput->setPlaceholder("Nazwij jednostkę...");
+unitNameInput->setMaxLength(15);
+unitNameInput->setOnTextEntered([](const std::string& text) {
+    renameSelectedUnit(text);
+});
+```
+
+## Optymalizacja Wydajności
+
+### Cache System
+
+Biblioteka wykorzystuje dwupoziomowy system cache'owania:
+
+**1. Cache Zasobów (TextureManager i FontManager)**
+```cpp
+// TextureManager - cache'uje tekstury
+auto& textureManager = guiManager.getTextureManager();
+
+// Załaduj teksturę tylko raz, potem używaj z cache
+auto unitTexture = textureManager.loadTexture("assets/units/soldier.png");
+auto buildingTexture = textureManager.loadTexture("assets/buildings/barracks.png");
+
+// FontManager - cache'uje czcionki
+auto& fontManager = guiManager.getFontManager();
+auto uiFont = fontManager.loadFont("assets/fonts/arial.ttf", 14);
+auto titleFont = fontManager.loadFont("assets/fonts/arial.ttf", 24);
+```
+
+**2. Cache Renderowania (m_cachedTexture)**
+```cpp
+// Każdy element GUI ma własny cache renderowania
+// Cache jest automatycznie odświeżany gdy element się zmienia
+element->setPosition(newX, newY);  // Automatycznie unieważnia cache
+element->setSize(newWidth, newHeight);  // Rekreacja cache
+element->markDirty();  // Ręczne unieważnienie cache
+```
+
+### Direct Rendering
+
+Dla elementów wymagających częstych aktualizacji używaj direct rendering:
+
+```cpp
+class Minimap : public GUIElement {
+public:
+    bool wantsDirectRender() const override { 
+        return true;  // Renderuj bezpośrednio, nie cache'uj
+    }
+    
+    void drawDirect(SDL_Renderer* renderer) override {
+        // Rysuj minimapę bezpośrednio na ekran
+        // Aktualizuj każdą klatkę
+        drawMinimapTiles(renderer);
+        drawUnitMarkers(renderer);
+        drawCameraView(renderer);
+    }
+};
+```
+
+### Best Practices
+
+**1. Optymalizacja tekstur**
+- Używaj atlasów tekstur dla podobnych elementów
+- Zachowaj spójne rozmiary (potęgi liczby 2)
+- Kompresuj tekstury gdy to możliwe
+
+**2. Zarządzanie pamięcią**
+- Używaj `std::unique_ptr` dla hierarchii elementów
+- Używaj `std::shared_ptr` dla współdzielonych zasobów
+- Oznaczaj elementy do usunięcia przez `markForDeletion()`
+
+**3. Renderowanie**
+- Cache'uj statyczne elementy HUD
+- Używaj direct rendering dla elementów dynamicznych
+- Minimalizuj zmiany stanu renderera
+
+**4. Organizacja kodu**
+```cpp
+// Przykład optymalnej struktury dla gry RTS
+class RTSGame {
+private:
+    GUIManager guiManager;
+    
+    // Podsystemy gry
+    std::unique_ptr<UnitManager> unitManager;
+    std::unique_ptr<BuildingManager> buildingManager;
+    std::unique_ptr<ResourceManager> resourceManager;
+    
+    // Elementy GUI
+    std::vector<std::unique_ptr<Panel>> hudPanels;
+    std::unique_ptr<Cursor> gameCursor;
+    std::unique_ptr<Minimap> minimap;
+    
+public:
+    void update(float deltaTime);
+    void render();
+};
+```
+
+## Przykłady Implementacji
+
+### HUD Example
+
+Kompletny przykład HUD dla gry RTS:
+
+```cpp
+#include "sdl_app.hpp"
+#include "gui_manager.hpp"
+#include "panel.hpp"
+#include "button.hpp"
+#include "label.hpp"
+#include "text_input.hpp"
+
+class RTSHUD {
+private:
+    GUIManager& guiManager;
+    std::unique_ptr<Panel> mainHudPanel;
+    std::unique_ptr<Panel> resourcesPanel;
+    std::unique_ptr<Panel> commandsPanel;
+    std::unique_ptr<Panel> minimapPanel;
+    
+public:
+    RTSHUD(GUIManager& manager) : guiManager(manager) {
+        createHUD();
+    }
+    
+private:
+    void createHUD() {
+        // Główny panel HUD (dół ekranu)
+        mainHudPanel = std::make_unique<Panel>(guiManager, 0, 540, 1024, 80);
+        mainHudPanel->setBackgroundColor(ElementState::Normal, 
+            SDL_Color{40, 40, 50, 240});
+        mainHudPanel->setBorder(ElementState::Normal, 
+            SDL_Color{80, 80, 100, 255}, 2);
+        
+        // Panel zasobów (lewy dolny)
+        createResourcesPanel();
+        
+        // Panel komend (prawy dolny)
+        createCommandsPanel();
+        
+        // Minimapa (prawy górny róg)
+        createMinimapPanel();
+        
+        guiManager.addElement(std::move(mainHudPanel));
+    }
+    
+    void createResourcesPanel() {
+        resourcesPanel = std::make_unique<Panel>(guiManager, 10, 550, 200, 60);
+        resourcesPanel->setBackgroundColor(ElementState::Normal, 
+            SDL_Color{60, 60, 40, 255});
+        
+        // Złoto
+        auto goldIcon = std::make_unique<Label>(guiManager, 10, 10, "💰", 20);
+        auto goldText = std::make_unique<Label>(guiManager, 35, 10, "1000", 16);
+        resourcesPanel->addChild(std::move(goldIcon));
+        resourcesPanel->addChild(std::move(goldText));
+        
+        // Drewno
+        auto woodIcon = std::make_unique<Label>(guiManager, 80, 10, "🌲", 20);
+        auto woodText = std::make_unique<Label>(guiManager, 105, 10, "500", 16);
+        resourcesPanel->addChild(std::move(woodIcon));
+        resourcesPanel->addChild(std::move(woodText));
+        
+        mainHudPanel->addChild(std::move(resourcesPanel));
+    }
+    
+    void createCommandsPanel() {
+        commandsPanel = std::make_unique<Panel>(guiManager, 700, 550, 300, 60);
+        commandsPanel->setBackgroundColor(ElementState::Normal, 
+            SDL_Color{50, 50, 60, 255});
+        
+        // Przyciski komend
+        auto trainSoldierBtn = std::make_unique<Button>(guiManager, 10, 10, 80, 40, "Żołnierz");
+        trainSoldierBtn->setOnClickCallback([](GUIElement*) {
+            // Logika trenowania żołnierza
+            trainUnit(UnitType::SOLDIER);
+        });
+        
+        auto trainArcherBtn = std::make_unique<Button>(guiManager, 100, 10, 80, 40, "Łucznik");
+        trainArcherBtn->setOnClickCallback([](GUIElement*) {
+            trainUnit(UnitType::ARCHER);
+        });
+        
+        auto buildBarracksBtn = std::make_unique<Button>(guiManager, 190, 10, 80, 40, "Koszary");
+        buildBarracksBtn->setOnClickCallback([](GUIElement*) {
+            startBuilding(BuildingType::BARRACKS);
+        });
+        
+        commandsPanel->addChild(std::move(trainSoldierBtn));
+        commandsPanel->addChild(std::move(trainArcherBtn));
+        commandsPanel->addChild(std::move(buildBarracksBtn));
+        
+        mainHudPanel->addChild(std::move(commandsPanel));
+    }
+    
+    void createMinimapPanel() {
+        minimapPanel = std::make_unique<Panel>(guiManager, 800, 10, 200, 150);
+        minimapPanel->setBackgroundColor(ElementState::Normal, 
+            SDL_Color{20, 20, 30, 255});
+        minimapPanel->setBorder(ElementState::Normal, 
+            SDL_Color{100, 100, 100, 255}, 1);
+        
+        mainHudPanel->addChild(std::move(minimapPanel));
+    }
+};
+```
+
+### Context Menu Example
+
+Menu kontekstowe dla jednostek:
+
+```cpp
+class UnitContextMenu {
+private:
+    GUIManager& guiManager;
+    std::unique_ptr<ContextMenu> contextMenu;
+    
+public:
+    UnitContextMenu(GUIManager& manager) : guiManager(manager) {
+        createContextMenu();
+    }
+    
+    void showForUnit(Unit* unit, int x, int y) {
+        // Dostosuj menu do typu jednostki
+        setupMenuForUnitType(unit->getType());
+        contextMenu->showAt(x, y);
+    }
+    
+private:
+    void createContextMenu() {
+        contextMenu = std::make_unique<ContextMenu>(guiManager);
+        
+        // Ruch
+        contextMenu->addItem("Ruch", [this]() {
+            enterMoveMode();
+        });
+        
+        // Atak
+        contextMenu->addItem("Atak", [this]() {
+            enterAttackMode();
+        });
+        
+        contextMenu->addSeparator();
+        
+        // Opcje specjalne (będą dostosowane dynamicznie)
+        contextMenu->addItem("Właściwości", [this]() {
+            showUnitProperties();
+        });
+    }
+    
+    void setupMenuForUnitType(UnitType type) {
+        // Wyczyść poprzednie opcje dynamiczne
+        contextMenu->clearDynamicItems();
+        
+        switch (type) {
+            case UnitType::WORKER:
+                addWorkerOptions();
+                break;
+            case UnitType::SOLDIER:
+                addSoldierOptions();
+                break;
+            case UnitType::BUILDING:
+                addBuildingOptions();
+                break;
+        }
+    }
+    
+    void addWorkerOptions() {
+        contextMenu->addItem("Zbieraj zasoby", [this]() {
+            assignResourceGathering();
+        });
+        
+        contextMenu->addItem("Buduj", [this]() {
+            enterBuildMode();
+        });
+        
+        contextMenu->addItem("Napraw", [this]() {
+            enterRepairMode();
+        });
+    }
+};
+```
+
+### Custom Cursor Example
+
+Zaawansowany system kursorów:
+
+```cpp
+class GameCursor {
+private:
+    GUIManager& guiManager;
+    std::unique_ptr<Cursor> cursor;
+    
+public:
+    GameCursor(GUIManager& manager) : guiManager(manager) {
+        createCursors();
+    }
+    
+    void update(int mouseX, int mouseY) {
+        auto newState = determineCursorState(mouseX, mouseY);
+        cursor->setState(newState);
+    }
+    
+private:
+    void createCursors() {
+        cursor = std::make_unique<Cursor>(guiManager);
+        
+        // Kursor domyślny
+        cursor->setCursorTexture(CursorState::Normal, "assets/cursors/arrow.png", 5, 5);
+        
+        // Kursor przy najechaniu na jednostkę
+        cursor->setCursorTexture(CursorState::Hover, "assets/cursors/select.png", 5, 5);
+        
+        // Kursor przy najechaniu na budynek
+        cursor->setCursorTexture(CursorState::Pressed, "assets/cursors/building.png", 5, 5);
+        
+        // Animowany kursor podczas akcji
+        cursor->setAnimatedCursor(CursorState::Busy, 
+            "assets/cursors/busy.png", 4, 1, 12.0f, 16, 16);
+        
+        // Kursor tekstowy
+        cursor->setCursorTexture(CursorState::Text, "assets/cursors/text.png", 2, 10);
+        
+        guiManager.addElement(std::move(cursor));
+    }
+    
+    CursorState determineCursorState(int x, int y) {
+        // Sprawdź element pod kursorem
+        auto element = guiManager.getElementAt(x, y);
+        
+        if (element) {
+            if (element->hasTag("unit")) {
+                return CursorState::Hover;
+            } else if (element->hasTag("building")) {
+                return CursorState::Pressed;
+            } else if (element->hasTag("text_input")) {
+                return CursorState::Text;
+            }
+        }
+        
+        // Sprawdź stan gry
+        if (isGameActionInProgress()) {
+            return CursorState::Busy;
+        }
+        
+        return CursorState::Normal;
+    }
+};
+```
+
+### Animation Example
+
+System animacji dla jednostek:
+
+```cpp
+class UnitAnimationSystem {
+private:
+    GUIManager& guiManager;
+    std::map<Unit*, std::unique_ptr<AnimatedImage>> unitAnimations;
+    
+public:
+    void addUnit(Unit* unit) {
+        auto animation = std::make_unique<AnimatedImage>(guiManager, 
+            unit->getX(), unit->getY(), 64, 64);
+        
+        // Domyślna animacja bezczynności
+        animation->setSpriteSheet("assets/units/idle.png", 1, 1);
+        animation->setFPS(1.0f);
+        
+        unitAnimations[unit] = std::move(animation);
+        guiManager.addElement(unitAnimations[unit].get());
+    }
+    
+    void updateUnitAnimation(Unit* unit, UnitState newState) {
+        auto it = unitAnimations.find(unit);
+        if (it != unitAnimations.end()) {
+            auto& animation = it->second;
+            
+            switch (newState) {
+                case UnitState::IDLE:
+                    playIdleAnimation(animation.get());
+                    break;
+                case UnitState::WALKING:
+                    playWalkingAnimation(animation.get());
+                    break;
+                case UnitState::ATTACKING:
+                    playAttackAnimation(animation.get());
+                    break;
+                case UnitState::DEAD:
+                    playDeathAnimation(animation.get());
+                    break;
+            }
+        }
+    }
+    
+private:
+    void playIdleAnimation(AnimatedImage* animation) {
+        animation->setSpriteSheet("assets/units/idle.png", 4, 1);
+        animation->setFPS(2.0f);
+        animation->setLoop(true);
+        animation->play();
+    }
+    
+    void playWalkingAnimation(AnimatedImage* animation) {
+        animation->setSpriteSheet("assets/units/walk.png", 8, 1);
+        animation->setFPS(12.0f);
+        animation->setLoop(true);
+        animation->play();
+    }
+    
+    void playAttackAnimation(AnimatedImage* animation) {
+        animation->setSpriteSheet("assets/units/attack.png", 6, 1);
+        animation->setFPS(15.0f);
+        animation->setLoop(false);
+        animation->setOnComplete([animation]() {
+            // Po ataku wróć do animacji bezczynności
+            animation->setSpriteSheet("assets/units/idle.png", 4, 1);
+            animation->setFPS(2.0f);
+            animation->play();
+        });
+        animation->play();
+    }
+};
+```
+
+## Najlepsze Praktyki
+
+### 1. Organizacja Kodu
+
+**Separacja logiki i widoku**
+```cpp
+// Dobrze - oddzielona logika gry od GUI
+class Unit {
+private:
+    UnitState m_state;
+    Vector2 m_position;
+    
+public:
+    void update(float deltaTime);
+    void setState(UnitState newState);
+};
+
+class UnitWidget : public GUIElement {
+private:
+    Unit* m_unit;
+    std::unique_ptr<AnimatedImage> m_animation;
+    
+public:
+    void render() override {
+        m_animation->setPosition(m_unit->getPosition());
+        updateAnimationBasedOnState(m_unit->getState());
+    }
+};
+```
+
+### 2. Zarządzanie Zasobami
+
+**Lazy loading i cache'owanie**
+```cpp
+class ResourceManager {
+private:
+    TextureManager& textureManager;
+    FontManager& fontManager;
+    std::map<std::string, bool> loadedTextures;
+    
+public:
+    SharedTexture getTexture(const std::string& path) {
+        if (!loadedTextures[path]) {
+            auto texture = textureManager.loadTexture(path);
+            loadedTextures[path] = true;
+            return texture;
+        }
+        return textureManager.getTexture(path);
+    }
+};
+```
+
+### 3. Optymalizacja Wydajności
+
+**Minimalizowanie zmian stanu renderera**
+```cpp
+// Dobrze - grupuj operacje na tej samej teksturze
+void renderUnits() {
+    auto unitTexture = textureManager.getTexture("units.png");
+    
+    for (auto& unit : units) {
+        SDL_Rect src = getUnitFrame(unit);
+        SDL_Rect dst = {unit.x, unit.y, 64, 64};
+        SDL_RenderCopy(renderer, unitTexture.get(), &src, &dst);
+    }
+}
+```
+
+### 4. Event Handling
+
+**Optymalne przekazywanie zdarzeń**
+```cpp
+void GUIManager::processEvent(const SDL_Event& event) {
+    // Przestań propagację po obsłużeniu zdarzenia
+    for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it) {
+        if ((*it)->processEvent(event)) {
+            break;  // Zdarzenie zostało obsłużone
+        }
+    }
+}
+```
+
+### 5. Debugowanie i Testowanie
+
+**Logowanie stanów**
+```cpp
+class DebugGUI {
+public:
+    static void drawFPS(int fps) {
+        auto fpsLabel = std::make_unique<Label>(guiManager, 10, 10, 
+            "FPS: " + std::to_string(fps), 16);
+        guiManager.addElement(std::move(fpsLabel));
+    }
+    
+    static void drawMemoryUsage() {
+        auto memoryInfo = getMemoryUsage();
+        auto memoryLabel = std::make_unique<Label>(guiManager, 10, 30,
+            "Memory: " + std::to_string(memoryInfo) + " MB", 16);
+        guiManager.addElement(std::move(memoryLabel));
+    }
+};
+```
+
+## Podsumowanie
+
+Biblioteka SDL GUI dostarcza kompletny zestaw narzędzi do tworzenia profesjonalnych interfejsów w grach RTS. Dzięki systemowi animacji, zaawansowanej obsłudze kursorów, optymalizacji wydajności i bogatym przykładom implementacji, programiści mogą szybko tworzyć responsywne i atrakcyjne interfejsy użytkownika.
+
+Kluczowe zalety biblioteki:
+- **Wydajność** - dwupoziomowy system cache'owania
+- **Elastyczność** - modularny design z możliwością rozszerzania
+- **Łatwość użycia** - intuicyjne API z przykładami
+- **Optymalizacja** - automatyczne zarządzanie pamięcią
+- **Kompletność** - wszystkie potrzebne widgety dla RTS
+
+Dokumentacja zawiera praktyczne przykłady, najlepsze praktyki i gotowe implementacje, które można bezpośrednio wykorzystać w projektach gier RTS.
