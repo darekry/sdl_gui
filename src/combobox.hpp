@@ -1,6 +1,4 @@
-#ifndef COMBOBOX_HPP
-#define COMBOBOX_HPP
-
+#pragma once
 #include "button.hpp"
 #include "panel.hpp"
 #include "gui.hpp"
@@ -40,5 +38,3 @@ private:
     Panel* m_dropdown_panel;
     bool m_needs_update;
 };
-
-#endif // COMBOBOX_HPP

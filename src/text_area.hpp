@@ -1,6 +1,4 @@
-#ifndef TEXT_AREA_HPP
-#define TEXT_AREA_HPP
-
+#pragma once
 #include "gui.hpp"
 #include "gui_manager.hpp"
 
@@ -43,5 +41,3 @@ int m_text_offset_x = 0;
 Uint32 m_cursorBlinkTime = 0;
 bool m_showCursor = false;
 };
-
-#endif // TEXT_AREA_HPP

@@ -1,6 +1,4 @@
-#ifndef PANEL_HPP
-#define PANEL_HPP
-
+#pragma once
 #include "gui.hpp"
 
 class Panel : public GUIElement {
@@ -19,5 +17,3 @@ protected:
     bool m_is_dragging = false;
     SDL_Point m_drag_offset;
 };
-
-#endif // PANEL_HPP

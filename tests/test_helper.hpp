@@ -1,9 +1,9 @@
 #ifndef TEST_HELPER_HPP
 #define TEST_HELPER_HPP
 
-#include <SDL.h>
-#include <SDL_ttf.h>
-#include <SDL_image.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 #include <stdexcept>
 #include <string>
 #include <string_view>

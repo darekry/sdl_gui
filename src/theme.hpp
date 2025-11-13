@@ -1,5 +1,4 @@
-#ifndef THEME_HPP
-#define THEME_HPP
+#pragma once
 
 #include "style.hpp"
 #include <map>
@@ -23,5 +22,3 @@ private:
     std::map<std::string, Style> m_styles;
     Style m_defaultStyle;
 };
-
-#endif // THEME_HPP

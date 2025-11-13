@@ -1,6 +1,4 @@
-#ifndef BUTTON_HPP
-#define BUTTON_HPP
-
+#pragma once
 #include "gui.hpp"
 
 // Klasa przycisku dziedzicząca po GUIElement
@@ -31,5 +29,3 @@ private:
     OnClickCallback m_onClick;
     OnMouseOverCallback m_onMouseOver;
 };
-
-#endif // BUTTON_HPP

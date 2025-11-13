@@ -1,5 +1,4 @@
-#ifndef GUI_HPP
-#define GUI_HPP
+#pragma once
 
 #include "texture_manager.hpp"
 #include "font_manager.hpp"
@@ -126,5 +125,3 @@ protected:
     bool m_style_dirty = true;
     std::vector<std::unique_ptr<GUIElement>> m_children;
 };
-
-#endif // GUI_HPP

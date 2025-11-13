@@ -1,6 +1,4 @@
-#ifndef CURSOR_HPP
-#define CURSOR_HPP
-
+#pragma once
 #include "gui.hpp"
 #include <string>
 #include <map>
@@ -77,5 +75,3 @@ private:
     float m_scale = 1.0f;
     std::function<void(CursorState)> m_onStateChanged;
 };
-
-#endif // CURSOR_HPP

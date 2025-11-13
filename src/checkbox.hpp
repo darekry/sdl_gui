@@ -1,6 +1,4 @@
-#ifndef CHECKBOX_HPP
-#define CHECKBOX_HPP
-
+#pragma once
 #include "gui.hpp"
 
 class Checkbox : public GUIElement {
@@ -24,5 +22,3 @@ private:
     bool m_isChecked;
     OnChangeCallback m_onChange;
 };
-
-#endif // CHECKBOX_HPP

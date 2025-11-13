@@ -1,5 +1,4 @@
-#ifndef FONT_MANAGER_HPP
-#define FONT_MANAGER_HPP
+#pragma once
 
 #include "SDL2/SDL_ttf.h"
 #include "sdl_deleters.hpp"
@@ -66,5 +65,3 @@ private:
     std::map<FontKey, SharedFont, FontCacheKeyCompare> m_fontCache; // Mapa przechowująca załadowane czcionki
     SharedFont m_defaultFont; // Domyślna czcionka
 };
-
-#endif // FONT_MANAGER_HPP

@@ -1,7 +1,4 @@
-#include "gui_manager.hpp"
-#include "sdl_app.hpp"
-#include "panel.hpp"
-
+#include "../dist/sdl_gui.hpp"
 
 
 const int SCREEN_WIDTH = 800;

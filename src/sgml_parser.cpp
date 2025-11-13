@@ -2,7 +2,7 @@
 #include "gui_manager.hpp"
 #include "panel.hpp"
 #include "button.hpp"
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 SGMLParser::SGMLParser(GUIManager& guiManager) : m_guiManager(guiManager) {}
 

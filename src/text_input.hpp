@@ -1,6 +1,4 @@
-#ifndef TEXT_INPUT_HPP
-#define TEXT_INPUT_HPP
-
+#pragma once
 
 #include "gui.hpp"
 #include "style.hpp"
@@ -42,5 +40,3 @@ private:
     std::function<void(TextInput*)> m_onTextChanged;
     std::function<void(TextInput*)> m_onEnterPressed;
 };
-
-#endif // TEXT_INPUT_HPP

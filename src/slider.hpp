@@ -1,6 +1,4 @@
-#ifndef SLIDER_HPP
-#define SLIDER_HPP
-
+#pragma once
 #include "button.hpp"
 #include "panel.hpp"
 #include "label.hpp"
@@ -51,5 +49,3 @@ private:
     std::unique_ptr<Button> m_decreaseButton;
     std::unique_ptr<Button> m_increaseButton;
 };
-
-#endif // SLIDER_HPP

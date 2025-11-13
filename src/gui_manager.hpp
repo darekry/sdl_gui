@@ -1,6 +1,4 @@
-#ifndef GUI_MANAGER_HPP
-#define GUI_MANAGER_HPP
-
+#pragma once
 
 #include "SDL2/SDL.h"
 #include "gui.hpp"
@@ -82,5 +80,3 @@ std::unique_ptr<AnimationManager> animation_manager;
 
 Theme m_theme;
 };
-
-#endif // GUI_MANAGER_HPP

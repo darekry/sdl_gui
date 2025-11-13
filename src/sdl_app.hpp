@@ -1,17 +1,15 @@
-#ifndef SDL_APP_HPP
-#define SDL_APP_HPP
+#pragma once
 
-#include "SDL_render.h"
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <iostream>
 
 
 
 class SDLApp {
 public:
-    SDLApp(const char* title, int width, int height, SDL_RendererFlags rendeerFlags = SDL_RENDERER_ACCELERATED) {
+    SDLApp(const char* title, int width, int height, SDL_RendererFlags rendeerFlags = SDL_RENDERER_PRESENTVSYNC) {
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
             std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
             throw std::runtime_error("SDL_Init failed");
@@ -58,11 +56,9 @@ public:
         SDL_Quit();
     }
 
-    SDL_Renderer* getRenderer() const { return m_renderer; }
+    [[nodiscard]] SDL_Renderer* getRenderer() const { return m_renderer; }
 
 private:
     SDL_Window* m_window = nullptr;
     SDL_Renderer* m_renderer = nullptr;
 };
-
-#endif // SDL_APP_HPP

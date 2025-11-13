@@ -1,5 +1,4 @@
-#ifndef CONTEXT_MENU_HPP
-#define CONTEXT_MENU_HPP
+#pragma once
 
 #include "gui.hpp"
 #include "panel.hpp"
@@ -55,5 +54,3 @@ private:
     const int m_itemHeight = 25;
     const int m_separatorHeight = 8;
 };
-
-#endif // CONTEXT_MENU_HPP

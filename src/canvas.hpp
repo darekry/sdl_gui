@@ -1,6 +1,4 @@
-#ifndef CANVAS_HPP
-#define CANVAS_HPP
-
+#pragma once
 #include "gui.hpp"
 #include <SDL2/SDL.h>
 
@@ -34,5 +32,3 @@ private:
 
     static constexpr int BRUSH_SIZE = 4;
 };
-
-#endif // CANVAS_HPP

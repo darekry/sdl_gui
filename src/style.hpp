@@ -1,5 +1,4 @@
-#ifndef STYLE_HPP
-#define STYLE_HPP
+#pragma once
 
 #include <SDL2/SDL_pixels.h>
 #include <memory>
@@ -127,5 +126,3 @@ inline void logStyle(const Style& style, const char* styleName) {
     }
     SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "--------------------------------------");
 }
-
-#endif // STYLE_HPP

@@ -1,5 +1,4 @@
-#ifndef RADIOGROUP_HPP
-#define RADIOGROUP_HPP
+#pragma once
 
 #include "panel.hpp"
 
@@ -13,5 +12,3 @@ public:
     void onButtonSelected(RadioButton* selectedButton);
     RadioButton* getSelectedButton() const;
 };
-
-#endif // RADIOGROUP_HPP

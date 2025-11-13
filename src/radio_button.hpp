@@ -1,6 +1,4 @@
-#ifndef RADIOBUTTON_HPP
-#define RADIOBUTTON_HPP
-
+#pragma once
 #include "gui.hpp"
 
 class RadioGroup;
@@ -26,5 +24,3 @@ private:
     bool m_isSelected = false;
     OnChangeCallback m_onChange;
 };
-
-#endif // RADIOBUTTON_HPP

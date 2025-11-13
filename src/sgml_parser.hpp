@@ -1,11 +1,7 @@
-#ifndef SGML_PARSER_HPP
-#define SGML_PARSER_HPP
-
+#pragma once
 #include <string>
 #include <memory>
-#include <functional>
-#include <map>
-#include <tinyxml2.h>
+#include "../lib/tinyxml2.h"
 
 class GUIManager;
 class GUIElement;
@@ -19,5 +15,3 @@ private:
     GUIManager& m_guiManager;
     std::unique_ptr<GUIElement> parseNode(tinyxml2::XMLElement* xmlNode);
 };
-
-#endif // SGML_PARSER_HPP

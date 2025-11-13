@@ -1,5 +1,4 @@
-#ifndef ANIMATED_IMAGE_HPP
-#define ANIMATED_IMAGE_HPP
+#pragma once
 
 #include "gui.hpp"
 #include "texture_manager.hpp"
@@ -108,5 +107,3 @@ private:
     // Wskaźnik do managerów (dostęp przez GUIElement::m_manager)
     // Nie trzymamy dodatknego wskaźnika do AnimationManager/TextureManager — pobieramy z m_manager w locie.
 };
-
-#endif // ANIMATED_IMAGE_HPP

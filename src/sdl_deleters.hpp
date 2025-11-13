@@ -1,6 +1,4 @@
-#ifndef SDL_DELETERS_HPP
-#define SDL_DELETERS_HPP
-
+#pragma once
 #include "SDL2/SDL_ttf.h"
 #include "SDL2/SDL.h"
 
@@ -21,5 +19,3 @@ struct SDLTextureDeleter {
         }
     }
 };
-
-#endif // SDL_DELETERS_HPP

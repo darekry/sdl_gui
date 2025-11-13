@@ -1,6 +1,4 @@
-#ifndef TAB_CONTROL_HPP
-#define TAB_CONTROL_HPP
-
+#pragma once
 #include "button.hpp"
 #include "gui.hpp"
 #include "panel.hpp"
@@ -30,5 +28,3 @@ private:
     
     int m_tabButtonHeight = 30;
 };
-
-#endif // TAB_CONTROL_HPP

@@ -1,5 +1,4 @@
-#ifndef TEXTURE_MANAGER_HPP
-#define TEXTURE_MANAGER_HPP
+#pragma once
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
@@ -52,4 +51,3 @@ private:
     std::map<std::string, SharedTexture, std::less<>> m_textureCache; // Mapa przechowująca załadowane tekstury
     SharedTexture m_defaultTexture; // Domyślna tekstura
 };
-#endif // TEXTURE_MANAGER_HPP

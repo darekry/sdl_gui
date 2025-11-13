@@ -30,6 +30,8 @@ RELEASE_FLAGS += -march=native
 RELEASE_FLAGS += -flto
 RELEASE_FLAGS += -DNDEBUG
 
+RELEASE_CXXFLAGS := $(COMMON_FLAGS) $(RELEASE_FLAGS)
+
 # Flagi specyficzne dla trybu Debug
 DEBUG_FLAGS = -g
 DEBUG_FLAGS += -O0
@@ -68,6 +70,7 @@ LDFLAGS += -lSDL2_ttf
 
 # define output directory
 OUTPUT := output
+DIST_DIR := dist
 
 # define source directory
 SRC := src
@@ -117,6 +120,9 @@ EXAMPLE_SRC_FILES := $(wildcard examples/*.cpp)
 EXAMPLE_EXECS     := $(patsubst examples/%.cpp,$(OUTPUT)/%,$(EXAMPLE_SRC_FILES))
 
 # --- Główne cele ---
+
+release: $(DIST_DIR)/libsdl_gui.a $(DIST_DIR)/libsdl_gui.so $(DIST_DIR)/sdl_gui.hpp
+	@echo "Release build finished. Artifacts are in $(DIST_DIR)/"
 
 examples: $(UNITY_OBJECT) $(EXAMPLE_EXECS)
 all:  examples
@@ -176,18 +182,156 @@ $(OUTPUT)/catch_amalgamated.o: $(LIB)/catch_amalgamated.cpp $(LIB)/catch_amalgam
 	@mkdir -p $(dir $@)
 	$(CXX) $(TEST_CXXFLAGS) -I$(LIB) -c $< -o $@
 
+# --- Reguły dla wydania (release) ---
+
+# Pliki nagłówkowe i obiektowe
+# Pliki nagłówkowe i obiektowe
+# Ręcznie zdefiniowana kolejność plików nagłówkowych, aby spełnić zależności między klasami.
+# Jest to konieczne do poprawnego stworzenia jednego, połączonego pliku nagłówkowego.
+HPP_SOURCES := \
+	$(SRC)/easing.hpp \
+	$(SRC)/sdl_deleters.hpp \
+	$(SRC)/sgml_parser.hpp \
+	$(SRC)/timer_manager.hpp \
+	$(SRC)/animation_manager.hpp \
+	$(SRC)/style.hpp \
+	$(SRC)/font_manager.hpp \
+	$(SRC)/texture_manager.hpp \
+	$(SRC)/theme.hpp \
+	$(SRC)/gui.hpp \
+	$(SRC)/label.hpp \
+	$(SRC)/panel.hpp \
+	$(SRC)/button.hpp \
+	$(SRC)/checkbox.hpp \
+	$(SRC)/slider.hpp \
+	$(SRC)/text_input.hpp \
+	$(SRC)/canvas.hpp \
+	$(SRC)/cursor.hpp \
+	$(SRC)/animated_image.hpp \
+	$(SRC)/radio_button.hpp \
+	$(SRC)/radio_group.hpp \
+	$(SRC)/tab_control.hpp \
+	$(SRC)/text_area.hpp \
+	$(SRC)/combobox.hpp \
+	$(SRC)/context_menu.hpp \
+	$(SRC)/gui_manager.hpp \
+	$(SRC)/sdl_app.hpp
+# Definicja plików obiektowych dla tinyxml2
+TINYXML2_SRC := $(LIB)/tinyxml2.cpp
+TINYXML2_OBJ := $(patsubst $(LIB)/%.cpp,$(OUTPUT)/release/%.o,$(TINYXML2_SRC))
+TINYXML2_PIC_OBJ := $(patsubst $(LIB)/%.cpp,$(OUTPUT)/release/%.pic.o,$(TINYXML2_SRC))
+
+LIB_OBJECTS := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/release/%.o,$(CPPSOURCES)) $(TINYXML2_OBJ)
+LIB_PIC_OBJECTS := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/release/%.pic.o,$(CPPSOURCES)) $(TINYXML2_PIC_OBJ)
+
+# Połączony plik nagłówkowy
+$(DIST_DIR)/sdl_gui.hpp: $(HPP_SOURCES) | $(DIST_DIR)
+	@echo "Creating combined header file..."
+	@echo "// Auto-generated header. Do not edit." > $@
+	@echo "#pragma once" >> $@
+	@echo "" >> $@
+	@echo "// C++ Standard Library" >> $@
+	@echo "#include <cmath>" >> $@
+	@echo "#include <functional>" >> $@
+	@echo "#include <iostream>" >> $@
+	@echo "#include <map>" >> $@
+	@echo "#include <memory>" >> $@
+	@echo "#include <numeric>" >> $@
+	@echo "#include <optional>" >> $@
+	@echo "#include <string>" >> $@
+	@echo "#include <string_view>" >> $@
+	@echo "#include <variant>" >> $@
+	@echo "#include <vector>" >> $@
+	@echo "" >> $@
+	@echo "// External libraries" >> $@
+	@echo "#include <SDL2/SDL.h>" >> $@
+	@echo "#include <SDL2/SDL_image.h>" >> $@
+	@echo "#include <SDL2/SDL_ttf.h>" >> $@
+	@echo "#include <SDL2/SDL_pixels.h>" >> $@
+	@echo "#include <SDL2/SDL_log.h>" >> $@
+	@echo "" >> $@
+	@echo "// Project libraries" >> $@
+	@echo "#include \"tinyxml2.h\"" >> $@
+	@echo "" >> $@
+	@# Łączymy wszystkie pliki nagłówkowe, dodając nową linię po każdym pliku i usuwając zbędne dyrektywy
+	@(for f in $(HPP_SOURCES); do \
+		cat $$f; \
+		echo; \
+	done) | sed \
+		-e '/#include "easing.hpp"/d' \
+		-e '/#include "sdl_deleters.hpp"/d' \
+		-e '/#include "sgml_parser.hpp"/d' \
+		-e '/#include "timer_manager.hpp"/d' \
+		-e '/#include "animation_manager.hpp"/d' \
+		-e '/#include "style.hpp"/d' \
+		-e '/#include "font_manager.hpp"/d' \
+		-e '/#include "texture_manager.hpp"/d' \
+		-e '/#include "theme.hpp"/d' \
+		-e '/#include "gui.hpp"/d' \
+		-e '/#include "label.hpp"/d' \
+		-e '/#include "panel.hpp"/d' \
+		-e '/#include "button.hpp"/d' \
+		-e '/#include "checkbox.hpp"/d' \
+		-e '/#include "slider.hpp"/d' \
+		-e '/#include "text_input.hpp"/d' \
+		-e '/#include "canvas.hpp"/d' \
+		-e '/#include "cursor.hpp"/d' \
+		-e '/#include "animated_image.hpp"/d' \
+		-e '/#include "radio_button.hpp"/d' \
+		-e '/#include "radio_group.hpp"/d' \
+		-e '/#include "tab_control.hpp"/d' \
+		-e '/#include "text_area.hpp"/d' \
+		-e '/#include "combobox.hpp"/d' \
+		-e '/#include "context_menu.hpp"/d' \
+		-e '/#include "gui_manager.hpp"/d' \
+		-e '/#include "sdl_app.hpp"/d' \
+		-e '/^#pragma once/d' \
+		-e '/^#include <.*>/d' \
+		-e '/^#include "SDL2\/.*"/d' \
+		-e '/#include "..\/lib\/tinyxml2.h"/d' \
+		| grep -v '^\s*$$' >> $@
+# Biblioteka statyczna
+$(DIST_DIR)/libsdl_gui.a: $(LIB_OBJECTS) | $(DIST_DIR)
+	@echo "Creating static library..."
+	ar rcs $@ $^
+
+# Biblioteka współdzielona
+$(DIST_DIR)/libsdl_gui.so: $(LIB_PIC_OBJECTS) | $(DIST_DIR)
+	@echo "Creating shared library..."
+	$(CXX) $(RELEASE_CXXFLAGS) -shared -o $@ $^ $(LDFLAGS)
+
+# Reguły kompilacji plików obiektowych dla bibliotek
+$(OUTPUT)/release/%.o: $(SRC)/%.cpp | $(OUTPUT)/release
+	$(CXX) $(RELEASE_CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+
+$(OUTPUT)/release/%.pic.o: $(SRC)/%.cpp | $(OUTPUT)/release
+	$(CXX) $(RELEASE_CXXFLAGS) $(CPPFLAGS) -fPIC -c $< -o $@
+
+# Reguły kompilacji dla tinyxml2
+$(TINYXML2_OBJ): $(TINYXML2_SRC) | $(OUTPUT)/release
+	$(CXX) $(RELEASE_CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+
+$(TINYXML2_PIC_OBJ): $(TINYXML2_SRC) | $(OUTPUT)/release
+	$(CXX) $(RELEASE_CXXFLAGS) $(CPPFLAGS) -fPIC -c $< -o $@
+
 # --- Inne cele ---
 
-.PHONY: clean run non_unity modules
+.PHONY: clean run non_unity modules release
 
 run:
 	@echo "No main executable to run. Run examples individually, e.g., ./output/example_button"
 
 
 clean:
-	rm -rf $(OUTPUT)
+	rm -rf $(OUTPUT) $(DIST_DIR)
 	rm -f $(TEST_EXECS) $(UNITY_SOURCE) $(UNITY_OBJECT)
 	@echo "Cleanup complete!"
 
 $(OUTPUT):
+	@mkdir -p $@
+
+$(DIST_DIR):
+	@mkdir -p $@
+
+$(OUTPUT)/release:
 	@mkdir -p $@
