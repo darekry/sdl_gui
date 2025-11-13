@@ -6,46 +6,73 @@ English is the authoritative language for this repository (Profile A). The Polis
 
 A simple and extensible GUI library built on SDL2 with C++23, designed for clarity, safe memory management, and ease of use. It provides a lightweight set of widgets, resource managers, and a consistent architecture centered around a context manager.
 
-Key source files:
-- Core element base: [`src/gui.hpp`](src/gui.hpp:19), implementation: [`src/gui.cpp`](src/gui.cpp:8)
-- Manager: [`src/gui_manager.hpp`](src/gui_manager.hpp:19), implementation: [`src/gui_manager.cpp`](src/gui_manager.cpp:14)
-- Textures: [`src/texture_manager.hpp`](src/texture_manager.hpp:15), implementation: [`src/texture_manager.cpp`](src/texture_manager.cpp:1)
-- Fonts: [`src/font_manager.hpp`](src/font_manager.hpp:30), implementation: [`src/font_manager.cpp`](src/font_manager.cpp:7)
-- Theme and style: [`src/theme.hpp`](src/theme.hpp:10), [`src/style.hpp`](src/style.hpp:17)
-- Timers and animations: [`src/timer_manager.hpp`](src/timer_manager.hpp:18), [`src/animation_manager.hpp`](src/animation_manager.hpp:24)
+## How to Use
 
-## Architecture
+### Initialization
 
-The library architecture focuses on reusability, central resource management, and efficient rendering (including caching).
+To get started, include the main header `gui_manager.hpp` and other necessary widget headers. The recommended entry-point helper is provided in `sdl_app.hpp`.
 
-### [`GUIElement`](src/gui.hpp:19) — Base Class
+```cpp
+#include "sdl_app.hpp"
+#include "gui_manager.hpp"
+#include "panel.hpp"
+// ... other widgets
 
-An abstract base class that defines a common interface and behavior for all widgets.
+// Initialize SDL and a window
+SDLApp app("My Application", 800, 600);
 
-- Hierarchy and ownership: parent–child managed via `std::vector<std::unique_ptr<GUIElement>>` (RAII, safe destruction).
-- Context access: each element references the global manager [`GUIManager`](src/gui_manager.hpp:19) for access to renderer and resource managers.
-- Core properties: position, size, visibility, enabled state, hover/press state tracking.
-- Event handling: a virtual `handleEvent(const SDL_Event&)` propagates events down the widget tree; widgets can consume events to stop propagation.
-- Rendering: `render()` draws the element and its children. The widget-specific drawing logic lives in `draw()` or (optionally) in a direct path `drawDirect()` when bypassing cache.
-- Deferred deletion: elements can be safely removed via a mark-and-cleanup phase.
-- Tooltips: built-in tooltip support using [`TimerManager`](src/timer_manager.hpp:18).
+// Create the GUI manager
+GUIManager guiManager(app.getRenderer());
+```
 
-### [`GUIManager`](src/gui_manager.hpp:19) — Central Context
+### Main Application Loop
 
-The central controller and provider of shared resources.
+Your application owns the SDL event loop, which provides maximum flexibility.
 
-- Life-cycle management: owns top-level GUI elements and coordinates event processing, rendering, and cleanup.
-- Global services: constructs and owns [`FontManager`](src/font_manager.hpp:30), [`TextureManager`](src/texture_manager.hpp:15), and [`TimerManager`](src/timer_manager.hpp:18); stores a pointer to `SDL_Renderer`.
-- Event propagation: receives SDL events from the main loop and forwards them to elements.
-- Global utilities: e.g., dynamic tooltips.
+```cpp
+bool quit = false;
+SDL_Event e;
 
-### Resource Managers
+while (!quit) {
+    while (SDL_PollEvent(&e)) {
+        if (e.type == SDL_QUIT) {
+            quit = true;
+        }
+        // Forward events to the GUI
+        guiManager.processEvent(e);
+    }
 
-Optimized memory and resource management to avoid redundant loads.
+    // Safe removal of elements and upkeep
+    guiManager.cleanup();
 
-- [`FontManager`](src/font_manager.hpp:30): caches TTF fonts as `std::shared_ptr<TTF_Font>` and provides precise text measurement.
-- [`TextureManager`](src/texture_manager.hpp:15): loads and caches `SDL_Texture` as `std::shared_ptr<SDL_Texture>`; can accept user-provided textures (e.g., via add methods).
-- [`TimerManager`](src/timer_manager.hpp:18): safe timer handling on the main thread (single-shot and interval), used by tooltips, animations, etc.
+    SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);
+    SDL_RenderClear(app.getRenderer());
+    guiManager.render();
+    SDL_RenderPresent(app.getRenderer());
+}
+```
+
+## Linking the Library
+
+To use the library, you need to link it against your application. Below are examples for both static and dynamic linking.
+
+### Static Linking (`.a`)
+
+When linking with the static library (`libsdl_gui.a`), you need to provide the path to the header files and the library file, along with the necessary SDL2 dependencies.
+
+```bash
+g++ your_app.cpp -o your_app -I/path/to/headers -L/path/to/library -lsdl_gui -lSDL2 -lSDL2_image -lSDL2_ttf
+```
+
+### Dynamic Linking (`.so`)
+
+When linking with the shared library (`libsdl_gui.so`), ensure the linker can find it at runtime.
+
+```bash
+g++ your_app.cpp -o your_app -I/path/to/headers -L/path/to/library -lsdl_gui -lSDL2 -lSDL2_image -lSDL2_ttf
+```
+
+Make sure the `.so` file is in a directory known to the dynamic linker (e.g., `/usr/local/lib`) or set the `LD_LIBRARY_PATH` environment variable.
 
 ## Available Widgets
 
@@ -159,85 +186,6 @@ Panel* tab2 = tabControl->addTab("Tab 2");
 tab2->addChild(std::make_unique<Button>(10, 10, 100, 30, "Button"));
 guiManager.addElement(std::move(tabControl));
 ```
-
-## How to Use
-
-### Initialization
-
-The recommended entry-point helper is provided in [`src/sdl_app.hpp`](src/sdl_app.hpp:1).
-
-```cpp
-#include "sdl_app.hpp"
-#include "gui_manager.hpp"
-#include "panel.hpp"
-// ... other widgets
-
-SDLApp app("My Application", 800, 600);
-GUIManager guiManager(app.getRenderer());
-```
-
-### Main Application Loop
-
-Your application owns the SDL event loop, which provides maximum flexibility.
-
-```cpp
-bool quit = false;
-SDL_Event e;
-
-while (!quit) {
-    while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT) {
-            quit = true;
-        }
-        // Forward events to the GUI
-        guiManager.processEvent(e);
-    }
-
-    // Safe removal of elements and upkeep
-    guiManager.cleanup();
-
-    SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);
-    SDL_RenderClear(app.getRenderer());
-    guiManager.render();
-    SDL_RenderPresent(app.getRenderer());
-}
-```
-
-## Build
-
-The project uses a Makefile and a unity build to speed up compilation.
-
-### Requirements
-
-- SDL2, SDL2_image, SDL2_ttf
-- C++23 compiler (Clang++ recommended)
-- `make`
-
-### Commands
-
-- `make all`: builds examples and tests
-- `make examples`: builds only examples
-- `make test`: builds and runs tests
-- `make clean`: removes build outputs
-
-Run an example:
-```bash
-make examples
-./output/example_button
-```
-
-## Testing
-
-The project uses **Catch2** for unit testing. Tests reside in [`tests/`](tests/:1) and can be run with:
-```bash
-make test
-```
-
-## Notes on Rendering and Caching
-
-- Render path: the manager iterates over top-level elements and calls their render entry point (see [`src/gui_manager.cpp`](src/gui_manager.cpp:51), [`src/gui.cpp`](src/gui.cpp:135)).
-- Cached rendering: when the widget does not opt into direct rendering, its content is drawn into a cached texture and then blitted to the main renderer; cache is invalidated on changes.
-- Direct rendering: for rapidly changing widgets, `drawDirect()` may be used by returning true from the direct-render path; this bypasses the off-screen cache and draws straight to the renderer.
 
 For more details on design and coding guidelines, see the translation and terminology guide: [`docs/translation_guidelines.md`](docs/translation_guidelines.md)
 

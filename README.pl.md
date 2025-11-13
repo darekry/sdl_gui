@@ -4,38 +4,69 @@
 
 Prosta i rozszerzalna biblioteka GUI zbudowana w oparciu o SDL2 w standardzie C++23, umożliwiająca łatwe tworzenie interaktywnych elementów interfejsu użytkownika. Biblioteka została zaprojektowana z myślą o spójności, bezpieczeństwie pamięci i łatwości użycia.
 
-## Architektura
+## Jak Używać
 
-Architektura biblioteki opiera się na kilku kluczowych klasach i wzorcach projektowych, które zapewniają elastyczność, reużywalność kodu i centralne zarządzanie zasobami.
+### Inicjalizacja
+Aby rozpocząć, dołącz główny plik nagłówkowy `gui_manager.hpp` oraz nagłówki potrzebnych widżetów. Zalecanym sposobem jest użycie klasy pomocniczej `sdl_app.hpp`.
 
-### `GUIElement` - Klasa Bazowa
+```cpp
+#include "sdl_app.hpp"
+#include "gui_manager.hpp"
+#include "panel.hpp" 
+// ... inne komponenty
 
-Sercem biblioteki jest abstrakcyjna klasa `GUIElement`, która definiuje wspólny interfejs i zachowanie dla wszystkich komponentów interfejsu.
+// Inicjalizacja SDL i okna
+SDLApp app("Moja Aplikacja", 800, 600);
 
-*   **Hierarchia i własność:** Zarządza relacją rodzic-dziecko za pomocą `std::vector<std::unique_ptr<GUIElement>>`. Użycie `std::unique_ptr` zapewnia automatyczne i kaskadowe zwalnianie pamięci (RAII), co eliminuje ryzyko wycieków.
-*   **Dostęp do kontekstu:** Każdy element przechowuje referencję do `GUIManager`, co daje mu dostęp do globalnych zasobów, takich jak renderer i managery.
-*   **Podstawowe atrybuty:** Definiuje podstawowe właściwości, takie jak pozycja (`x`, `y`), rozmiar (`width`, `height`), widoczność (`m_visible`), aktywność (`m_enabled`), stan najechania myszą (`m_isHovered`).
-*   **Obsługa zdarzeń:** Wirtualna metoda `handleEvent(const SDL_Event& e)` propaguje zdarzenia w dół drzewa komponentów. Komponenty mogą "skonsumować" zdarzenie, zatrzymując dalszą propagację.
-*   **Renderowanie:** Metoda `render()` odpowiada za rysowanie elementu i jego dzieci. Wywołuje wirtualną metodę `draw()`, którą klasy pochodne muszą zaimplementować. Renderowanie uwzględnia również przycinanie (`clipping`) do granic rodzica.
-*   **Odroczone usuwanie:** Mechanizm `markForDeletion()` pozwala na bezpieczne usuwanie elementów w głównej pętli aplikacji.
-*   **Podpowiedzi (Tooltips):** Wbudowana obsługa tooltipów z wykorzystaniem `TimerManager` do opóźnionego wyświetlania.
+// Stworzenie managera GUI
+GUIManager guiManager(app.getRenderer());
+```
 
-### `GUIManager` - Centralny Zarządca
+### Główna Pętla Aplikacji
+Pętla zdarzeń jest odpowiedzialnością aplikacji, co daje większą elastyczność.
 
-`GUIManager` pełni rolę głównego zarządcy i "dostawcy kontekstu" dla całej biblioteki.
+```cpp
+bool quit = false;
+SDL_Event e;
 
-*   **Zarządzanie cyklem życia:** Przechowuje elementy GUI najwyższego poziomu i jest odpowiedzialny za inicjowanie procesów obsługi zdarzeń (`processEvent`), renderowania (`render`) i czyszczenia (`cleanup`).
-*   **Dostawca Kontekstu:** W konstruktorze tworzy instancje `FontManager`, `TextureManager` i `TimerManager`. Przechowuje również wskaźnik na `SDL_Renderer`. Każdy `GUIElement` ma dostęp do `GUIManager`, a przez niego do tych zasobów.
-*   **Propagacja zdarzeń:** Metoda `processEvent(const SDL_Event& e)` odbiera zdarzenia z głównej pętli aplikacji i przekazuje je do zarządzanych elementów.
-*   **Globalne funkcje:** Zarządza globalnymi elementami, takimi jak dynamicznie tworzone podpowiedzi.
+while (!quit) {
+    while (SDL_PollEvent(&e)) {
+        if (e.type == SDL_QUIT) {
+            quit = true;
+        }
+        guiManager.processEvent(e);
+    }
 
-### Managery Zasobów
+    guiManager.cleanup(); // Bezpieczne usuwanie elementów
 
-Aby zoptymalizować użycie pamięci i unikać wielokrotnego ładowania tych samych zasobów, biblioteka wykorzystuje dedykowane managery.
+    SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);
+    SDL_RenderClear(app.getRenderer());
+    guiManager.render();
+    SDL_RenderPresent(app.getRenderer());
+}
+```
 
-*   **`FontManager`:** Zarządza czcionkami TTF. Cache'uje załadowane czcionki (`std::shared_ptr<TTF_Font>`), zapewniając automatyczne zwalnianie pamięci.
-*   **`TextureManager`:** Zarządza teksturami `SDL_Texture`. Cache'uje tekstury (`std::shared_ptr<SDL_Texture>`) i pozwala na dodawanie tekstur stworzonych przez użytkownika (`addTexture`).
-*   **`TimerManager`:** Zapewnia bezpieczną obsługę zdarzeń czasowych (timerów) w głównym wątku aplikacji, co jest używane m.in. do implementacji tooltipów.
+## Linkowanie Biblioteki
+
+Aby użyć biblioteki, musisz zlinkować ją ze swoją aplikacją. Poniżej znajdują się przykłady dla linkowania statycznego i dynamicznego.
+
+### Linkowanie Statyczne (`.a`)
+
+Podczas linkowania z biblioteką statyczną (`libsdl_gui.a`) należy podać ścieżkę do plików nagłówkowych i pliku biblioteki, a także dołączyć wymagane zależności SDL2.
+
+```bash
+g++ twoja_aplikacja.cpp -o twoja_aplikacja -I/sciezka/do/naglowkow -L/sciezka/do/biblioteki -lsdl_gui -lSDL2 -lSDL2_image -lSDL2_ttf
+```
+
+### Linkowanie Dynamiczne (`.so`)
+
+Podczas linkowania z biblioteką współdzieloną (`libsdl_gui.so`) upewnij się, że linker będzie w stanie ją znaleźć w czasie wykonania.
+
+```bash
+g++ twoja_aplikacja.cpp -o twoja_aplikacja -I/sciezka/do/naglowkow -L/sciezka/do/biblioteki -lsdl_gui -lSDL2 -lSDL2_image -lSDL2_ttf
+```
+
+Upewnij się, że plik `.so` znajduje się w katalogu znanym linkerowi dynamicznemu (np. `/usr/local/lib`) lub ustaw zmienną środowiskową `LD_LIBRARY_PATH`.
 
 ## Dostępne Komponenty
 
@@ -149,70 +180,6 @@ Biblioteka oferuje zestaw gotowych do użycia, w pełni konfigurowalnych kompone
     tab2->addChild(std::make_unique<Button>(10, 10, 100, 30, "Przycisk"));
     guiManager.addElement(std::move(tabControl));
     ```
-
-## Jak Używać
-
-### Inicjalizacja
-Zalecanym sposobem jest użycie klasy pomocniczej `SDLApp` (`examples/helpers/sdl_app.hpp`).
-
-```cpp
-#include "sdl_app.hpp"
-#include "gui_manager.hpp"
-#include "panel.hpp" 
-// ... inne komponenty
-
-SDLApp app("Moja Aplikacja", 800, 600);
-GUIManager guiManager(app.getRenderer());
-```
-
-### Główna Pętla Aplikacji
-Pętla zdarzeń jest odpowiedzialnością aplikacji, co daje większą elastyczność.
-
-```cpp
-bool quit = false;
-SDL_Event e;
-
-while (!quit) {
-    while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT) {
-            quit = true;
-        }
-        guiManager.processEvent(e);
-    }
-
-    guiManager.cleanup(); // Bezpieczne usuwanie elementów
-
-    SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);
-    SDL_RenderClear(app.getRenderer());
-    guiManager.render();
-    SDL_RenderPresent(app.getRenderer());
-}
-```
-
-## Kompilacja
-
-Projekt wykorzystuje `Makefile` i *unity build* dla szybkiej kompilacji.
-
-### Wymagania
-*   SDL2, SDL2_image, SDL2_ttf
-*   Kompilator C++23 (rekomendowany Clang++)
-*   `make`
-
-### Polecenia
-*   `make all`: Kompiluje przykłady i testy.
-*   `make examples`: Kompiluje tylko przykłady.
-*   `make test`: Kompiluje i uruchamia testy.
-*   `make clean`: Usuwa skompilowane pliki.
-
-Aby uruchomić przykład:
-```bash
-make examples
-./output/example_button
-```
-
-## Testowanie
-
-Biblioteka wykorzystuje framework **Catch2** do testów jednostkowych. Testy znajdują się w katalogu `tests/` i można je uruchomić za pomocą `make test`.
 
 ## Indeksy dokumentacji
 - Archiwum (PL): [docs/pl/archive/README.md](docs/pl/archive/README.md)

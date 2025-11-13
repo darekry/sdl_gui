@@ -1,33 +1,25 @@
-# ContextMenu — contextual menu widget
+# ContextMenu — Contextual Menu Widget
 
 This page is also available in Polish: [`docs/pl/context_menu.md`](../pl/context_menu.md)
 
-Short introduction
-------------------
-`ContextMenu` is a widget that implements a contextual (right‑click) menu which appears on demand in response to mouse or other events. It supports:
-- dynamic creation of menu items with actions,
-- separators between groups of options,
-- enabling/disabling individual items,
-- automatic positioning and closing behavior,
-- full integration with SDL event handling.
+`ContextMenu` is a widget that implements a context menu, which appears in response to user actions, typically a right mouse click.
 
-Requirements and dependencies
------------------------------
-- Inherits from `GUIElement` — core functionality: [`src/gui.hpp`](../../src/gui.hpp:19)
-- Uses `Panel` as the container for menu items: [`src/panel.hpp`](../../src/panel.hpp:13)
-- Creates a `Button` for each clickable item: [`src/button.hpp`](../../src/button.hpp:13)
-- Managed by `GUIManager`: [`src/gui_manager.hpp`](../../src/gui_manager.hpp:19)
+**Key Features:**
+- Dynamically create menu items with assigned actions.
+- Add separators between groups of options.
+- Enable and disable individual items.
+- Automatic positioning and closing.
 
-Construction and basic usage
-----------------------------
-Minimal usage example (compilable fragment):
+## Construction and Basic Usage
+
+To use `ContextMenu`, create an instance, add menu items, and then display it at the appropriate time.
 
 ```cpp
+#include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "context_menu.hpp"
 
 int main() {
-    // Initialize SDL and GUIManager
     SDLApp app("ContextMenu Example", 800, 600);
     GUIManager manager(app.getRenderer());
 
@@ -39,233 +31,87 @@ int main() {
     menuPtr->addItem("Copy", []() {
         std::cout << "Copy action executed!" << std::endl;
     });
-
     menuPtr->addItem("Paste", []() {
         std::cout << "Paste action executed!" << std::endl;
-    }, false); // disabled
-
+    }, false); // Disabled item
     menuPtr->addSeparator();
-
     menuPtr->addItem("Delete", []() {
         std::cout << "Delete action executed!" << std::endl;
     });
 
-    // Attach to the manager
     manager.addElement(std::move(contextMenu));
 
-    // Show the menu at cursor position in your app
-    menuPtr->showAt(mouseX, mouseY);
+    // Main application loop
+    while (app.isRunning()) {
+        app.handleEvents();
+        const SDL_Event& event = app.getEvent();
+
+        if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT) {
+            menuPtr->showAt(event.button.x, event.button.y);
+        }
+
+        manager.processEvent(event);
+        
+        app.clearScreen();
+        manager.render();
+        app.present();
+    }
 
     return 0;
 }
 ```
 
-Adding menu items
------------------
-The context menu supports different item types:
+## Managing Menu Items
 
-### Standard items
+The context menu allows for flexible addition and removal of items.
+
 ```cpp
 // Add an item with an action
-menuPtr->addItem("Open File", []() {
-    openFileDialog();
-});
+menuPtr->addItem("Open File", []() { /* ... */ });
 
 // Add a disabled item
-menuPtr->addItem("Save", []() {
-    saveCurrentFile();
-}, false); // disabled
+menuPtr->addItem("Save", []() { /* ... */ }, false);
 
-// Add a label-only item (no action)
-menuPtr->addItem("Version 1.0");
+// Add a visual separator
+menuPtr->addSeparator();
+
+// Remove all items
+menuPtr->clearItems();
 ```
 
-### Separators
-```cpp
-menuPtr->addSeparator(); // Adds a visual separator
-```
+## Displaying and Hiding
 
-### Clearing the menu
-```cpp
-menuPtr->clearItems(); // Removes all items
-```
-
-Showing and hiding the menu
----------------------------
-You can show the menu at any position on screen:
+The menu can be displayed anywhere on the screen. It will automatically adjust its position to stay within the window bounds.
 
 ```cpp
-// Show the menu
+// Display the menu at the given coordinates
 menuPtr->showAt(x, y);
 
-// Check visibility
+// Check if the menu is visible
 if (menuPtr->isVisible()) {
-    std::cout << "Menu is currently shown" << std::endl;
+    // ...
 }
 
 // Hide the menu
 menuPtr->hide();
 ```
 
-The menu automatically:
-- positions itself so it does not overflow the window bounds,
-- closes after an option is selected,
-- closes when clicking outside the menu area.
+The menu closes automatically when an option is selected or when a click occurs outside its area.
 
-Event handling
---------------
-ContextMenu automatically handles mouse events:
+## API Reference
 
-```cpp
-// In your main event loop
-while (SDL_PollEvent(&event)) {
-    if (event.type == SDL_MOUSEBUTTONDOWN &&
-        event.button.button == SDL_BUTTON_RIGHT) {
+### Item Management
+- `ContextMenu(GUIManager& manager)`: Constructor.
+- `addItem(std::string_view text, std::function<void()> action = nullptr, bool enabled = true)`: Adds a menu item.
+- `addSeparator()`: Adds a separator.
+- `clearItems()`: Removes all items.
 
-        // Show the menu at the cursor
-        menuPtr->showAt(event.button.x, event.button.y);
-    }
+### Display Control
+- `showAt(int x, int y)`: Displays the menu at the specified position.
+- `hide()`: Hides the menu.
+- `isVisible() const`: Returns `true` if the menu is visible.
 
-    manager.processEvent(event);
-}
-```
+## Example
 
-The menu automatically:
-- captures clicks on its items,
-- executes the assigned actions,
-- closes after action execution,
-- closes when clicking outside its area.
-
-Public method list
-------------------
-Below is the list of public methods with signatures and short descriptions. Signatures are from the header: [`src/context_menu.hpp`](../../src/context_menu.hpp:25).
-
-### Item management
-- `void addItem(std::string_view text, std::function<void()> action = nullptr, bool enabled = true)` — adds an item with an optional action and enabled state. ([`src/context_menu.hpp`](../../src/context_menu.hpp:30))
-- `void addSeparator()` — adds a separator between item groups. ([`src/context_menu.hpp`](../../src/context_menu.hpp:31))
-- `void clearItems()` — removes all items from the menu. ([`src/context_menu.hpp`](../../src/context_menu.hpp:32))
-
-### Display control
-- `void showAt(int x, int y)` — shows the menu at a given position, automatically keeping it within window bounds. ([`src/context_menu.hpp`](../../src/context_menu.hpp:34))
-- `void hide()` — hides the menu. ([`src/context_menu.hpp`](../../src/context_menu.hpp:35))
-- `bool isVisible() const` — returns true if the menu is currently visible. ([`src/context_menu.hpp`](../../src/context_menu.hpp:36))
-
-### Inherited from GUIElement
-- `bool handleEvent(const SDL_Event& event) override` — handles mouse events for the menu. ([`src/context_menu.hpp`](../../src/context_menu.hpp:38))
-- `const char* getComponentType() const override` — returns "ContextMenu". ([`src/context_menu.hpp`](../../src/context_menu.hpp:39))
-
-Internal mechanisms important to users
---------------------------------------
-### ContextMenuItem structure
-```cpp
-struct ContextMenuItem {
-    std::string text;              // Display text
-    std::function<void()> action;  // Action to execute
-    bool enabled = true;           // Whether the item is enabled
-    bool separator = false;        // Whether this is a separator
-};
-```
-
-### Composite architecture
-ContextMenu uses a composite pattern:
-- The root `ContextMenu` inherits from `GUIElement`,
-- An internal `Panel` (`m_panel`) contains all menu items,
-- Each item is either a `Button` (for actions) or a `Panel` (for separators).
-
-### Deferred button creation
-Buttons are created on-demand in `showAt()`:
-- `createMenuButtons()` is called only when needed,
-- sets a `m_needsUpdate` flag for synchronization,
-- creates an appropriate widget per item.
-
-### Automatic positioning
-The `positionMenu()` method:
-- checks window bounds (defaults to 800×600),
-- shifts the menu left/up if it would overflow the right/bottom edges,
-- ensures the menu is always fully visible.
-
-### Clicking outside the menu
-The `shouldCloseOnClick()` method:
-- detects clicks outside the menu rectangle,
-- uses `SDL_PointInRect()` to test position,
-- returns true when the menu should be closed.
-
-Tips & Gotchas (most common)
-------------------------------
-### Building dynamic menus
-```cpp
-// Context-sensitive menu
-void showFileMenu(int fileType) {
-    menuPtr->clearItems();
-
-    menuPtr->addItem("Open");
-    menuPtr->addItem("Edit");
-
-    if (fileType == IMAGE_FILE) {
-        menuPtr->addSeparator();
-        menuPtr->addItem("View Image");
-        menuPtr->addItem("Resize");
-    }
-
-    menuPtr->showAt(mouseX, mouseY);
-}
-```
-
-### Managing item state
-```cpp
-// Enable/disable items depending on application state
-bool canSave = hasUnsavedChanges();
-menuPtr->addItem("Save", []() { saveFile(); }, canSave);
-
-bool canUndo = !undoStack.empty();
-menuPtr->addItem("Undo", []() { undoLastAction(); }, canUndo);
-```
-
-### Right mouse button handling
-```cpp
-// In the event loop
-if (event.type == SDL_MOUSEBUTTONDOWN &&
-    event.button.button == SDL_BUTTON_RIGHT) {
-
-    // Check which element was clicked
-    GUIElement* clickedElement = getElementAt(event.button.x, event.button.y);
-
-    if (clickedElement != nullptr) {
-        showContextMenuFor(clickedElement, event.button.x, event.button.y);
-    }
-}
-```
-
-### Positioning issues
-- The menu assumes an 800×600 window by default — adjust inside `positionMenu()` if needed.
-- Ensure `GUIManager` is properly configured before constructing the menu.
-- You may need to call `markDirty()` manually after structural changes.
-
-### Visibility issues
-- The menu is hidden initially — always call `showAt()` to display it.
-- The menu automatically closes after an option is selected.
-- Ensure all callbacks are connected correctly.
-
-Additional references / examples
---------------------------------
-- Full example in the examples directory: [`examples/example_context_menu.cpp`](../../examples/example_context_menu.cpp:1)
-- Widget constructor: [`src/context_menu.hpp`](../../src/context_menu.hpp:27)
-- `addItem` implementation: [`src/context_menu.cpp`](../../src/context_menu.cpp:18)
-- `showAt` implementation: [`src/context_menu.cpp`](../../src/context_menu.cpp:37)
-- `handleEvent` implementation: [`src/context_menu.cpp`](../../src/context_menu.cpp:56)
-
-Frequently reviewed code lines (important implementation spots)
---------------------------------------------------------------
-- Constructor / destructor: [`src/context_menu.cpp`](../../src/context_menu.cpp:5)
-- addItem: [`src/context_menu.cpp`](../../src/context_menu.cpp:18)
-- addSeparator: [`src/context_menu.cpp`](../../src/context_menu.cpp:24)
-- showAt: [`src/context_menu.cpp`](../../src/context_menu.cpp:37)
-- hide: [`src/context_menu.cpp`](../../src/context_menu.cpp:50)
-- handleEvent: [`src/context_menu.cpp`](../../src/context_menu.cpp:56)
-- createMenuButtons: [`src/context_menu.cpp`](../../src/context_menu.cpp:88)
-- positionMenu: [`src/context_menu.cpp`](../../src/context_menu.cpp:125)
-- shouldCloseOnClick: [`src/context_menu.cpp`](../../src/context_menu.cpp:153)
-
-Conclusion
-----------
-ContextMenu is a versatile widget that can be adapted to many scenarios. Its composite architecture makes it easy to extend, and its automatic lifecycle behavior makes it reliable for everyday use. It works well for simple context menus as well as more complex contextual systems.
+A complete, working example of `ContextMenu` usage can be found in:
+- [`examples/example_context_menu.cpp`](../../examples/example_context_menu.cpp)
