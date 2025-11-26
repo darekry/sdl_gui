@@ -187,6 +187,40 @@ tab2->addChild(std::make_unique<Button>(10, 10, 100, 30, "Button"));
 guiManager.addElement(std::move(tabControl));
 ```
 
+## Examples
+
+The library includes several complete example applications demonstrating various features and use cases:
+
+### Calculator Example
+A fully functional desktop calculator with:
+- Basic arithmetic operations (+, -, *, /)
+- Decimal point support
+- Clear, backspace, and sign toggle functions
+- iOS-inspired design with color-coded buttons
+
+See [docs/calculator_example.md](docs/calculator_example.md) for details.
+
+**Build and run:**
+```bash
+make output/example_calculator
+./output/example_calculator
+```
+
+### Other Examples
+- `example_button.cpp`: Button usage and event handling
+- `example_panel.cpp`: Panel containers and layouts
+- `example_checkbox.cpp`: Checkbox widgets
+- `example_slider.cpp`: Slider controls
+- `example_text_input.cpp`: Single-line text input
+- `example_text_area.cpp`: Multi-line text input
+- `example_tabs.cpp`: Tabbed interfaces
+- `example_combobox.cpp`: Dropdown menus
+- `example_radio_button.cpp`: Radio button groups
+- `example_context_menu.cpp`: Context menus
+- `example_theme_playground.cpp`: Theme customization
+- `example_animation.cpp`: Animation system
+- `example_animated_image.cpp`: Animated sprites
+
 For more details on design and coding guidelines, see the translation and terminology guide: [`docs/translation_guidelines.md`](docs/translation_guidelines.md)
 
 ## Documentation Indexes
