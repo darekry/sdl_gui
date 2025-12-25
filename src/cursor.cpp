@@ -41,7 +41,21 @@ void Cursor::setAnimatedCursor(CursorState state, const std::string& path, int t
     data.rows = std::max(1, rows);
     data.currentFrame = 0;
     data.frameDuration = (fps > 0.0f) ? (1.0f / fps) : (1.0f / kDefaultFPS);
-    data.lastFrameTime = SDL_GetTicks64();
+
+    if (data.animation_id != 0) {
+        m_manager.getAnimationManager()->removeAnimation(data.animation_id);
+    }
+
+    data.animation_id = m_manager.getAnimationManager()->addAnimation(static_cast<uint32_t>(data.frameDuration * 1000), [this, state]() {
+        auto it = m_cursors.find(state);
+        if (it != m_cursors.end()) {
+            CursorData& data = it->second;
+            if (!data.loop && data.currentFrame >= data.totalFrames - 1) {
+                return;
+            }
+            data.currentFrame = (data.currentFrame + 1) % data.totalFrames;
+        }
+    });
 
     if (data.texture) {
         int texW = 0;
@@ -122,25 +136,7 @@ void Cursor::renderOverlay(SDL_Renderer* renderer) {
     }
 
     CursorData& data = it->second;
-    if (data.isAnimated) {
-        updateAnimation(data);
-    }
-
     renderCursor(renderer, data, mouseX, mouseY);
-}
-
-void Cursor::updateAnimation(CursorData& data) {
-    if (!data.texture) {
-        return;
-    }
-
-    uint64_t currentTime = SDL_GetTicks64();
-    float elapsedSeconds = static_cast<float>(currentTime - data.lastFrameTime) / 1000.0f;
-    if (elapsedSeconds >= data.frameDuration) {
-        int frameAdvance = static_cast<int>(std::floor(elapsedSeconds / data.frameDuration));
-        data.currentFrame = (data.currentFrame + frameAdvance) % std::max(1, data.totalFrames);
-        data.lastFrameTime = currentTime;
-    }
 }
 
 void Cursor::renderCursor(SDL_Renderer* renderer, const CursorData& data, int mouseX, int mouseY) {

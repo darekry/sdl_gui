@@ -14,7 +14,7 @@ int main() {
 
         auto cursorPtr = std::make_unique<Cursor>(gui);
         Cursor* cursor = cursorPtr.get();
-        gui.addElement(std::move(cursorPtr));
+        gui.setCursor(std::move(cursorPtr));
 
         cursor->setCursorTexture(CursorState::Normal, "assets/button1.png", 8, 8);
         cursor->setCursorTexture(CursorState::Hover, "assets/button2.png", 16, 16);
@@ -140,6 +140,7 @@ int main() {
                 gui.processEvent(e);
             }
 
+            gui.update();
             gui.cleanup();
 
             SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);

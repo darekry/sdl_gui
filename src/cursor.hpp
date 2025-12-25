@@ -60,11 +60,10 @@ private:
         int frameH = 0;
         float frameDuration = 1.0f / 12.0f;
         int currentFrame = 0;
-        uint64_t lastFrameTime = 0;
         bool loop = true;
+        uint32_t animation_id = 0;
     };
 
-    void updateAnimation(CursorData& data);
     void renderCursor(SDL_Renderer* renderer, const CursorData& data, int mouseX, int mouseY);
     SDL_Rect getSrcRect(const CursorData& data) const;
 

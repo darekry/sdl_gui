@@ -37,6 +37,7 @@ int main(int, char**) {
             SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
             SDL_RenderClear(renderer);
 
+            guiManager.update();
             guiManager.render();
             guiManager.cleanup();
 

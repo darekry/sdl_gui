@@ -81,7 +81,18 @@ bool GUIManager::processEvent(const SDL_Event& event) {
         }
     }
 
+    if (cursor) {
+        cursor->handleEvent(event);
+    }
+
     return false;
+}
+
+void GUIManager::update() {
+    // Zaktualizuj timery i animacje
+    timerManager->update();
+    animation_manager->update();
+
 }
 
 void GUIManager::render() {
@@ -102,13 +113,13 @@ void GUIManager::render() {
             element->renderOverlay(m_renderer);
         }
     }
+
+    if (cursor) {
+        cursor->renderOverlay(m_renderer);
+    }
 }
 
 void GUIManager::cleanup() {
-    // Zaktualizuj timery i animacje
-    timerManager->update();
-    animation_manager->update();
-
     if (tooltipElement && tooltipElement->isMarkedForDeletion()) {
         tooltipElement.reset();
     }
@@ -236,6 +247,10 @@ GUIElement* GUIManager::getKeyboardFocus() const {
 
 AnimationManager* GUIManager::getAnimationManager() {
     return animation_manager.get();
+}
+
+void GUIManager::setCursor(std::unique_ptr<Cursor> new_cursor) {
+    cursor = std::move(new_cursor);
 }
 
 GUIElement* GUIManager::findElementAt(int x, int y) {

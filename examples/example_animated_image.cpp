@@ -49,6 +49,7 @@ int main() {
                 gui.processEvent(e);
             }
 
+            gui.update();
             gui.cleanup();
 
             SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);

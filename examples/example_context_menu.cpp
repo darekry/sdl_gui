@@ -67,6 +67,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
                 manager.processEvent(event);
             }
 
+            manager.update();
+            manager.cleanup();
+
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             SDL_RenderClear(renderer);
 

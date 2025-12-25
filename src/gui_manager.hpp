@@ -7,6 +7,7 @@
 #include "timer_manager.hpp"
 #include "theme.hpp"
 #include "animation_manager.hpp"
+#include "cursor.hpp"
 
 
 class TimerManager;
@@ -29,6 +30,9 @@ public:
 
     // Metoda do obsługi zdarzeń SDL i przekazywania ich do odpowiednich elementów GUI
     bool processEvent(const SDL_Event& e);
+
+    // Metoda do renderowania wszystkich elementów GUI
+    void update();
 
     // Metoda do renderowania wszystkich elementów GUI
     void render();
@@ -62,10 +66,13 @@ void releaseMouse();
 void setKeyboardFocus(GUIElement* element);
 [[nodiscard]] GUIElement* getKeyboardFocus() const;
 
+void setCursor(std::unique_ptr<Cursor> new_cursor);
+
 private:
 // Kontener na unikalne wskaźniki do elementów GUI
 std::vector<std::unique_ptr<GUIElement>> m_elements;
 std::unique_ptr<GUIElement> tooltipElement;
+std::unique_ptr<Cursor> cursor;
 
 // Stan fokusu i przechwytywania
 GUIElement* m_mouseCaptureElement = nullptr;
