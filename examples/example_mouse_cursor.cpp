@@ -4,8 +4,8 @@
 #include "panel.hpp"
 #include "button.hpp"
 #include "label.hpp"
-#include <iostream>
-#include <memory>
+
+import std.compat;
 
 int main() {
     try {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cmath>
+import std.compat;
 
 namespace Easing {
     inline float linear(float t) { return t; }

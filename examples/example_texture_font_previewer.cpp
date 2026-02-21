@@ -7,8 +7,8 @@
 #include "label.hpp"
 #include "texture_manager.hpp"
 #include "font_manager.hpp"
-#include <iostream>
-#include <memory>
+
+import std.compat;
 
 int main() {
     try {

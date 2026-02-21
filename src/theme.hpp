@@ -1,8 +1,8 @@
 #pragma once
 
 #include "style.hpp"
-#include <map>
-#include <string>
+
+import std.compat;
 
 // Klasa Theme przechowuje domyślne style dla wszystkich typów komponentów.
 // Umożliwia globalną zmianę wyglądu aplikacji.

@@ -1,7 +1,7 @@
 #include "canvas.hpp"
 #include "gui_manager.hpp"
-#include <algorithm>
-#include <cmath>
+
+import std.compat;
 
 namespace {
     inline int iclamp(int v, int lo, int hi) {

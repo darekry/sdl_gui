@@ -1,8 +1,8 @@
 #pragma once
+
+
 #include "gui.hpp"
-#include <string>
-#include <map>
-#include <functional>
+import std.compat;
 
 enum class CursorState {
     Normal,

@@ -5,14 +5,7 @@
 #include "label.hpp"
 #include "panel.hpp"
 
-#include <chrono>
-#include <sstream>
-#include <iomanip>
-#include <vector>
-#include <memory>
-#include <string>
-#include <iostream>
-#include <algorithm>
+import std.compat;
 
 const int SCREEN_W = 1920;
 const int SCREEN_H = 1080;

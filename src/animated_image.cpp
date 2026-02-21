@@ -2,9 +2,8 @@
 #include "gui_manager.hpp"
 #include "sdl_deleters.hpp"
 #include <SDL2/SDL.h>
-#include <algorithm>
-#include <cmath>
-#include <iostream>
+
+import std.compat;
 
 AnimatedImage::AnimatedImage(GUIManager& manager, int x, int y, int width, int height)
     : GUIElement(manager, x, y, width, height) {

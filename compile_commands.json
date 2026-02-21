@@ -1,82 +1,122 @@
 [
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/all.o output/all.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/all.o output/all.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/output/all.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_animated_image output/all.o examples/example_animated_image.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_animated_image output/all.o examples/example_animated_image.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_animated_image.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_animation output/all.o examples/example_animation.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_animation output/all.o examples/example_animation.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_animation.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_button output/all.o examples/example_button.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_button output/all.o examples/example_button.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_button.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_checkbox output/all.o examples/example_checkbox.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_checkbox output/all.o examples/example_checkbox.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_checkbox.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_combobox output/all.o examples/example_combobox.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_combobox output/all.o examples/example_combobox.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_combobox.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_panel output/all.o examples/example_panel.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_context_menu output/all.o examples/example_context_menu.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_context_menu.cpp"
+    },
+    {
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_mouse_cursor output/all.o examples/example_mouse_cursor.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_mouse_cursor.cpp"
+    },
+    {
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_paint output/all.o examples/example_paint.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_paint.cpp"
+    },
+    {
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_panel output/all.o examples/example_panel.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_panel.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_performance output/all.o examples/example_performance.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_performance output/all.o examples/example_performance.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_performance.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_radio_button output/all.o examples/example_radio_button.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_radio_button output/all.o examples/example_radio_button.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_radio_button.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_slider output/all.o examples/example_slider.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_scrollview_prototype output/all.o examples/example_scrollview_prototype.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_scrollview_prototype.cpp"
+    },
+    {
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_slider output/all.o examples/example_slider.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_slider.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_tabs output/all.o examples/example_tabs.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_sprite_animator output/all.o examples/example_sprite_animator.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_sprite_animator.cpp"
+    },
+    {
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_tabs output/all.o examples/example_tabs.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_tabs.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_text_area output/all.o examples/example_text_area.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_text_area output/all.o examples/example_text_area.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_text_area.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_text_input output/all.o examples/example_text_input.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_text_input output/all.o examples/example_text_input.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_text_input.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_themes output/all.o examples/example_themes.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_texture_font_previewer output/all.o examples/example_texture_font_previewer.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_texture_font_previewer.cpp"
+    },
+    {
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_theme_playground output/all.o examples/example_theme_playground.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_theme_playground.cpp"
+    },
+    {
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_themes output/all.o examples/example_themes.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_themes.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_tooltip output/all.o examples/example_tooltip.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_tooltip output/all.o examples/example_tooltip.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_tooltip.cpp"
     },
     {
-        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -o output/example_window output/all.o examples/example_window.cpp",
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_window output/all.o examples/example_window.cpp",
         "directory": "/home/darekry/code/sdl_gui",
         "file": "/home/darekry/code/sdl_gui/examples/example_window.cpp"
+    },
+    {
+        "command": "c++ -c -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wfloat-equal -Wformat=2 -Wnon-virtual-dtor -Woverloaded-virtual -Wreorder -Wzero-as-null-pointer-constant -Wunreachable-code -Wstrict-aliasing -Wpedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Winit-self -Wmissing-declarations -Winline -Wdouble-promotion -Wnull-dereference -Wextra-semi -Wsign-promo -I/usr/include/SDL2 -D_REENTRANT -stdlib=libc++ -std=c++23 -fmodule-file=std=modules_cache/std_debug.pcm -fmodule-file=std.compat=modules_cache/std.compat_debug.pcm -g -O0 -fsanitize=address,undefined -DDEBUG=1 -Isrc -isystem lib -o output/example_xml_parser output/all.o examples/example_xml_parser.cpp",
+        "directory": "/home/darekry/code/sdl_gui",
+        "file": "/home/darekry/code/sdl_gui/examples/example_xml_parser.cpp"
     }
 ]

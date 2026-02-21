@@ -5,7 +5,7 @@
 #include "panel.hpp"
 #include "label.hpp"
 
-#include <string_view>
+import std.compat;
 
 static constexpr int DEFAULT_FONT_SIZE = 24;
 static constexpr int TOOLTIP_FONT_SIZE = 14;

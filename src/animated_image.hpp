@@ -1,14 +1,12 @@
 #pragma once
 
+
 #include "gui.hpp"
 #include "texture_manager.hpp"
 #include "animation_manager.hpp"
 #include "SDL2/SDL.h"
-#include <functional>
-#include <memory>
-#include <string>
-#include <optional>
 
+import std.compat;
 class AnimatedImage : public GUIElement {
 public:
     enum class ScaleMode {

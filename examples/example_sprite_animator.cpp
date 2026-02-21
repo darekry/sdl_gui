@@ -6,8 +6,8 @@
 #include "combobox.hpp"
 #include "slider.hpp"
 #include "label.hpp"
-#include <iostream>
-#include <memory>
+
+import std.compat;
 
 int main() {
     try {

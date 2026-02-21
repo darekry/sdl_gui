@@ -5,11 +5,7 @@
 #include "label.hpp"
 #include "style.hpp"
 
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <vector>
-#include <limits>
+import std.compat;
 
 int main(int, char**) {
     try {

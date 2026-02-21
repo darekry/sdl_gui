@@ -4,6 +4,7 @@
 #include "text_area.hpp"
 #include "sdl_app.hpp"
 
+import std.compat;
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     try {

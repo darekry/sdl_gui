@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "SDL2/SDL.h"
 #include "gui.hpp"
 #include "font_manager.hpp"
@@ -9,6 +10,7 @@
 #include "animation_manager.hpp"
 #include "cursor.hpp"
 
+import std.compat;
 
 class TimerManager;
 class AnimationManager;

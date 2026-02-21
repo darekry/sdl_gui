@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "texture_manager.hpp"
 #include "font_manager.hpp"
 #include "SDL2/SDL.h"
@@ -12,8 +13,8 @@
 #else
 #define LOG_DEBUG(...)
 #endif
-
 import std.compat;
+
 class GUIManager;
 
 class GUIElement {

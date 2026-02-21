@@ -1,6 +1,7 @@
 #include "context_menu.hpp"
 #include "gui_manager.hpp"
-#include <algorithm>
+
+import std.compat;
 
 ContextMenu::ContextMenu(GUIManager& manager)
     : GUIElement(manager, 0, 0, 200, 100) {

@@ -8,8 +8,8 @@
 #include "radio_button.hpp"
 #include "radio_group.hpp"
 #include "sdl_app.hpp"
-#include <iostream>
-#include <optional>
+
+import std.compat;
 
 // Definicja jasnego motywu
 Theme createLightTheme() {

@@ -1,7 +1,8 @@
 #include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "sgml_parser.hpp"
-#include <iostream>
+
+import std.compat;
 
 int main(int argc, char * argv[])
 {

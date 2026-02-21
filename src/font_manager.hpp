@@ -2,10 +2,8 @@
 
 #include "SDL2/SDL_ttf.h"
 #include "sdl_deleters.hpp"
-#include <map>
-#include <memory>
-#include <string_view>
-#include <string>
+
+import std.compat;
 
 // Typ dla współdzielonego wskaźnika na czcionkę
 using SharedFont = std::shared_ptr<TTF_Font>;

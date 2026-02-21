@@ -2,7 +2,8 @@
 #include "../src/context_menu.hpp"
 #include "../src/button.hpp"
 #include "../src/sdl_app.hpp"
-#include <iostream>
+
+import std.compat;
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;

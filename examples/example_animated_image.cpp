@@ -3,9 +3,8 @@
 #include "animated_image.hpp"
 #include "panel.hpp"
 #include "button.hpp"
-#include <iostream>
-#include <cstddef>
-#include <memory>
+
+import std.compat;
 
 int main() {
     try {

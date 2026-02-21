@@ -6,6 +6,10 @@ Stan repozytorium:
 - Testy jednostkowe (Catch2) w [`tests/`](tests/:1).
 
 Ostatnie istotne zmiany:
+- **Migracja na moduły C++23 (import std.compat;)**:
+    *   Przeprowadzono migrację wszystkich plików w `src/` (`.hpp` i `.cpp`) oraz `examples/` (`.cpp`) z tradycyjnych `#include` nagłówków standardowych na `import std.compat;`.
+    *   `import std.compat;` umieszczony po wszystkich `#include` (SDL2, własne nagłówki, biblioteki zewnętrzne) aby uniknąć konfliktów z nagłówkami SDL2 które wewnętrznie inkludują nagłówki standardowe C.
+    *   Projekt buduje się poprawnie z modułami C++23 (zweryfikowano przez `make examples`).
 - Przeprowadzono pełną analizę projektu w celu aktualizacji banku pamięci.
 - Zaktualizowano dokumentację architektury (`architecture.md`), produktu (`product.md`), technologii (`tech.md`), zadań (`tasks.md`) i strategii testów (`testing_strategy.md`).
 - Potwierdzono, że architektura oparta na `GUIManager` i `GUIElement` z cache'owaniem renderowania jest stabilna.

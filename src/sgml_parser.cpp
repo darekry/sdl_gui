@@ -14,9 +14,8 @@
 #include "text_area.hpp"
 #include "text_input.hpp"
 #include <SDL2/SDL.h>
-#include <functional>
-#include <map>
-#include <sstream>
+
+import std.compat;
 
 SGMLParser::SGMLParser(GUIManager & guiManager)
     : m_guiManager(guiManager)

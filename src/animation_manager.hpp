@@ -1,17 +1,10 @@
 #pragma once
 
-#include <algorithm>
-#include <cmath>
-#include <functional>
-#include <iostream>
-#include <iterator>
-#include <numeric>
-#include <variant>
-#include <vector>
-
 #include <SDL2/SDL.h>
 
 #include "easing.hpp"
+
+import std.compat;
 
 struct Animation {
     using CompleteCallback = std::function<void()>;

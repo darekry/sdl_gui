@@ -1,8 +1,8 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include <functional>
-#include <vector>
+
+import std.compat;
 
 
 class GUIElement;

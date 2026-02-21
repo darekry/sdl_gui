@@ -1,10 +1,9 @@
 #pragma once
 
 #include <SDL2/SDL_pixels.h>
-#include <memory>
-#include <optional>
-#include <string>
 #include <SDL2/SDL_log.h>
+
+import std.compat;
 
 struct SDL_Texture;
 using SharedTexture = std::shared_ptr<SDL_Texture>;

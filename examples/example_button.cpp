@@ -3,6 +3,8 @@
 #include "sdl_app.hpp"
 #include "label.hpp"
 
+import std.compat;
+
 
 
 

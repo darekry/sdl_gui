@@ -4,7 +4,8 @@
 #include "button.hpp"
 #include "animation_manager.hpp"
 #include "easing.hpp"
-#include <cstddef>
+
+import std.compat;
 
 int main() {
     try {

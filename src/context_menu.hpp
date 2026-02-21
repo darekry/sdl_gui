@@ -1,12 +1,10 @@
 #pragma once
 
+
 #include "gui.hpp"
 #include "panel.hpp"
 #include "button.hpp"
-#include <functional>
-#include <vector>
-#include <string>
-#include <memory>
+import std.compat;
 
 struct ContextMenuItem {
     std::string text;
