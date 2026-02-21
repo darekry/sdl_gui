@@ -5,6 +5,32 @@ CC = clang-22
 # CXX    = g++
 CXX    = clang++-22
 # Flagi wspólne dla obu trybów
+
+MODULE_CACHE_DIR := modules_cache
+
+# Moduły prekompilowane C++23 - osobne wersje dla debug i release
+# Debug: bez optymalizacji, z informacjami debugowania
+STD_PCM_DEBUG := $(MODULE_CACHE_DIR)/std_debug.pcm
+STD_COMPAT_PCM_DEBUG := $(MODULE_CACHE_DIR)/std.compat_debug.pcm
+MODULE_PCMS_DEBUG := $(STD_PCM_DEBUG) $(STD_COMPAT_PCM_DEBUG)
+
+# Release: z optymalizacjami (-O3, -march=native)
+STD_PCM_RELEASE := $(MODULE_CACHE_DIR)/std_release.pcm
+STD_COMPAT_PCM_RELEASE := $(MODULE_CACHE_DIR)/std.compat_release.pcm
+MODULE_PCMS_RELEASE := $(STD_PCM_RELEASE) $(STD_COMPAT_PCM_RELEASE)
+
+# Wybór odpowiednich modułów w zależności od trybu
+ifeq ($(RELEASE),1)
+    STD_PCM := $(STD_PCM_RELEASE)
+    STD_COMPAT_PCM := $(STD_COMPAT_PCM_RELEASE)
+    MODULE_PCMS := $(MODULE_PCMS_RELEASE)
+else
+    STD_PCM := $(STD_PCM_DEBUG)
+    STD_COMPAT_PCM := $(STD_COMPAT_PCM_DEBUG)
+    MODULE_PCMS := $(MODULE_PCMS_DEBUG)
+endif
+
+
 COMMON_FLAGS = -Wall
 COMMON_FLAGS += -Wextra
 COMMON_FLAGS += -Wshadow
@@ -20,9 +46,41 @@ COMMON_FLAGS += -Wzero-as-null-pointer-constant
 COMMON_FLAGS += -Wunreachable-code
 COMMON_FLAGS += -Wstrict-aliasing
 COMMON_FLAGS += -Wpedantic
+
+# Dodatkowe flagi warningów (zakomentowane - można włączyć stopniowo)
+COMMON_FLAGS += -Wcast-align
+COMMON_FLAGS += -Wcast-qual
+COMMON_FLAGS += -Wctor-dtor-privacy
+COMMON_FLAGS += -Wdisabled-optimization
+# COMMON_FLAGS += -Wdocumentation
+COMMON_FLAGS += -Winit-self
+# COMMON_FLAGS += -Wlogical-op
+COMMON_FLAGS += -Wmissing-declarations
+# COMMON_FLAGS += -Wmissing-include-dirs
+# COMMON_FLAGS += -Wnoexcept
+# COMMON_FLAGS += -Wstrict-overflow=5
+# COMMON_FLAGS += -Wswitch-default
+# COMMON_FLAGS += -Wundef
+COMMON_FLAGS += -Winline
+# COMMON_FLAGS += -Wmissing-field-initializers
+# COMMON_FLAGS += -Wthread-safety
+COMMON_FLAGS += -Wdouble-promotion
+COMMON_FLAGS += -Wnull-dereference
+COMMON_FLAGS += -Wextra-semi
+COMMON_FLAGS += -Wsign-promo
+# COMMON_FLAGS += -Werror
+
 COMMON_FLAGS += $(shell sdl2-config --cflags)
 COMMON_FLAGS += -stdlib=libc++
 COMMON_FLAGS += -std=c++23
+
+
+
+
+
+COMMON_FLAGS  +=-fmodule-file=std=$(STD_PCM)
+COMMON_FLAGS  +=-fmodule-file=std.compat=$(STD_COMPAT_PCM)
+
 
 # Flagi specyficzne dla trybu Release
 RELEASE_FLAGS = -O3
@@ -103,7 +161,7 @@ NON_UNITY_OBJECTS := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/%.o,$(CPPSOURCES))
 
 # Reguła wzorcowa do kompilacji pojedynczego pliku źródłowego na plik obiektowy
 # Ta reguła jest używana tylko przez cel `non_unity`
-$(OUTPUT)/%.o: $(SRC)/%.cpp | $(OUTPUT)
+$(OUTPUT)/%.o: $(SRC)/%.cpp | $(OUTPUT) 
 	@echo "Kompilowanie (non-unity): $<"
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
@@ -121,20 +179,20 @@ EXAMPLE_EXECS     := $(patsubst examples/%.cpp,$(OUTPUT)/%,$(EXAMPLE_SRC_FILES))
 
 # --- Główne cele ---
 
-release: $(DIST_DIR)/libsdl_gui.a $(DIST_DIR)/libsdl_gui.so $(DIST_DIR)/sdl_gui.hpp
+release: $(DIST_DIR)/libsdl_gui.a $(DIST_DIR)/libsdl_gui.so $(DIST_DIR)/sdl_gui.hpp modules_release
 	@echo "Release build finished. Artifacts are in $(DIST_DIR)/"
 
-examples: $(UNITY_OBJECT) $(EXAMPLE_EXECS)
+examples: $(UNITY_OBJECT) $(EXAMPLE_EXECS) modules_all
 all:  examples
 
 # Cel do tradycyjnej kompilacji (non-unity)
 # Buduje wszystkie pliki obiektowe, ale nie linkuje ich.
 # To wystarczy, aby `bear` przechwycił komendy kompilacji.
-non_unity: $(NON_UNITY_OBJECTS)
+non_unity: $(NON_UNITY_OBJECTS) modules
 	@echo "Tradycyjna kompilacja (non-unity) zakończona. Obiekty znajdują się w $(OUTPUT)/"
 
 # Cel do uruchamiania testów
-test: $(TEST_UNITY_OBJECT) $(TEST_EXECS)
+test: $(TEST_UNITY_OBJECT) $(TEST_EXECS) modules
 	@echo "Running all tests..."
 	@for t in $(TEST_EXECS); do \
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=print_stacktrace=1 ./$$t || exit 1; \
@@ -316,7 +374,7 @@ $(TINYXML2_PIC_OBJ): $(TINYXML2_SRC) | $(OUTPUT)/release
 
 # --- Inne cele ---
 
-.PHONY: clean run non_unity modules release
+.PHONY: clean run non_unity modules modules_debug modules_release modules_all release
 
 run:
 	@echo "No main executable to run. Run examples individually, e.g., ./output/example_button"
@@ -325,6 +383,7 @@ run:
 clean:
 	rm -rf $(OUTPUT) $(DIST_DIR)
 	rm -f $(TEST_EXECS) $(UNITY_SOURCE) $(UNITY_OBJECT)
+# 	rm -f $(MODULE_PCMS_DEBUG) $(MODULE_PCMS_RELEASE)
 	@echo "Cleanup complete!"
 
 $(OUTPUT):
@@ -334,4 +393,48 @@ $(DIST_DIR):
 	@mkdir -p $@
 
 $(OUTPUT)/release:
+	@mkdir -p $@
+
+
+
+
+# --- Moduły prekompilowane C++23 ---
+# Osobne cele dla budowania modułów debug i release
+
+.PHONY: modules modules_debug modules_release
+
+# Główny cel - buduje moduły odpowiednie dla aktualnego trybu (debug/release)
+modules: $(MODULE_PCMS)
+
+# Wymuś przebudowanie wszystkich modułów (debug i release)
+modules_all: modules_debug modules_release
+	@echo "Wszystkie moduły zbudowane."
+
+# Buduj moduły debug
+modules_debug: $(MODULE_PCMS_DEBUG)
+	@echo "Moduły debug zbudowane."
+
+# Buduj moduły release
+modules_release: $(MODULE_PCMS_RELEASE)
+	@echo "Moduły release zbudowane."
+
+# --- Moduły DEBUG (bez optymalizacji, z informacjami debugowania) ---
+$(STD_PCM_DEBUG): | $(MODULE_CACHE_DIR)
+	@echo "Kompilowanie modułu std (debug)..."
+	$(CXX) -std=c++23 -stdlib=libc++ -Wno-reserved-identifier -Wno-reserved-module-identifier -g -O0 --precompile -o $@ /usr/lib/llvm-22/share/libc++/v1/std.cppm
+
+$(STD_COMPAT_PCM_DEBUG): $(STD_PCM_DEBUG) | $(MODULE_CACHE_DIR)
+	@echo "Kompilowanie modułu std.compat (debug)..."
+	$(CXX) -std=c++23 -stdlib=libc++ -fmodule-file=std=$(STD_PCM_DEBUG) -Wno-reserved-identifier -Wno-reserved-module-identifier -g -O0 --precompile -o $@ /usr/lib/llvm-22/share/libc++/v1/std.compat.cppm
+
+# --- Moduły RELEASE (z pełną optymalizacją: -O3, -march=native, -flto) ---
+$(STD_PCM_RELEASE): | $(MODULE_CACHE_DIR)
+	@echo "Kompilowanie modułu std (release)..."
+	$(CXX) -std=c++23 -stdlib=libc++ -Wno-reserved-identifier -Wno-reserved-module-identifier -O3 -march=native -flto --precompile -o $@ /usr/lib/llvm-22/share/libc++/v1/std.cppm
+
+$(STD_COMPAT_PCM_RELEASE): $(STD_PCM_RELEASE) | $(MODULE_CACHE_DIR)
+	@echo "Kompilowanie modułu std.compat (release)..."
+	$(CXX) -std=c++23 -stdlib=libc++ -fmodule-file=std=$(STD_PCM_RELEASE) -Wno-reserved-identifier -Wno-reserved-module-identifier -O3 -march=native -flto --precompile -o $@ /usr/lib/llvm-22/share/libc++/v1/std.compat.cppm
+
+$(MODULE_CACHE_DIR):
 	@mkdir -p $@

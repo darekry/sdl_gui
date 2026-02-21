@@ -34,16 +34,16 @@
         <AnimatedImage id="test_animation" x="10" y="30" width="64" height="64" texturePath="assets/explosion.png" frameWidth="64" frameHeight="64" frameCount="16" loop="false" onAnimationEnd="on_anim_finished" />
         <TabControl id="main_tabs" x="100" y="30" width="650" height="230">
             <Tab title="First Tab">
-                <Panel>
+               
                     <Label text="This is the first tab." x="10" y="10" />
                     <Button text="Tab 1 Button" x="10" y="40" width="120" height="30" />
-                </Panel>
+                
             </Tab>
             <Tab title="Second Tab">
-                <Panel>
+                
                     <Label text="This is the second tab with more controls." x="10" y="10" />
                     <Checkbox text="Another checkbox" x="10" y="40" />
-                </Panel>
+                
             </Tab>
         </TabControl>
     </Panel>

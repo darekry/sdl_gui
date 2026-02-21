@@ -12,12 +12,13 @@
             <Style state="Normal" textColor="255,255,255,255" />
         </Label>
 
-        <TabControl x="50" y="70" width="700" height="500" tabHeight="40">
-            <Tab title="Basic">
-                <Panel x="0" y="0" width="700" height="460">
-                    <Button id="btn1" x="20" y="20" width="150" height="40" text="Styled Button">
+        <TabControl x="50" y="70" width="700" height="600" tabHeight="40">
+            <Tab title="Basic" >
+                
+                    <Button id="btn1" x="20" y="20" width="150" height="40">
                         <Style state="Normal" backgroundColor="#3498db" textColor="#ffffff" />
                         <Style state="Hover" backgroundColor="#2980b9" />
+                        <Label x="0" y="0" text="Styled Button" />
                     </Button>
                     
                     <Checkbox x="20" y="80" checked="true" />
@@ -27,28 +28,28 @@
                     <Label x="60" y="120" text="Option 1" />
                     
                     <Slider x="20" y="160" width="200" height="20" min="0" max="100" value="75" />
-                </Panel>
+                
             </Tab>
             
             <Tab title="Text & Selection">
-                <Panel x="0" y="0" width="700" height="460">
+               
                     <TextInput x="20" y="20" width="250" height="35" text="Edit me..." />
                     
                     <TextArea x="20" y="70" width="400" height="150" text="This is a multiline text area.&#10;It supports word wrapping." wordWrap="true" fontPath="assets/fonts/font.ttf" />
                     
-                    <ComboBox x="20" y="240" width="200" height="30">
+                    <ComboBox id="combo1" x="20" y="240" width="200" height="30">
                         <Item text="Selection A" />
                         <Item text="Selection B" />
                         <Item text="Selection C" />
                     </ComboBox>
-                </Panel>
+               
             </Tab>
 
             <Tab title="Multimedia">
-                <Panel x="0" y="0" width="700" height="460">
+                
                     <AnimatedImage x="20" y="20" width="128" height="128" path="assets/explosion.png" frames="16" rows="1" fps="12" loop="true" />
                     <Canvas x="200" y="20" width="400" height="300" />
-                </Panel>
+                
             </Tab>
         </TabControl>
     </Panel>

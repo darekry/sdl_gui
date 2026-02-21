@@ -12,14 +12,8 @@
 #else
 #define LOG_DEBUG(...)
 #endif
-#include <functional>
-#include <optional>
-#include <map>
-#include <vector>
-#include <memory>
-#include <string>
-#include <string_view>
 
+import std.compat;
 class GUIManager;
 
 class GUIElement {

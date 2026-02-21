@@ -175,7 +175,12 @@ std::unique_ptr<GUIElement> SGMLParser::parseNode(tinyxml2::XMLElement * xmlNode
         for (tinyxml2::XMLElement * tabNode = xmlNode->FirstChildElement("Tab"); tabNode != nullptr; tabNode = tabNode->NextSiblingElement("Tab"))
         {
             const char * title = tabNode->Attribute("title");
-            Panel * content = tc->addTab(title ? title : "Tab");
+            int width = 100;
+            int height = -1;
+            tabNode->QueryIntAttribute("width", &width);
+            tabNode->QueryIntAttribute("height", &height);
+
+            Panel * content = tc->addTab(title ? title : "Tab", width, height);
             for (tinyxml2::XMLElement * child = tabNode->FirstChildElement(); child != nullptr; child = child->NextSiblingElement())
             {
                 auto childEl = parseNode(child);

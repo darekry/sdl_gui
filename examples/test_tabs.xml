@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Panel id="main_panel" x="0" y="0" width="800" height="600">
+    <TabControl id="test_tabs" x="50" y="50" width="700" height="500" tabHeight="40">
+        <Tab title="Short" width="80">
+            <Label text="This tab has width 80" x="20" y="20" />
+        </Tab>
+        <Tab title="Default">
+            <Label text="This tab has default width 100" x="20" y="20" />
+        </Tab>
+        <Tab title="Very Long Tab Title" width="200" height="60">
+            <Label text="This tab has width 200 and height 60" x="20" y="20" />
+        </Tab>
+    </TabControl>
+</Panel>
