@@ -50,10 +50,21 @@ SharedTexture TextureManager::loadTexture(std::string_view path) {
 
 
 SharedTexture TextureManager::createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color) {
-    LOG_DEBUG("TextureManager: Attempting to create texture for text: \"%s\"", std::string(text).c_str());
     if (!font) {
         LOG_DEBUG("TextureManager ERROR: Font is not loaded!");
         return nullptr;
+    }
+
+    // Utwórz unikalny klucz cache: "text|font_ptr|r,g,b,a"
+    // Używamy adresu font_ptr jako identyfikatora czcionki (raz załadowana czcionka ma stały adres)
+    std::string cacheKey = std::string(text) + "|" + std::to_string(reinterpret_cast<uintptr_t>(font.get())) 
+                          + "|" + std::to_string(color.r) + "," + std::to_string(color.g) 
+                          + "," + std::to_string(color.b) + "," + std::to_string(color.a);
+    
+    // Sprawdź cache
+    auto it = m_textureCache.find(cacheKey);
+    if (it != m_textureCache.end()) {
+        return it->second;
     }
 
     auto* textSurface = TTF_RenderUTF8_Blended(font.get(), std::string(text).c_str(), color);
@@ -61,7 +72,6 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
         LOG_DEBUG("TextureManager ERROR: Unable to render text surface! SDL_ttf Error: %s", TTF_GetError());
         return nullptr;
     }
-    LOG_DEBUG("TextureManager: Text surface created successfully (w: %d, h: %d).", textSurface->w, textSurface->h);
 
     auto* textTexture = SDL_CreateTextureFromSurface(m_renderer, textSurface);
     SDL_FreeSurface(textSurface);
@@ -71,9 +81,11 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
         return nullptr;
     }
     SDL_SetTextureBlendMode(textTexture, SDL_BLENDMODE_BLEND);
-    LOG_DEBUG("TextureManager: Texture created successfully from text.");
 
-    return {textTexture, SDLTextureDeleter()};
+    auto sharedTexture = SharedTexture(textTexture, SDLTextureDeleter());
+    m_textureCache.emplace(std::move(cacheKey), sharedTexture);
+    
+    return sharedTexture;
 }
 
 SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* texture) {

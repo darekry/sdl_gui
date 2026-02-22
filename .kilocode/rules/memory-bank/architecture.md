@@ -29,6 +29,13 @@ Główne komponenty:
   - Udostępnia funkcję `getTextSize` do precyzyjnego mierzenia wymiarów tekstu.
   - Kluczowe pliki: [`src/font_manager.hpp`](src/font_manager.hpp:30), [`src/font_manager.cpp`](src/font_manager.cpp:7).
 
+- StringGrid
+  - Siatka danych tekstowych dziedzicząca po Panel, wzorowana na TStringGrid z VCL.
+  - Wykorzystuje Slider do przewijania (pionowego i poziomego) oraz TextInput do edycji komórek inline.
+  - Używa renderowania bezpośredniego (`wantsDirectRender() = true`) dla optymalnej wydajności przy przewijaniu.
+  - Funkcjonalności: zarządzanie danymi komórek, nagłówki kolumn/wierszy, zaznaczanie pojedyncze i zakresowe, edycja inline, callbacki.
+  - Kluczowe pliki: [`src/string_grid.hpp`](src/string_grid.hpp), [`src/string_grid.cpp`](src/string_grid.cpp).
+
 Render flow (szczegółowo):
 1.  [`GUIManager::render()`](src/gui_manager.cpp:51) iteruje po wszystkich elementach najwyższego poziomu i wywołuje na nich [`GUIElement::render(renderer)`](src/gui.cpp:127).
 2.  [`GUIElement::render()`](src/gui.cpp:133) najpierw sprawdza, czy element jest widoczny. Jeśli tak, oblicza swój prostokąt na ekranie i sprawdza przecięcie z prostokątem przycinania rodzica (`parent_clip_rect`).
@@ -49,5 +56,6 @@ Zarządzanie zasobami i cache:
 - GUIManager: [`src/gui_manager.hpp`](src/gui_manager.hpp:19), [`src/gui_manager.cpp`](src/gui_manager.cpp:14)
 - TextureManager: [`src/texture_manager.hpp`](src/texture_manager.hpp:15), [`src/texture_manager.cpp`](src/texture_manager.cpp:1)
 - FontManager: [`src/font_manager.hpp`](src/font_manager.hpp:30), [`src/font_manager.cpp`](src/font_manager.cpp:7)
+- StringGrid: [`src/string_grid.hpp`](src/string_grid.hpp), [`src/string_grid.cpp`](src/string_grid.cpp)
 - Style/Theme: [`src/style.hpp`](src/style.hpp:17), [`src/theme.hpp`](src/theme.hpp:10), [`src/theme.cpp`](src/theme.cpp:1)
 - Zarządzanie pamięcią: [`src/sdl_deleters.hpp`](src/sdl_deleters.hpp)

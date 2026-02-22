@@ -6,6 +6,13 @@ Stan repozytorium:
 - Testy jednostkowe (Catch2) w [`tests/`](tests/:1).
 
 Ostatnie istotne zmiany:
+- **Nowy komponent StringGrid**:
+    *   Implementacja siatki danych tekstowych wzorowanej na TStringGrid z VCL.
+    *   Pliki: [`src/string_grid.hpp`](src/string_grid.hpp), [`src/string_grid.cpp`](src/string_grid.cpp).
+    *   Przykład użycia: [`examples/example_string_grid.cpp`](examples/example_string_grid.cpp).
+    *   Testy jednostkowe: [`tests/test_string_grid.cpp`](tests/test_string_grid.cpp).
+    *   Wykorzystuje istniejące widgety: Slider (przewijanie), TextInput (edycja komórek).
+    *   Renderowanie bezpośrednie (`wantsDirectRender() = true`) zamiast cache'owania.
 - **Migracja na moduły C++23 (import std.compat;)**:
     *   Przeprowadzono migrację wszystkich plików w `src/` (`.hpp` i `.cpp`) oraz `examples/` (`.cpp`) z tradycyjnych `#include` nagłówków standardowych na `import std.compat;`.
     *   `import std.compat;` umieszczony po wszystkich `#include` (SDL2, własne nagłówki, biblioteki zewnętrzne) aby uniknąć konfliktów z nagłówkami SDL2 które wewnętrznie inkludują nagłówki standardowe C.
