@@ -379,10 +379,6 @@ void AnimatedImage::animateToFrame(int targetFrame, uint32_t duration_ms, bool l
     });
 }
 
-void AnimatedImage::startFrameAnimation() {
-    // Not used in current implementation: we either use play() (timer) or animateToFrame() (AnimationManager)
-}
-
 void AnimatedImage::stopFrameAnimation() {
     m_isPlaying = false;
     if (m_playTimerId) {

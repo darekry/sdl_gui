@@ -22,7 +22,7 @@
 
 ## Błędy krytyczne i安全问题 (Security/Safety Issues)
 
-### Priorytet 1 - Krytyczne
+### Priorytet 1 - Krytyczne - ✅ NAPRAWIONE
 
 #### 1. TimerManager - Use-After-Free - ✅ NAPRAWIONE
 **Plik:** [`src/timer_manager.cpp`](src/timer_manager.cpp)
@@ -31,7 +31,7 @@
 
 **Naprawa:** Zmieniono logikę `update()` - teraz zbiera indeksy timerów do wykonania przed iteracją, wykonuje callbacki, a następnie usuwa single-shot timery i aktualizuje repeating timery. Eliminuje iterator invalidation.
 
-#### 2. AnimationManager - Dangling Pointer - ⚠️ DOKUMENTOWANE ( wymaga zmiany API)
+#### 2. AnimationManager - Dangling Pointer - ⚠️ DOKUMENTOWANE (wymaga zmiany API)
 **Plik:** [`src/animation_manager.hpp`](src/animation_manager.hpp)
 
 **Status:** Dokumentowano 2026-04-09
@@ -49,7 +49,7 @@
 
 ---
 
-### Priorytet 2 - Wysokie
+### Priorytet 2 - Wysokie - ✅ NAPRAWIONE
 
 #### 4. Canvas - Ręczne zarządzanie teksturą - ✅ NAPRAWIONE
 **Plik:** [`src/canvas.hpp`](src/canvas.hpp), [`src/canvas.cpp`](src/canvas.cpp)
@@ -92,41 +92,41 @@
 
 ---
 
-### Priorytet 3 - Średnie (DO ZROBIENIA)
+### Priorytet 3 - Średnie - ✅ NAPRAWIONE
 
-#### 8. StringGrid Sorting - Undefined Behavior
-**Plik:** [`src/string_grid.cpp:86-89`](src/string_grid.cpp)
+#### 8. StringGrid Sorting - Undefined Behavior - ✅ NAPRAWIONE
+**Plik:** [`src/string_grid.cpp`](src/string_grid.cpp)
 
-**Opis:** Jeśli wiersze mają różne rozmiary, komparator sortowania zwraca `false` w obu przypadkach `a < b` i `b < a`, co narusza strict weak ordering i prowadzi do UB w `std::sort`.
+**Status:** Naprawiono 2026-04-09
 
-**Rozwiązanie:** Zapewnić spójny porządek lub zwrócić odpowiednią wartość dla wierszy o różnych rozmiarach.
+**Naprawa:** Komparator teraz zapewnia strict weak ordering - wiersze bez danej kolumny są porządkowane według rozmiaru, zapewniając spójną kolejność.
 
-#### 9. Panel Drag State Not Reset
-**Plik:** [`src/panel.cpp:36-43`](src/panel.cpp)
+#### 9. Panel Drag State Not Reset - ✅ NAPRAWIONE
+**Plik:** [`src/panel.cpp`](src/panel.cpp), [`src/panel.hpp`](src/panel.hpp)
 
-**Opis:** Jeśli `onMouseCaptureLost()` zostanie wywołane, `m_is_dragging` pozostaje `true`.
+**Status:** Naprawiono 2026-04-09
 
-**Rozwiązanie:** Zresetować `m_is_dragging` w `onMouseCaptureLost()`.
+**Naprawa:** Dodano override `onMouseCaptureLost()` który resetuje `m_is_dragging = false`.
 
-#### 10. Slider Division by Zero
-**Plik:** [`src/slider.cpp:56-57`](src/slider.cpp)
+#### 10. Slider Division by Zero - ✅ NAPRAWIONE
+**Plik:** [`src/slider.cpp`](src/slider.cpp)
 
-**Opis:** `m_trackSize` może wynosić 0 dla bardzo małych sliderów, co prowadzi do dzielenia przez zero.
+**Status:** Naprawiono 2026-04-09
 
-**Rozwiązanie:** Dodać sprawdzenie `m_trackSize > 0`.
+**Naprawa:** Dodano guard `if (m_trackSize <= 0) return;` w `updateValueFromMouse()`.
 
-#### 11. Tooltip Timer Not Stopped on Element Destruction
-**Plik:** [`src/gui.cpp:102-104`](src/gui.cpp)
+#### 11. Tooltip Timer Not Stopped on Element Destruction - ✅ NAPRAWIONE
+**Plik:** [`src/gui.hpp`](src/gui.hpp), [`src/gui.cpp`](src/gui.cpp)
 
-**Opis:** Timer tooltipa nie jest czyszczony w destruktorze elementu.
+**Status:** Naprawiono 2026-04-09
 
-**Rozwiązanie:** Anulować timer w destruktorze `GUIElement`.
+**Naprawa:** Dodano destruktor `GUIElement::~GUIElement()` który zatrzymuje tooltip timer jeśli działa.
 
 ---
 
 ## Niespójności w kodzie
 
-### API Naming Inconsistencies (DO ZROBIENIA)
+### API Naming Inconsistencies (DO ZROBIENIA - niski priorytet)
 | Klasa | Metoda | Problem |
 |-------|--------|---------|
 | Button | `setOnClickCallback` | vs |
@@ -144,19 +144,25 @@
 
 **Naprawa:** Usunięto duplikat `#include "theme.hpp"`
 
-### Redundant Style Assignment (DO ZROBIENIA)
-**Plik:** `src/theme.cpp:60,67`
+### Redundant Style Assignment - ✅ NAPRAWIONE
+**Plik:** `src/theme.cpp`
 
-Styl dla "TextInput" jest ustawiany dwukrotnie, drugie przypisanie nadpisuje pierwsze.
+**Status:** Naprawiono 2026-04-09
 
-### Dead Code (DO ZROBIENIA)
-- `src/button.hpp:30` - `OnMouseOverCallback m_onMouseOver` - nigdy nieużywane
-- `src/combobox.cpp:161-163` - `updateMainButtonText()` - pusta implementacja
-- `src/animated_image.cpp:382-384` - `startFrameAnimation()` - nieużywana
+**Naprawa:** Usunięto nadpisujące przypisanie `theme.setStyle("TextInput", textAreaStyle)` - TextInput zachowuje swój własny styl.
+
+### Dead Code - ✅ NAPRAWIONE
+**Status:** Naprawiono 2026-04-09
+
+**Naprawa:**
+- `src/combobox.cpp` - usunięto pustą metodę `updateMainButtonText()`
+- `src/animated_image.cpp` - usunięto nieużywaną metodę `startFrameAnimation()`
+
+**Uwaga:** `OnMouseOverCallback` w Button jest dokumentowanym API - to jest bug (callback nie jest wywoływany), nie dead code.
 
 ---
 
-## Możliwości refaktoryzacji
+## Możliwości refaktoryzacji (DO ZROBIENIA - niski priorytet)
 
 ### Priorytet Wysoki
 
@@ -331,6 +337,45 @@ Usunięto duplikat `#include "theme.hpp"` w text_input.cpp.
 **Zmienione pliki:**
 - [`src/text_input.cpp`](src/text_input.cpp)
 
+#### 11. StringGrid Sorting UB - NAPRAWIONE
+Komparator zapewnia teraz strict weak ordering dla wierszy o różnych rozmiarach.
+
+**Zmienione pliki:**
+- [`src/string_grid.cpp`](src/string_grid.cpp)
+
+#### 12. Panel Drag State Reset - NAPRAWIONE
+Dodano `onMouseCaptureLost()` override resetujący `m_is_dragging`.
+
+**Zmienione pliki:**
+- [`src/panel.hpp`](src/panel.hpp)
+- [`src/panel.cpp`](src/panel.cpp)
+
+#### 13. Slider Division by Zero - NAPRAWIONE
+Dodano guard dla `m_trackSize <= 0`.
+
+**Zmienione pliki:**
+- [`src/slider.cpp`](src/slider.cpp)
+
+#### 14. Tooltip Timer Cleanup - NAPRAWIONE
+Dodano destruktor GUIElement zatrzymujący tooltip timer.
+
+**Zmienione pliki:**
+- [`src/gui.hpp`](src/gui.hpp)
+- [`src/gui.cpp`](src/gui.cpp)
+
+#### 15. Redundant Style Assignment - NAPRAWIONE
+Usunięto nadpisujące przypisanie TextInput style.
+
+**Zmienione pliki:**
+- [`src/theme.cpp`](src/theme.cpp)
+
+#### 16. Dead Code Removal - NAPRAWIONE
+Usunięto nieużywane metody: `updateMainButtonText()`, `startFrameAnimation()`.
+
+**Zmienione pliki:**
+- [`src/combobox.hpp`](src/combobox.hpp), [`src/combobox.cpp`](src/combobox.cpp)
+- [`src/animated_image.hpp`](src/animated_image.hpp), [`src/animated_image.cpp`](src/animated_image.cpp)
+
 ---
 
 ## Data analizy
@@ -344,8 +389,8 @@ Usunięto duplikat `#include "theme.hpp"` w text_input.cpp.
 - `src/animation_manager.hpp`
 - `src/cursor.hpp`, `src/cursor.cpp`
 - `src/canvas.hpp`, `src/canvas.cpp`
-- `src/gui.cpp`, `src/panel.cpp`, `src/slider.cpp`
+- `src/gui.hpp`, `src/gui.cpp`, `src/panel.hpp`, `src/panel.cpp`, `src/slider.cpp`
 - `src/label.cpp`, `src/text_input.cpp`
-- `src/button.hpp`, `src/combobox.cpp`, `src/animated_image.cpp`
+- `src/button.hpp`, `src/combobox.hpp`, `src/combobox.cpp`, `src/animated_image.hpp`, `src/animated_image.cpp`
 - `src/texture_manager.hpp`, `src/texture_manager.cpp`
 - `src/font_manager.hpp`, `src/font_manager.cpp`

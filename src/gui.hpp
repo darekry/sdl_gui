@@ -28,7 +28,7 @@ public:
     bool m_visible = true;
 
     GUIElement(GUIManager& manager, int x, int y, int width, int height);
-    virtual ~GUIElement() = default;
+    virtual ~GUIElement();
 
     void setTooltip(const std::string& text);
     void setID(std::string_view id);

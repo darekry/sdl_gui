@@ -9,6 +9,14 @@ GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)
     : m_x(x), m_y(y), m_width(width), m_height(height), m_manager(manager), m_parent(nullptr) {
 }
 
+GUIElement::~GUIElement() {
+    // Stop tooltip timer if running
+    if (tooltipTimerId != 0) {
+        stopTimer(tooltipTimerId);
+        tooltipTimerId = 0;
+    }
+}
+
 void GUIElement::setPosition(int x, int y) {
     m_x = x;
     m_y = y;

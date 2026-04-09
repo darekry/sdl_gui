@@ -90,3 +90,7 @@ void Panel::draw(SDL_Renderer* renderer) {
         SDL_RenderCopy(renderer, resolvedStyle.texture.value().get(), nullptr, &destRect);
     }
 }
+
+void Panel::onMouseCaptureLost() {
+    m_is_dragging = false;
+}

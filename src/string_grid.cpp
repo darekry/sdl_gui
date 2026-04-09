@@ -85,9 +85,24 @@ void StringGrid::sortByColumn(size_t col, SortDirection dir) {
     // Sortujemy dane
     std::sort(m_data.begin(), m_data.end(),
         [col, dir, hasCustom, this](const auto& rowA, const auto& rowB) {
-            if (col >= rowA.size() || col >= rowB.size()) {
-                return false;
+            // Handle rows with different sizes - maintain consistent ordering
+            // Rows with fewer columns come first (or last depending on direction)
+            const size_t sizeA = rowA.size();
+            const size_t sizeB = rowB.size();
+            
+            if (col >= sizeA && col >= sizeB) {
+                // Both rows don't have this column - compare by row size
+                return (dir == SortDirection::Ascending) ? (sizeA < sizeB) : (sizeA > sizeB);
             }
+            if (col >= sizeA) {
+                // rowA doesn't have this column - it comes first (ascending) or last (descending)
+                return dir == SortDirection::Ascending;
+            }
+            if (col >= sizeB) {
+                // rowB doesn't have this column - rowA comes last (ascending) or first (descending)
+                return dir == SortDirection::Descending;
+            }
+            
             const auto& cellA = rowA[col];
             const auto& cellB = rowB[col];
             

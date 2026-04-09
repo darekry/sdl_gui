@@ -158,9 +158,6 @@ void ComboBox::selectItem(int index) {
     toggleDropdown();
 }
 
-void ComboBox::updateMainButtonText() {
-}
-
 void ComboBox::createDropdownButtons() {
     m_dropdown_panel->clearChildren();
 

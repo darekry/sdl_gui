@@ -49,6 +49,11 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
 }
 
 void Slider::updateValueFromMouse(int mouseX, int mouseY) {
+    // Guard against division by zero
+    if (m_trackSize <= 0) {
+        return;
+    }
+    
     auto absPos = getAbsolutePosition();
     float ratio = 0.0f;
 

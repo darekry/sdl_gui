@@ -64,7 +64,6 @@ Theme Theme::createDefaultTheme() {
     textAreaStyle.borderWidth=2;
     textAreaStyle.backgroundColor = {255, 255, 255, 255}; // Białe tło
     theme.setStyle("TextArea", textAreaStyle);
-    theme.setStyle("TextInput", textAreaStyle);
 
     // --- Style dla Etykiety (Label) ---
     // Etykieta nie ma żadnych specjalnych stylów, więc będzie w pełni dziedziczyć z domyślnego.

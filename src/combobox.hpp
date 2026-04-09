@@ -27,7 +27,6 @@ protected:
 private:
     void toggleDropdown();
     void selectItem(int index);
-    void updateMainButtonText();
     void createDropdownButtons();
 
     bool m_is_expanded;
