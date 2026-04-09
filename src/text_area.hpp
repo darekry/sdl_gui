@@ -15,6 +15,8 @@ public:
     void setWordWrap(bool enabled);
     bool getWordWrap() const;
 
+    void setOnTextChanged(const std::function<void(TextArea*)>& callback);
+
     bool handleEvent(const SDL_Event& e) override;
     [[nodiscard]] const char* getComponentType() const override;
 protected:
@@ -40,4 +42,6 @@ size_t m_cursorPos = 0; // Pozycja kursora w m_text
 int m_text_offset_x = 0;
 Uint32 m_cursorBlinkTime = 0;
 bool m_showCursor = false;
+
+    std::function<void(TextArea*)> m_onTextChanged;
 };

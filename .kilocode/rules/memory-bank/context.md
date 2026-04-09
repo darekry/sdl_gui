@@ -6,13 +6,12 @@ Stan repozytorium:
 - Testy jednostkowe (Catch2) w [`tests/`](tests/:1).
 
 Ostatnie istotne zmiany:
-- **Nowy komponent StringGrid**:
-    *   Implementacja siatki danych tekstowych wzorowanej na TStringGrid z VCL.
-    *   Pliki: [`src/string_grid.hpp`](src/string_grid.hpp), [`src/string_grid.cpp`](src/string_grid.cpp).
-    *   Przykład użycia: [`examples/example_string_grid.cpp`](examples/example_string_grid.cpp).
-    *   Testy jednostkowe: [`tests/test_string_grid.cpp`](tests/test_string_grid.cpp).
-    *   Wykorzystuje istniejące widgety: Slider (przewijanie), TextInput (edycja komórek).
-    *   Renderowanie bezpośrednie (`wantsDirectRender() = true`) zamiast cache'owania.
+- **Refaktoryzacja i rozszerzenie komponentu StringGrid**:
+    *   **Refaktoryzacja kodu**: Metoda `drawDirect()` została podzielona na mniejsze, bardziej czytelne metody pomocnicze (`drawCells()`, `drawColumnHeaders()`, `drawRowHeaders()`, `drawSelection()`, `drawGridLines()`). Wprowadzono strukturę `VisibleRange` i metody pomocnicze do obliczania pozycji (`getColumnX()`, `getRowY()`, `getCellAreaX()`, `getCellAreaY()`), co uprościło kod i ułatwiło utrzymanie.
+    *   **Sortowanie kolumn**: Dodano sortowanie danych po kliknięciu w nagłówek kolumny. Obsługiwane są trzy stany: brak sortowania, rosnące, malejące. Biblioteka automatycznie wykrywa czy dane są numeryczne czy tekstowe. Dodano wskaźniki wizualne (↑/↓) w nagłówkach.
+    *   **Kopiowanie do schowka**: Implementacja kopiowania zaznaczonych komórek do schowka systemowego (Ctrl+C) w formacie TSV (tab-separated values).
+    *   **Naprawa metody `clear()`**: Teraz zachowuje strukturę kolumn (nagłówki i szerokości), usuwając tylko dane komórek.
+    *   **Rozszerzone testy jednostkowe**: Dodano 14 nowych testów pokrywających nowe funkcjonalności (sortowanie, schowek, poprawne zachowanie clear()). Wszystkie testy przechodzą (101 asercji).
 - **Migracja na moduły C++23 (import std.compat;)**:
     *   Przeprowadzono migrację wszystkich plików w `src/` (`.hpp` i `.cpp`) oraz `examples/` (`.cpp`) z tradycyjnych `#include` nagłówków standardowych na `import std.compat;`.
     *   `import std.compat;` umieszczony po wszystkich `#include` (SDL2, własne nagłówki, biblioteki zewnętrzne) aby uniknąć konfliktów z nagłówkami SDL2 które wewnętrznie inkludują nagłówki standardowe C.

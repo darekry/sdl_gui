@@ -1,76 +1,84 @@
 # Znalezione problemy i niespójności w SDL GUI
 
+## StringGrid - Integracja z systemami biblioteki
+
+### Priorytet 1 - Krytyczny (System styli)
+- [ ] Dodać domyślny styl StringGrid w `src/theme.cpp` w metodzie `createDefaultTheme()`
+- [ ] Zastąpić hardcoded kolory wartościami z `getComposedStyle(m_state)` w `src/string_grid.cpp`
+
+### Priorytet 2 - Wysoki (Parser XML)
+- [ ] Dodać `#include "string_grid.hpp"` w `src/sgml_parser.cpp`
+- [ ] Dodać obsługę tagu "StringGrid" w metodzie `parseNode()` 
+- [ ] Zaimplementować parsowanie atrybutów: rowCount, colCount, showRowHeaders, showColumnHeaders, editable
+
+### Priorytet 3 - Średni (API)
+- [ ] Dodać metody setter dla kolorów w `src/string_grid.hpp`:
+  - `setCellBackgroundColor(SDL_Color)`
+  - `setSelectionColor(SDL_Color)`
+  - `setGridLineColor(SDL_Color)`
+  - `setHeaderBackgroundColor(SDL_Color)`
+  - `setHeaderTextColor(SDL_Color)`
+
+---
+
 ## TextArea
 
-### 1. Brak aktualizacji `m_state` po kliknięciu
-**Plik:** [`src/text_area.cpp`](src/text_area.cpp:92-108)
+### 1. Brak aktualizacji `m_state` po kliknięciu - ✅ NAPRAWIONE
+**Plik:** [`src/text_area.cpp`](src/text_area.cpp)
 
-**Opis:** TextArea nie aktualizuje `m_state` (przez `setState()`) po kliknięciu, w przeciwieństwie do innych widgetów jak Button. TextArea używa wewnętrznej zmiennej `m_isHovered` do śledzenia stanu aktywności.
+**Status:** Naprawiono 2026-02-22
 
-**Oczekiwane zachowanie:** Po kliknięciu w TextArea, `getState()` powinno zwracać `ElementState::Hover`, podobnie jak w innych widgetach.
+**Naprawa:** Dodano `setState(ElementState::Hover)` w obsłudze `SDL_MOUSEBUTTONDOWN` gdy kliknięcie jest wewnątrz elementu oraz `setState(ElementState::Normal)` przy utracie fokusu.
 
-**Rzeczywiste zachowanie:** `getState()` zwraca `ElementState::Normal` nawet po kliknięciu wewnątrz TextArea.
+### 2. Inicjalizacja `m_lines` dopiero w `draw()` - ✅ NAPRAWIONE
+**Plik:** [`src/text_area.cpp`](src/text_area.cpp)
 
-**Wpływ na testy:** Testy nie mogą używać `getState()` do weryfikacji aktywacji TextArea.
+**Status:** Naprawiono 2026-02-22
 
-**Sugerowana naprawa:** Dodać `setState(ElementState::Hover)` w obsłudze `SDL_MOUSEBUTTONDOWN` gdy kliknięcie jest wewnątrz elementu.
+**Naprawa:** Zainicjalizowano `m_lines.push_back("")` w konstruktorze TextArea, co eliminuje potrzebę wywoływania `render()` przed edycją tekstu.
 
-```cpp
-// W handleEvent(), linia ~94:
-if (contains(e.button.x, e.button.y)) {
-    setState(ElementState::Hover);  // DODAĆ TO
-    m_isHovered = true;
-    SDL_StartTextInput();
-    // ...
-}
-```
-
-### 2. Inicjalizacja `m_lines` dopiero w `draw()`
-**Plik:** [`src/text_area.cpp`](src/text_area.cpp:173-215)
-
-**Opis:** Wektor `m_lines` jest inicjalizowany dopiero w metodzie `recalculateLines()`, która jest wywoływana z `draw()`. Jeśli użytkownik spróbuje edytować tekst przed pierwszym renderem, może wystąpić SIGSEGV w `update_text_offset()`.
-
-**Problem:** Metoda `update_text_offset()` (linia 274-316) iteruje po `m_lines` bez sprawdzania czy jest pusty.
-
-**Wpływ na testy:** Testy muszą wywołać `render()` przed próbą edycji tekstu, co jest nieintuicyjne.
-
-**Sugerowana naprawa:** 
-1. Zainicjalizować `m_lines` w konstruktorze z jedną pustą linią.
-2. Lub dodać sprawdzenie `m_lines.empty()` w `update_text_offset()`.
-
-```cpp
-// W konstruktorze:
-TextArea::TextArea(...) {
-    m_lines.push_back("");  // Zainicjalizuj z pustą linią
-    // ...
-}
-
-// Lub w update_text_offset():
-void TextArea::update_text_offset() {
-    if (m_lines.empty()) return;  // Dodaj guard
-    // ...
-}
-```
-
-### 3. Brak callbacków
+### 3. Brak callbacków - ✅ NAPRAWIONE
 **Plik:** [`src/text_area.hpp`](src/text_area.hpp)
 
-**Opis:** TextArea nie posiada callbacków dla zmian tekstu (w przeciwieństwie do TextInput, który ma `setOnTextChanged`).
+**Status:** Naprawiono 2026-02-22
 
-**Wpływ:** Użytkownik nie może reagować na zmiany tekstu w czasie rzeczywistym.
-
-**Sugerowana poprawa:** Dodać callback `setOnTextChanged` podobnie jak w TextInput.
+**Naprawa:** Dodano metodę `setOnTextChanged(const std::function<void(TextArea*)>& callback)` oraz wywołanie callbacka przy zmianach tekstu.
 
 ---
 
 ## Uwagi do testów
 
-### Wymagane wywołanie `render()` przed edycją
-W testach TextArea, przed próbą edycji tekstu (dodawanie/usuwanie znaków), konieczne jest wywołanie:
+### ~~Wymagane wywołanie `render()` przed edycją~~ - NIEAKTUALNE
+~~W testach TextArea, przed próbą edycji tekstu (dodawanie/usuwanie znaków), konieczne jest wywołanie:~~
 ```cpp
-area->render(manager.getRenderer());
+// area->render(manager.getRenderer());  // Już niepotrzebne po naprawie #2
 ```
-Dzieje się tak z powodu problemu #2 powyżej - `m_lines` jest inicjalizowany dopiero w `draw()`.
+Ten problem został rozwiązany przez naprawę #2 - `m_lines` jest teraz inicjalizowany w konstruktorze.
+
+---
+
+## Historia napraw
+
+### Naprawy z 2026-02-22
+
+#### 1. Brak aktualizacji `m_state` po kliknięciu - NAPRAWIONE
+Dodano `setState(ElementState::Hover)` w obsłudze kliknięcia oraz `setState(ElementState::Normal)` przy utracie fokusu.
+
+**Zmienione pliki:**
+- [`src/text_area.cpp`](src/text_area.cpp) - dodano wywołania `setState()` w odpowiednich miejscach obsługi zdarzeń
+
+#### 2. Inicjalizacja `m_lines` dopiero w `draw()` - NAPRAWIONE
+Zainicjalizowano `m_lines.push_back("")` w konstruktorze TextArea.
+
+**Zmienione pliki:**
+- [`src/text_area.cpp`](src/text_area.cpp) - dodano inicjalizację `m_lines` w konstruktorze
+
+#### 3. Brak callbacków - NAPRAWIONE
+Dodano metodę `setOnTextChanged(const std::function<void(TextArea*)>& callback)` oraz wywołanie callbacka przy zmianach tekstu.
+
+**Zmienione pliki:**
+- [`src/text_area.hpp`](src/text_area.hpp) - dodano deklarację metody `setOnTextChanged()` i zmiennej składowej `m_onTextChanged`
+- [`src/text_area.cpp`](src/text_area.cpp) - dodano implementację metody i wywołanie callbacka
 
 ---
 

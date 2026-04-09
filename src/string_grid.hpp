@@ -7,6 +7,9 @@
 
 import std.compat;
 
+// Enum reprezentujący kierunek sortowania
+enum class SortDirection { None, Ascending, Descending };
+
 // Struktura reprezentująca współrzędne komórki
 struct CellCoord {
     size_t row;
@@ -41,6 +44,14 @@ struct SelectionRange {
     }
 };
 
+// Struktura reprezentująca widoczny zakres komórek
+struct VisibleRange {
+    int startRow = 0;
+    int endRow = 0;
+    int startCol = 0;
+    int endCol = 0;
+};
+
 class StringGrid : public Panel {
 public:
     // Konstruktor
@@ -57,6 +68,21 @@ public:
     void setCellText(size_t row, size_t col, std::string_view text);
     [[nodiscard]] std::string_view getCellText(size_t row, size_t col) const;
     void clear();
+    
+    // Sortowanie
+    void sortByColumn(size_t col, SortDirection dir);
+    [[nodiscard]] SortDirection getSortDirection() const { return m_sortDirection; }
+    [[nodiscard]] size_t getSortColumn() const { return m_sortColumn; }
+    
+    // Niestandardowa funkcja porównująca dla sortowania
+    // Zwraca true, jeśli a powinno być przed b (dla sortowania rosnącego)
+    using CompareFunc = std::function<bool(const std::string& a, const std::string& b)>;
+    
+    // Niestandardowe funkcje porównujące dla sortowania kolumn
+    void setCustomComparator(size_t col, CompareFunc func);
+    void clearCustomComparator(size_t col);
+    void clearAllCustomComparators();
+    [[nodiscard]] bool hasCustomComparator(size_t col) const;
     
     // Geometria kolumn
     void setColumnWidth(size_t col, int width);
@@ -82,6 +108,14 @@ public:
     void startEditing(size_t row, size_t col);
     void stopEditing();
     [[nodiscard]] bool isEditing() const;
+    
+    // Settery dla kolorów specjalnych
+    void setSelectionColor(SDL_Color color);
+    void setSelectedCellBorderColor(SDL_Color color);
+    
+    // Gettery dla kolorów specjalnych
+    [[nodiscard]] SDL_Color getSelectionColor() const;
+    [[nodiscard]] SDL_Color getSelectedCellBorderColor() const;
     
     // Callbacki
     using CellCallback = std::function<void(StringGrid*, CellCoord)>;
@@ -117,12 +151,37 @@ private:
     [[nodiscard]] SDL_Rect getCellRect(size_t row, size_t col) const;
     [[nodiscard]] SDL_Rect getHeaderRect(size_t col) const;
     [[nodiscard]] SDL_Rect getRowHeaderRect(size_t row) const;
-    void drawCell(SDL_Renderer* renderer, size_t row, size_t col, int screenX, int screenY, int width, int height);
-    void drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offsetY);
-    void drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY);
+    void drawCell(SDL_Renderer* renderer, size_t row, size_t col, int screenX, int screenY, int width, int height,
+                  SDL_Color cellBackgroundColor, SDL_Color textColor);
+    void drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
+                           SDL_Color headerBackgroundColor, SDL_Color headerTextColor, SDL_Color gridLineColor);
+    void drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
+                        SDL_Color headerBackgroundColor, SDL_Color headerTextColor, SDL_Color gridLineColor);
     void drawSelection(SDL_Renderer* renderer, int offsetX, int offsetY);
-    void drawGridLines(SDL_Renderer* renderer, int offsetX, int offsetY);
+    void drawGridLines(SDL_Renderer* renderer, int offsetX, int offsetY, SDL_Color gridLineColor);
     void ensureCellVisible(size_t row, size_t col);
+    
+    // Nowe metody pomocnicze do obliczania pozycji
+    [[nodiscard]] int getColumnX(size_t col) const;
+    [[nodiscard]] int getRowY(size_t row) const;
+    [[nodiscard]] int getCellAreaX() const;
+    [[nodiscard]] int getCellAreaY() const;
+    [[nodiscard]] VisibleRange calculateVisibleRange() const;
+    
+    // Nowe metody pomocnicze do rysowania
+    void drawCells(SDL_Renderer* renderer, int offsetX, int offsetY, 
+                   SDL_Color cellBackgroundColor, SDL_Color textColor,
+                   const VisibleRange& range);
+    void renderText(SDL_Renderer* renderer, std::string_view text, int x, int y, 
+                    SDL_Color color, bool centerX = false, bool centerY = false);
+    
+    // Nowe metody pomocnicze do obsługi zdarzeń
+    bool handleMouseButtonDown(const SDL_Event& e);
+    bool handleMouseMotion(const SDL_Event& e);
+    bool handleMouseWheel(const SDL_Event& e);
+    bool handleKeyboard(const SDL_Event& e);
+    void handleHeaderClick(int localX, int localY);
+    void copySelectionToClipboard();
     
     // Dane
     std::vector<std::vector<std::string>> m_data;
@@ -157,11 +216,10 @@ private:
     Slider* m_vSlider = nullptr;
     Slider* m_hSlider = nullptr;
     
-    // Kolory
+    // Kolory (wartości domyślne jako fallback)
     SDL_Color m_cellBackgroundColor = {255, 255, 255, 255};
     SDL_Color m_selectionColor = {51, 153, 255, 100};
     SDL_Color m_gridLineColor = {200, 200, 200, 255};
-    SDL_Color m_headerBackgroundColor = {240, 240, 240, 255};
     SDL_Color m_headerTextColor = {0, 0, 0, 255};
     SDL_Color m_textColor = {0, 0, 0, 255};
     SDL_Color m_selectedCellBorderColor = {51, 153, 255, 255};
@@ -171,6 +229,13 @@ private:
     CellCallback m_onCellDoubleClick;
     EditCallback m_onCellEdit;
     SelectionCallback m_onSelectionChange;
+    
+    // Sortowanie
+    SortDirection m_sortDirection = SortDirection::None;
+    size_t m_sortColumn = SIZE_MAX;
+    
+    // Niestandardowe funkcje porównujące dla kolumn
+    std::map<size_t, CompareFunc> m_customComparators;
     
     // Czcionka
     static constexpr int DEFAULT_FONT_SIZE = 14;

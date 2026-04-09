@@ -22,6 +22,7 @@ distribution.
 */
 
 #include "tinyxml2.h"
+#include <cstdarg>
 
 import std.compat;
 

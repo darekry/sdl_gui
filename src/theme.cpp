@@ -68,6 +68,14 @@ Theme Theme::createDefaultTheme() {
 
     // --- Style dla Etykiety (Label) ---
     // Etykieta nie ma żadnych specjalnych stylów, więc będzie w pełni dziedziczyć z domyślnego.
+
+    // --- Style dla StringGrid ---
+    Style stringGridStyle;
+    stringGridStyle.backgroundColor = {255, 255, 255, 255};  // białe tło komórek
+    stringGridStyle.textColor = {0, 0, 0, 255};              // czarny tekst
+    stringGridStyle.borderColor = {200, 200, 200, 255};      // linie siatki
+    stringGridStyle.borderWidth = 1;
+    theme.setStyle("StringGrid", stringGridStyle);
     
     return theme;
 }

@@ -76,7 +76,7 @@ int main() {
             guiManager.cleanup();
 
             SDL_RenderPresent(renderer);
-            SDL_Delay(16);
+            // SDL_Delay(16);
         }
     } catch (const std::runtime_error& e) {
         std::cerr << "An error occurred: " << e.what() << std::endl;

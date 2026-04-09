@@ -10,6 +10,7 @@
 #include "radio_button.hpp"
 #include "radio_group.hpp"
 #include "slider.hpp"
+#include "string_grid.hpp"
 #include "tab_control.hpp"
 #include "text_area.hpp"
 #include "text_input.hpp"
@@ -124,6 +125,24 @@ std::unique_ptr<GUIElement> SGMLParser::parseNode(tinyxml2::XMLElement * xmlNode
         }
         element = std::make_unique<Slider>(m_guiManager, 0, 0, 100, 20, minValue, maxValue, val, orientation);
     }
+    else if (tagName == "StringGrid")
+    {
+        int rowCount = 5;
+        int colCount = 5;
+        xmlNode->QueryIntAttribute("rowCount", &rowCount);
+        xmlNode->QueryIntAttribute("colCount", &colCount);
+        auto grid = std::make_unique<StringGrid>(m_guiManager, 0, 0, 400, 300, static_cast<size_t>(rowCount), static_cast<size_t>(colCount));
+        bool showRowHeaders = true;
+        bool showColumnHeaders = true;
+        bool editable = true;
+        xmlNode->QueryBoolAttribute("showRowHeaders", &showRowHeaders);
+        xmlNode->QueryBoolAttribute("showColumnHeaders", &showColumnHeaders);
+        xmlNode->QueryBoolAttribute("editable", &editable);
+        grid->setShowRowHeaders(showRowHeaders);
+        grid->setShowColumnHeaders(showColumnHeaders);
+        grid->setEditable(editable);
+        element = std::move(grid);
+    }
     else if (tagName == "TextInput")
     {
         auto ti = std::make_unique<TextInput>(m_guiManager, 0, 0, 100, 30);
@@ -139,10 +158,12 @@ std::unique_ptr<GUIElement> SGMLParser::parseNode(tinyxml2::XMLElement * xmlNode
     }
     else if (tagName == "TextArea")
     {
-        const char * fontPathText = xmlNode->Attribute("fontPath");
+        const char* fontPathText = xmlNode->Attribute("fontPath");
         int fontSizeText = 16;
         xmlNode->QueryIntAttribute("fontSize", &fontSizeText);
-        auto ta = std::make_unique<TextArea>(m_guiManager, 0, 0, 200, 150, fontPathText ? fontPathText : "", fontSizeText);
+        const char* defaultFont = "assets/fonts/font.ttf";
+        auto ta = std::make_unique<TextArea>(m_guiManager, 0, 0, 200, 150,
+            fontPathText ? fontPathText : defaultFont, fontSizeText);
         const char * text = xmlNode->Attribute("text");
         if (text)
         {

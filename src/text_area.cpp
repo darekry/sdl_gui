@@ -10,6 +10,7 @@ TextArea::TextArea(GUIManager& manager, int x, int y, int w, int h, std::string_
     m_manager.getFontManager().loadFont(m_font_path.c_str(), m_font_size);
     m_needs_texture_update = true;
     m_text_offset_x = 0;
+    m_lines.push_back("");  // Zainicjalizuj z pustą linią, aby uniknąć SIGSEGV w update_text_offset()
 }
 
 void TextArea::setText(std::string_view text) {
@@ -17,6 +18,7 @@ void TextArea::setText(std::string_view text) {
     m_cursorPos = std::min(m_cursorPos, (m_text.length()));
     m_needs_texture_update = true;
     markDirty();
+    if (m_onTextChanged) { m_onTextChanged(this); }
 }
 
 void TextArea::setText(std::string&& text) {
@@ -24,6 +26,7 @@ void TextArea::setText(std::string&& text) {
     m_cursorPos = std::min(m_cursorPos, (m_text.length()));
     m_needs_texture_update = true;
     markDirty();
+    if (m_onTextChanged) { m_onTextChanged(this); }
 }
 
 void TextArea::setText(const char* text) {
@@ -31,6 +34,7 @@ void TextArea::setText(const char* text) {
     m_cursorPos = std::min(m_cursorPos, (m_text.length()));
     m_needs_texture_update = true;
     markDirty();
+    if (m_onTextChanged) { m_onTextChanged(this); }
 }
 
 const std::string& TextArea::getText() const {
@@ -44,6 +48,10 @@ void TextArea::setWordWrap(bool enabled) {
 
 bool TextArea::getWordWrap() const {
     return m_wordWrap;
+}
+
+void TextArea::setOnTextChanged(const std::function<void(TextArea*)>& callback) {
+    m_onTextChanged = callback;
 }
 
 void TextArea::draw(SDL_Renderer* renderer) {
@@ -91,6 +99,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
     auto eventHandled = false;
     if (e.type == SDL_MOUSEBUTTONDOWN) {
         if (contains(e.button.x, e.button.y)) {
+            setState(ElementState::Hover);
             m_isHovered = true;
             SDL_StartTextInput();
             m_showCursor = true;
@@ -100,6 +109,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         } else {
             if(m_isHovered)
             {
+                setState(ElementState::Normal);
                 markDirty();
             }
             m_isHovered = false;
@@ -127,6 +137,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         m_needs_texture_update = true;
         update_text_offset();
         markDirty();
+        if (m_onTextChanged) { m_onTextChanged(this); }
         eventHandled = true;
     } else if (e.type == SDL_KEYDOWN && m_isHovered) {
         if (e.key.keysym.sym == SDLK_BACKSPACE && m_cursorPos > 0) {
@@ -134,12 +145,14 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             m_cursorPos--;
             m_needs_texture_update = true; 
             update_text_offset();
+            if (m_onTextChanged) { m_onTextChanged(this); }
             eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_RETURN) {
             m_text.insert(m_cursorPos, "\n");
             m_cursorPos++;
             m_needs_texture_update = true;
              update_text_offset();
+            if (m_onTextChanged) { m_onTextChanged(this); }
            eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_LEFT && m_cursorPos > 0) {
             m_cursorPos--;
@@ -273,8 +286,9 @@ const char* TextArea::getComponentType() const {
 
 void TextArea::update_text_offset() {
     auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
-    if (!font) { return;
-}
+    if (!font) {
+        return;
+    }
 
     size_t current_line_idx = 0;
     auto pos_in_lines = 0uz;
