@@ -193,7 +193,10 @@ void GUIElement::renderToCache() {
 
     int tex_w = 0, tex_h = 0;
     if (m_cachedTexture) {
-        SDL_QueryTexture(m_cachedTexture.get(), nullptr, nullptr, &tex_w, &tex_h);
+        if (SDL_QueryTexture(m_cachedTexture.get(), nullptr, nullptr, &tex_w, &tex_h) != 0) {
+            LOG_DEBUG("GUIElement: SDL_QueryTexture failed: %s", SDL_GetError());
+            tex_w = tex_h = 0;
+        }
     }
     if (!m_cachedTexture || tex_w != m_width || tex_h != m_height) {
         m_cachedTexture.reset(SDL_CreateTexture(m_manager.getRenderer(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, m_width, m_height));

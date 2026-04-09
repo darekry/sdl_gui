@@ -14,8 +14,11 @@ void Label::recalculateSize() {
     auto& fontManager = m_manager.getFontManager();
     auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
     if (font) {
-        int textWidth, textHeight;
-        TTF_SizeText(font.get(), m_text.c_str(), &textWidth, &textHeight);
+        int textWidth = 0, textHeight = 0;
+        if (TTF_SizeText(font.get(), m_text.c_str(), &textWidth, &textHeight) != 0) {
+            LOG_DEBUG("Label: TTF_SizeText failed: %s", TTF_GetError());
+            textWidth = textHeight = 0;
+        }
         setSize(textWidth, textHeight);
     }
 }

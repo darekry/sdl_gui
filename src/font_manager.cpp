@@ -8,8 +8,13 @@
 FontManager::FontManager() {
     // Inicjalizacja SDL_ttf, jeśli nie została jeszcze zainicjowana
     if (TTF_Init() == -1) {
-        LOG_DEBUG("SDL_ttf could not initialize! SDL_ttf Error: %s", TTF_GetError());
-        // W przypadku błędu inicjalizacji, można podjąć odpowiednie działania, np. rzucić wyjątek
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+            "FontManager CRITICAL: SDL_ttf could not initialize! SDL_ttf Error: %s", 
+            TTF_GetError());
+        m_initialized = false;
+        // Obiekt będzie działać w ograniczonym trybie - nie będzie mógł ładować czcionek
+    } else {
+        m_initialized = true;
     }
 }
 

@@ -11,6 +11,14 @@ import std.compat;
 // Typ dla współdzielonego wskaźnika na teksturę
 using SharedTexture = std::shared_ptr<SDL_Texture>;
 
+/**
+ * @brief Manages texture loading and caching for the GUI.
+ * 
+ * @warning This class is NOT thread-safe. All methods must be called from the same thread
+ *          that owns the GUIManager and SDL renderer. Concurrent calls from different threads
+ *          may cause data races in the texture cache and SDL texture operations.
+ *          If multi-threaded texture loading is needed, use external synchronization (e.g., std::mutex).
+ */
 class TextureManager {
 public:
     // Konstruktor
@@ -18,6 +26,12 @@ public:
 
     // Destruktor
     ~TextureManager();
+    
+    /**
+     * @brief Check if SDL_image was initialized successfully.
+     * @return true if initialization succeeded, false otherwise.
+     */
+    bool isInitialized() const { return m_initialized; }
 
     // Metoda do ładowania tekstury. Zwraca SharedTexture.
     // Jeśli tekstura o danej ścieżce została już załadowana, zwraca istniejący SharedTexture.
@@ -50,4 +64,5 @@ private:
     SDL_Renderer* m_renderer;
     std::map<std::string, SharedTexture, std::less<>> m_textureCache; // Mapa przechowująca załadowane tekstury
     SharedTexture m_defaultTexture; // Domyślna tekstura
+    bool m_initialized = false; // SDL_image initialization status
 };

@@ -25,19 +25,37 @@ void TimerManager::removeTimer(uint32_t timerId) {
 void TimerManager::update() {
     uint32_t currentTime = SDL_GetTicks();
 
-    for (auto& timer : timers) {
-        if (currentTime >= timer.executionTime) {
-            if (timer.callback) {
-                timer.callback(timer.target);
-            }
-            if (!timer.singleShot) {
-                timer.executionTime = currentTime + timer.interval;
-            }
+    // Collect timers that need to execute, to avoid iterator invalidation
+    // if callbacks modify the timers vector
+    std::vector<size_t> timers_to_execute;
+    for (size_t i = 0; i < timers.size(); ++i) {
+        if (currentTime >= timers[i].executionTime) {
+            timers_to_execute.push_back(i);
         }
     }
 
-    auto new_end = std::remove_if(timers.begin(), timers.end(), [currentTime](const TimerEvent& timer) {
-        return timer.singleShot && currentTime >= timer.executionTime;
-    });
+    // Execute callbacks for triggered timers
+    for (size_t idx : timers_to_execute) {
+        if (idx < timers.size() && timers[idx].callback) {
+            timers[idx].callback(timers[idx].target);
+        }
+    }
+
+    // Update repeating timers and remove single-shot timers
+    // Use erase-remove with proper predicate
+    auto new_end = std::remove_if(timers.begin(), timers.end(), 
+        [currentTime](const TimerEvent& timer) {
+            if (currentTime >= timer.executionTime) {
+                return timer.singleShot; // Remove single-shot timers that executed
+            }
+            return false;
+        });
     timers.erase(new_end, timers.end());
+
+    // Update execution time for repeating timers
+    for (auto& timer : timers) {
+        if (!timer.singleShot && currentTime >= timer.executionTime) {
+            timer.executionTime = currentTime + timer.interval;
+        }
+    }
 }

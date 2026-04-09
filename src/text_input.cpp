@@ -3,7 +3,6 @@
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
 #include "theme.hpp"
-#include "theme.hpp"
 
 
 TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
@@ -70,7 +69,10 @@ void TextInput::update_text_offset() {
     if (!font) return;
 
     int text_width = 0;
-    TTF_SizeText(font.get(), m_text.substr(0, m_cursor_pos).c_str(), &text_width, nullptr);
+    if (TTF_SizeText(font.get(), m_text.substr(0, m_cursor_pos).c_str(), &text_width, nullptr) != 0) {
+        LOG_DEBUG("TextInput: TTF_SizeText failed: %s", TTF_GetError());
+        text_width = 0;
+    }
 
     auto cursor_pos_x = text_width;
     auto padding = 5;
@@ -84,7 +86,10 @@ void TextInput::update_text_offset() {
     }
 
     int total_text_width=0;
-    TTF_SizeText(font.get(), m_text.c_str(), &total_text_width, nullptr);
+    if (TTF_SizeText(font.get(), m_text.c_str(), &total_text_width, nullptr) != 0) {
+        LOG_DEBUG("TextInput: TTF_SizeText failed: %s", TTF_GetError());
+        total_text_width = 0;
+    }
 
     if (total_text_width < visible_width) {
         m_text_offset_x = 0;
@@ -109,7 +114,9 @@ void TextInput::draw(SDL_Renderer* renderer) {
             SDL_QueryTexture(text_texture.get(), nullptr, nullptr, &textWidth, &textHeight);
             
             SDL_Rect clip_rect = { 5, 0, getWidth() - 10, getHeight() };
-            SDL_RenderSetClipRect(renderer, &clip_rect);
+            if (SDL_RenderSetClipRect(renderer, &clip_rect) != 0) {
+                LOG_DEBUG("TextInput: SDL_RenderSetClipRect failed: %s", SDL_GetError());
+            }
 
             SDL_Rect renderQuad = { 5 + m_text_offset_x, (getHeight() - textHeight) / 2, textWidth, textHeight };
             SDL_RenderCopy(renderer, text_texture.get(), nullptr, &renderQuad);
@@ -128,7 +135,10 @@ void TextInput::draw(SDL_Renderer* renderer) {
         if (m_show_cursor) {
             int cursor_x_pos = 0;
             if (m_cursor_pos > 0 && font) {
-                TTF_SizeText(font.get(), m_text.substr(0, m_cursor_pos).c_str(), &cursor_x_pos, nullptr);
+                if (TTF_SizeText(font.get(), m_text.substr(0, m_cursor_pos).c_str(), &cursor_x_pos, nullptr) != 0) {
+                    LOG_DEBUG("TextInput: TTF_SizeText failed for cursor: %s", TTF_GetError());
+                    cursor_x_pos = 0;
+                }
             }
             
             SDL_Rect cursor_rect = {

@@ -34,6 +34,13 @@ struct FontCacheKeyCompare {
     }
 };
 
+/**
+ * @brief Manages font loading and caching for the GUI.
+ * 
+ * @warning This class is NOT thread-safe. All methods must be called from the same thread
+ *          that owns the GUIManager. Concurrent calls from different threads may cause data races
+ *          in the font cache. If multi-threaded font loading is needed, use external synchronization.
+ */
 class FontManager {
 public:
     // Konstruktor
@@ -41,6 +48,12 @@ public:
 
     // Destruktor
     ~FontManager();
+    
+    /**
+     * @brief Check if SDL_ttf was initialized successfully.
+     * @return true if initialization succeeded, false otherwise.
+     */
+    bool isInitialized() const { return m_initialized; }
 
     // Metoda do ładowania czcionki. Zwraca SharedFont.
     // Jeśli czcionka o danej ścieżce i rozmiarze została już załadowana, zwraca istniejący SharedFont.
@@ -62,4 +75,5 @@ public:
 private:
     std::map<FontKey, SharedFont, FontCacheKeyCompare> m_fontCache; // Mapa przechowująca załadowane czcionki
     SharedFont m_defaultFont; // Domyślna czcionka
+    bool m_initialized = false; // SDL_ttf initialization status
 };

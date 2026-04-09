@@ -25,6 +25,17 @@ struct LoopingAnimation {
     uint64_t last_execution_time = 0;
 };
 
+/**
+ * @brief Manages animations for GUI elements.
+ * 
+ * @warning This class is NOT thread-safe. All methods must be called from the same thread
+ *          that owns the GUIManager. Concurrent calls from different threads may cause data races.
+ *          
+ * @warning Animation callbacks that modify external data should be carefully managed.
+ *          The Animation struct stores raw pointers to target properties. If the target object
+ *          is destroyed before the animation completes, undefined behavior will occur.
+ *          Consider using std::shared_ptr or ensuring animations complete before object destruction.
+ */
 class AnimationManager {
 public:
     AnimationManager() = default;

@@ -18,7 +18,8 @@ protected:
     void drawDirect(SDL_Renderer* renderer) override;
 
 private:
-    SDL_Texture* m_canvasTex = nullptr;
+    // Use unique_ptr with custom deleter for automatic texture cleanup
+    std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_canvasTex{nullptr, SDL_DestroyTexture};
     int m_texW = 0;
     int m_texH = 0;
     bool m_drawing = false;

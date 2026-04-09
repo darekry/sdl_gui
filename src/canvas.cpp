@@ -17,44 +17,40 @@ Canvas::Canvas(GUIManager& manager, int x, int y, int width, int height)
 }
 
 Canvas::~Canvas() {
-    if (m_canvasTex) {
-        SDL_DestroyTexture(m_canvasTex);
-        m_canvasTex = nullptr;
-    }
+    // unique_ptr with deleter handles cleanup automatically
+    m_canvasTex.reset();
 }
 
 void Canvas::ensureTexture(SDL_Renderer* renderer) {
     if (!renderer) return;
     if (m_width <= 0 || m_height <= 0) return;
 
-    if (m_canvasTex == nullptr || m_texW != m_width || m_texH != m_height) {
+    if (!m_canvasTex || m_texW != m_width || m_texH != m_height) {
         recreateTexture(renderer, m_width, m_height);
     }
 }
 
 void Canvas::recreateTexture(SDL_Renderer* renderer, int w, int h) {
-    if (m_canvasTex) {
-        SDL_DestroyTexture(m_canvasTex);
-        m_canvasTex = nullptr;
-    }
+    m_canvasTex.reset();
     if (w <= 0 || h <= 0) {
         m_texW = m_texH = 0;
         return;
     }
 
-    m_canvasTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
-    if (!m_canvasTex) {
+    SDL_Texture* newTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+    if (!newTex) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Canvas: SDL_CreateTexture failed: %s", SDL_GetError());
         m_texW = m_texH = 0;
         return;
     }
-    SDL_SetTextureBlendMode(m_canvasTex, SDL_BLENDMODE_BLEND);
+    m_canvasTex.reset(newTex);
+    SDL_SetTextureBlendMode(m_canvasTex.get(), SDL_BLENDMODE_BLEND);
     m_texW = w;
     m_texH = h;
 
     // Wyczyść na biało
     SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, m_canvasTex);
+    SDL_SetRenderTarget(renderer, m_canvasTex.get());
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
     SDL_SetRenderTarget(renderer, oldTarget);
@@ -66,7 +62,7 @@ void Canvas::clear() {
     if (!renderer || !m_canvasTex) return;
 
     SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, m_canvasTex);
+    SDL_SetRenderTarget(renderer, m_canvasTex.get());
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
     SDL_SetRenderTarget(renderer, oldTarget);
@@ -108,7 +104,7 @@ void Canvas::drawSegment(SDL_Renderer* renderer, SDL_Point a, SDL_Point b) {
 
     // Ustaw rysowanie na teksturę płótna
     SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, m_canvasTex);
+    SDL_SetRenderTarget(renderer, m_canvasTex.get());
 
     // Kolor pędzla: czarny, pełna alfa
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -158,7 +154,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
             m_last = local;
             // Narysuj punkt startowy
             SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-            SDL_SetRenderTarget(renderer, m_canvasTex);
+            SDL_SetRenderTarget(renderer, m_canvasTex.get());
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             putBrush(renderer, local.x, local.y);
             SDL_SetRenderTarget(renderer, oldTarget);
@@ -203,5 +199,5 @@ void Canvas::drawDirect(SDL_Renderer* renderer) {
 
     SDL_Point abs = getAbsolutePosition();
     SDL_Rect dest{ abs.x, abs.y, m_width, m_height };
-    SDL_RenderCopy(renderer, m_canvasTex, nullptr, &dest);
+    SDL_RenderCopy(renderer, m_canvasTex.get(), nullptr, &dest);
 }

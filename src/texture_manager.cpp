@@ -10,8 +10,13 @@ TextureManager::TextureManager(SDL_Renderer* renderer) : m_renderer(renderer) {
     // Sprawdzamy, czy wymagane formaty są już załadowane
     const auto imgFlags = IMG_INIT_PNG; // Można dodać więcej formatów, np. IMG_INIT_JPG
     if (!(IMG_Init(imgFlags) & imgFlags)) {
-        LOG_DEBUG("SDL_image could not initialize! SDL_image Error: %s", IMG_GetError());
-        // W przypadku błędu inicjalizacji, można podjąć odpowiednie działania, np. rzucić wyjątek
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
+            "TextureManager CRITICAL: SDL_image could not initialize! SDL_image Error: %s", 
+            IMG_GetError());
+        m_initialized = false;
+        // Obiekt będzie działać w ograniczonym trybie - nie będzie mógł ładować obrazów
+    } else {
+        m_initialized = true;
     }
 }
 

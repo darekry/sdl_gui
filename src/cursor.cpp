@@ -13,6 +13,13 @@ Cursor::Cursor(GUIManager& manager)
 }
 
 Cursor::~Cursor() {
+    // Cancel all active animations to prevent dangling pointer callbacks
+    for (auto& [state, data] : m_cursors) {
+        if (data.animation_id != 0) {
+            m_manager.getAnimationManager()->removeAnimation(data.animation_id);
+            data.animation_id = 0;
+        }
+    }
     SDL_ShowCursor(SDL_ENABLE);
 }
 
