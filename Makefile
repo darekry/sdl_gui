@@ -249,7 +249,9 @@ $(OUTPUT)/catch_amalgamated.o: $(LIB)/catch_amalgamated.cpp $(LIB)/catch_amalgam
 HPP_SOURCES := \
 	$(SRC)/easing.hpp \
 	$(SRC)/sdl_deleters.hpp \
+	$(SRC)/layout_parser.hpp \
 	$(SRC)/sgml_parser.hpp \
+	$(SRC)/json_parser.hpp \
 	$(SRC)/timer_manager.hpp \
 	$(SRC)/animation_manager.hpp \
 	$(SRC)/style.hpp \
@@ -318,7 +320,9 @@ $(DIST_DIR)/sdl_gui.hpp: $(HPP_SOURCES) | $(DIST_DIR)
 	done) | sed \
 		-e '/#include "easing.hpp"/d' \
 		-e '/#include "sdl_deleters.hpp"/d' \
+		-e '/#include "layout_parser.hpp"/d' \
 		-e '/#include "sgml_parser.hpp"/d' \
+		-e '/#include "json_parser.hpp"/d' \
 		-e '/#include "timer_manager.hpp"/d' \
 		-e '/#include "animation_manager.hpp"/d' \
 		-e '/#include "style.hpp"/d' \

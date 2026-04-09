@@ -6,6 +6,13 @@ Stan repozytorium:
 - Testy jednostkowe (Catch2) w [`tests/`](tests/:1).
 
 Ostatnie istotne zmiany:
+- **Dodano obsługę definicji GUI przez JSON (JsonParser)**:
+    *   Dodano bibliotekę nlohmann/json (v3.11.3) jako header-only w [`lib/nlohmann_json.hpp`](lib/nlohmann_json.hpp:1).
+    *   Utworzono [`src/json_parser.hpp`](src/json_parser.hpp:1) i [`src/json_parser.cpp`](src/json_parser.cpp:1) - parser JSON analogiczny do SGMLParser.
+    *   JsonParser obsługuje wszystkie widgety: Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas.
+    *   Obsługuje sekcję `resources` (fonts, textures) i `styles` z kolorami w formatach RGBA i hex.
+    *   Dodano przykład [`examples/example_json_parser.cpp`](examples/example_json_parser.cpp:1) i testowy layout [`examples/comprehensive_layout.json`](examples/comprehensive_layout.json:1).
+    *   Zaktualizowano [`Makefile`](Makefile:1) - dodano json_parser.hpp do HPP_SOURCES.
 - **Refaktoryzacja i rozszerzenie komponentu StringGrid**:
     *   **Refaktoryzacja kodu**: Metoda `drawDirect()` została podzielona na mniejsze, bardziej czytelne metody pomocnicze (`drawCells()`, `drawColumnHeaders()`, `drawRowHeaders()`, `drawSelection()`, `drawGridLines()`). Wprowadzono strukturę `VisibleRange` i metody pomocnicze do obliczania pozycji (`getColumnX()`, `getRowY()`, `getCellAreaX()`, `getCellAreaY()`), co uprościło kod i ułatwiło utrzymanie.
     *   **Sortowanie kolumn**: Dodano sortowanie danych po kliknięciu w nagłówek kolumny. Obsługiwane są trzy stany: brak sortowania, rosnące, malejące. Biblioteka automatycznie wykrywa czy dane są numeryczne czy tekstowe. Dodano wskaźniki wizualne (↑/↓) w nagłówkach.

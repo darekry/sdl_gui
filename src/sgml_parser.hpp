@@ -1,23 +1,27 @@
 #pragma once
 
-#include <SDL2/SDL_pixels.h>
+#include "layout_parser.hpp"
 #include "../lib/tinyxml2.h"
 
-import std.compat;
-
-class GUIManager;
-class GUIElement;
-
-class SGMLParser
+class SGMLParser : public LayoutParser
 {
 public:
-    SGMLParser(GUIManager & guiManager);
-    std::unique_ptr<GUIElement> loadLayout(const std::string & file_path);
+    SGMLParser(GUIManager& guiManager);
+
+protected:
+    bool loadFile(const std::string& file_path) override;
+    void* getRootNode() override;
+    bool hasNode(void* node, const std::string& key) override;
+    std::string getString(void* node, const std::string& key, const std::string& defaultVal) override;
+    int getInt(void* node, const std::string& key, int defaultVal) override;
+    float getFloat(void* node, const std::string& key, float defaultVal) override;
+    bool getBool(void* node, const std::string& key, bool defaultVal) override;
+    bool isArray(void* node, const std::string& key) override;
+    void forEachInArray(void* node, const std::string& key, std::function<void(void*)> callback) override;
+    void* getChild(void* node, const std::string& key) override;
+    std::string getNodeName(void* node) override;
 
 private:
-    GUIManager & m_guiManager;
-    std::unique_ptr<GUIElement> parseNode(tinyxml2::XMLElement * xmlNode);
-    void parseResources(tinyxml2::XMLElement * resourcesNode);
-    void parseStyle(tinyxml2::XMLElement * styleNode, GUIElement * element);
-    std::optional<SDL_Color> parseColor(const char * colorStr);
+    tinyxml2::XMLDocument m_doc;
+    tinyxml2::XMLElement* m_root = nullptr;
 };

@@ -1,0 +1,297 @@
+{
+    "resources": {
+        "fonts": [
+            {"path": "assets/fonts/font.ttf", "size": 16},
+            {"path": "assets/fonts/font.ttf", "size": 24}
+        ],
+        "textures": []
+    },
+    "root": {
+        "type": "Panel",
+        "id": "main_panel",
+        "x": 10,
+        "y": 10,
+        "width": 780,
+        "height": 580,
+        "styles": [
+            {
+                "state": "Normal",
+                "backgroundColor": "#f0f0f0"
+            }
+        ],
+        "children": [
+            {
+                "type": "Label",
+                "id": "title_label",
+                "x": 250,
+                "y": 10,
+                "text": "Comprehensive JSON Parser Test",
+                "fontSize": 24,
+                "styles": [
+                    {
+                        "state": "Normal",
+                        "textColor": "#333333"
+                    }
+                ]
+            },
+            {
+                "type": "Panel",
+                "id": "basic_controls",
+                "x": 10,
+                "y": 40,
+                "width": 370,
+                "height": 250,
+                "styles": [
+                    {
+                        "state": "Normal",
+                        "backgroundColor": "#ffffff",
+                        "borderColor": "#cccccc",
+                        "borderWidth": 1
+                    }
+                ],
+                "children": [
+                    {
+                        "type": "Label",
+                        "x": 10,
+                        "y": 5,
+                        "text": "Basic Controls"
+                    },
+                    {
+                        "type": "Button",
+                        "id": "ok_button",
+                        "x": 10,
+                        "y": 30,
+                        "width": 100,
+                        "height": 30,
+                        "text": "Click Me",
+                        "styles": [
+                            {
+                                "state": "Normal",
+                                "backgroundColor": "#4CAF50",
+                                "textColor": "#ffffff"
+                            },
+                            {
+                                "state": "Hover",
+                                "backgroundColor": "#45a049"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Checkbox",
+                        "id": "enable_feature_check",
+                        "x": 120,
+                        "y": 35,
+                        "width": 30,
+                        "height": 30,
+                        "checked": true
+                    },
+                    {
+                        "type": "Label",
+                        "x": 155,
+                        "y": 40,
+                        "text": "Enable Feature"
+                    },
+                    {
+                        "type": "Slider",
+                        "id": "volume_slider",
+                        "x": 10,
+                        "y": 70,
+                        "width": 200,
+                        "height": 20,
+                        "min": 0,
+                        "max": 100,
+                        "value": 50,
+                        "orientation": "Horizontal"
+                    },
+                    {
+                        "type": "Label",
+                        "id": "volume_label",
+                        "x": 220,
+                        "y": 70,
+                        "text": "Volume: 50"
+                    },
+                    {
+                        "type": "TextInput",
+                        "id": "name_input",
+                        "x": 10,
+                        "y": 100,
+                        "width": 200,
+                        "height": 30,
+                        "text": "Enter name"
+                    },
+                    {
+                        "type": "TextArea",
+                        "id": "log_area",
+                        "x": 10,
+                        "y": 140,
+                        "width": 350,
+                        "height": 100,
+                        "text": "Log messages will appear here...",
+                        "wordWrap": true
+                    }
+                ]
+            },
+            {
+                "type": "Panel",
+                "id": "selection_controls",
+                "x": 390,
+                "y": 40,
+                "width": 380,
+                "height": 250,
+                "styles": [
+                    {
+                        "state": "Normal",
+                        "backgroundColor": "#ffffff",
+                        "borderColor": "#cccccc",
+                        "borderWidth": 1
+                    }
+                ],
+                "children": [
+                    {
+                        "type": "Label",
+                        "x": 10,
+                        "y": 5,
+                        "text": "Selection Controls"
+                    },
+                    {
+                        "type": "ComboBox",
+                        "id": "item_selector",
+                        "x": 10,
+                        "y": 30,
+                        "width": 150,
+                        "height": 30,
+                        "items": ["Option 1", "Option 2", "Option 3"]
+                    },
+                    {
+                        "type": "RadioGroup",
+                        "id": "color_group",
+                        "x": 10,
+                        "y": 70,
+                        "width": 150,
+                        "height": 120,
+                        "children": [
+                            {
+                                "type": "RadioButton",
+                                "x": 0,
+                                "y": 0,
+                                "width": 30,
+                                "height": 30
+                            },
+                            {
+                                "type": "Label",
+                                "x": 35,
+                                "y": 5,
+                                "text": "Red"
+                            },
+                            {
+                                "type": "RadioButton",
+                                "x": 0,
+                                "y": 30,
+                                "width": 30,
+                                "height": 30
+                            },
+                            {
+                                "type": "Label",
+                                "x": 35,
+                                "y": 35,
+                                "text": "Green"
+                            },
+                            {
+                                "type": "RadioButton",
+                                "x": 0,
+                                "y": 60,
+                                "width": 30,
+                                "height": 30,
+                                "selected": true
+                            },
+                            {
+                                "type": "Label",
+                                "x": 35,
+                                "y": 65,
+                                "text": "Blue"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "Panel",
+                "id": "advanced_controls",
+                "x": 10,
+                "y": 300,
+                "width": 760,
+                "height": 270,
+                "styles": [
+                    {
+                        "state": "Normal",
+                        "backgroundColor": "#ffffff",
+                        "borderColor": "#cccccc",
+                        "borderWidth": 1
+                    }
+                ],
+                "children": [
+                    {
+                        "type": "Label",
+                        "x": 10,
+                        "y": 5,
+                        "text": "Advanced Controls"
+                    },
+                    {
+                        "type": "TabControl",
+                        "id": "main_tabs",
+                        "x": 100,
+                        "y": 30,
+                        "width": 650,
+                        "height": 230,
+                        "tabHeight": 30,
+                        "tabs": [
+                            {
+                                "title": "First Tab",
+                                "children": [
+                                    {
+                                        "type": "Label",
+                                        "x": 10,
+                                        "y": 10,
+                                        "text": "This is the first tab."
+                                    },
+                                    {
+                                        "type": "Button",
+                                        "x": 10,
+                                        "y": 40,
+                                        "width": 120,
+                                        "height": 30,
+                                        "text": "Tab 1 Button"
+                                    }
+                                ]
+                            },
+                            {
+                                "title": "Second Tab",
+                                "children": [
+                                    {
+                                        "type": "Label",
+                                        "x": 10,
+                                        "y": 10,
+                                        "text": "This is the second tab with more controls."
+                                    },
+                                    {
+                                        "type": "Checkbox",
+                                        "x": 10,
+                                        "y": 40,
+                                        "width": 30,
+                                        "height": 30
+                                    },
+                                    {
+                                        "type": "Label",
+                                        "x": 45,
+                                        "y": 45,
+                                        "text": "Another checkbox"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
