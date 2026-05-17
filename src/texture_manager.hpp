@@ -39,6 +39,9 @@ public:
 
     // Metoda do tworzenia tekstury z tekstu.
     SharedTexture createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color);
+    
+    // Metoda do tworzenia tekstury z tekstu z stabilnym kluczem (font_path + font_size).
+    SharedTexture createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color);
 
     // Metoda do dodawania istniejącej tekstury i przejmowania nad nią własności
     SharedTexture addTexture(std::string_view key, SDL_Texture* texture);
@@ -59,6 +62,11 @@ public:
     
     // Metoda do pobierania domyślnej tekstury
     SharedTexture getDefaultTexture() const;
+
+    // Cleanup methods
+    void pruneUnused();
+    void clearCache();
+    [[nodiscard]] size_t getCacheSize() const;
 
 private:
     SDL_Renderer* m_renderer;

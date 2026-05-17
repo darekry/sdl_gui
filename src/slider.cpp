@@ -102,6 +102,13 @@ bool Slider::handleEvent(const SDL_Event& e) {
             updateValueFromMouse(e.motion.x, e.motion.y);
             return true;
         }
+    } else if (e.type == SDL_MOUSEWHEEL && m_isHovered) {
+        // Obsługa kółka myszy - zmiana wartości gdy slider jest hoverowany
+        int delta = e.wheel.y * m_wheelStep;
+        if (delta != 0) {
+            setValue(m_currentValue + delta);
+            return true;
+        }
     }
     return false;
 }

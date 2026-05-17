@@ -1,6 +1,7 @@
 #include "text_area.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
+#include "sdl_deleters.hpp"
 
 import std.compat;
 
@@ -239,8 +240,22 @@ void TextArea::refreshTextures() {
         if (line.empty()) {
             m_line_textures.push_back(nullptr);
         } else {
-            auto lineTexture = m_manager.getTextureManager().createTextureFromText(line, font, color);
-            m_line_textures.push_back(lineTexture);
+            SDL_Surface* surface = TTF_RenderUTF8_Blended(font.get(), line.c_str(), color);
+            if (!surface) {
+                LOG_DEBUG("TextArea: TTF_RenderUTF8_Blended failed: %s", TTF_GetError());
+                m_line_textures.push_back(nullptr);
+                continue;
+            }
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(m_manager.getRenderer(), surface);
+            SDL_FreeSurface(surface);
+            
+            if (!texture) {
+                LOG_DEBUG("TextArea: SDL_CreateTextureFromSurface failed: %s", SDL_GetError());
+                m_line_textures.push_back(nullptr);
+                continue;
+            }
+            SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+            m_line_textures.push_back(SharedTexture(texture, SDLTextureDeleter()));
         }
     }
 }

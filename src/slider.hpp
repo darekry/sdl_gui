@@ -19,6 +19,9 @@ public:
     using OnChangeCallback = std::function<void(GUIElement*)>;
     void setOnChangeCallback(OnChangeCallback callback) { m_onChange = std::move(callback); }
 
+    void setWheelStep(int step) { m_wheelStep = step > 0 ? step : 1; }
+    int getWheelStep() const { return m_wheelStep; }
+
     Button* getDecrementButton();
     Button* getIncrementButton();
 
@@ -40,6 +43,7 @@ private:
     int m_currentValue;
     OnChangeCallback m_onChange;
     bool m_isDragging = false;
+    int m_wheelStep = 1; // Wartość zmiany przy przewijaniu kółkiem myszy
 
     // Pola do zarządzania wewnętrznym układem
     int m_trackSize;

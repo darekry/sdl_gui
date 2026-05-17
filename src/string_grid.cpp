@@ -62,9 +62,9 @@ std::string_view StringGrid::getCellText(size_t row, size_t col) const {
 }
 
 void StringGrid::clear() {
-    // Usuwamy tylko dane, zachowując strukturę kolumn (nagłówki i szerokości)
     m_data.clear();
     clearSelection();
+    clearLocalTextureCache();
 }
 
 void StringGrid::sortByColumn(size_t col, SortDirection dir) {
@@ -715,7 +715,7 @@ void StringGrid::renderText(SDL_Renderer* renderer, std::string_view text, int x
     auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
     if (!font) return;
     
-    auto texture = m_manager.getTextureManager().createTextureFromText(text, font, color);
+    auto texture = createLocalTextTexture(text, font.get(), color);
     if (!texture) return;
     
     int textWidth, textHeight;
@@ -949,8 +949,7 @@ void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,
     if (row < m_data.size() && col < m_data[row].size() && !m_data[row][col].empty()) {
         auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
         if (font) {
-            auto texture = m_manager.getTextureManager().createTextureFromText(
-                m_data[row][col], font, textColor);
+            auto texture = createLocalTextTexture(m_data[row][col], font.get(), textColor);
             if (texture) {
                 int textWidth, textHeight;
                 SDL_QueryTexture(texture.get(), nullptr, nullptr, &textWidth, &textHeight);
@@ -1010,18 +1009,15 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
             if (font && col < m_columnHeaders.size() && !m_columnHeaders[col].empty()) {
                 std::string headerText = m_columnHeaders[col];
                 
-                // Dodaj strzałkę sortowania
                 if (m_sortColumn == col && m_sortDirection != SortDirection::None) {
                     headerText += (m_sortDirection == SortDirection::Ascending) ? " \u2191" : " \u2193";
                 }
                 
-                auto texture = m_manager.getTextureManager().createTextureFromText(
-                    headerText, font, headerTextColor);
+                auto texture = createLocalTextTexture(headerText, font.get(), headerTextColor);
                 if (texture) {
                     int textWidth, textHeight;
                     SDL_QueryTexture(texture.get(), nullptr, nullptr, &textWidth, &textHeight);
                     
-                    // Obcięcie tekstu jeśli jest za długi
                     if (textWidth > colWidth - 8) {
                         textWidth = colWidth - 8;
                     }
@@ -1070,8 +1066,7 @@ void StringGrid::drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY
             
             if (font) {
                 std::string rowLabel = std::to_string(row + 1);
-                auto texture = m_manager.getTextureManager().createTextureFromText(
-                    rowLabel, font, headerTextColor);
+                auto texture = createLocalTextTexture(rowLabel, font.get(), headerTextColor);
                 if (texture) {
                     int textWidth, textHeight;
                     SDL_QueryTexture(texture.get(), nullptr, nullptr, &textWidth, &textHeight);
@@ -1201,5 +1196,42 @@ void StringGrid::ensureCellVisible(size_t row, size_t col) {
     }
     if (m_vSlider) {
         m_vSlider->setValue(m_vScrollOffset);
+    }
+}
+
+SharedTexture StringGrid::createLocalTextTexture(std::string_view text, TTF_Font* font, SDL_Color color) {
+    std::string key = std::string(text) + "|" + std::to_string(color.r) + "," + std::to_string(color.g) + "," + std::to_string(color.b) + "," + std::to_string(color.a);
+    
+    auto it = m_localTextureCache.find(key);
+    if (it != m_localTextureCache.end()) {
+        return it->second;
+    }
+    
+    SDL_Surface* surface = TTF_RenderUTF8_Blended(font, std::string(text).c_str(), color);
+    if (!surface) {
+        LOG_DEBUG("StringGrid: TTF_RenderUTF8_Blended failed: %s", TTF_GetError());
+        return nullptr;
+    }
+    
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(m_manager.getRenderer(), surface);
+    SDL_FreeSurface(surface);
+    
+    if (!texture) {
+        LOG_DEBUG("StringGrid: SDL_CreateTextureFromSurface failed: %s", SDL_GetError());
+        return nullptr;
+    }
+    
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+    auto sharedTexture = SharedTexture(texture, SDLTextureDeleter());
+    m_localTextureCache.emplace(std::move(key), sharedTexture);
+    
+    return sharedTexture;
+}
+
+void StringGrid::clearLocalTextureCache() {
+    size_t count = m_localTextureCache.size();
+    m_localTextureCache.clear();
+    if (count > 0) {
+        LOG_DEBUG("StringGrid::clearLocalTextureCache(): Cleared %zu local textures.", count);
     }
 }

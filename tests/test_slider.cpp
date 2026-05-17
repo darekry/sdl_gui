@@ -75,4 +75,57 @@ TEST_CASE("Slider functionality", "[slider]") {
 
         REQUIRE(sliderPtr->getValue() == 49);
     }
+
+    SECTION("Mouse wheel increases value when slider is hovered") {
+        auto slider = std::make_unique<Slider>(manager, 50, 50, 200, 40, 0, 100, 50, Orientation::Horizontal);
+        Slider* sliderPtr = slider.get();
+        manager.addElement(std::move(slider));
+
+        // Symuluj hover nad sliderem
+        manager.processEvent(helper.createMouseMotion(150, 70));
+        manager.render(); // Render aby zaktualizować stan hover
+
+        // Kółko w górę powinno zwiększyć wartość
+        manager.processEvent(helper.createMouseWheel(1));
+        REQUIRE(sliderPtr->getValue() == 51);
+    }
+
+    SECTION("Mouse wheel decreases value when slider is hovered") {
+        auto slider = std::make_unique<Slider>(manager, 50, 50, 200, 40, 0, 100, 50, Orientation::Horizontal);
+        Slider* sliderPtr = slider.get();
+        manager.addElement(std::move(slider));
+
+        // Symuluj hover nad sliderem
+        manager.processEvent(helper.createMouseMotion(150, 70));
+        manager.render();
+
+        // Kółko w dół powinno zmniejszyć wartość
+        manager.processEvent(helper.createMouseWheel(-1));
+        REQUIRE(sliderPtr->getValue() == 49);
+    }
+
+    SECTION("Mouse wheel with custom step") {
+        auto slider = std::make_unique<Slider>(manager, 50, 50, 200, 40, 0, 100, 50, Orientation::Horizontal);
+        Slider* sliderPtr = slider.get();
+        sliderPtr->setWheelStep(5);
+        manager.addElement(std::move(slider));
+
+        // Symuluj hover
+        manager.processEvent(helper.createMouseMotion(150, 70));
+        manager.render();
+
+        // Kółko w górę z krokiem 5
+        manager.processEvent(helper.createMouseWheel(1));
+        REQUIRE(sliderPtr->getValue() == 55);
+    }
+
+    SECTION("Mouse wheel ignored when slider is not hovered") {
+        auto slider = std::make_unique<Slider>(manager, 50, 50, 200, 40, 0, 100, 50, Orientation::Horizontal);
+        Slider* sliderPtr = slider.get();
+        manager.addElement(std::move(slider));
+
+        // Bez hover - kółko nie powinno zmienić wartości
+        manager.processEvent(helper.createMouseWheel(1));
+        REQUIRE(sliderPtr->getValue() == 50);
+    }
 }

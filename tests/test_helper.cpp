@@ -71,6 +71,16 @@ SDL_Event TestHelper::createMouseMotion(int x, int y, Uint32 state) {
     return e;
 }
 
+SDL_Event TestHelper::createMouseWheel(Sint32 y, Sint32 x) {
+    SDL_Event e;
+    SDL_memset(&e, 0, sizeof(e));
+    e.type = SDL_MOUSEWHEEL;
+    e.wheel.type = SDL_MOUSEWHEEL;
+    e.wheel.x = x;
+    e.wheel.y = y;
+    return e;
+}
+
 SDL_Event TestHelper::createKeyEvent(Uint32 type, SDL_Keycode key) {
     SDL_Event e;
     SDL_memset(&e, 0, sizeof(e));

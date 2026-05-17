@@ -34,6 +34,7 @@ public:
     // Mouse/keyboard/text events
     SDL_Event createMouseButton(Uint32 type, Uint8 button, int x, int y);
     SDL_Event createMouseMotion(int x, int y, Uint32 state = 0);
+    SDL_Event createMouseWheel(Sint32 y, Sint32 x = 0);
     SDL_Event createKeyEvent(Uint32 type, SDL_Keycode key);
     SDL_Event createTextInputEvent(const char* text);
 

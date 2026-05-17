@@ -60,19 +60,55 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
         return nullptr;
     }
 
-    // Utwórz unikalny klucz cache: "text|font_ptr|r,g,b,a"
-    // Używamy adresu font_ptr jako identyfikatora czcionki (raz załadowana czcionka ma stały adres)
     std::string cacheKey = std::string(text) + "|" + std::to_string(reinterpret_cast<uintptr_t>(font.get())) 
                           + "|" + std::to_string(color.r) + "," + std::to_string(color.g) 
                           + "," + std::to_string(color.b) + "," + std::to_string(color.a);
     
-    // Sprawdź cache
     auto it = m_textureCache.find(cacheKey);
     if (it != m_textureCache.end()) {
         return it->second;
     }
 
     auto* textSurface = TTF_RenderUTF8_Blended(font.get(), std::string(text).c_str(), color);
+    if (!textSurface) {
+        LOG_DEBUG("TextureManager ERROR: Unable to render text surface! SDL_ttf Error: %s", TTF_GetError());
+        return nullptr;
+    }
+
+    auto* textTexture = SDL_CreateTextureFromSurface(m_renderer, textSurface);
+    SDL_FreeSurface(textSurface);
+
+    if (!textTexture) {
+        LOG_DEBUG("TextureManager ERROR: Unable to create texture from rendered text! SDL Error: %s", SDL_GetError());
+        return nullptr;
+    }
+    SDL_SetTextureBlendMode(textTexture, SDL_BLENDMODE_BLEND);
+
+    auto sharedTexture = SharedTexture(textTexture, SDLTextureDeleter());
+    m_textureCache.emplace(std::move(cacheKey), sharedTexture);
+    
+    return sharedTexture;
+}
+
+SharedTexture TextureManager::createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color) {
+    std::string cacheKey = std::string(text) + "|" + std::string(fontPath) + "|" + std::to_string(fontSize)
+                          + "|" + std::to_string(color.r) + "," + std::to_string(color.g) 
+                          + "," + std::to_string(color.b) + "," + std::to_string(color.a);
+    
+    auto it = m_textureCache.find(cacheKey);
+    if (it != m_textureCache.end()) {
+        return it->second;
+    }
+
+    auto* font = TTF_OpenFont(std::string(fontPath).c_str(), fontSize);
+    if (!font) {
+        LOG_DEBUG("TextureManager ERROR: Unable to load font %s! SDL_ttf Error: %s", std::string(fontPath).c_str(), TTF_GetError());
+        return nullptr;
+    }
+
+    auto* textSurface = TTF_RenderUTF8_Blended(font, std::string(text).c_str(), color);
+    TTF_CloseFont(font);
+    
     if (!textSurface) {
         LOG_DEBUG("TextureManager ERROR: Unable to render text surface! SDL_ttf Error: %s", TTF_GetError());
         return nullptr;
@@ -183,7 +219,6 @@ SharedTexture TextureManager::getDefaultTexture() const {
 }
 
 bool TextureManager::queryTexture(std::string_view path, int& width, int& height) {
-    // If texture already loaded, use it; otherwise attempt to load (which will cache it)
     SharedTexture tex = getTexture(path);
     if (!tex) {
         tex = loadTexture(path);
@@ -196,4 +231,32 @@ bool TextureManager::queryTexture(std::string_view path, int& width, int& height
         return false;
     }
     return true;
+}
+
+void TextureManager::pruneUnused() {
+    auto it = m_textureCache.begin();
+    size_t removed = 0;
+    while (it != m_textureCache.end()) {
+        if (it->second.use_count() == 1) {
+            it = m_textureCache.erase(it);
+            ++removed;
+        } else {
+            ++it;
+        }
+    }
+    if (removed > 0) {
+        LOG_DEBUG("TextureManager::pruneUnused(): Removed %zu unused textures.", removed);
+    }
+}
+
+void TextureManager::clearCache() {
+    size_t count = m_textureCache.size();
+    m_textureCache.clear();
+    if (count > 0) {
+        LOG_DEBUG("TextureManager::clearCache(): Cleared %zu textures.", count);
+    }
+}
+
+size_t TextureManager::getCacheSize() const {
+    return m_textureCache.size();
 }

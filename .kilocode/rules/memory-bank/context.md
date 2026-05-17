@@ -1,55 +1,42 @@
-Aktualny stan projektu i najważniejsze zmiany.
+# Aktualny stan projektu
 
-Stan repozytorium:
-- Kod źródłowy i implementacja podstawowych widgetów znajdują się w [`src/`](src/:1).
-- Dokumentacja i przykłady są w [`docs/`](docs/:1) i [`examples/`](examples/:1).
-- Testy jednostkowe (Catch2) w [`tests/`](tests/:1).
+## Stan repozytorium
 
-Ostatnie istotne zmiany:
-- **Dodano obsługę definicji GUI przez JSON (JsonParser)**:
-    *   Dodano bibliotekę nlohmann/json (v3.11.3) jako header-only w [`lib/nlohmann_json.hpp`](lib/nlohmann_json.hpp:1).
-    *   Utworzono [`src/json_parser.hpp`](src/json_parser.hpp:1) i [`src/json_parser.cpp`](src/json_parser.cpp:1) - parser JSON analogiczny do SGMLParser.
-    *   JsonParser obsługuje wszystkie widgety: Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas.
-    *   Obsługuje sekcję `resources` (fonts, textures) i `styles` z kolorami w formatach RGBA i hex.
-    *   Dodano przykład [`examples/example_json_parser.cpp`](examples/example_json_parser.cpp:1) i testowy layout [`examples/comprehensive_layout.json`](examples/comprehensive_layout.json:1).
-    *   Zaktualizowano [`Makefile`](Makefile:1) - dodano json_parser.hpp do HPP_SOURCES.
-- **Refaktoryzacja i rozszerzenie komponentu StringGrid**:
-    *   **Refaktoryzacja kodu**: Metoda `drawDirect()` została podzielona na mniejsze, bardziej czytelne metody pomocnicze (`drawCells()`, `drawColumnHeaders()`, `drawRowHeaders()`, `drawSelection()`, `drawGridLines()`). Wprowadzono strukturę `VisibleRange` i metody pomocnicze do obliczania pozycji (`getColumnX()`, `getRowY()`, `getCellAreaX()`, `getCellAreaY()`), co uprościło kod i ułatwiło utrzymanie.
-    *   **Sortowanie kolumn**: Dodano sortowanie danych po kliknięciu w nagłówek kolumny. Obsługiwane są trzy stany: brak sortowania, rosnące, malejące. Biblioteka automatycznie wykrywa czy dane są numeryczne czy tekstowe. Dodano wskaźniki wizualne (↑/↓) w nagłówkach.
-    *   **Kopiowanie do schowka**: Implementacja kopiowania zaznaczonych komórek do schowka systemowego (Ctrl+C) w formacie TSV (tab-separated values).
-    *   **Naprawa metody `clear()`**: Teraz zachowuje strukturę kolumn (nagłówki i szerokości), usuwając tylko dane komórek.
-    *   **Rozszerzone testy jednostkowe**: Dodano 14 nowych testów pokrywających nowe funkcjonalności (sortowanie, schowek, poprawne zachowanie clear()). Wszystkie testy przechodzą (101 asercji).
-- **Migracja na moduły C++23 (import std.compat;)**:
-    *   Przeprowadzono migrację wszystkich plików w `src/` (`.hpp` i `.cpp`) oraz `examples/` (`.cpp`) z tradycyjnych `#include` nagłówków standardowych na `import std.compat;`.
-    *   `import std.compat;` umieszczony po wszystkich `#include` (SDL2, własne nagłówki, biblioteki zewnętrzne) aby uniknąć konfliktów z nagłówkami SDL2 które wewnętrznie inkludują nagłówki standardowe C.
-    *   Projekt buduje się poprawnie z modułami C++23 (zweryfikowano przez `make examples`).
-- Przeprowadzono pełną analizę projektu w celu aktualizacji banku pamięci.
-- Zaktualizowano dokumentację architektury (`architecture.md`), produktu (`product.md`), technologii (`tech.md`), zadań (`tasks.md`) i strategii testów (`testing_strategy.md`).
-- Potwierdzono, że architektura oparta na `GUIManager` i `GUIElement` z cache'owaniem renderowania jest stabilna.
-- Potwierdzono, że przykłady w `examples/` są aktualne i stanowią dobrą bazę do testów manualnych.
-- Naprawiono 8 warningów implicit conversion int to float w [`src/slider.cpp`](src/slider.cpp), dodając explicit cast do static_cast<float> dla dzielenia int przez int oraz mnożenia int przez float.
-- Dodano słowo kluczowe override do deklaracji metody getComponentType w [`src/text_area.hpp`](src/text_area.hpp:21), aby poprawić czytelność kodu i zgodność z standardami C++.
-- Naprawiono warning o nieużywanych parametrach argc i argv w [`examples/example_context_menu.cpp`](examples/example_context_menu.cpp:10), dodając [[maybe_unused]] przed parametrami funkcji main.
-- Naprawiono warning o missing field 'textColor' initializer w [`examples/example_checkbox.cpp`](examples/example_checkbox.cpp:18), dodając .textColor = std::nullopt do inicjalizacji stylu panelu.
-- Naprawiono warning o missing field 'backgroundColor' initializer w [`examples/example_tabs.cpp`](examples/example_tabs.cpp:27-29), dodając .backgroundColor = std::nullopt do inicjalizacji stylu paneli zakładek.
-- Naprawiono warning o missing field 'backgroundColor' initializer w [`examples/example_window.cpp`](examples/example_window.cpp:28, 33, 46), dodając .backgroundColor = std::nullopt do inicjalizacji stylu paneli okna.
-- Naprawiono warning o nieużywanych parametrach argc i argv w [`examples/example_themes.cpp`](examples/example_themes.cpp:76), dodając [[maybe_unused]] przed parametrami funkcji main.
-- Naprawiono warning o missing field initializer w [`examples/example_radio_button.cpp`](examples/example_radio_button.cpp:19), dodając .borderWidth = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt do inicjalizacji stylu RadioGroup.
-- Naprawiono 2 warningi implicit conversion int to float w [`src/animated_image.cpp`](src/animated_image.cpp:127,185), dodając static_cast<float> dla wartości int przed mnożeniem przez float w celu uniknięcia utraty precyzji.
-- Naprawiono 2 warningi implicit conversion w [`src/context_menu.cpp`](src/context_menu.cpp:94,131), dodając static_cast<size_t> dla konwersji int do size_type oraz static_cast<int> dla konwersji size_type do int.
-- Zaktualizowano dokumentację dotyczącą tworzenia nowych widżetów ([`docs/creating_new_widget.md`](docs/creating_new_widget.md) oraz wersje `pl` i `en`). Poprawiono w niej przykład implementacji metody `draw()`, zaktualizowano jej sygnaturę i dodano informację o automatycznym wykrywaniu plików przez `Makefile`.
-- Zaktualizowano pliki [`readme.md`](readme.md) i [`README.pl.md`](README.pl.md). W `readme.md` poprawiono opis polecenia `make all`, a w `README.pl.md` skorygowano ścieżkę do pliku `src/sdl_app.hpp`.
-- **Refaktoryzacja dokumentacji dla użytkownika końcowego**:
-    *   Zmodyfikowano `readme.md` i `README.pl.md`, usuwając sekcje dotyczące wewnętrznej architektury, kompilacji i testowania, a dodając szczegółowe instrukcje linkowania z bibliotekami statycznymi i dynamicznymi. Uproszczono sekcję "How to Use".
-    *   Usunięto zbędne pliki i katalogi z `docs/`, które dotyczyły wewnętrznego rozwoju biblioteki (np. `creating_new_widget.md`, `testing_strategy.md`, `feature_proposals.md`, `proposals/`, `archive/`).
-    *   Zrefaktoryzowano pozostałe pliki w `docs/` (`animated_image.md`, `context_menu.md`, `mouse_cursor.md`, `for_rts.md`), usuwając szczegóły implementacyjne i skupiając się na publicznym API.
-    *   Utworzono nową dokumentację `docs/getting_started.md` (w wersjach `pl`/`en`), zawierającą kompletny przewodnik dla początkujących, w tym wymagania, strukturę projektu, przykład "Hello World" oraz instrukcje linkowania.
-    *   Utworzono nową dokumentację API w `docs/api/` dla kluczowych komponentów (`GUIManager.md`, `Button.md`, `Panel.md`), opisującą ich przeznaczenie, publiczne metody i przykłady użycia.
+- **Kod źródłowy**: [`src/`](src/) - 30 plików nagłówkowych, 25 plików implementacji
+- **Dokumentacja**: [`docs/`](docs/) - API docs, przewodniki (EN/PL), code review texture/font manager
+- **Przykłady**: [`examples/`](examples/) - 25 przykładów demonstrujących widgety
+- **Testy**: [`tests/`](tests/) - 20 plików testowych (Catch2)
 
-Następne kroki (priorytety):
-1.  Rozszerzenie pokrycia testami jednostkowymi dla kluczowych komponentów, które jeszcze nie są w pełni przetestowane.
+## Kluczowe cechy
 
-Punkty wymagające weryfikacji:
-- Dokładne ścieżki do zasobów domyślnych (`assets/fonts/font.ttf`) oraz polityka publikacji assetów.
-- Czy oczekiwane zachowanie cache (`m_cachedTexture`) w sytuacji zmiany rozmiaru elementu jest zgodne z wymaganiami.
-- Poziom wsparcia dla różnych formatów obrazów w [`TextureManager::TextureManager`](src/texture_manager.cpp:7).
+- Biblioteka GUI oparta na SDL2 z cache'owaniem renderowania
+- Migracja na moduły C++23 (`import std.compat;`)
+- Parser JSON/XML do definicji layoutów
+- Kompletny zestaw widgetów: Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu
+- System motywów i stylów
+
+## Ostatnia analiza i fixy (2026-05-17)
+
+Przeprowadzony code review systemu TextureManager/FontManager - wyniki w [`docs/texture_font_manager_review.md`](docs/texture_font_manager_review.md).
+
+**Zaimplementowane fixy**:
+1. `TextureManager::pruneUnused()`, `clearCache()`, `getCacheSize()` - cleanup mechanizm
+2. `TextureManager::createTextureFromText(path, size, color)` - stabilny klucz cache (font_path|font_size)
+3. `TextArea::refreshTextures()` - lokalne tekstury, nie w TextureManager cache
+4. `TextInput` - cursor w `renderOverlay()` (bez recreate cache), lokalna tekstura tekstu
+5. `StringGrid` - `m_localTextureCache` dla komórek, `createLocalTextTexture()`, `clearLocalTextureCache()`
+6. `gui.cpp:102-104` - hover detection z `e.motion.x/y` (zamiast `SDL_GetMouseState()`)
+7. **Slider** - obsługa kółka myszy (`m_wheelStep`, `setWheelStep()`, `SDL_MOUSEWHEEL` handling)
+
+**FontManager**: ✅ Poprawna implementacja z transparent comparator
+
+## Następne kroki
+
+1. Rozszerzenie pokrycia testami jednostkowymi
+2. Dokończenie prototypu ScrollView
+3. Testowanie fixów w examples
+
+## Punkty do weryfikacji
+
+- Polityka publikacji assetów domyślnych (`assets/fonts/font.ttf`)
+- Zachowanie cache (`m_cachedTexture`) przy zmianie rozmiaru elementu

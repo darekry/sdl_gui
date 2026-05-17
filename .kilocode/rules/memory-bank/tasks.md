@@ -41,3 +41,34 @@
     *   Jeśli widget się nie rysuje, upewnij się, że flaga `m_isDirty` jest ustawiana na `true` po każdej zmianie, która powinna wywołać przerysowanie.
     *   Sprawdź, czy `render()` jest poprawnie wywoływane w hierarchii elementów.
     *   Użyj debuggera, aby prześledzić `GUIElement::render()` i `GUIElement::renderToCache()`.
+
+## Jak dodać test jednostkowy
+
+1.  **Stwórz plik testowy**:
+    *   Utwórz plik `test_nazwa_widgetu.cpp` w katalogu [`tests/`](tests/:1).
+
+2.  **Struktura testu**:
+    ```cpp
+    #define CATCH_CONFIG_MAIN
+    #include "lib/catch_amalgamated.hpp"
+    #include "tests/test_helper.hpp"
+    #include "nazwa_widgetu.hpp"
+
+    TEST_CASE("NazwaWidget - opis testu", "[tag]") {
+        TestHelper helper;
+        GUIManager& manager = helper.getManager();
+
+        SECTION("Nazwa sekcji") {
+            // kod testu
+            REQUIRE(warunek);
+        }
+    }
+    ```
+
+3.  **Uruchom testy**:
+    *   Wykonaj `make test` - Makefile automatycznie wykryje nowy plik testowy.
+
+4.  **Ważne uwagi**:
+    *   Użyj `TestHelper` do inicjalizacji SDL w trybie headless.
+    *   Symuluj zdarzenia przez `helper.createMouseEvent()` i `helper.createKeyboardEvent()`.
+    *   Testuj callbacki, stany elementów i reakcje na zdarzenia.

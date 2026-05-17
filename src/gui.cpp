@@ -100,9 +100,7 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
     }
 
     if (e.type == SDL_MOUSEMOTION) {
-        int mouseX, mouseY;
-        SDL_GetMouseState(&mouseX, &mouseY);
-        bool currentlyHovered = contains(mouseX, mouseY);
+        bool currentlyHovered = contains(e.motion.x, e.motion.y);
 
         if (currentlyHovered && !m_isHovered) {
             m_isHovered = true;

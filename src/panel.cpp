@@ -43,22 +43,8 @@ bool Panel::handleEvent(const SDL_Event& event) {
         }
     }
     
-    // Logika dla samego panelu (np. hover), jeśli zdarzenie nie zostało przechwycone przez dzieci
-    // Wywołujemy bazową implementację, ale bez ponownej propagacji do dzieci
-    if (event.type == SDL_MOUSEMOTION) {
-        int mouseX, mouseY;
-        SDL_GetMouseState(&mouseX, &mouseY);
-        bool currentlyHovered = contains(mouseX, mouseY);
-
-        if (currentlyHovered && !m_isHovered) {
-            m_isHovered = true;
-            setState(ElementState::Hover);
-        } else if (!currentlyHovered && m_isHovered) {
-            m_isHovered = false;
-            setState(ElementState::Normal);
-        }
-    }
-    
+    // Obsługa przeciągania - sprawdzana PRZED hover, aby uniknąć lagów
+    // Podczas drag używamy event.motion.x/y zamiast SDL_GetMouseState()
     if (m_is_dragging && event.type == SDL_MOUSEMOTION) {
         int parentX = m_parent ? m_parent->getAbsolutePosition().x : 0;
         int parentY = m_parent ? m_parent->getAbsolutePosition().y : 0;
@@ -70,6 +56,21 @@ bool Panel::handleEvent(const SDL_Event& event) {
         m_is_dragging = false;
         m_manager.releaseMouse();
         return true;
+    }
+
+    // Hover check - tylko gdy NIE przeciągamy
+    if (!m_is_dragging && event.type == SDL_MOUSEMOTION) {
+        int mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        bool currentlyHovered = contains(mouseX, mouseY);
+
+        if (currentlyHovered && !m_isHovered) {
+            m_isHovered = true;
+            setState(ElementState::Hover);
+        } else if (!currentlyHovered && m_isHovered) {
+            m_isHovered = false;
+            setState(ElementState::Normal);
+        }
     }
 
     return false;

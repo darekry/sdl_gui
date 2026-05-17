@@ -20,7 +20,8 @@ SDL_Texture* createColorTexture(SDL_Renderer* renderer, SDL_Color color) {
 
 int main() {
     try {
-        SDLApp app("Draggable Window Example", 800, 600);
+        // Używamy SDL_RENDERER_ACCELERATED zamiast domyślnego VSync dla mniejszego lagu
+        SDLApp app("Draggable Window Example", 800, 600, SDL_RENDERER_ACCELERATED);
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 

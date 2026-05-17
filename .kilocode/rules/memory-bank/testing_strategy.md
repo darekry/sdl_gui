@@ -2,81 +2,101 @@
 
 ## Cel i narzędzia
 
-Głównym celem strategii testowania jest zapewnienie stabilności kluczowych komponentów (widgety, menedżery, cache) i szybkie wykrywanie regresji.
+Głównym celem strategii testowania jest zapewnienie stabilności kluczowych komponentów i szybkie wykrywanie regresji.
 
--   **Framework do testów jednostkowych**: **Catch2**. Wersja amalgamated znajduje się w [`lib/catch_amalgamated.hpp`](lib/catch_amalgamated.hpp:1).
--   **Uruchamianie testów**: `make test` w głównym katalogu projektu.
+- **Framework**: Catch2 (wersja amalgamated w [`lib/catch_amalgamated.hpp`](lib/catch_amalgamated.hpp))
+- **Uruchamianie**: `make test` w głównym katalogu projektu
 
-## Rodzaje testów
+---
 
-### 1. Testy jednostkowe
+## Testy jednostkowe
 
-Testy jednostkowe weryfikują logikę poszczególnych komponentów w izolacji. Znajdują się w katalogu [`tests/`](tests/:1).
+Testy znajdują się w katalogu [`tests/`](tests/) i weryfikują logikę komponentów w izolacji.
 
--   **Struktura**: Każdy plik `test_*.cpp` odpowiada za testowanie konkretnego widgetu lub modułu.
--   **Helper**: Pliki [`tests/test_helper.hpp`](tests/test_helper.hpp:1) i [`tests/test_helper.cpp`](tests/test_helper.cpp:1) dostarczają środowisko testowe, które inicjalizuje SDL i `GUIManager` w tle, umożliwiając testowanie logiki bez renderowania okna.
--   **Zasada**: Testy powinny symulować interakcje (np. kliknięcia, wprowadzanie tekstu) i weryfikować stan obiektu oraz wywołania zwrotne (callbacki).
+### Infrastruktura testowa
 
-**Przykładowy test dla `Button`:**
-```cpp
-#define CATCH_CONFIG_MAIN
-#include "lib/catch_amalgamated.hpp"
-#include "tests/test_helper.hpp"
-#include "button.hpp"
-#include "gui_manager.hpp"
+- [`tests/test_helper.hpp`](tests/test_helper.hpp) - nagłówek pomocniczy
+- [`tests/test_helper.cpp`](tests/test_helper.cpp) - implementacja środowiska testowego (inicjalizacja SDL i GUIManager bez renderowania okna)
 
-TEST_CASE("Button Functionality", "[button]") {
-    TestHelper helper;
-    GUIManager& manager = helper.getManager();
+### Pokrycie testami
 
-    SECTION("Event Handling - Click") {
-        bool clicked = false;
-        auto button = std::make_unique<Button>(manager, 10, 10, 100, 50, "Click me");
-        button->setOnClickCallback([&](GUIElement*) { clicked = true; });
-        
-        Button* button_ptr = button.get();
-        manager.addElement(std::move(button));
+| Komponent | Plik testowy | Status |
+|-----------|--------------|--------|
+| **Widgety** | | |
+| Button | `test_button.cpp` | ✓ |
+| Checkbox | `test_checkbox.cpp` | ✓ |
+| ComboBox | `test_combobox.cpp` | ✓ |
+| ContextMenu | `test_context_menu.cpp` | ✓ |
+| Label | `test_label.cpp` | ✓ |
+| Panel | `test_panel.cpp` | ✓ |
+| RadioButton | `test_radio_button.cpp` | ✓ |
+| RadioGroup | `test_radio_group.cpp` | ✓ |
+| Slider | `test_slider.cpp` | ✓ |
+| StringGrid | `test_string_grid.cpp` | ✓ |
+| TabControl | `test_tab_control.cpp` | ✓ |
+| TextArea | `test_text_area.cpp` | ✓ |
+| TextInput | `test_text_input.cpp` | ✓ |
+| AnimatedImage | `test_animated_image.cpp` | ✓ |
+| Canvas | `test_canvas.cpp` | ✓ |
+| **Menedżery** | | |
+| FontManager | `test_font_manager.cpp` | ✓ |
+| TextureManager | `test_texture_manager.cpp` | ✓ |
+| TimerManager | `test_timer_manager.cpp` | ✓ |
+| AnimationManager | `test_animation_manager.cpp` | ✓ |
+| **Inne** | | |
+| Theme | `test_theme.cpp` | ✓ |
 
-        // Symulacja kliknięcia wewnątrz przycisku
-        SDL_Event event = helper.createMouseEvent(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(event);
-        
-        // Weryfikacja stanu po zdarzeniu
-        REQUIRE(button_ptr->getState() == ElementState::Pressed);
+### Brakujące testy
 
-        // Symulacja zwolnienia przycisku
-        event = helper.createMouseEvent(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20);
-        manager.processEvent(event);
+| Komponent | Uwagi |
+|-----------|-------|
+| Easing | Funkcje matematyczne, header-only |
+| Style | Struktura danych, header-only |
+| Cursor | Narzędzie, header-only |
+| SDLApp | Narzędzie, header-only |
+| SGMLParser | Parser XML |
+| JsonParser | Parser JSON |
+| LayoutParser | Interfejs parserów |
 
-        REQUIRE(clicked == true);
-        REQUIRE(button_ptr->getState() == ElementState::Hover);
-    }
-}
-```
+---
 
-### 2. Testy integracyjne (manualne)
+## Testy integracyjne (manualne)
 
-Katalog [`examples/`](examples/:1) pełni rolę zestawu manualnych testów integracyjnych. Każdy plik `example_*.cpp` demonstruje działanie jednego lub więcej komponentów w działającej aplikacji.
+Katalog [`examples/`](examples/) zawiera 25 przykładów pełniących rolę testów integracyjnych.
 
--   **Cel**: Weryfikacja wizualna i funkcjonalna. Sprawdzenie, czy widgety poprawnie się renderują, reagują na interakcje i współpracują ze sobą.
--   **Procedura**: Po wprowadzeniu znaczących zmian w bibliotece, deweloper powinien skompilować (`make examples`) i uruchomić wszystkie przykłady, aby upewnić się, że żaden z nich nie uległ regresji.
--   **Kluczowe przykłady do weryfikacji**:
-    -   `example_button.cpp`: Podstawowa funkcjonalność i stylowanie.
-    -   `example_window.cpp`: Zarządzanie hierarchią i dziećmi.
-    -   `example_animated_image.cpp`: Złożone widgety, timery i animacje.
+### Kluczowe przykłady do weryfikacji
 
-### 3. Testy wydajności (manualne)
+| Przykład | Cel weryfikacji |
+|----------|-----------------|
+| `example_button.cpp` | Podstawowa funkcjonalność i stylowanie |
+| `example_window.cpp` | Zarządzanie hierarchią i dziećmi |
+| `example_animated_image.cpp` | Złożone widgety, timery, animacje |
+| `example_string_grid.cpp` | Sortowanie, edycja, schowek |
+| `example_json_parser.cpp` | Parsowanie layoutów JSON |
+| `example_performance.cpp` | Wydajność przy dużej liczbie widgetów |
 
-Przykład [`examples/example_performance.cpp`](examples/example_performance.cpp:1) służy jako narzędzie do manualnego testowania wydajności biblioteki.
+### Procedura
 
--   **Cel**: Ocena, jak biblioteka radzi sobie z renderowaniem i zarządzaniem dużą liczbą widgetów.
--   **Procedura**: Uruchomienie przykładu i dynamiczne dodawanie/usuwanie setek obiektów, obserwując przy tym licznik FPS i czas renderowania klatki. Pozwala to na wczesne wykrycie wąskich gardeł wydajnościowych.
+Po znaczących zmianach w bibliotece:
+1. `make examples`
+2. Uruchomić kluczowe przykłady i zweryfikować wizualnie
+
+---
+
+## Testy wydajności
+
+[`examples/example_performance.cpp`](examples/example_performance.cpp) służy do oceny wydajności:
+
+- Dynamiczne dodawanie/usuwanie setek obiektów
+- Obserwacja licznika FPS i czasu renderowania
+- Wczesne wykrywanie wąskich gardeł
+
+---
 
 ## Podsumowanie
 
 Strategia opiera się na trzech filarach:
-1.  **Automatyczne testy jednostkowe (Catch2)** do weryfikacji logiki.
-2.  **Manualne testy integracyjne (`examples/`)** do weryfikacji wizualnej i funkcjonalnej.
-3.  **Manualne testy wydajności (`example_performance.cpp`)** do monitorowania optymalizacji.
 
-Taki podział zapewnia dobre pokrycie kodu i minimalizuje ryzyko regresji, jednocześnie utrzymując proces testowania relatywnie prostym i szybkim.
+1. **Testy jednostkowe (Catch2)** - automatyczna weryfikacja logiki (20 testów)
+2. **Testy integracyjne (`examples/`)** - manualna weryfikacja wizualna (25 przykładów)
+3. **Testy wydajności (`example_performance.cpp`)** - monitorowanie optymalizacji

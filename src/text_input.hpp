@@ -23,14 +23,17 @@ public:
     void onFocusGained() override;
     void onFocusLost() override;
     const char* getComponentType() const override;
+    void renderOverlay(SDL_Renderer* renderer) override;
 protected:
     void draw(SDL_Renderer* renderer) override;
 
 private:
     void update_text_offset();
+    void refreshTextTexture();
     
     std::string m_text;
     bool m_locked;
+    SharedTexture m_textTexture;
 
     size_t m_cursor_pos = 0;
     int m_text_offset_x = 0;
