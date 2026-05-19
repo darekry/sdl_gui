@@ -43,6 +43,7 @@ Theme Theme::createDefaultTheme() {
     // --- Style dla przycisku (Button) ---
     Style button_style;
     button_style.borderWidth = 2;
+    button_style.borderRadius = 4;  // Zaokrąglone przyciski
     theme.setStyle("Button", button_style);
 
     // --- Style dla Panelu ---
@@ -57,12 +58,14 @@ Theme Theme::createDefaultTheme() {
     // --- Style dla pola tekstowego (TextInput) ---
     Style textInputStyle;
     textInputStyle.backgroundColor = {255, 255, 255, 255}; // Białe tło
+    textInputStyle.borderRadius = 2;  // Delikatne zaokrąglenie
     theme.setStyle("TextInput", textInputStyle);
 
     // --- Style dla pola tekstowego wieloliniowego (TextArea) ---
     Style textAreaStyle;
     textAreaStyle.borderWidth=2;
     textAreaStyle.backgroundColor = {255, 255, 255, 255}; // Białe tło
+    textAreaStyle.borderRadius = 2;  // Delikatne zaokrąglenie
     theme.setStyle("TextArea", textAreaStyle);
 
     // --- Style dla Etykiety (Label) ---

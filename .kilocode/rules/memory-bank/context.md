@@ -4,7 +4,7 @@
 
 - **Kod źródłowy**: [`src/`](src/) - 32 plików nagłówkowych, 27 plików implementacji
 - **Dokumentacja**: [`docs/`](docs/) - API docs, przewodniki (EN/PL), code review texture/font manager
-- **Przykłady**: [`examples/`](examples/) - 26 przykładów demonstrujących widgety
+- **Przykłady**: [`examples/`](examples/) - 27 przykładów demonstrujących widgety (nowy: example_rounded_corners)
 - **Testy**: [`tests/`](tests/) - 21 plików testowych (Catch2)
 
 ## Kluczowe cechy
@@ -14,6 +14,65 @@
 - Parser JSON/XML do definicji layoutów
 - Kompletny zestaw widgetów: Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, ListView, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu
 - System motywów i stylów
+- **Zaokrąglone rogi** - wsparcie dla borderRadius w Style (SDL2_gfx)
+
+## Ostatnie zmiany (2026-05-20)
+
+### Fix cursor blinking and mouse positioning (TextInput/TextArea)
+
+**Problemy rozwiązane**:
+1. TextInput cursor not blinking - `renderOverlay()` never called because `isOverlay()` returns false
+2. TextArea cursor not blinking when idle - blinking logic in `handleEvent()` only runs with events
+3. No mouse click cursor positioning in TextInput/TextArea
+
+**Implementacja**:
+1. `gui_manager.cpp:98-107` - `renderOverlay()` called for keyboard focus element regardless of `isOverlay()`
+2. `text_input.cpp:205-256` - mouse click cursor positioning using binary search
+3. `text_area.cpp` - added `renderOverlay()` for cursor, moved blinking logic there, removed from `handleEvent()`
+4. `text_area.hpp` - added `renderOverlay()` override, removed unused `renderCursor()` method
+5. `text_area.cpp` - mouse click cursor positioning with row/column calculation
+
+**Files modified**:
+- `src/gui_manager.cpp` - render overlay for keyboard focus
+- `src/text_input.cpp` - mouse positioning (binary search)
+- `src/text_area.cpp` - renderOverlay, mouse positioning, removed blink from handleEvent
+- `src/text_area.hpp` - added renderOverlay, removed renderCursor
+
+**Tests**: All pass (81 assertions in TextInput, 80 in TextArea)
+
+### Zaokrąglone rogi (borderRadius) (2026-05-19)
+
+Dodano wsparcie dla zaokrąglonych rogów w widgetach używających `drawBackgroundAndBorder()`:
+- Panel, Button, Checkbox, TextInput, TextArea automatycznie obsługują borderRadius
+
+**Zmienione pliki**:
+1. `Makefile` - dodano `-lSDL2_gfx` do LDFLAGS, include SDL2_gfxPrimitives.h w combined header
+2. `src/style.hpp` - dodano `borderRadius` do Style struct, aktualizacja mergeWith(), operator==(), logStyle()
+3. `src/gui.hpp` - dodano `setBorderRadius(ElementState state, int radius)`
+4. `src/gui.cpp` - implementacja `setBorderRadius()`, aktualizacja `drawBackgroundAndBorder()` używa `roundedBoxRGBA()` i `roundedRectangleRGBA()` z SDL2_gfx
+5. `src/theme.cpp` - default borderRadius dla Button (4px), TextInput/TextArea (2px)
+6. `src/layout_parser.cpp` - parsowanie atrybutu `borderRadius` w JSON/XML layouts
+7. `examples/example_rounded_corners.cpp` - demonstracja zaokrąglonych rogów
+
+**API**:
+```cpp
+// Ustawienie zaokrąglenia rogów
+button->setBorderRadius(ElementState::Normal, 8);
+button->setBorderRadius(ElementState::Hover, 10);
+
+// W JSON/XML layout
+{
+  "type": "Button",
+  "style": {
+    "borderRadius": 6
+  }
+}
+```
+
+**Widgety z własnym rysowaniem (do zrobienia w późniejszym etapie)**:
+- Slider (thumb)
+- StringGrid (komórki, nagłówki)
+- RadioButton (już rysuje koło)
 
 ## Ostatnia analiza i fixy (2026-05-17)
 
@@ -125,24 +184,24 @@ Przeprowadzony code review systemu TextureManager/FontManager - wyniki w [`docs/
 | Easing | test_easing.cpp | NEW | ✓ Created |
 | Cursor | test_cursor.cpp | NEW | ✓ Created |
 
-## Test Results Summary (2026-05-17)
+## Test Results Summary (2026-05-19) - FINAL
 
-**All 25 tests passed after fixes:**
+**All 24 tests passed:**
 
 | Test | Assertions | Test Cases | Status |
 |------|------------|------------|--------|
 | test_easing | 263 | 6 | ✅ PASSED |
-| test_cursor | 90 | 10 | ✅ PASSED (fixed library bug) |
+| test_cursor | 90 | 10 | ✅ PASSED |
 | test_gui_element | 102 | 12 | ✅ PASSED |
 | test_gui_manager | 107 | 14 | ✅ PASSED |
-| test_button | 77 | 12 | ✅ PASSED |
+| test_button | 79 | 12 | ✅ PASSED |
 | test_checkbox | 86 | 10 | ✅ PASSED |
 | test_label | 60 | 8 | ✅ PASSED |
 | test_panel | 75 | 12 | ✅ PASSED |
 | test_slider | 55 | 9 | ✅ PASSED |
 | test_text_input | 81 | 11 | ✅ PASSED |
 | test_text_area | 80 | 12 | ✅ PASSED |
-| test_radio_button | 88 | 8 | ✅ PASSED (fixed library bug) |
+| test_radio_button | 88 | 8 | ✅ PASSED |
 | test_radio_group | 70 | 8 | ✅ PASSED |
 | test_combobox | 75 | 10 | ✅ PASSED |
 | test_canvas | 50 | 11 | ✅ PASSED |
@@ -155,16 +214,22 @@ Przeprowadzony code review systemu TextureManager/FontManager - wyniki w [`docs/
 | test_font_manager | 182 | 9 | ✅ PASSED |
 | test_texture_manager | 22 | 1 | ✅ PASSED |
 | test_animation_manager | 23 | 1 | ✅ PASSED |
-| test_timer_manager | 13 | 1 | ✅ PASSED |
+
+**Total: 1,853 assertions across 181 test cases - ALL PASSED**
 
 **Library bugs fixed during testing:**
 1. `cursor.cpp:78-91` - setState() required texture to exist (removed check)
 2. `gui.cpp:122-137` - Clicks without prior mouse motion didn't register (added position check for button events)
+3. `gui.cpp:138-142` - Mouse release outside button now correctly sets Normal state (not Hover)
 
-**Total: 1,726 assertions across 25 test files**
+## Current Status
+
+**Test rewriting task: COMPLETED**
+- All 24 test files compile and pass
+- All library bugs discovered during testing have been fixed
+- Memory bank updated with final results
 
 ## Punkty do weryfikacji
 
 - Polityka publikacji assetów domyślnych (`assets/fonts/font.ttf`)
 - Zachowanie cache (`m_cachedTexture`) przy zmianie rozmiaru elementu
-- Test compilation verification - all tests should link together now

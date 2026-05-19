@@ -73,6 +73,7 @@ COMMON_FLAGS += -Wsign-promo
 COMMON_FLAGS += $(shell sdl2-config --cflags)
 COMMON_FLAGS += -stdlib=libc++
 COMMON_FLAGS += -std=c++23
+COMMON_FLAGS += -I/usr/include/SDL2
 
 
 
@@ -125,6 +126,7 @@ CPPFLAGS := -Isrc -isystem lib
 LDFLAGS  = $(shell sdl2-config --libs)
 LDFLAGS += -lSDL2_image
 LDFLAGS += -lSDL2_ttf
+LDFLAGS += -lSDL2_gfx
 
 # define output directory
 OUTPUT := output
@@ -172,7 +174,7 @@ TEST_SRC_FILES  := $(wildcard $(TESTS_DIR)/test_*.cpp)
 TEST_HELPER_SRC := $(TESTS_DIR)/test_helper.cpp
 TEST_HELPER_OBJ := $(OUTPUT)/test_helper.o
 # Pliki wykonywalne testów
-TEST_EXECS      := $(patsubst $(TESTS_DIR)/test_%.cpp,$(OUTPUT)/test_%,$(filter-out $(TESTS_DIR)/test_helper.cpp,$(TEST_SRC_FILES)))
+TEST_EXECS      := $(patsubst $(TESTS_DIR)/test_%.cpp,$(OUTPUT)/test_%,$(filter-out $(TESTS_DIR)/test_helper.cpp $(TESTS_DIR)/test_main.cpp,$(TEST_SRC_FILES)))
 # --- Konfiguracja przykładów ---
 EXAMPLE_SRC_FILES := $(wildcard examples/*.cpp)
 EXAMPLE_EXECS     := $(patsubst examples/%.cpp,$(OUTPUT)/%,$(EXAMPLE_SRC_FILES))
@@ -309,6 +311,7 @@ $(DIST_DIR)/sdl_gui.hpp: $(HPP_SOURCES) | $(DIST_DIR)
 	@echo "#include <SDL2/SDL_ttf.h>" >> $@
 	@echo "#include <SDL2/SDL_pixels.h>" >> $@
 	@echo "#include <SDL2/SDL_log.h>" >> $@
+	@echo "#include <SDL2/SDL2_gfxPrimitives.h>" >> $@
 	@echo "" >> $@
 	@echo "// Project libraries" >> $@
 	@echo "#include \"tinyxml2.h\"" >> $@

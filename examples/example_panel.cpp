@@ -1,4 +1,8 @@
-#include "../dist/sdl_gui.hpp"
+#include "panel.hpp"
+#include "gui_manager.hpp"
+#include "sdl_app.hpp"
+#include "button.hpp"
+#include "label.hpp"
 
 import std.compat;
 

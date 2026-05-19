@@ -18,13 +18,13 @@ public:
     void setOnTextChanged(const std::function<void(TextArea*)>& callback);
 
     bool handleEvent(const SDL_Event& e) override;
+    void renderOverlay(SDL_Renderer* renderer) override;
     [[nodiscard]] const char* getComponentType() const override;
 protected:
     void draw(SDL_Renderer* renderer) override;
 
 private:
     void recalculateLines();
-    void renderCursor();
     void refreshTextures();
     void update_text_offset();
 

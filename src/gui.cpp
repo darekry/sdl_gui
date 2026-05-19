@@ -2,6 +2,7 @@
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include "SDL2/SDL.h"
+#include "SDL2/SDL2_gfxPrimitives.h"
 
 
 // Implementacja klasy GUIElement
@@ -122,12 +123,6 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
     // For mouse button events, check actual position at event time
     bool mouseInside = m_isHovered || (e.type == SDL_MOUSEBUTTONDOWN && contains(e.button.x, e.button.y)) ||
                        (e.type == SDL_MOUSEBUTTONUP && contains(e.button.x, e.button.y));
-    
-    // DEBUG: Log state transitions
-    if (e.type == SDL_MOUSEBUTTONUP) {
-        SDL_Log("GUIElement::handleEvent MOUSEBUTTONUP: pos=(%d,%d), contains=%d, m_isHovered=%d, mouseInside=%d, m_state=%d",
-                e.button.x, e.button.y, contains(e.button.x, e.button.y), m_isHovered, mouseInside, static_cast<int>(m_state));
-    }
     
     if (mouseInside) {
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
@@ -385,27 +380,56 @@ void GUIElement::setBorder(ElementState state, SDL_Color color, int width) {
     m_localStyles[state].borderWidth = width;
     markDirty();
 }
+void GUIElement::setBorderRadius(ElementState state, int radius) {
+    m_localStyles[state].borderRadius = radius;
+    markDirty();
+}
 
 void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
     const Style& style = getComposedStyle(m_state);
+    int radius = style.borderRadius.value_or(0);
+    // Clamp radius to half of the smaller dimension to avoid overflow
+    radius = std::min(radius, std::min(m_width, m_height) / 2);
 
     // Rysowanie tła
     if (style.backgroundColor) {
-        SDL_SetRenderDrawColor(renderer, style.backgroundColor->r, style.backgroundColor->g, style.backgroundColor->b, style.backgroundColor->a);
-        SDL_Rect bgRect = {0, 0, m_width, m_height};
-        SDL_RenderFillRect(renderer, &bgRect);
+        const SDL_Color& bg = *style.backgroundColor;
+        if (radius > 0) {
+            // Zaokrąglone rogi - używamy SDL2_gfx
+            roundedBoxRGBA(renderer, 0, 0, m_width - 1, m_height - 1, radius,
+                           bg.r, bg.g, bg.b, bg.a);
+        } else {
+            // Ostre rogi - standardowy SDL
+            SDL_SetRenderDrawColor(renderer, bg.r, bg.g, bg.b, bg.a);
+            SDL_Rect bgRect = {0, 0, m_width, m_height};
+            SDL_RenderFillRect(renderer, &bgRect);
+        }
     }
 
     // Rysowanie obramowania
     if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
-        SDL_SetRenderDrawColor(renderer, style.borderColor->r, style.borderColor->g, style.borderColor->b, style.borderColor->a);
-        SDL_Rect borderRect = {0, 0, m_width, m_height};
-        for (int i = 0; i < *style.borderWidth; ++i) {
-            SDL_RenderDrawRect(renderer, &borderRect);
-            borderRect.x++;
-            borderRect.y++;
-            borderRect.w -= 2;
-            borderRect.h -= 2;
+        const SDL_Color& bc = *style.borderColor;
+        int width = *style.borderWidth;
+        if (radius > 0) {
+            // Zaokrąglone obramowanie - używamy SDL2_gfx
+            // Rysujemy kilka obramowań z malejącym radius dla grubości > 1
+            for (int i = 0; i < width; ++i) {
+                int innerRadius = radius - i;
+                if (innerRadius < 0) innerRadius = 0;
+                roundedRectangleRGBA(renderer, i, i, m_width - 1 - i, m_height - 1 - i,
+                                      innerRadius, bc.r, bc.g, bc.b, bc.a);
+            }
+        } else {
+            // Ostre obramowanie - standardowy SDL
+            SDL_SetRenderDrawColor(renderer, bc.r, bc.g, bc.b, bc.a);
+            SDL_Rect borderRect = {0, 0, m_width, m_height};
+            for (int i = 0; i < width; ++i) {
+                SDL_RenderDrawRect(renderer, &borderRect);
+                borderRect.x++;
+                borderRect.y++;
+                borderRect.w -= 2;
+                borderRect.h -= 2;
+            }
         }
     }
 }

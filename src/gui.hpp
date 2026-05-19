@@ -65,6 +65,7 @@ public:
     void setTextColor(ElementState state, SDL_Color color);
     void setTexture(ElementState state, SharedTexture texture);
     void setBorder(ElementState state, SDL_Color color, int width);
+    void setBorderRadius(ElementState state, int radius);
     virtual const char* getComponentType() const;
     void markForDeletion();
     void markDirty(bool cascadeToParents = true);

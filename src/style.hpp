@@ -29,6 +29,7 @@ struct Style {
     std::optional<SharedTexture> texture;
     std::optional<SDL_Color> borderColor;
     std::optional<int> borderWidth;
+    std::optional<int> borderRadius;  // Promień zaokrąglenia rogów (0 = ostre)
     std::optional<int> fontSize;
     std::optional<std::string> fontName;
 
@@ -47,6 +48,9 @@ struct Style {
         }
         if (!borderWidth.has_value() && base.borderWidth.has_value()) {
             borderWidth = base.borderWidth;
+        }
+        if (!borderRadius.has_value() && base.borderRadius.has_value()) {
+            borderRadius = base.borderRadius;
         }
         if (!fontSize.has_value() && base.fontSize.has_value()) {
             fontSize = base.fontSize;
@@ -71,6 +75,9 @@ struct Style {
 
         if (borderWidth.has_value() != other.borderWidth.has_value()) { return false; }
         if (borderWidth && *borderWidth != *other.borderWidth) { return false; }
+
+        if (borderRadius.has_value() != other.borderRadius.has_value()) { return false; }
+        if (borderRadius && *borderRadius != *other.borderRadius) { return false; }
 
         if (fontSize.has_value() != other.fontSize.has_value()) { return false; }
         if (fontSize && *fontSize != *other.fontSize) { return false; }
@@ -112,6 +119,11 @@ inline void logStyle(const Style& style, const char* styleName) {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderWidth: %d", style.borderWidth.value());
     } else {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderWidth: nullopt");
+    }
+    if (style.borderRadius.has_value()) {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderRadius: %d", style.borderRadius.value());
+    } else {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderRadius: nullopt");
     }
     if (style.fontSize.has_value()) {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  FontSize: %d", style.fontSize.value());

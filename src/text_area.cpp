@@ -58,7 +58,6 @@ void TextArea::setOnTextChanged(const std::function<void(TextArea*)>& callback) 
 void TextArea::draw(SDL_Renderer* renderer) {
     drawBackgroundAndBorder(renderer);
 
-    // Renderowanie tekstu
     if (m_needs_texture_update) {
         recalculateLines();
         refreshTextures();
@@ -78,16 +77,11 @@ void TextArea::draw(SDL_Renderer* renderer) {
             SDL_QueryTexture(texture.get(), nullptr, nullptr, &texW, &texH);
             SDL_Rect destRect = {2 + m_text_offset_x, yOffset + 2, texW, texH};
 
-            // Sprawdzenie, czy linia jest widoczna, zanim ją narysujemy
             if (destRect.y + destRect.h > 0 && destRect.y < m_height) {
                  SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
             }
         }
         yOffset += TTF_FontHeight(font.get());
-    }
-
-    if (m_isHovered && m_showCursor) {
-        renderCursor(); // renderCursor musi też rysować na cache
     }
 
     SDL_RenderSetClipRect(renderer, nullptr);
@@ -105,6 +99,62 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             SDL_StartTextInput();
             m_showCursor = true;
             m_cursorBlinkTime = SDL_GetTicks();
+            
+            auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
+            if (font) {
+                auto abs_pos = getAbsolutePosition();
+                int line_height = TTF_FontHeight(font.get());
+                int click_y = e.button.y - abs_pos.y - 2 + m_scroll_offset_y;
+                int click_x = e.button.x - abs_pos.x - 2 - m_text_offset_x;
+                
+                size_t row = static_cast<size_t>(std::max(0, click_y / line_height));
+                row = std::min(row, m_lines.size() - 1);
+                
+                const auto& line = m_lines[row];
+                size_t pos_in_line = 0;
+                
+                if (click_x <= 0) {
+                    pos_in_line = 0;
+                } else if (line.empty()) {
+                    pos_in_line = 0;
+                } else {
+                    size_t left = 0;
+                    size_t right = line.length();
+                    while (left < right) {
+                        size_t mid = left + (right - left) / 2;
+                        int text_width = 0;
+                        TTF_SizeText(font.get(), line.substr(0, mid).c_str(), &text_width, nullptr);
+                        if (text_width < click_x) {
+                            left = mid + 1;
+                        } else {
+                            right = mid;
+                        }
+                    }
+                    
+                    int width_at_left = 0;
+                    int width_at_prev = 0;
+                    TTF_SizeText(font.get(), line.substr(0, left).c_str(), &width_at_left, nullptr);
+                    if (left > 0) {
+                        TTF_SizeText(font.get(), line.substr(0, left - 1).c_str(), &width_at_prev, nullptr);
+                    }
+                    
+                    if (left > 0 && abs(click_x - width_at_prev) < abs(click_x - width_at_left)) {
+                        pos_in_line = left - 1;
+                    } else {
+                        pos_in_line = left;
+                    }
+                }
+                
+                size_t abs_pos_in_text = 0;
+                for (size_t i = 0; i < row; ++i) {
+                    abs_pos_in_text += m_lines[i].length() + 1;
+                }
+                abs_pos_in_text += pos_in_line;
+                m_cursorPos = abs_pos_in_text;
+                
+                update_text_offset();
+            }
+            
             markDirty();
             eventHandled = true;
         } else {
@@ -173,15 +223,59 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         }
     }
 
-    if (m_isHovered) {
-        if (SDL_GetTicks() - m_cursorBlinkTime > 500) {
-            m_showCursor = !m_showCursor;
-            m_cursorBlinkTime = SDL_GetTicks();
-            markDirty();
-        }
+    return eventHandled;
+}
+
+void TextArea::renderOverlay(SDL_Renderer* renderer) {
+    if (!m_isHovered) return;
+    
+    if (SDL_GetTicks() - m_cursorBlinkTime > 500) {
+        m_showCursor = !m_showCursor;
+        m_cursorBlinkTime = SDL_GetTicks();
+    }
+    
+    if (!m_showCursor) return;
+    
+    auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
+    if (!font) return;
+
+    if (m_needs_texture_update) {
+        recalculateLines();
+        refreshTextures();
+        m_needs_texture_update = false;
     }
 
-    return eventHandled;
+    auto currentLineIndex = 0;
+    auto posInLines = 0uz;
+    auto tempPos = 0uz;
+
+    for(size_t i = 0; i < m_lines.size(); ++i) {
+        const auto lineLengthWithNewline = static_cast<size_t>(m_lines[i].length()) + (i < m_lines.size() - 1 ? 1uz : 0uz);
+        if (static_cast<size_t>(m_cursorPos) >= tempPos && static_cast<size_t>(m_cursorPos) <= tempPos + lineLengthWithNewline) {
+            currentLineIndex = static_cast<int>(i);
+            posInLines = static_cast<size_t>(m_cursorPos) - tempPos;
+            break;
+        }
+        tempPos += lineLengthWithNewline;
+    }
+
+    auto x = 0;
+    auto y = 0;
+    const auto& lineContent = m_lines[static_cast<size_t>(currentLineIndex)];
+    posInLines = std::min(posInLines, lineContent.length());
+
+    auto textBeforeCursor = lineContent.substr(0, posInLines);
+    TTF_SizeText(font.get(), textBeforeCursor.c_str(), &x, nullptr);
+
+    y = (currentLineIndex * TTF_FontHeight(font.get())) + m_scroll_offset_y;
+
+    auto abs_pos = getAbsolutePosition();
+    auto cursorRect = SDL_Rect{ abs_pos.x + 2 + x + m_text_offset_x, abs_pos.y + 2 + y, 2, TTF_FontHeight(font.get()) };
+    
+    const auto style = getComposedStyle(m_state);
+    SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(renderer, &cursorRect);
 }
 
 void TextArea::recalculateLines() {
@@ -258,41 +352,6 @@ void TextArea::refreshTextures() {
             m_line_textures.push_back(SharedTexture(texture, SDLTextureDeleter()));
         }
     }
-}
-
-void TextArea::renderCursor() {
-    auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
-    if (!font) return;
-
-    auto currentLineIndex = 0;
-    auto posInLines = 0uz;
-    auto tempPos = 0uz;
-
-    for(size_t i = 0; i < m_lines.size(); ++i) {
-        const auto lineLengthWithNewline = static_cast<size_t>(m_lines[i].length()) + (i < m_lines.size() - 1 ? 1uz : 0uz);
-        if (static_cast<size_t>(m_cursorPos) >= tempPos && static_cast<size_t>(m_cursorPos) <= tempPos + lineLengthWithNewline) {
-            currentLineIndex = static_cast<int>(i);
-            posInLines = static_cast<size_t>(m_cursorPos) - tempPos;
-            break;
-        }
-        tempPos += lineLengthWithNewline;
-    }
-
-    auto x = 0;
-    auto y = 0;
-    const auto& lineContent = m_lines[static_cast<size_t>(currentLineIndex)];
-    posInLines = std::min(posInLines, lineContent.length());
-
-    auto textBeforeCursor = lineContent.substr(0, posInLines);
-    TTF_SizeText(font.get(), textBeforeCursor.c_str(), &x, nullptr);
-
-    y = (currentLineIndex * TTF_FontHeight(font.get())) + m_scroll_offset_y;
-
-    auto cursorRect = SDL_Rect{ 2 + x + m_text_offset_x, 2 + y, 2, TTF_FontHeight(font.get()) };
-    const auto style = getComposedStyle(m_state);
-    SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
-    SDL_SetRenderDrawColor(m_manager.getRenderer(), color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(m_manager.getRenderer(), &cursorRect);
 }
 
 const char* TextArea::getComponentType() const {

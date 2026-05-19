@@ -204,6 +204,49 @@ bool TextInput::handleEvent(const SDL_Event& e) {
 
     if (e.type == SDL_MOUSEBUTTONDOWN && contains(e.button.x, e.button.y)) {
         m_manager.setKeyboardFocus(this);
+        
+        auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
+        if (font) {
+            auto abs_pos = getAbsolutePosition();
+            int click_x = e.button.x - abs_pos.x - 5;
+            
+            if (click_x <= 0) {
+                m_cursor_pos = 0;
+            } else if (m_text.empty()) {
+                m_cursor_pos = 0;
+            } else {
+                size_t left = 0;
+                size_t right = m_text.length();
+                while (left < right) {
+                    size_t mid = left + (right - left) / 2;
+                    int text_width = 0;
+                    TTF_SizeText(font.get(), m_text.substr(0, mid).c_str(), &text_width, nullptr);
+                    if (text_width < click_x) {
+                        left = mid + 1;
+                    } else {
+                        right = mid;
+                    }
+                }
+                
+                int width_at_left = 0;
+                int width_at_right = 0;
+                TTF_SizeText(font.get(), m_text.substr(0, left).c_str(), &width_at_left, nullptr);
+                if (left > 0) {
+                    TTF_SizeText(font.get(), m_text.substr(0, left - 1).c_str(), &width_at_right, nullptr);
+                }
+                
+                if (left > 0 && abs(click_x - width_at_right) < abs(click_x - width_at_left)) {
+                    m_cursor_pos = left - 1;
+                } else {
+                    m_cursor_pos = left;
+                }
+            }
+            
+            update_text_offset();
+            m_show_cursor = true;
+            m_cursor_blink_time = SDL_GetTicks();
+            markDirty();
+        }
         return true;
     }
 

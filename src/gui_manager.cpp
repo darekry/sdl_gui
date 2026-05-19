@@ -96,7 +96,6 @@ void GUIManager::update() {
 }
 
 void GUIManager::render() {
-    // Renderuj wszystkie zarządzane elementy które nie są overlay
     for (const auto& element : m_elements) {
         if (element && !element->isOverlay()) {
             element->render(m_renderer);
@@ -107,11 +106,14 @@ void GUIManager::render() {
         tooltipElement->render(m_renderer);
     }
     
-    // Renderuj overlay elementy na samym końcu (np. kursor)
     for (const auto& element : m_elements) {
         if (element && element->isOverlay()) {
             element->renderOverlay(m_renderer);
         }
+    }
+
+    if (m_keyboardFocusElement) {
+        m_keyboardFocusElement->renderOverlay(m_renderer);
     }
 
     if (cursor) {

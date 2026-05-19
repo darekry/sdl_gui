@@ -261,6 +261,7 @@ void LayoutParser::parseStyle(void* styleNode, GUIElement* element)
     if (hasNode(styleNode, "textColor")) { auto c = parseColor(getString(styleNode, "textColor")); if (c) style.textColor = c; }
     if (hasNode(styleNode, "borderColor")) { auto c = parseColor(getString(styleNode, "borderColor")); if (c) style.borderColor = c; }
     if (hasNode(styleNode, "borderWidth")) style.borderWidth = getInt(styleNode, "borderWidth", 0);
+    if (hasNode(styleNode, "borderRadius")) style.borderRadius = getInt(styleNode, "borderRadius", 0);
     if (hasNode(styleNode, "fontSize")) style.fontSize = getInt(styleNode, "fontSize", 0);
     if (hasNode(styleNode, "fontName")) style.fontName = getString(styleNode, "fontName");
     if (hasNode(styleNode, "texture"))
