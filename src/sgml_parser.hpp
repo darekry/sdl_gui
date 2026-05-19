@@ -20,6 +20,7 @@ protected:
     void forEachInArray(void* node, const std::string& key, std::function<void(void*)> callback) override;
     void* getChild(void* node, const std::string& key) override;
     std::string getNodeName(void* node) override;
+    std::string getDirectString(void* node, const std::string& defaultVal) override;
 
 private:
     tinyxml2::XMLDocument m_doc;

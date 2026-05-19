@@ -119,19 +119,37 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
         }
     }
 
-    if (m_isHovered) {
+    // For mouse button events, check actual position at event time
+    bool mouseInside = m_isHovered || (e.type == SDL_MOUSEBUTTONDOWN && contains(e.button.x, e.button.y)) ||
+                       (e.type == SDL_MOUSEBUTTONUP && contains(e.button.x, e.button.y));
+    
+    // DEBUG: Log state transitions
+    if (e.type == SDL_MOUSEBUTTONUP) {
+        SDL_Log("GUIElement::handleEvent MOUSEBUTTONUP: pos=(%d,%d), contains=%d, m_isHovered=%d, mouseInside=%d, m_state=%d",
+                e.button.x, e.button.y, contains(e.button.x, e.button.y), m_isHovered, mouseInside, static_cast<int>(m_state));
+    }
+    
+    if (mouseInside) {
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
             setState(ElementState::Pressed);
         } else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
             if (m_state == ElementState::Pressed) {
-                setState(ElementState::Hover);
+                // Only set Hover if mouse is actually inside at release time
+                if (contains(e.button.x, e.button.y)) {
+                    setState(ElementState::Hover);
+                } else {
+                    setState(ElementState::Normal);
+                }
             }
         } else if (m_state != ElementState::Pressed) {
             setState(ElementState::Hover);
         }
     } else {
-        // Only change to Normal if not currently pressed (to handle drag scenarios)
+        // Mouse outside - set Normal (unless still pressed for drag scenarios)
         if (m_state != ElementState::Pressed) {
+            setState(ElementState::Normal);
+        } else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+            // Released outside while pressed - set Normal
             setState(ElementState::Normal);
         }
     }

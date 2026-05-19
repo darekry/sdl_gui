@@ -15,6 +15,13 @@ public:
 
     int getValue() const { return m_currentValue; }
     void setValue(int value);
+    
+    void setMin(int min) { m_minValue = min; setValue(m_currentValue); }
+    void setMax(int max) { m_maxValue = max; setValue(m_currentValue); }
+    void setRange(int min, int max) { m_minValue = min; m_maxValue = max; setValue(m_currentValue); }
+    
+    int getMin() const { return m_minValue; }
+    int getMax() const { return m_maxValue; }
 
     using OnChangeCallback = std::function<void(GUIElement*)>;
     void setOnChangeCallback(OnChangeCallback callback) { m_onChange = std::move(callback); }

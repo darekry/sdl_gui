@@ -27,6 +27,7 @@ protected:
     virtual void forEachInArray(void* node, const std::string& key, std::function<void(void*)> callback) = 0;
     virtual void* getChild(void* node, const std::string& key) = 0;
     virtual std::string getNodeName(void* node) = 0;
+    virtual std::string getDirectString(void* node, const std::string& defaultVal = "") = 0;
 
     GUIManager& m_guiManager;
 

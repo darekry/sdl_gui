@@ -37,9 +37,14 @@ bool Button::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
         if (m_state == ElementState::Pressed) {
             m_manager.releaseMouse();
-            setState(ElementState::Hover);
-            if (contains(e.button.x, e.button.y) && m_onClick) {
-                m_onClick(this);
+            // Fix: Check mouse position before setting state
+            if (contains(e.button.x, e.button.y)) {
+                setState(ElementState::Hover);
+                if (m_onClick) {
+                    m_onClick(this);
+                }
+            } else {
+                setState(ElementState::Normal);
             }
             return true;
         }

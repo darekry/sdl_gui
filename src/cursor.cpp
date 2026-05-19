@@ -80,10 +80,6 @@ void Cursor::setState(CursorState state) {
         return;
     }
 
-    if (!m_cursors.contains(state)) {
-        return;
-    }
-
     m_currentState = state;
     if (m_onStateChanged) {
         m_onStateChanged(state);

@@ -198,3 +198,10 @@ std::string JsonParser::getNodeName(void* node)
     const auto& val = v->getObject().at("type");
     return val.isString() ? val.getString() : "";
 }
+
+std::string JsonParser::getDirectString(void* node, const std::string& defaultVal)
+{
+    auto* v = static_cast<json::Value*>(node);
+    if (!v) return defaultVal;
+    return v->isString() ? v->getString() : defaultVal;
+}

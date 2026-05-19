@@ -44,7 +44,8 @@ Abstrakcyjna klasa bazowa dla wszystkich widgetów.
 | Widget | Opis | Pliki |
 |--------|------|-------|
 | **Label** | Etykieta tekstowa | [`src/label.hpp`](src/label.hpp), [`src/label.cpp`](src/label.cpp) |
-| **StringGrid** | Siatka danych tekstowych z nagłówkami, sortowaniem i edycją inline | [`src/string_grid.hpp`](src/string_grid.hpp), [`src/string_grid.cpp`](src/string_grid.cpp) |
+| **StringGrid** | Siatka danych tekstowych z nagłówkami, sortowaniem i edycją inline; kontrola sliderów (`setHorizontalScrollEnabled`, `setVerticalScrollEnabled`) | [`src/string_grid.hpp`](src/string_grid.hpp), [`src/string_grid.cpp`](src/string_grid.cpp) |
+| **ListView** | Lista elementów z zaznaczaniem; dziedziczy po StringGrid (~90% code reuse), 1 kolumna, ukryte nagłówki | [`src/list_view.hpp`](src/list_view.hpp), [`src/list_view.cpp`](src/list_view.cpp) |
 
 ### Grafika i animacje
 | Widget | Opis | Pliki |

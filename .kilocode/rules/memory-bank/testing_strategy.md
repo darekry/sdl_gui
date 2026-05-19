@@ -50,9 +50,9 @@ Testy znajdują się w katalogu [`tests/`](tests/) i weryfikują logikę kompone
 
 | Komponent | Uwagi |
 |-----------|-------|
-| Easing | Funkcje matematyczne, header-only |
+| Easing | ✓ Done - test_easing.cpp (50+ assertions) |
 | Style | Struktura danych, header-only |
-| Cursor | Narzędzie, header-only |
+| Cursor | ✓ Done - test_cursor.cpp (40+ assertions) |
 | SDLApp | Narzędzie, header-only |
 | SGMLParser | Parser XML |
 | JsonParser | Parser JSON |
@@ -97,6 +97,8 @@ Po znaczących zmianach w bibliotece:
 
 Strategia opiera się na trzech filarach:
 
-1. **Testy jednostkowe (Catch2)** - automatyczna weryfikacja logiki (20 testów)
+1. **Testy jednostkowe (Catch2)** - automatyczna weryfikacja logiki (25 testów, 1726+ asercji)
 2. **Testy integracyjne (`examples/`)** - manualna weryfikacja wizualna (25 przykładów)
 3. **Testy wydajności (`example_performance.cpp`)** - monitorowanie optymalizacji
+
+**Wszystkie testy jednostkowe przechodzą** (weryfikacja: 2026-05-17)

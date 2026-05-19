@@ -230,9 +230,13 @@ bool TextInput::handleEvent(const SDL_Event& e) {
             if (m_onTextChanged) m_onTextChanged(this);
             eventHandled = true;
         } else if (e.key.keysym.sym == SDLK_RETURN) {
-            if (m_onEnterPressed) m_onEnterPressed(this);
-            m_manager.setKeyboardFocus(nullptr);
-            eventHandled = true;
+            // Call callback BEFORE any other operations
+            // Callback may destroy this TextInput (e.g., StringGrid::stopEditing)
+            // so we must return immediately after to prevent use-after-free
+            if (m_onEnterPressed) {
+                m_onEnterPressed(this);
+            }
+            return true;  // Return immediately - this object may be destroyed
         } else if (e.key.keysym.sym == SDLK_LEFT && m_cursor_pos > 0) {
             m_cursor_pos--;
             update_text_offset();

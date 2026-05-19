@@ -6,6 +6,7 @@
 #include "combobox.hpp"
 #include "gui_manager.hpp"
 #include "label.hpp"
+#include "list_view.hpp"
 #include "panel.hpp"
 #include "radio_button.hpp"
 #include "radio_group.hpp"
@@ -151,6 +152,38 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     else if (type == "Canvas")
     {
         element = std::make_unique<Canvas>(m_guiManager, 0, 0, 100, 100);
+    }
+    else if (type == "ListView")
+    {
+        auto lv = std::make_unique<ListView>(m_guiManager, 0, 0, 200, 200);
+        if (hasNode(node, "rowHeight")) lv->setRowHeight(getInt(node, "rowHeight", 25));
+        if (isArray(node, "items"))
+        {
+            forEachInArray(node, "items", [this, &lv](void* itemNode) {
+                std::string text = getString(itemNode, "text", "");
+                if (text.empty()) text = getDirectString(itemNode, "");
+                if (!text.empty()) lv->addItem(text);
+            });
+        }
+        else if (hasNode(node, "items"))
+        {
+            std::string itemsAttr = getString(node, "items", "");
+            if (!itemsAttr.empty())
+            {
+                std::stringstream ss(itemsAttr);
+                std::string item;
+                while (std::getline(ss, item, ','))
+                {
+                    size_t start = item.find_first_not_of(" \t");
+                    size_t end = item.find_last_not_of(" \t");
+                    if (start != std::string::npos && end != std::string::npos)
+                        lv->addItem(item.substr(start, end - start + 1));
+                }
+            }
+        }
+        if (hasNode(node, "selectedIndex"))
+            lv->setSelectedRow(static_cast<size_t>(getInt(node, "selectedIndex", -1)));
+        element = std::move(lv);
     }
     else if (type == "Style" || type == "Item" || type == "Resources")
     {

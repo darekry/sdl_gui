@@ -123,3 +123,13 @@ std::string SGMLParser::getNodeName(void* node)
     auto elem = static_cast<tinyxml2::XMLElement*>(node);
     return elem->Name() ? std::string(elem->Name()) : "";
 }
+
+std::string SGMLParser::getDirectString(void* node, const std::string& defaultVal)
+{
+    auto elem = static_cast<tinyxml2::XMLElement*>(node);
+    const char* text = elem->GetText();
+    if (text) return std::string(text);
+    const char* valAttr = elem->Attribute("value");
+    if (valAttr) return std::string(valAttr);
+    return defaultVal;
+}

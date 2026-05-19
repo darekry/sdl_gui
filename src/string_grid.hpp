@@ -60,7 +60,12 @@ public:
     StringGrid(GUIManager& manager, int x, int y, int width, int height,
                size_t initialRows = 0, size_t initialCols = 0);
     
-    ~StringGrid() override = default;
+    ~StringGrid() override {
+        // Clear pointers to children before Panel destroys them
+        m_vSlider = nullptr;
+        m_hSlider = nullptr;
+        clearLocalTextureCache();
+    }
     
     // Zarządzanie danymi
     void setRowCount(size_t rows);
@@ -107,6 +112,15 @@ public:
     // Edycja
     void setEditable(bool editable);
     [[nodiscard]] bool isEditable() const;
+    
+    // Kontrola sliderów
+    void setHorizontalScrollEnabled(bool enabled);
+    void setVerticalScrollEnabled(bool enabled);
+    [[nodiscard]] bool isHorizontalScrollEnabled() const;
+    [[nodiscard]] bool isVerticalScrollEnabled() const;
+    [[nodiscard]] int getVerticalSliderMax() const;
+    [[nodiscard]] int getVerticalScrollOffset() const { return m_vScrollOffset; }
+    [[nodiscard]] int getRowHeight() const { return m_rowHeight; }
     void startEditing(size_t row, size_t col);
     void stopEditing();
     [[nodiscard]] bool isEditing() const;
@@ -217,6 +231,10 @@ private:
     // Dzieci (slidery)
     Slider* m_vSlider = nullptr;
     Slider* m_hSlider = nullptr;
+    
+    // Kontrola sliderów
+    bool m_hScrollEnabled = true;
+    bool m_vScrollEnabled = true;
     
     // Kolory (wartości domyślne jako fallback)
     SDL_Color m_cellBackgroundColor = {255, 255, 255, 255};

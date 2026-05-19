@@ -289,6 +289,37 @@ bool StringGrid::isEditing() const {
     return m_isEditing;
 }
 
+// Kontrola sliderów
+void StringGrid::setHorizontalScrollEnabled(bool enabled) {
+    m_hScrollEnabled = enabled;
+    if (m_hSlider) {
+        m_hSlider->setVisible(enabled);
+    }
+    if (!enabled) {
+        m_hScrollOffset = 0;
+    }
+    updateSliderRanges();
+}
+
+void StringGrid::setVerticalScrollEnabled(bool enabled) {
+    m_vScrollEnabled = enabled;
+    if (m_vSlider) {
+        m_vSlider->setVisible(enabled);
+    }
+    if (!enabled) {
+        m_vScrollOffset = 0;
+    }
+    updateSliderRanges();
+}
+
+bool StringGrid::isHorizontalScrollEnabled() const {
+    return m_hScrollEnabled;
+}
+
+bool StringGrid::isVerticalScrollEnabled() const {
+    return m_vScrollEnabled;
+}
+
 // Settery dla kolorów specjalnych
 void StringGrid::setSelectionColor(SDL_Color color) {
     m_selectionColor = color;
@@ -582,11 +613,10 @@ bool StringGrid::handleEvent(const SDL_Event& e) {
         return false;
     }
     
-    // Pass to sliders first
-    if (m_vSlider && m_vSlider->handleEvent(e)) {
+    if (m_vSlider && m_vScrollEnabled && m_vSlider->handleEvent(e)) {
         return true;
     }
-    if (m_hSlider && m_hSlider->handleEvent(e)) {
+    if (m_hSlider && m_hScrollEnabled && m_hSlider->handleEvent(e)) {
         return true;
     }
     
@@ -738,6 +768,7 @@ void StringGrid::setupSliders() {
                                              m_sliderWidth, sliderHeight,
                                              0, 1000, 0, Orientation::Vertical);
     m_vSlider = vSlider.get();
+    m_vSlider->setVisible(m_vScrollEnabled);
     m_vSlider->setOnChangeCallback([this](GUIElement*) {
         m_vScrollOffset = m_vSlider->getValue();
     });
@@ -751,6 +782,7 @@ void StringGrid::setupSliders() {
                                              sliderWidth, m_sliderWidth,
                                              0, 1000, 0, Orientation::Horizontal);
     m_hSlider = hSlider.get();
+    m_hSlider->setVisible(m_hScrollEnabled);
     m_hSlider->setOnChangeCallback([this](GUIElement*) {
         m_hScrollOffset = m_hSlider->getValue();
     });
@@ -765,13 +797,15 @@ void StringGrid::updateSliderRanges() {
     int visibleWidth = getVisibleCellAreaWidth();
     int visibleHeight = getVisibleCellAreaHeight();
     
-    if (m_vSlider) {
+    if (m_vSlider && m_vScrollEnabled) {
         int maxVScroll = std::max(0, totalHeight - visibleHeight);
+        m_vSlider->setRange(0, maxVScroll);
         m_vSlider->setValue(std::min(m_vScrollOffset, maxVScroll));
     }
     
-    if (m_hSlider) {
+    if (m_hSlider && m_hScrollEnabled) {
         int maxHScroll = std::max(0, totalWidth - visibleWidth);
+        m_hSlider->setRange(0, maxHScroll);
         m_hSlider->setValue(std::min(m_hScrollOffset, maxHScroll));
     }
 }
@@ -793,7 +827,7 @@ int StringGrid::getVisibleCellAreaWidth() const {
     if (m_showRowHeaders) {
         width -= m_rowHeaderWidth;
     }
-    if (m_vSlider) {
+    if (m_vSlider && m_vScrollEnabled) {
         width -= m_sliderWidth;
     }
     return std::max(0, width);
@@ -804,10 +838,17 @@ int StringGrid::getVisibleCellAreaHeight() const {
     if (m_showColumnHeaders) {
         height -= m_headerHeight;
     }
-    if (m_hSlider) {
+    if (m_hSlider && m_hScrollEnabled) {
         height -= m_sliderWidth;
     }
     return std::max(0, height);
+}
+
+int StringGrid::getVerticalSliderMax() const {
+    if (!m_vSlider || !m_vScrollEnabled) {
+        return 0;
+    }
+    return m_vSlider->getMax();
 }
 
 // Helper methods for position calculations
@@ -948,24 +989,24 @@ void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,
     
     if (row < m_data.size() && col < m_data[row].size() && !m_data[row][col].empty()) {
         auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
-        if (font) {
-            auto texture = createLocalTextTexture(m_data[row][col], font.get(), textColor);
-            if (texture) {
-                int textWidth, textHeight;
-                SDL_QueryTexture(texture.get(), nullptr, nullptr, &textWidth, &textHeight);
-                
-                int textX = screenX + 4;
-                int textY = screenY + (height - textHeight) / 2;
-                
-                SDL_Rect textClip = {screenX + 2, screenY, width - 4, height};
-                SDL_RenderSetClipRect(renderer, &textClip);
-                
-                SDL_Rect destRect = {textX, textY, textWidth, textHeight};
-                SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
-                
-                SDL_RenderSetClipRect(renderer, nullptr);
-            }
-        }
+        if (!font) return;
+        
+        auto texture = createLocalTextTexture(m_data[row][col], font.get(), textColor);
+        if (!texture) return;
+        
+        int textWidth, textHeight;
+        SDL_QueryTexture(texture.get(), nullptr, nullptr, &textWidth, &textHeight);
+        
+        int textX = screenX + 4;
+        int textY = screenY + (height - textHeight) / 2;
+        
+        SDL_Rect textClip = {screenX + 2, screenY, width - 4, height};
+        SDL_RenderSetClipRect(renderer, &textClip);
+        
+        SDL_Rect destRect = {textX, textY, textWidth, textHeight};
+        SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
+        
+        SDL_RenderSetClipRect(renderer, nullptr);
     }
 }
 
