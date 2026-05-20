@@ -31,7 +31,7 @@ SharedFont FontManager::loadFont(std::string_view path, int size) {
     auto it = m_fontCache.find(key_sv);
 
     if (it != m_fontCache.end()) {
-        LOG_DEBUG("FontManager: Loading font from cache: %s (size %d)", it->first.first.c_str(), size);
+     //   LOG_DEBUG("FontManager: Loading font from cache: %s (size %d)", it->first.first.c_str(), size);
         return it->second;
     }
 

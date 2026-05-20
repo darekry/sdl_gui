@@ -95,6 +95,8 @@ RELEASE_CXXFLAGS := $(COMMON_FLAGS) $(RELEASE_FLAGS)
 DEBUG_FLAGS = -g
 DEBUG_FLAGS += -O0
 DEBUG_FLAGS += -fsanitize=address,undefined
+DEBUG_FLAGS += -fno-omit-frame-pointer
+DEBUG_FLAGS += -fno-optimize-sibling-calls
 DEBUG_FLAGS += -DDEBUG=1
 
 # Ustaw CXXFLAGS w zależności od zmiennej DEBUG
@@ -151,6 +153,8 @@ TEST_UNITY_OBJECT := $(OUTPUT)/all_test.o
 # --- Źródła i obiekty ---
 # Wszystkie pliki źródłowe C++ w projekcie
 CPPSOURCES := $(wildcard $(SRC)/*.cpp)
+# Pliki źródłowe composite (złożone komponenty)
+COMPOSITE_SRC := $(wildcard $(SRC)/composite/*.cpp)
 LIB_SRC := lib/tinyxml2.cpp
 
 # --- Konfiguracja tradycyjnej kompilacji (dla compile_commands.json) ---
@@ -228,9 +232,11 @@ define UNITY_BUILD_CONTENT
 
 $(foreach file,$(CPPSOURCES) $(LIB_SRC),#include "$(notdir $(file))"
 )
+$(foreach file,$(COMPOSITE_SRC),#include "composite/$(notdir $(file))"
+)
 endef
 
-$(UNITY_SOURCE): $(CPPSOURCES) $(LIB_SRC) | $(OUTPUT)
+$(UNITY_SOURCE): $(CPPSOURCES) $(COMPOSITE_SRC) $(LIB_SRC) | $(OUTPUT)
 	$(file >$@,$(UNITY_BUILD_CONTENT))
 
 
@@ -277,14 +283,21 @@ HPP_SOURCES := \
 	$(SRC)/combobox.hpp \
 	$(SRC)/context_menu.hpp \
 	$(SRC)/gui_manager.hpp \
-	$(SRC)/sdl_app.hpp
+	$(SRC)/sdl_app.hpp \
+	$(SRC)/composite/dialog_box.hpp \
+	$(SRC)/composite/message_box.hpp \
+	$(SRC)/composite/file_dialog.hpp
 # Definicja plików obiektowych dla tinyxml2
 TINYXML2_SRC := $(LIB)/tinyxml2.cpp
 TINYXML2_OBJ := $(patsubst $(LIB)/%.cpp,$(OUTPUT)/release/%.o,$(TINYXML2_SRC))
 TINYXML2_PIC_OBJ := $(patsubst $(LIB)/%.cpp,$(OUTPUT)/release/%.pic.o,$(TINYXML2_SRC))
 
-LIB_OBJECTS := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/release/%.o,$(CPPSOURCES)) $(TINYXML2_OBJ)
-LIB_PIC_OBJECTS := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/release/%.pic.o,$(CPPSOURCES)) $(TINYXML2_PIC_OBJ)
+LIB_OBJECTS := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/release/%.o,$(CPPSOURCES)) \
+               $(patsubst $(SRC)/composite/%.cpp,$(OUTPUT)/release/composite/%.o,$(COMPOSITE_SRC)) \
+               $(TINYXML2_OBJ)
+LIB_PIC_OBJECTS := $(patsubst $(SRC)/%.cpp,$(OUTPUT)/release/%.pic.o,$(CPPSOURCES)) \
+                   $(patsubst $(SRC)/composite/%.cpp,$(OUTPUT)/release/composite/%.pic.o,$(COMPOSITE_SRC)) \
+                   $(TINYXML2_PIC_OBJ)
 
 # Połączony plik nagłówkowy
 $(DIST_DIR)/sdl_gui.hpp: $(HPP_SOURCES) | $(DIST_DIR)
@@ -350,6 +363,19 @@ $(DIST_DIR)/sdl_gui.hpp: $(HPP_SOURCES) | $(DIST_DIR)
 		-e '/#include "context_menu.hpp"/d' \
 		-e '/#include "gui_manager.hpp"/d' \
 		-e '/#include "sdl_app.hpp"/d' \
+		-e '/#include "composite\/dialog_box.hpp"/d' \
+		-e '/#include "composite\/message_box.hpp"/d' \
+		-e '/#include "composite\/file_dialog.hpp"/d' \
+		-e '/#include "..\/gui.hpp"/d' \
+		-e '/#include "..\/panel.hpp"/d' \
+		-e '/#include "..\/button.hpp"/d' \
+		-e '/#include "..\/label.hpp"/d' \
+		-e '/#include "..\/gui_manager.hpp"/d' \
+		-e '/#include "..\/theme.hpp"/d' \
+		-e '/#include "..\/list_view.hpp"/d' \
+		-e '/#include "..\/text_input.hpp"/d' \
+		-e '/#include "dialog_box.hpp"/d' \
+		-e '/#include "file_dialog.hpp"/d' \
 		-e '/^#pragma once/d' \
 		-e '/^#include <.*>/d' \
 		-e '/^#include "SDL2\/.*"/d' \
@@ -370,6 +396,13 @@ $(OUTPUT)/release/%.o: $(SRC)/%.cpp | $(OUTPUT)/release
 	$(CXX) $(RELEASE_CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 $(OUTPUT)/release/%.pic.o: $(SRC)/%.cpp | $(OUTPUT)/release
+	$(CXX) $(RELEASE_CXXFLAGS) $(CPPFLAGS) -fPIC -c $< -o $@
+
+# Reguły kompilacji plików obiektowych dla composite
+$(OUTPUT)/release/composite/%.o: $(SRC)/composite/%.cpp | $(OUTPUT)/release/composite
+	$(CXX) $(RELEASE_CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+
+$(OUTPUT)/release/composite/%.pic.o: $(SRC)/composite/%.cpp | $(OUTPUT)/release/composite
 	$(CXX) $(RELEASE_CXXFLAGS) $(CPPFLAGS) -fPIC -c $< -o $@
 
 # Reguły kompilacji dla tinyxml2
@@ -400,6 +433,9 @@ $(DIST_DIR):
 	@mkdir -p $@
 
 $(OUTPUT)/release:
+	@mkdir -p $@
+
+$(OUTPUT)/release/composite:
 	@mkdir -p $@
 
 

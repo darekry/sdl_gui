@@ -19,31 +19,15 @@ class Theme;
 
 class GUIManager {
 public:
-    // Konstruktor
-    explicit GUIManager(SDL_Renderer* renderer);
-
-    // Destruktor
+    GUIManager(SDL_Renderer* renderer);
     ~GUIManager();
 
-    // Metoda do dodawania elementów GUI do zarządzania
-
-    // Metoda do dodawania elementów GUI do zarządzania, przejmując własność
     GUIElement* addElement(std::unique_ptr<GUIElement> element);
-
-    // Metoda do obsługi zdarzeń SDL i przekazywania ich do odpowiednich elementów GUI
     bool processEvent(const SDL_Event& e);
-
-    // Metoda do renderowania wszystkich elementów GUI
     void update();
-
-    // Metoda do renderowania wszystkich elementów GUI
     void render();
-
-    // Metoda do czyszczenia elementów oznaczonych do usunięcia
     void cleanup();
 
-    // Metody dostępu do kontekstu
-    // Metody dostępu do kontekstu
     SDL_Renderer* getRenderer() const { return m_renderer; }
     FontManager& getFontManager() { return m_fontManager; }
     const FontManager& getFontManager() const { return m_fontManager; }
@@ -52,40 +36,40 @@ public:
     TimerManager* getTimerManager();
     AnimationManager* getAnimationManager();
     
-    // Tooltip
     void showTooltip(GUIElement* target, const std::string& text);
     void hideTooltip();
 
-// --- Zarządzanie motywem ---
-void setTheme(Theme theme);
-Theme& getTheme();
+    void setTheme(Theme theme);
+    Theme& getTheme();
 
-GUIElement* findElementAt(int x, int y);
+    GUIElement* findElementAt(int x, int y);
 
-// --- Zarządzanie fokusem i przechwytywaniem ---
-void captureMouse(GUIElement* element);
-void releaseMouse();
-void setKeyboardFocus(GUIElement* element);
-[[nodiscard]] GUIElement* getKeyboardFocus() const;
+    void captureMouse(GUIElement* element);
+    void releaseMouse();
+    void setKeyboardFocus(GUIElement* element);
+    [[nodiscard]] GUIElement* getKeyboardFocus() const;
 
-void setCursor(std::unique_ptr<Cursor> new_cursor);
+    void setCursor(std::unique_ptr<Cursor> new_cursor);
+    
+    bool isElementAlive(GUIElement* element) const;
+    void registerElement(GUIElement* element);
+    void unregisterElement(GUIElement* element);
 
 private:
-// Kontener na unikalne wskaźniki do elementów GUI
-std::vector<std::unique_ptr<GUIElement>> m_elements;
-std::unique_ptr<GUIElement> tooltipElement;
-std::unique_ptr<Cursor> cursor;
+    std::vector<std::unique_ptr<GUIElement>> m_elements;
+    std::unique_ptr<GUIElement> tooltipElement;
+    std::unique_ptr<Cursor> cursor;
 
-// Stan fokusu i przechwytywania
-GUIElement* m_mouseCaptureElement = nullptr;
-GUIElement* m_keyboardFocusElement = nullptr;
+    GUIElement* m_mouseCaptureElement = nullptr;
+    GUIElement* m_keyboardFocusElement = nullptr;
 
-// Kontekst aplikacji
-SDL_Renderer* m_renderer;
-FontManager m_fontManager;
-TextureManager m_textureManager;
-std::unique_ptr<TimerManager> timerManager;
-std::unique_ptr<AnimationManager> animation_manager;
+    SDL_Renderer* m_renderer;
+    FontManager m_fontManager;
+    TextureManager m_textureManager;
+    std::unique_ptr<TimerManager> timerManager;
+    std::unique_ptr<AnimationManager> animation_manager;
 
-Theme m_theme;
+    Theme m_theme;
+    
+    std::unordered_set<GUIElement*> m_liveElements;
 };

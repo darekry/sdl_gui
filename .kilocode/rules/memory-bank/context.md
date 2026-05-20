@@ -2,9 +2,10 @@
 
 ## Stan repozytorium
 
-- **Kod źródłowy**: [`src/`](src/) - 32 plików nagłówkowych, 27 plików implementacji
+- **Kod źródłowy**: [`src/`](src/) - 34 plików nagłówkowych, 29 plików implementacji
+- **Komponenty złożone**: [`src/composite/`](src/composite/) - DialogBox, MessageBox (2 pliki)
 - **Dokumentacja**: [`docs/`](docs/) - API docs, przewodniki (EN/PL), code review texture/font manager
-- **Przykłady**: [`examples/`](examples/) - 27 przykładów demonstrujących widgety (nowy: example_rounded_corners)
+- **Przykłady**: [`examples/`](examples/) - 28 przykładów demonstrujących widgety (nowy: example_dialog)
 - **Testy**: [`tests/`](tests/) - 21 plików testowych (Catch2)
 
 ## Kluczowe cechy
@@ -15,8 +16,67 @@
 - Kompletny zestaw widgetów: Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, ListView, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu
 - System motywów i stylów
 - **Zaokrąglone rogi** - wsparcie dla borderRadius w Style (SDL2_gfx)
+- **Komponenty złożone** - DialogBox, MessageBox dla łatwego tworzenia okien dialogowych
 
 ## Ostatnie zmiany (2026-05-20)
+
+### Komponenty złożone (Composite Components)
+
+Dodano nowy katalog `src/composite/` dla komponentów wyższego poziomu, które składają się z wielu podstawowych widgetów:
+
+**DialogBox** (`src/composite/dialog_box.hpp/cpp`):
+- Okno dialogowe w stylu Windows, draggable
+- Statyczne metody factory: `createConfirm()`, `createAlert()`, `createCustom()`, `createWithTitle()`
+- Składa się z Panel (tło/ramka), Label (komunikat), Button (akcje)
+- ESC zamyka dialog bez wyboru
+
+**MessageBox** (`src/composite/message_box.hpp/cpp`):
+- Statyczna klasa pomocnicza dla szybkich alertów
+- Metody: `showInfo()`, `showError()`, `showWarning()`, `showQuestion()`, `showCustom()`
+- Automatyczny styling (kolor tła/border różny dla typu)
+
+**FileDialog** (`src/composite/file_dialog.hpp/cpp`) - NEW:
+- Dialog wyboru pliku/katalogu w stylu Windows 3.11
+- MVP approach: ListView dla directories (flat list) i files
+- ".." jako first item - navigate to parent directory
+- Double-click na directory - navigate into it
+- Filtering: *.txt, *.cpp, *.* patterns
+- Save mode: TextInput dla filename
+- std::filesystem dla directory navigation
+
+**Przykłady**: 
+- `examples/example_dialog.cpp` - demonstracja DialogBox i MessageBox
+- `examples/example_file_dialog.cpp` - demonstracja FileDialog (NEW)
+
+**API FileDialog**:
+```cpp
+// Open file dialog
+FileDialog::createOpen(manager, "Open File", "", "*.cpp",
+    [](std::string_view path) { if (!path.empty()) { /* selected */ } });
+
+// Save file dialog
+FileDialog::createSave(manager, "Save File", "", "untitled.txt", "*.txt",
+    [](std::string_view path) { if (!path.empty()) { /* save to path */ } });
+```
+
+**Zmienione pliki**:
+1. `src/composite/dialog_box.hpp/cpp` - nowy komponent
+2. `src/composite/message_box.hpp/cpp` - nowy komponent
+3. `Makefile` - dodano COMPOSITE_SRC, reguły kompilacji dla composite/
+4. `examples/example_dialog.cpp` - nowy przykład
+
+**API**:
+```cpp
+// DialogBox - dialog potwierdzający
+DialogBox::createConfirm(manager, "Czy na pewno?", "Tak", "Nie",
+    [](bool confirmed) { if (confirmed) { /* akcja */ } });
+
+// MessageBox - szybki alert
+MessageBox::showInfo(manager, "Plik został zapisany.");
+MessageBox::showError(manager, "Błąd: nie można otworzyć pliku.");
+MessageBox::showQuestion(manager, "Czy kontynuować?", 
+    []() { /* tak */ }, []() { /* nie */ });
+```
 
 ### Fix cursor blinking and mouse positioning (TextInput/TextArea)
 

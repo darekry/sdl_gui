@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(lldb) Launch example_file_dialog",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/output/example_file_dialog",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "ASAN_OPTIONS",
+                    "value": "detect_leaks=0:abort_on_error=1"
+                },
+                {
+                    "name": "UBSAN_OPTIONS",
+                    "value": "print_stacktrace=1"
+                }
+            ],
+            "preLaunchTask": "build-debug",
+            "stopOnEntry": false,
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "(lldb) Attach to running process",
+            "type": "lldb",
+            "request": "attach",
+            "pid": "${command:pickProcess}",
+            "stopOnEntry": false,
+            "MIMode": "lldb"
+        }
+    ]
+}

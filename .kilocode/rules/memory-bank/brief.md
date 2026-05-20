@@ -16,7 +16,10 @@ SDL GUI to lekka biblioteka GUI oparta na SDL2, zapewniająca podstawowe widgety
 - **TextureManager**, **FontManager**, **TimerManager**, **AnimationManager**
 
 ### Widgety
-Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu
+Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, ListView, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu
+
+### Komponenty złożone (Composite)
+- **DialogBox**, **MessageBox**, **FileDialog** - gotowe dialogi w katalogu `src/composite/`
 
 ### Parsery layoutów
 - **JsonParser**, **SGMLParser** - definicja GUI z plików JSON/XML

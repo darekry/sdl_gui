@@ -60,6 +60,43 @@ Abstrakcyjna klasa bazowa dla wszystkich widgetów.
 
 ---
 
+## Komponenty złożone (Composite Components)
+
+Komponenty złożone znajdują się w katalogu [`src/composite/`](src/composite/) i składają się z wielu podstawowych widgetów, dostarczając gotowe do użycia elementy wyższego poziomu.
+
+| Komponent | Opis | Pliki |
+|-----------|------|-------|
+| **DialogBox** | Okno dialogowe w stylu Windows, draggable, z tytułem i przyciskami akcji | [`src/composite/dialog_box.hpp`](src/composite/dialog_box.hpp), [`src/composite/dialog_box.cpp`](src/composite/dialog_box.cpp) |
+| **MessageBox** | Statyczna klasa pomocnicza dla szybkich alertów (Info, Error, Warning, Question) | [`src/composite/message_box.hpp`](src/composite/message_box.hpp), [`src/composite/message_box.cpp`](src/composite/message_box.cpp) |
+| **FileDialog** | Dialog wyboru pliku/katalogu, ListView dla dirs/files, std::filesystem navigation | [`src/composite/file_dialog.hpp`](src/composite/file_dialog.hpp), [`src/composite/file_dialog.cpp`](src/composite/file_dialog.cpp) |
+
+### DialogBox API
+```cpp
+// Dialog potwierdzający (Tak/Nie)
+auto dialog = DialogBox::createConfirm(manager, "Czy na pewno?", "Tak", "Nie",
+    [](bool confirmed) { if (confirmed) { /* akcja */ } });
+manager.addElement(std::move(dialog));
+
+// Dialog alertu (OK)
+auto alert = DialogBox::createAlert(manager, "Operacja zakończona.", "OK",
+    [](int) { /* callback */ });
+
+// Dialog z tytułem i własnymi przyciskami
+auto custom = DialogBox::createWithTitle(manager, "Zapisz?", "Zapisać zmiany?",
+    {"Zapisz", "Nie", "Anuluj"},
+    [](int idx) { /* idx = indeks klikniętego przycisku */ });
+```
+
+### MessageBox API
+```cpp
+MessageBox::showInfo(manager, "Plik zapisany.");
+MessageBox::showError(manager, "Błąd: brak pliku.");
+MessageBox::showWarning(manager, "Niski poziom pamięci.");
+MessageBox::showQuestion(manager, "Czy kontynuować?", []() { /* tak */ }, []() { /* nie */ });
+```
+
+---
+
 ## Menedżery zasobów
 
 ### TextureManager

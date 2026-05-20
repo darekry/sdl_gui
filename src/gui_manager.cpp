@@ -30,7 +30,16 @@ GUIManager::~GUIManager() = default;
 GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     if (element) {
         auto* raw_ptr = element.get();
-        m_elements.push_back(std::move(element)); // Przenieś własność do wektora
+        
+        // Check if element is already in vector (duplicate detection)
+        for (const auto& e : m_elements) {
+            if (e.get() == raw_ptr) {
+                std::cerr << "ERROR: GUIManager::addElement() - element already exists in m_elements! ptr=" << raw_ptr << std::endl;
+                return nullptr;  // Reject duplicate
+            }
+        }
+        
+        m_elements.push_back(std::move(element));
         return raw_ptr;
     }
     return nullptr;
@@ -97,23 +106,19 @@ void GUIManager::update() {
 
 void GUIManager::render() {
     for (const auto& element : m_elements) {
-        if (element && !element->isOverlay()) {
+        if (element && !element->isOverlay() && !element->isMarkedForDeletion()) {
             element->render(m_renderer);
         }
     }
-    
-    if (tooltipElement) {
+
+    if (tooltipElement && !tooltipElement->isMarkedForDeletion()) {
         tooltipElement->render(m_renderer);
     }
-    
+
     for (const auto& element : m_elements) {
-        if (element && element->isOverlay()) {
+        if (element && element->isOverlay() && !element->isMarkedForDeletion()) {
             element->renderOverlay(m_renderer);
         }
-    }
-
-    if (m_keyboardFocusElement) {
-        m_keyboardFocusElement->renderOverlay(m_renderer);
     }
 
     if (cursor) {
@@ -122,46 +127,76 @@ void GUIManager::render() {
 }
 
 void GUIManager::cleanup() {
+    LOG_DEBUG("GUIManager::cleanup() - ENTER, m_elements.size = %zu", m_elements.size());
+    
     if (tooltipElement && tooltipElement->isMarkedForDeletion()) {
+        LOG_DEBUG("GUIManager::cleanup() - clearing tooltipElement");
         tooltipElement.reset();
     }
 
-    // Sprawdź, czy elementy z fokusem/przechwyceniem nie są usuwane
-    if (m_keyboardFocusElement && m_keyboardFocusElement->isMarkedForDeletion()) {
+    auto hasAncestorMarkedForDeletion = [](GUIElement* element) {
+        if (!element) return false;
+        GUIElement* current = element;
+        while (current) {
+            if (current->isMarkedForDeletion()) return true;
+            current = current->getParent();
+        }
+        return false;
+    };
+
+    // Check keyboard/mouse focus BEFORE removing elements
+    // Focus element might be a child of an element marked for deletion
+    if (m_keyboardFocusElement && 
+        (m_keyboardFocusElement->isMarkedForDeletion() || hasAncestorMarkedForDeletion(m_keyboardFocusElement))) {
+        LOG_DEBUG("GUIManager::cleanup() - clearing keyboardFocus (marked for deletion)");
         setKeyboardFocus(nullptr);
     }
-    if (m_mouseCaptureElement && m_mouseCaptureElement->isMarkedForDeletion()) {
+    if (m_mouseCaptureElement && 
+        (m_mouseCaptureElement->isMarkedForDeletion() || hasAncestorMarkedForDeletion(m_mouseCaptureElement))) {
+        LOG_DEBUG("GUIManager::cleanup() - releasing mouse (marked for deletion)");
         releaseMouse();
     }
     
-    // Najpierw rekurencyjnie wywołaj cleanup dla wszystkich elementów
+    LOG_DEBUG("GUIManager::cleanup() - calling cleanup on elements");
     for (const auto& element : m_elements) {
         if (element) {
             element->cleanup();
         }
     }
-// Następnie usuń oznaczone elementy z głównego kontenera
-size_t total_removed_count = 0;
-for (const auto& element : m_elements) {
-    if (element && element->isMarkedForDeletion()) {
-        total_removed_count += 1 + element->countDescendants();
+    
+    size_t total_removed_count = 0;
+    for (const auto& element : m_elements) {
+        if (element && element->isMarkedForDeletion()) {
+            total_removed_count += 1 + element->countDescendants();
+        }
     }
-}
+    
+    LOG_DEBUG("GUIManager::cleanup() - total elements to remove: %zu", total_removed_count);
 
-auto new_end = std::remove_if(m_elements.begin(), m_elements.end(),
-                              [](const std::unique_ptr<GUIElement>& element) {
-    return element->isMarkedForDeletion();
-});
+    // Elements to be removed (and their children via unique_ptr destructor)
+    // After erase, all children will be destroyed too
+    // So we need to clear focus/capture if they point to any descendant of removed elements
+    
+    auto new_end = std::remove_if(m_elements.begin(), m_elements.end(),
+                                  [](const std::unique_ptr<GUIElement>& element) {
+        return element && element->isMarkedForDeletion();
+    });
 
-std::size_t prefix_distance = static_cast<std::size_t>(std::distance(m_elements.begin(), new_end));
-if (prefix_distance < m_elements.size())
-{
-    m_elements.erase(new_end, m_elements.end());
-}
-
-if (total_removed_count > 0) {
-    LOG_DEBUG("GUIManager::cleanup(): Removed %zu elements in total.", total_removed_count);
-}
+    std::size_t prefix_distance = static_cast<std::size_t>(std::distance(m_elements.begin(), new_end));
+    if (prefix_distance < m_elements.size())
+    {
+        LOG_DEBUG("GUIManager::cleanup() - erasing %zu elements from vector", m_elements.size() - prefix_distance);
+        m_elements.erase(new_end, m_elements.end());
+    }
+    
+    // After erase, focus/capture pointers might be invalid (pointing to destroyed children)
+    // We already checked hasAncestorMarkedForDeletion before, which should have cleared them
+    // But double-check: if focus/capture still exists, it should not be null
+    // SAFELY check if focus/capture is null (don't access the pointer)
+    // Note: We cannot safely access m_keyboardFocusElement here if it was destroyed
+    // The hasAncestorMarkedForDeletion check above should have handled it
+    
+    LOG_DEBUG("GUIManager::cleanup() - EXIT, m_elements.size = %zu", m_elements.size());
 }
 
 void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
@@ -264,4 +299,23 @@ GUIElement* GUIManager::findElementAt(int x, int y) {
         }
     }
     return nullptr;
+}
+
+bool GUIManager::isElementAlive(GUIElement* element) const {
+    if (!element) return false;
+    return m_liveElements.contains(element);
+}
+
+void GUIManager::registerElement(GUIElement* element) {
+    if (element) {
+        m_liveElements.insert(element);
+        LOG_DEBUG("GUIManager::registerElement() - registered %p, total = %zu", element, m_liveElements.size());
+    }
+}
+
+void GUIManager::unregisterElement(GUIElement* element) {
+    if (element) {
+        m_liveElements.erase(element);
+        LOG_DEBUG("GUIManager::unregisterElement() - unregistered %p, total = %zu", element, m_liveElements.size());
+    }
 }
