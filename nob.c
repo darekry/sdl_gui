@@ -297,7 +297,7 @@ static bool build_examples(bool release) {
         
         // Rebuild check
         const char *inputs[] = {*src, unity_obj};
-        if (nob_needs_rebuild(exe, inputs, 2) <= 0 && nob_file_exists(exe)) {
+        if (nob_needs_rebuild(exe, inputs, 2) <= 0) {
             skipped++;
             continue;
         }
@@ -334,7 +334,7 @@ static bool build_tests(bool release) {
     // Build catch_amalgamated.o
     const char *catch_obj = OUTPUT_DIR "/catch_amalgamated.o";
     const char *catch_inputs[] = {LIB_DIR "/catch_amalgamated.cpp", LIB_DIR "/catch_amalgamated.hpp"};
-    if (nob_needs_rebuild(catch_obj, catch_inputs, 2) > 0 || !nob_file_exists(catch_obj)) {
+    if (nob_needs_rebuild(catch_obj, catch_inputs, 2) > 0) {
         Nob_Cmd cmd = {0};
         nob_cmd_append(&cmd, CXX);
         cmd_add_common(&cmd);
@@ -351,7 +351,7 @@ static bool build_tests(bool release) {
     const char *helper_obj = OUTPUT_DIR "/test_helper.o";
     const char *helper_inputs[] = {TESTS_DIR "/test_helper.cpp", TESTS_DIR "/test_helper.hpp",
                                     std_pcm_path(release), std_compat_pcm_path(release)};
-    if (nob_needs_rebuild(helper_obj, helper_inputs, 4) > 0 || !nob_file_exists(helper_obj)) {
+    if (nob_needs_rebuild(helper_obj, helper_inputs, 4) > 0) {
         Nob_Cmd cmd = {0};
         nob_cmd_append(&cmd, CXX);
         cmd_add_common(&cmd);
@@ -382,7 +382,7 @@ static bool build_tests(bool release) {
         const char *exe = nob_temp_sprintf("%s/%s", OUTPUT_DIR, name);
         
         const char *inputs[] = {*src, unity_obj, helper_obj, catch_obj};
-        if (nob_needs_rebuild(exe, inputs, 4) <= 0 && nob_file_exists(exe)) {
+        if (nob_needs_rebuild(exe, inputs, 4) <= 0) {
             skipped++;
             continue;
         }
@@ -483,8 +483,7 @@ static bool line_should_remove(const char *line) {
 static bool build_combined_header(void) {
     const char *output = DIST_DIR "/sdl_gui.hpp";
     
-    if (nob_needs_rebuild(output, hpp_order, NOB_ARRAY_LEN(hpp_order)) <= 0 
-        && nob_file_exists(output)) {
+    if (nob_needs_rebuild(output, hpp_order, NOB_ARRAY_LEN(hpp_order)) <= 0) {
         return true;
     }
     
@@ -571,7 +570,7 @@ static bool build_release(void) {
         nob_da_append(&deps, std_pcm_path(true));
         nob_da_append(&deps, std_compat_pcm_path(true));
         
-        if (nob_needs_rebuild(obj, deps.items, deps.count) <= 0 && nob_file_exists(obj)) {
+        if (nob_needs_rebuild(obj, deps.items, deps.count) <= 0) {
             skipped++;
             continue;
         }
@@ -606,7 +605,7 @@ static bool build_release(void) {
         nob_da_append(&deps, std_pcm_path(true));
         nob_da_append(&deps, std_compat_pcm_path(true));
         
-        if (nob_needs_rebuild(obj, deps.items, deps.count) <= 0 && nob_file_exists(obj)) {
+        if (nob_needs_rebuild(obj, deps.items, deps.count) <= 0) {
             skipped++;
             continue;
         }
@@ -629,7 +628,7 @@ static bool build_release(void) {
     const char *tinyxml2_obj = OUTPUT_DIR "/release/tinyxml2.pic.o";
     nob_da_append(&objects, nob_temp_strdup(tinyxml2_obj));
     const char *tinyxml2_inputs[] = {LIB_DIR "/tinyxml2.cpp", LIB_DIR "/tinyxml2.h"};
-    if (nob_needs_rebuild(tinyxml2_obj, tinyxml2_inputs, 2) > 0 || !nob_file_exists(tinyxml2_obj)) {
+    if (nob_needs_rebuild(tinyxml2_obj, tinyxml2_inputs, 2) > 0) {
         built++;
         Nob_Cmd cmd = {0};
         nob_cmd_append(&cmd, CXX);
@@ -651,7 +650,7 @@ static bool build_release(void) {
     
     // Build static library (.a)
     const char *lib_a = DIST_DIR "/libsdl_gui.a";
-    if (nob_needs_rebuild(lib_a, objects.items, objects.count) > 0 || !nob_file_exists(lib_a)) {
+    if (nob_needs_rebuild(lib_a, objects.items, objects.count) > 0) {
         nob_log(INFO, "Building static library: %s", lib_a);
         Nob_Cmd cmd = {0};
         nob_cmd_append(&cmd, "ar", "rcs", lib_a);
@@ -663,7 +662,7 @@ static bool build_release(void) {
     
     // Build shared library (.so)
     const char *lib_so = DIST_DIR "/libsdl_gui.so";
-    if (nob_needs_rebuild(lib_so, objects.items, objects.count) > 0 || !nob_file_exists(lib_so)) {
+    if (nob_needs_rebuild(lib_so, objects.items, objects.count) > 0) {
         nob_log(INFO, "Building shared library: %s", lib_so);
         Nob_Cmd cmd = {0};
         nob_cmd_append(&cmd, CXX);
