@@ -10,7 +10,17 @@ import std.compat;
 
 class SDLApp {
 public:
-    SDLApp(const char* title, int width, int height, SDL_RendererFlags rendeerFlags = SDL_RENDERER_PRESENTVSYNC) {
+    /**
+     * @brief Construct a new SDLApp
+     * @param title Window title
+     * @param width Initial window width
+     * @param height Initial window height
+     * @param rendererFlags SDL renderer flags (default: VSync)
+     * @param resizable If true, window can be resized by user
+     */
+    SDLApp(const char* title, int width, int height, 
+           SDL_RendererFlags rendererFlags = SDL_RENDERER_PRESENTVSYNC,
+           bool resizable = false) {
         if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
             std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
             throw std::runtime_error("SDL_Init failed");
@@ -29,7 +39,13 @@ public:
             throw std::runtime_error("TTF_Init failed");
         }
 
-        m_window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+        Uint32 windowFlags = SDL_WINDOW_SHOWN;
+        if (resizable) {
+            windowFlags |= SDL_WINDOW_RESIZABLE;
+        }
+
+        m_window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+                                      width, height, windowFlags);
         if (!m_window) {
             std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
             TTF_Quit();
@@ -38,7 +54,7 @@ public:
             throw std::runtime_error("SDL_CreateWindow failed");
         }
 
-        m_renderer = SDL_CreateRenderer(m_window, -1, rendeerFlags);
+        m_renderer = SDL_CreateRenderer(m_window, -1, rendererFlags);
         if (!m_renderer) {
             std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
             SDL_DestroyWindow(m_window);
@@ -58,6 +74,14 @@ public:
     }
 
     [[nodiscard]] SDL_Renderer* getRenderer() const { return m_renderer; }
+    [[nodiscard]] SDL_Window* getWindow() const { return m_window; }
+    
+    /**
+     * @brief Get current window size
+     */
+    void getWindowSize(int& width, int& height) const {
+        SDL_GetWindowSize(m_window, &width, &height);
+    }
 
 private:
     SDL_Window* m_window = nullptr;

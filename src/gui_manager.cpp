@@ -319,3 +319,36 @@ void GUIManager::unregisterElement(GUIElement* element) {
         LOG_DEBUG("GUIManager::unregisterElement() - unregistered %p, total = %zu", element, m_liveElements.size());
     }
 }
+
+// === Resize handling ===
+
+void GUIManager::handleResize(int width, int height) {
+    m_windowWidth = width;
+    m_windowHeight = height;
+    
+    // Update all top-level elements with anchors
+    for (const auto& element : m_elements) {
+        if (element && element->hasAnchor()) {
+            element->updateLayout(width, height);
+        }
+    }
+    
+    // Call custom resize callback if set
+    if (m_resizeCallback) {
+        m_resizeCallback(width, height);
+    }
+}
+
+void GUIManager::setResizeCallback(ResizeCallback callback) {
+    m_resizeCallback = callback;
+}
+
+void GUIManager::getWindowSize(int& width, int& height) const {
+    width = m_windowWidth;
+    height = m_windowHeight;
+}
+
+void GUIManager::setWindowSize(int width, int height) {
+    m_windowWidth = width;
+    m_windowHeight = height;
+}

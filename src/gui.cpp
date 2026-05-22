@@ -467,3 +467,117 @@ GUIElement* GUIElement::findElementAt(int x, int y) {
 
     return this;
 }
+
+// === Anchor system implementation ===
+
+void GUIElement::setAnchor(const Anchor& anchor) {
+    m_anchor = anchor;
+    // Store original size before anchor modifications
+    if (m_originalWidth == 0 && m_originalHeight == 0) {
+        storeOriginalSize();
+    }
+}
+
+void GUIElement::storeOriginalSize() {
+    m_originalWidth = m_width;
+    m_originalHeight = m_height;
+}
+
+void GUIElement::applyAnchor(int parentWidth, int parentHeight) {
+    if (!m_anchor.hasAnyAnchor()) {
+        return; // No anchor set, use fixed position
+    }
+    
+    // Calculate new position and size
+    int newX = m_x;
+    int newY = m_y;
+    int newWidth = m_width;
+    int newHeight = m_height;
+    
+    // Helper function to convert anchor value to pixels
+    auto toPixels = [parentWidth, parentHeight](float value, bool isHorizontal) -> int {
+        if (value < 0) return -1; // Not set
+        if (value <= 1.0f) {
+            // Percentage
+            return static_cast<int>((isHorizontal ? parentWidth : parentHeight) * value);
+        }
+        // Fixed pixels (subtract 1 to distinguish from percentages)
+        return static_cast<int>(value - 1.0f);
+    };
+    
+    // Determine element size to use for positioning
+    int effectiveWidth = m_originalWidth > 0 ? m_originalWidth : m_width;
+    int effectiveHeight = m_originalHeight > 0 ? m_originalHeight : m_height;
+    
+    // Handle horizontal positioning
+    if (m_anchor.stretchesHorizontal()) {
+        // Stretch mode: both left and right are set
+        int leftPx = toPixels(m_anchor.left, true);
+        int rightPx = toPixels(m_anchor.right, true);
+        newX = leftPx;
+        newWidth = parentWidth - leftPx - rightPx;
+        if (newWidth < 0) newWidth = 0;
+    } else if (m_anchor.hasLeft()) {
+        int leftPx = toPixels(m_anchor.left, true);
+        // Special case: 0.5 means center horizontally
+        if (m_anchor.left == 0.5f) {
+            newX = leftPx - effectiveWidth / 2;  // Center the element, not its corner
+        } else {
+            newX = leftPx;
+        }
+        newWidth = effectiveWidth;
+    } else if (m_anchor.hasRight()) {
+        // Only right anchor: position from right edge, keep original width
+        int rightPx = toPixels(m_anchor.right, true);
+        newWidth = effectiveWidth;
+        newX = parentWidth - rightPx - newWidth;
+    }
+    
+    // Handle vertical positioning
+    if (m_anchor.stretchesVertical()) {
+        // Stretch mode: both top and bottom are set
+        int topPx = toPixels(m_anchor.top, false);
+        int bottomPx = toPixels(m_anchor.bottom, false);
+        newY = topPx;
+        newHeight = parentHeight - topPx - bottomPx;
+        if (newHeight < 0) newHeight = 0;
+    } else if (m_anchor.hasTop()) {
+        int topPx = toPixels(m_anchor.top, false);
+        // Special case: 0.5 means center vertically
+        if (m_anchor.top == 0.5f) {
+            newY = topPx - effectiveHeight / 2;  // Center the element, not its corner
+        } else {
+            newY = topPx;
+        }
+        newHeight = effectiveHeight;
+    } else if (m_anchor.hasBottom()) {
+        // Only bottom anchor: position from bottom edge, keep original height
+        int bottomPx = toPixels(m_anchor.bottom, false);
+        newHeight = effectiveHeight;
+        newY = parentHeight - bottomPx - newHeight;
+    }
+    
+    // Apply calculated values
+    if (newX != m_x || newY != m_y) {
+        setPosition(newX, newY);
+    }
+    if (newWidth != m_width || newHeight != m_height) {
+        setSize(newWidth, newHeight);
+    }
+}
+
+void GUIElement::updateLayout(int parentWidth, int parentHeight) {
+    // Apply anchor to this element
+    applyAnchor(parentWidth, parentHeight);
+    
+    // Propagate to children
+    for (auto& child : m_children) {
+        if (child) {
+            child->updateLayout(m_width, m_height);
+        }
+    }
+}
+
+void GUIElement::onParentResize(int parentWidth, int parentHeight) {
+    updateLayout(parentWidth, parentHeight);
+}
