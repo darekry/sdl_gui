@@ -1,5 +1,64 @@
 # Aktualny stan projektu
 
+## Ostatnie zmiany (2026-05-21)
+
+### Rebuild detection fix (2026-05-21) - COMPLETED ✓
+
+**Problem**: Każde uruchomienie ./nob budowało cały projekt, nawet gdy nie było zmian.
+
+**Rozwiązanie**:
+1. `ensure_unity_source()` - porównuje content `all.cpp` przed nadpisaniem
+   - Jeśli content unchanged: skip write, preserve timestamp
+   - Jeśli content changed: write new file, update timestamp
+2. Modules rebuild - tylko gdy pcm nie istnieje (source timestamp constant)
+3. Unity object (`all.o`) - rebuild tylko gdy `all.cpp` timestamp changed
+4. Examples rebuild - `{example_src, all.o}` - rebuild tylko gdy jeden z nich changed
+
+**Verification tests passed**:
+- Fresh build: 28 built ✓
+- No changes: 0 built, 28 skipped ✓
+- One example changed: 1 built, 27 skipped ✓
+- Library source changed: unity + 28 rebuilt ✓
+- After rebuild: 0 built, 28 skipped ✓
+
+**Bug fixed**: Removed duplicate code block in `build_unity_object()` function
+
+### compile_commands.json integration (2026-05-21)
+
+**Zmiana**: Usunięto osobny target `compile_commands` - generowanie jest teraz automatyczne podczas regularnych buildów.
+
+**Implementacja**:
+- Global `Nob_Compdb g_compdb` - entries added during compilations
+- `nob_compdb_add()` called BEFORE each `nob_cmd_run()`
+- `nob_compdb_save()` at end of main() (only if compilations happened)
+- Removed `generate_compile_commands()` function and target
+
+**Zalety**:
+- compile_commands.json zawsze aktualny po build
+- Zero extra work - entries generated alongside compilations
+- Nie regeneruje gdy nothing compiled (skipped builds)
+
+### Refaktor nob.c (Opcja C)
+
+Przeprowadzono refaktor skryptu budującego `nob.c`:
+- **853 linii** (z ~1400 przed refaktorem)
+- Prekompilowane flagi jako globalne `Nob_Cmd`: `g_common`, `g_debug`, `g_release`
+- Helper functions: `cmd_add_common()`, `cmd_add_mode()`, `cmd_add_modules()`
+- `nob_cmd_extend()` zamiast pętli for dla flag
+- `nob_da_foreach(const char*, ...)` dla iteracji
+- Release kompiluje `.pic.o` (używane dla `.a` i `.so` - bez double compilation)
+- Parallel compilation: `nob_cmd_run(.async = &procs)`
+- Rebuild detection: `nob_needs_rebuild()` dla examples, tests, release
+
+**Zachowane features**:
+- Debug/Release modes
+- Unity build
+- Static (.a) i shared (.so) libraries
+- compile_commands.json generation
+- C++23 modules
+
+**Test**: All examples (28) i tests (10) passed.
+
 ## Stan repozytorium
 
 - **Kod źródłowy**: [`src/`](src/) - 34 plików nagłówkowych, 29 plików implementacji
@@ -7,6 +66,32 @@
 - **Dokumentacja**: [`docs/`](docs/) - API docs, przewodniki (EN/PL), code review texture/font manager
 - **Przykłady**: [`examples/`](examples/) - 28 przykładów demonstrujących widgety (nowy: example_dialog)
 - **Testy**: [`tests/`](tests/) - 21 plików testowych (Catch2)
+- **Build system**: [`nob.c`](nob.c) - skrypt budujący w C (nob.h v3.8.0)
+
+## System budowania (nob.c)
+
+Projekt używa skryptu budującego `nob.c` (z biblioteką `nob.h`) zastępując Makefile:
+
+**Uruchomienie**:
+```bash
+cc -o nob nob.c   # bootstrap (raz)
+./nob             # build examples (debug)
+./nob examples    # build examples
+./nob test        # build + run tests
+./nob release     # build dist/ artifacts
+./nob clean       # remove output/, dist/, modules_cache/
+./nob non_unity   # compile each .cpp separately
+./nob compile_commands  # generate compile_commands.json
+./nob -r examples # build examples (release)
+```
+
+**Funkcje**:
+- Moduły prekompilowane C++23 (std.pcm, std.compat.pcm)
+- Unity build (output/all.cpp)
+- Debug/Release z różnymi flagami
+- Generowanie compile_commands.json dla clangd
+- Biblioteki statyczne/dynamiczne dla release
+- Połączony header dist/sdl_gui.hpp
 
 ## Kluczowe cechy
 

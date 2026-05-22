@@ -59,6 +59,7 @@ vendor/
 dist/
 # Build logs
 *.log
-
+nob
+nob.old
 # Temporary files
 tmp.cpp
