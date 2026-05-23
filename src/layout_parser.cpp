@@ -81,7 +81,27 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else if (type == "RadioGroup")
     {
-        element = std::make_unique<RadioGroup>(m_guiManager, 0, 0, 0, 0);
+        auto rg = std::make_unique<RadioGroup>(m_guiManager, 0, 0, 0, 0);
+        
+        // Parse option configuration
+        if (hasNode(node, "optionSpacing")) rg->setOptionSpacing(getInt(node, "optionSpacing", 40));
+        if (hasNode(node, "buttonX") || hasNode(node, "labelX") || hasNode(node, "startY"))
+            rg->setOptionMargins(getInt(node, "buttonX", 20), getInt(node, "labelX", 45), getInt(node, "startY", 20));
+        if (hasNode(node, "buttonSize") || hasNode(node, "labelFontSize"))
+            rg->setOptionSizes(getInt(node, "buttonSize", 20), getInt(node, "labelFontSize", 16));
+        
+        // Parse options array
+        if (isArray(node, "options"))
+        {
+            forEachInArray(node, "options", [this, &rg](void* optNode) {
+                std::string text = getString(optNode, "text", "");
+                bool selected = getBool(optNode, "selected", false);
+                if (!text.empty())
+                    rg->addOption(text, selected);
+            });
+        }
+        
+        element = std::move(rg);
     }
     else if (type == "Slider")
     {
@@ -185,7 +205,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
             lv->setSelectedRow(static_cast<size_t>(getInt(node, "selectedIndex", -1)));
         element = std::move(lv);
     }
-    else if (type == "Style" || type == "Item" || type == "Resources")
+    else if (type == "Style" || type == "Item" || type == "Resources" || type == "Option")
     {
         return nullptr;
     }
@@ -200,6 +220,19 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
         if (hasNode(node, "id")) element->setID(getString(node, "id"));
         element->setPosition(getInt(node, "x", element->getX()), getInt(node, "y", element->getY()));
         element->setSize(getInt(node, "width", element->getWidth()), getInt(node, "height", element->getHeight()));
+        
+        // Parse anchor for responsive positioning
+        if (hasNode(node, "anchorLeft") || hasNode(node, "anchorTop") || 
+            hasNode(node, "anchorRight") || hasNode(node, "anchorBottom"))
+        {
+            Anchor anchor;
+            if (hasNode(node, "anchorLeft")) anchor.left = getFloat(node, "anchorLeft", -1.0f);
+            if (hasNode(node, "anchorTop")) anchor.top = getFloat(node, "anchorTop", -1.0f);
+            if (hasNode(node, "anchorRight")) anchor.right = getFloat(node, "anchorRight", -1.0f);
+            if (hasNode(node, "anchorBottom")) anchor.bottom = getFloat(node, "anchorBottom", -1.0f);
+            element->setAnchor(anchor);
+            element->storeOriginalSize();
+        }
         
         if (hasNode(node, "visible")) element->setVisible(getBool(node, "visible", true));
         if (hasNode(node, "enabled")) element->setEnabled(getBool(node, "enabled", true));

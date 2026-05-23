@@ -40,6 +40,7 @@ bool SGMLParser::hasNode(void* node, const std::string& key)
     if (key == "fonts") return elem->FirstChildElement("Font") != nullptr;
     if (key == "textures") return elem->FirstChildElement("Texture") != nullptr;
     if (key == "resources") return elem->FirstChildElement("Resources") != nullptr;
+    if (key == "options") return elem->FirstChildElement("Option") != nullptr;
     return elem->Attribute(key.c_str()) != nullptr;
 }
 
@@ -83,6 +84,7 @@ bool SGMLParser::isArray(void* node, const std::string& key)
     if (key == "tabs") return elem->FirstChildElement("Tab") != nullptr;
     if (key == "fonts") return elem->FirstChildElement("Font") != nullptr;
     if (key == "textures") return elem->FirstChildElement("Texture") != nullptr;
+    if (key == "options") return elem->FirstChildElement("Option") != nullptr;
     return false;
 }
 
@@ -96,6 +98,7 @@ void SGMLParser::forEachInArray(void* node, const std::string& key, std::functio
     else if (key == "tabs") childTag = "Tab";
     else if (key == "fonts") childTag = "Font";
     else if (key == "textures") childTag = "Texture";
+    else if (key == "options") childTag = "Option";
 
     if (childTag.empty())
     {

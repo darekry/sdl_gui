@@ -1,5 +1,32 @@
 # Aktualny stan projektu
 
+## Ostatnie zmiany (2026-05-23)
+
+### RadioGroup::addOption() - convenience API
+
+Dodano metodę `addOption(text, selected)` do RadioGroup, która automatycznie tworzy RadioButton + Label z auto-pozycjonaniem.
+
+**API:**
+```cpp
+radioGroup->addOption("Opcja 1");
+radioGroup->addOption("Opcja 2", true);  // selected by default
+radioGroup->addOption("Opcja 3");
+
+// Konfiguracja layoutu (opcjonalnie):
+radioGroup->setOptionSpacing(40);
+radioGroup->setOptionMargins(20, 45, 10);  // buttonX, labelX, startY
+radioGroup->setOptionSizes(20, 16);  // buttonSize, labelFontSize
+```
+
+**Zmienione pliki:**
+- `src/radio_group.hpp` - dodano addOption(), setOptionSpacing(), setOptionMargins(), setOptionSizes()
+- `src/radio_group.cpp` - implementacja
+- `examples/example_radio_button.cpp` - zaktualizowany przykład
+
+**Redukcja boilerplate:** z ~12 linii (4 per opcja) do 3 linii (1 per opcja).
+
+**Tests:** RadioGroup tests passed (70 assertions in 8 test cases).
+
 ## Ostatnie zmiany (2026-05-21)
 
 ### Rebuild detection fix (2026-05-21) - COMPLETED ✓
