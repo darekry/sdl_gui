@@ -13,6 +13,7 @@ public:
 
     void setDefaultStyle(Style style);
     const Style& getDefaultStyle() const;
+    SDL_Color getBackgroundColor() const;
 
     // Metoda fabryczna tworząca domyślny motyw w stylu "Windows 95/98".
     static Theme createDefaultTheme();

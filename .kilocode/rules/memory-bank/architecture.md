@@ -97,6 +97,70 @@ MessageBox::showQuestion(manager, "Czy kontynuować?", []() { /* tak */ }, []() 
 
 ---
 
+## Systemy zarządzania ekranami/oknami
+
+### ScreenManager
+Zarządzanie wieloma ekranami w jednym oknie (typowe dla gier).
+
+| Komponent | Opis | Pliki |
+|-----------|------|-------|
+| **Screen** | Abstrakcyjna klasa bazowa dla ekranów z lifecycle (onEnter/onExit) | [`src/screen.hpp`](src/screen.hpp) |
+| **ScreenManager** | Zarządzanie ekranami, stack overlays, przełączanie | [`src/screen_manager.hpp`](src/screen_manager.hpp), [`src/screen_manager.cpp`](src/screen_manager.cpp) |
+
+**API Screen:**
+```cpp
+class MyScreen : public Screen {
+    void onEnter(GUIManager& manager) override;   // Dodaj elementy
+    void onExit(GUIManager& manager) override;    // Cleanup
+    bool handleEvent(GUIManager& manager, const SDL_Event& e) override;
+    void update(GUIManager& manager) override;
+    void render(GUIManager& manager, SDL_Renderer* renderer) override;
+    bool wantsPreProcessEvent() const override;   // Intercept events before GUIManager
+};
+```
+
+**API ScreenManager:**
+```cpp
+screenManager.addScreen("name", std::make_unique<MyScreen>());
+screenManager.changeScreen("name");   // Clear stack, switch screen
+screenManager.pushScreen("overlay");  // Add overlay (pause menu)
+screenManager.popScreen();            // Remove overlay, return to previous
+screenManager.getStackDepth();        // Number of screens in stack
+```
+
+### WindowManager
+Zarządzanie wieloma oknami systemowymi (typowe dla aplikacji desktopowych).
+
+| Komponent | Opis | Pliki |
+|-----------|------|-------|
+| **Window** | SDL_Window + SDL_Renderer + GUIManager wrapper | [`src/window.hpp`](src/window.hpp), [`src/window.cpp`](src/window.cpp) |
+| **WindowManager** | Tworzenie, zarządzanie, event routing dla okien | [`src/window_manager.hpp`](src/window_manager.hpp), [`src/window_manager.cpp`](src/window_manager.cpp) |
+
+**API Window:**
+```cpp
+Window* window = windowManager.createWindow("Title", 800, 600);
+window->getGUIManager().addElement(...);  // Dodaj elementy do okna
+window->setOnCloseCallback([](Window* w) { w->markForClose(); });
+window->hide();  window->show();
+window->getSize(w, h);
+```
+
+**API WindowManager:**
+```cpp
+WindowManager windowManager;  // Initializes SDL
+Window* win = windowManager.createWindow("App", 800, 600);
+while (!windowManager.shouldQuit()) {
+    windowManager.processEvents();  // Auto-routing by SDL_WINDOWID
+    windowManager.updateAll();
+    windowManager.renderAll();
+    windowManager.cleanupAll();
+}
+windowManager.closeWindow(win->getWindowID());
+windowManager.closeSecondaryWindows();  // Keep only first
+```
+
+---
+
 ## Menedżery zasobów
 
 ### TextureManager

@@ -2,6 +2,56 @@
 
 ## Ostatnie zmiany (2026-05-23)
 
+### ScreenManager i WindowManager - nowe systemy (COMPLETED ✓)
+
+Zaimplementowane dwa systemy zarządzania ekranami/oknami:
+
+**ScreenManager** (src/screen.hpp, src/screen_manager.hpp/cpp):
+- Abstrakcyjna klasa Screen z lifecycle (onEnter/onExit)
+- Zmiana ekranów: `changeScreen()` - clears stack, switches screen
+- Overlay mode: `pushScreen()`/`popScreen()` - screen stack for pause menus
+- Integracja z GUIManager: handleEvent, update, render, cleanup
+- Example: `examples/example_screen_manager.cpp` - MenuScreen → GameScreen → PauseScreen
+
+**WindowManager** (src/window.hpp, src/window_manager.hpp/cpp):
+- Window class wrapping SDL_Window + SDL_Renderer + GUIManager
+- Multiple system windows with independent GUIManagers
+- Automatic event routing via SDL_WINDOWID
+- Window lifecycle: createWindow, closeWindow, cleanupAll
+- Callbacks: onClose, onResize
+- Example: `examples/example_window_manager.cpp` - MainWindow + SettingsWindow + FormWindow
+
+**API:**
+```cpp
+// ScreenManager usage:
+ScreenManager screenManager(guiManager);
+screenManager.addScreen("menu", std::make_unique<MenuScreen>());
+screenManager.changeScreen("menu");
+screenManager.pushScreen("pause");  // overlay
+screenManager.popScreen();          // return to game
+
+// WindowManager usage:
+WindowManager windowManager;
+Window* mainWindow = windowManager.createWindow("App", 800, 600);
+Window* settingsWindow = windowManager.createWindow("Settings", 400, 300);
+while (!windowManager.shouldQuit()) {
+    windowManager.processEvents();
+    windowManager.updateAll();
+    windowManager.renderAll();
+    windowManager.cleanupAll();
+}
+```
+
+**Tests:** test_screen_manager.cpp (24 test cases), test_window_manager.cpp (15 test cases)
+
+**Fixes during build:**
+1. Slider/Checkbox constructor API - fixed in examples
+2. TextArea setPlaceholderText removed (method not implemented)
+3. Theme::getBackgroundColor() added
+4. TimerManager reference → pointer
+
+## Ostatnie zmiany (2026-05-23)
+
 ### RadioGroup::addOption() - convenience API
 
 Dodano metodę `addOption(text, selected)` do RadioGroup, która automatycznie tworzy RadioButton + Label z auto-pozycjonaniem.

@@ -21,6 +21,10 @@ Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, Lis
 ### Komponenty złożone (Composite)
 - **DialogBox**, **MessageBox**, **FileDialog** - gotowe dialogi w katalogu `src/composite/`
 
+### Systemy zarządzania ekranami
+- **ScreenManager** - zarządzanie ekranami w jednym oknie (grach)
+- **WindowManager** - zarządzanie wieloma oknami systemowymi
+
 ### Parsery layoutów
 - **JsonParser**, **SGMLParser** - definicja GUI z plików JSON/XML
 

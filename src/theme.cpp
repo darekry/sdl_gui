@@ -22,6 +22,13 @@ const Style& Theme::getDefaultStyle() const {
     return m_defaultStyle;
 }
 
+SDL_Color Theme::getBackgroundColor() const {
+    if (m_defaultStyle.backgroundColor.has_value()) {
+        return m_defaultStyle.backgroundColor.value();
+    }
+    return {255, 255, 255, 255};
+}
+
 Theme Theme::createDefaultTheme() {
     Theme theme;
 
