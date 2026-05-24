@@ -12,7 +12,7 @@
     *   Jeśli widget wymaga częstych aktualizacji (np. co klatkę), możesz zrezygnować z cache'owania, nadpisując metodę `wantsDirectRender()` tak, aby zwracała `true`, i implementując logikę rysowania w `drawDirect()`.
 
 3.  **Zaktualizuj system budowania**:
-    *   Obecny `Makefile` automatycznie wykrywa nowe pliki `.cpp` w katalogu `src/` dzięki `wildcard`, więc ręczna edycja `Makefile` nie jest konieczna.
+    *   `nob.c` automatycznie wykrywa nowe pliki `.cpp` w katalogu `src/` (unity build), więc ręczna edycja nie jest konieczna.
 
 4.  **Dodaj przykład użycia**:
     *   Stwórz plik `example_my_widget.cpp` w katalogu [`examples/`](examples/:1), aby pokazać, jak używać nowego widgetu.
@@ -25,10 +25,8 @@
 
 ## Jak uruchomić testy
 
-1.  **Zbuduj projekt**:
-    *   Uruchom `make` w głównym katalogu projektu. To polecenie skompiluje bibliotekę, przykłady oraz pliki wykonywalne testów.
-2.  **Uruchom testy**:
-    *   Wykonaj polecenie `make test`. Skrypt automatycznie uruchomi wszystkie pliki wykonywalne testów znajdujące się w katalogu `output/`.
+1.  **Zbuduj i uruchom testy**:
+    *   Uruchom `./nob test` - kompiluje i automatycznie uruchamia wszystkie testy.
 
 ## Wskazówki dotyczące debugowania
 
@@ -66,7 +64,7 @@
     ```
 
 3.  **Uruchom testy**:
-    *   Wykonaj `make test` - Makefile automatycznie wykryje nowy plik testowy.
+    *   Wykonaj `./nob test` - nob.c automatycznie wykryje nowy plik testowy.
 
 4.  **Ważne uwagi**:
     *   Użyj `TestHelper` do inicjalizacji SDL w trybie headless.

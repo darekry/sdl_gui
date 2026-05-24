@@ -2,6 +2,14 @@
 
 ## Ostatnie zmiany (2026-05-23)
 
+### Dokumentacja - cleanup i reorganizacja (COMPLETED ✓)
+
+Uporządkowanie katalogu `docs/`:
+- **Usunięto:** `nob_simplification_proposal.md`, `composite_components_proposal.md`, `file_dialog_design.md` (zaimplementowane)
+- **Usunięto duplikaty:** `animated_image.md`, `context_menu.md` (root-level, wersje EN/PL zachowane)
+- **Zaktualizowano:** `responsive_layout_proposal.md` - status IMPLEMENTED
+- **Utworzono:** `docs/index.md` (EN), `docs/pl/index.md` (PL) - indeksy dokumentacji
+
 ### ScreenManager i WindowManager - nowe systemy (COMPLETED ✓)
 
 Zaimplementowane dwa systemy zarządzania ekranami/oknami:

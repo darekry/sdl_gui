@@ -15,8 +15,8 @@
 #define MODULE_CACHE_DIR "modules_cache"
 #define EXAMPLES_DIR "examples"
 
-#define STD_MODULE_SRC "/usr/lib/llvm-22/share/libc++/v1/std.cppm"
-#define STD_COMPAT_MODULE_SRC "/usr/lib/llvm-22/share/libc++/v1/std.compat.cppm"
+#define STD_MODULE_SRC "/usr/lib/llvm-23/share/libc++/v1/std.cppm"
+#define STD_COMPAT_MODULE_SRC "/usr/lib/llvm-23/share/libc++/v1/std.compat.cppm"
 
 // ========== PREKOMPILOWANE FLAGI ==========
 

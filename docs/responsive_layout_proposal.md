@@ -1,6 +1,9 @@
-# Responsive Layout System - Implementation Status
+# Responsive Layout System — Reference Document
 
-## ✅ ZAIMPLEMENTOWANE (2026-05-22)
+> **Status:** ✅ IMPLEMENTED (2026-05-22)  
+> This document is kept for reference. The Anchor system is now part of the library.
+
+## Implemented Features
 
 ### Anchor System - Opcja 2
 

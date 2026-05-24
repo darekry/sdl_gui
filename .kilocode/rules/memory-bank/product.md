@@ -35,7 +35,7 @@ Przyjazne mechanizmy stylowania:
 
 - **Prosty model dodawania widgetów**: utwórz instancję elementu dziedziczącego po `GUIElement`, dodaj do `GUIManager` przez `addElement`
 - **Minimalne zarządzanie zasobami**: menedżery automatycznie cache'ują zasoby i zwracają współdzielone wskaźniki (`SharedTexture`, `SharedFont`)
-- **Przykłady gotowego użycia**: katalog [`examples/`](examples/) zawiera 25 przykładów demonstrujących poszczególne widgety i funkcjonalności
+- **Przykłady gotowego użycia**: katalog [`examples/`](examples/) zawiera 31 przykładów demonstrujących poszczególne widgety i funkcjonalności
 
 ## Ograniczenia i założenia
 

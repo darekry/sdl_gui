@@ -60,6 +60,6 @@ cc -o nob nob.c
 ## Narzędzia deweloperskie
 
 -   **System budowania**: `nob.c` z `nob.h` (Go Rebuild Urself™ Technology - automatyczne przebudowanie).
--   **Analiza kodu**: `clangd` lub inne narzędzia oparte na LSP, które wykorzystują plik [`compile_commands.json`](compile_commands.json:1) do precyzyjnej analizy kodu. Generuj przez `./nob compile_commands`.
+-   **Analiza kodu**: `clangd` lub inne narzędzia oparte na LSP, które wykorzystują plik [`compile_commands.json`](compile_commands.json:1) do precyźnej analizy kodu. Generowany automatycznie podczas buildów.
 -   **Testowanie**: `Catch2` do testów jednostkowych.
 -   **Formatowanie kodu**: Projekt zawiera plik `.clang-format`, który definiuje styl formatowania kodu.
