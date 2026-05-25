@@ -783,3 +783,1406 @@ TEST_CASE("TextArea Initialization", "[text_area]") {
         REQUIRE(ta.isVisible());
     }
 }
+
+TEST_CASE("TextArea - Locked State", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("setLocked true prevents focus gain on click") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setLocked(true);
+        manager.addElement(std::move(ta));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+
+        REQUIRE_FALSE(area->isHovered());
+    }
+
+    SECTION("isLocked returns correct state") {
+        TextArea ta(manager, 10, 20, 200, 100, "assets/fonts/font.ttf", 16);
+
+        REQUIRE_FALSE(ta.isLocked());
+
+        ta.setLocked(true);
+        REQUIRE(ta.isLocked());
+
+        ta.setLocked(false);
+        REQUIRE_FALSE(ta.isLocked());
+    }
+
+    SECTION("Locked TextArea ignores typing") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        area->setLocked(true);
+
+        manager.processEvent(helper.createTextInputEvent("X"));
+
+        REQUIRE(area->getText().empty());
+    }
+
+    SECTION("Locked TextArea ignores backspace") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Test");
+        manager.addElement(std::move(ta));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        area->setLocked(true);
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+
+        REQUIRE(area->getText() == "Test");
+    }
+}
+
+TEST_CASE("TextArea - Delete Key", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Delete removes character after cursor") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+
+        event = helper.createTextInputEvent("A");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("B");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("C");
+        area->handleEvent(event);
+
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        area->handleEvent(event);
+
+        REQUIRE(area->getText() == "ABC");
+
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        area->handleEvent(event);
+        REQUIRE(area->getText() == "AB");
+    }
+
+    SECTION("Delete at end of line does nothing") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        area->handleEvent(event);
+        REQUIRE(area->getText() == "X");
+    }
+
+    SECTION("Delete removes selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+
+        event = helper.createTextInputEvent("A");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("B");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("C");
+        area->handleEvent(event);
+
+        area->setSelection(1, 2);
+
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        area->handleEvent(event);
+        REQUIRE(area->getText() == "AC");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+}
+
+TEST_CASE("TextArea - Selection Operations", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("hasSelection returns false by default") {
+        TextArea ta(manager, 10, 20, 200, 100, "assets/fonts/font.ttf", 16);
+        REQUIRE_FALSE(ta.hasSelection());
+    }
+
+    SECTION("setSelection sets hasSelection true") {
+        TextArea ta(manager, 10, 20, 200, 100, "assets/fonts/font.ttf", 16);
+        ta.setText("Hello");
+        ta.setSelection(1, 3);
+        REQUIRE(ta.hasSelection());
+    }
+
+    SECTION("getSelection returns selected text") {
+        TextArea ta(manager, 10, 20, 200, 100, "assets/fonts/font.ttf", 16);
+        ta.setText("Hello World");
+        ta.setSelection(0, 5);
+        REQUIRE(ta.getSelection() == "Hello");
+    }
+
+    SECTION("clearSelection clears selection") {
+        TextArea ta(manager, 10, 20, 200, 100, "assets/fonts/font.ttf", 16);
+        ta.setText("Hello");
+        ta.setSelection(1, 3);
+        ta.clearSelection();
+        REQUIRE_FALSE(ta.hasSelection());
+        REQUIRE(ta.getSelection().empty());
+    }
+
+    SECTION("setSelection clamps to text length") {
+        TextArea ta(manager, 10, 20, 200, 100, "assets/fonts/font.ttf", 16);
+        ta.setText("Hi");
+        ta.setSelection(0, 100);
+        REQUIRE(ta.getSelection() == "Hi");
+    }
+
+    SECTION("Selection across multiple lines") {
+        TextArea ta(manager, 10, 20, 200, 100, "assets/fonts/font.ttf", 16);
+        ta.setText("Line1\nLine2\nLine3");
+        ta.setSelection(3, 10);
+        REQUIRE(ta.getSelection() == "e1\nLine");
+    }
+}
+
+TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Cut removes selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+
+        for (char c : "ABCDE") {
+            if (c == '\0') continue;
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+
+        area->setSelection(1, 4);
+
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_x, KMOD_CTRL);
+        area->handleEvent(event);
+
+        REQUIRE(area->getText() == "AE");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Paste inserts at cursor when no selection") {
+        SDL_SetClipboardText("test");
+
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+
+        event = helper.createTextInputEvent("A");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("B");
+        area->handleEvent(event);
+
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        area->handleEvent(event);
+
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL);
+        area->handleEvent(event);
+
+        REQUIRE(area->getText() == "AtestB");
+    }
+
+    SECTION("Paste replaces selection") {
+        SDL_SetClipboardText("NEW");
+
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+
+        for (char c : "Hello") {
+            if (c == '\0') continue;
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+
+        area->setSelection(1, 4);
+
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL);
+        area->handleEvent(event);
+
+        REQUIRE(area->getText() == "HNEWo");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Copy with no selection does nothing to text") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+
+        for (char c : "Test") {
+            if (c == '\0') continue;
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_c, KMOD_CTRL);
+        area->handleEvent(event);
+
+        REQUIRE(area->getText() == "Test");
+    }
+}
+
+TEST_CASE("TextArea - Home/End Keys", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Home moves cursor to start of current line") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText().substr(6, 1) == "X");
+    }
+
+    SECTION("End moves cursor to end of current line") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("ABC");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("!");
+        area->handleEvent(event);
+        REQUIRE(area->getText() == "ABC!");
+    }
+
+    SECTION("Ctrl+Home moves cursor to document start") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText()[0] == 'X');
+    }
+
+    SECTION("Ctrl+End moves cursor to document end") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText().back() == 'X');
+    }
+
+    SECTION("Home on empty text does nothing harmful") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText() == "X");
+    }
+
+    SECTION("End on empty text does nothing harmful") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText() == "X");
+    }
+
+    SECTION("Shift+Home selects from cursor to line start") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "Lin");
+    }
+
+    SECTION("Shift+End selects from cursor to line end") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Hello");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "llo");
+    }
+}
+
+TEST_CASE("TextArea - Arrow Up/Down", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Arrow Up moves cursor to previous line") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("ABC\nDEF\nGHI");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText().find("XBC") != std::string::npos);
+    }
+
+    SECTION("Arrow Down moves cursor to next line") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("ABC\nDEF\nGHI");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText().find("XEF") != std::string::npos);
+    }
+
+    SECTION("Arrow Up at first line stays at first line") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("ABC\nDEF");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText()[0] == 'X');
+    }
+
+    SECTION("Arrow Down at last line processes Down event") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("ABC\nDEF");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        bool handled = area->handleEvent(event);
+        REQUIRE(handled);
+    }
+
+    SECTION("Arrow Up with navigation works") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("ABCD\nEFGH");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP);
+        bool handled = area->handleEvent(event);
+        REQUIRE(handled);
+    }
+
+    SECTION("Arrow Down navigation works") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("ABCD\nEFGH");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        bool handled = area->handleEvent(event);
+        REQUIRE(handled);
+    }
+}
+
+TEST_CASE("TextArea - Page Up/Down", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("PageUp scrolls up and moves cursor") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\nL9\nL10");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEUP);
+        bool handled = area->handleEvent(event);
+        REQUIRE(handled);
+    }
+
+    SECTION("PageDown scrolls down multiple lines") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\nL9\nL10");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEDOWN);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText().find("X") != std::string::npos);
+    }
+
+    SECTION("PageUp at start stays at start") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("L1\nL2\nL3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEUP);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText()[0] == 'X');
+    }
+
+    SECTION("PageDown at end stays at end") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("L1\nL2\nL3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEDOWN);
+        area->handleEvent(event);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        REQUIRE(area->getText().back() == 'X');
+    }
+
+    SECTION("Shift+PageUp creates selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEUP, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+    }
+
+    SECTION("Shift+PageDown creates selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEDOWN, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+    }
+}
+
+TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Shift+Left creates selection to the left") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("Hello World")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        area->handleEvent(event);
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "d");
+    }
+
+    SECTION("Shift+Right creates selection to the right") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("Hello World")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL);
+        area->handleEvent(event);
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "H");
+    }
+
+    SECTION("Shift+Left multiple times extends selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("ABCDE")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        area->handleEvent(event);
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "CDE");
+    }
+
+    SECTION("Shift+Right multiple times extends selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("ABCDE")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL);
+        area->handleEvent(event);
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "AB");
+    }
+
+    SECTION("Arrow without Shift clears selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("ABC")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        area->handleEvent(event);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        area->handleEvent(event);
+        REQUIRE(area->hasSelection());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        area->handleEvent(event);
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Shift+Left at beginning does not create selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("Test")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL);
+        area->handleEvent(event);
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Shift+Right at end does not extend selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("Test")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        area->handleEvent(event);
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE_FALSE(area->hasSelection());
+    }
+}
+
+TEST_CASE("TextArea - Ctrl+A Select All", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Ctrl+A selects all text") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "Line1\nLine2\nLine3");
+    }
+
+    SECTION("Ctrl+A on empty text creates no selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        area->handleEvent(event);
+        
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Ctrl+A then Delete clears all text") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Test");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText().empty());
+    }
+
+    SECTION("Ctrl+A then Backspace clears all text") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Test");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText().empty());
+    }
+
+    SECTION("Ctrl+A replaces existing selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Hello World");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        area->setSelection(0, 5);
+        REQUIRE(area->getSelection() == "Hello");
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getSelection() == "Hello World");
+    }
+}
+
+TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Typing replaces selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Hello World");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        area->setSelection(6, 11);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "Hello X");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Enter replaces selection with newline") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("ABC")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        area->setSelection(1, 2);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "A\nC");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Typing replaces all text when full selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("Old Text")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("N");
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "N");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Backspace deletes selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("Hello World")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        area->setSelection(5, 6);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "HelloWorld");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Delete deletes selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("Hello World")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        area->setSelection(0, 6);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "World");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Multiple character input replaces selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (char c : std::string("ABC")) {
+            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            area->handleEvent(event);
+        }
+        
+        area->setSelection(1, 2);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("Y");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("Z");
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "AXYZC");
+    }
+}
+
+TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Shift+Down creates multi-line selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        area->setSelection(0, 0);
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection().length() > 0);
+    }
+
+    SECTION("Selection across multiple lines with Ctrl+A") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("A\nB\nC");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getSelection() == "A\nB\nC");
+    }
+
+    SECTION("Shift+Up creates selection to previous line") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        
+        area->setSelection(area->getText().length(), area->getText().length());
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+    }
+
+    SECTION("Backspace deletes multi-line selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createTextInputEvent("L");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("i");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("n");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("e");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("1");
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("L");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("i");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("n");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("e");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("2");
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("L");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("3");
+        area->handleEvent(event);
+        
+        area->setSelection(0, 12);
+        REQUIRE(area->hasSelection());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "L3");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Delete deletes multi-line selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        area->setSelection(5, 17);
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "Line1");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Typing replaces multi-line selection") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        area->setSelection(3, 15);
+        
+        event = helper.createTextInputEvent("X");
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "LinXe3");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("Enter replaces multi-line selection with newline") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createTextInputEvent("L");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("1");
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("L");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("2");
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("L");
+        area->handleEvent(event);
+        event = helper.createTextInputEvent("3");
+        area->handleEvent(event);
+        
+        area->setSelection(0, 4);
+        REQUIRE(area->hasSelection());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        area->handleEvent(event);
+        
+        REQUIRE(area->getText() == "\n2\nL3");
+        REQUIRE_FALSE(area->hasSelection());
+    }
+}
+
+TEST_CASE("TextArea - Selection with Navigation Keys", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Shift+Home selects to line start") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Hello World");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (int i = 0; i < 6; ++i) {
+            event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+            area->handleEvent(event);
+        }
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "Hello ");
+    }
+
+    SECTION("Shift+End selects to line end") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Hello World");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        for (int i = 0; i < 3; ++i) {
+            event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+            area->handleEvent(event);
+        }
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "lo World");
+    }
+
+    SECTION("Ctrl+Shift+Home selects to document start") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        area->handleEvent(event);
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL | KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection().find("Line1") != std::string::npos);
+    }
+
+    SECTION("Ctrl+Shift+End selects to document end") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 200, 100, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        area->setText("Line1\nLine2\nLine3");
+        manager.addElement(std::move(ta));
+
+        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(event);
+        area->render(manager.getRenderer());
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        area->handleEvent(event);
+        area->clearSelection();
+        
+        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL | KMOD_SHIFT);
+        area->handleEvent(event);
+        
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection().find("Line3") != std::string::npos);
+    }
+}

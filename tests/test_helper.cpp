@@ -91,6 +91,17 @@ SDL_Event TestHelper::createKeyEvent(Uint32 type, SDL_Keycode key) {
     return e;
 }
 
+SDL_Event TestHelper::createKeyEvent(Uint32 type, SDL_Keycode key, Uint16 mod) {
+    SDL_Event e;
+    SDL_memset(&e, 0, sizeof(e));
+    e.type = type;
+    e.key.type = type;
+    e.key.keysym.sym = key;
+    e.key.keysym.mod = mod;
+    e.key.state = (type == SDL_KEYDOWN ? SDL_PRESSED : SDL_RELEASED);
+    return e;
+}
+
 SDL_Event TestHelper::createTextInputEvent(const char* text) {
     SDL_Event e;
     SDL_memset(&e, 0, sizeof(e));

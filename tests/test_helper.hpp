@@ -36,6 +36,7 @@ public:
     SDL_Event createMouseMotion(int x, int y, Uint32 state = 0);
     SDL_Event createMouseWheel(Sint32 y, Sint32 x = 0);
     SDL_Event createKeyEvent(Uint32 type, SDL_Keycode key);
+    SDL_Event createKeyEvent(Uint32 type, SDL_Keycode key, Uint16 mod);
     SDL_Event createTextInputEvent(const char* text);
 
     // Backward-compat alias (camelCase name expected by spec)

@@ -31,7 +31,7 @@ int main(int, char**) {
                 guiManager.processEvent(e);
             }
 
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+            SDL_SetRenderDrawColor(renderer, 20, 25, 25, 255);
             SDL_RenderClear(renderer);
 
             guiManager.render();

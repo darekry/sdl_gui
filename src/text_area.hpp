@@ -17,6 +17,14 @@ public:
 
     void setOnTextChanged(const std::function<void(TextArea*)>& callback);
 
+    void setLocked(bool locked);
+    bool isLocked() const;
+
+    bool hasSelection() const;
+    std::string getSelection() const;
+    void clearSelection();
+    void setSelection(size_t start, size_t end);
+
     bool handleEvent(const SDL_Event& e) override;
     void renderOverlay(SDL_Renderer* renderer) override;
     [[nodiscard]] const char* getComponentType() const override;
@@ -27,6 +35,9 @@ private:
     void recalculateLines();
     void refreshTextures();
     void update_text_offset();
+    size_t getLineFromPosition(size_t pos) const;
+    size_t getPositionFromLineAndColumn(size_t line, size_t column) const;
+    size_t getColumnFromPosition(size_t pos) const;
 
     std::string m_text;
     std::vector<std::string> m_lines;
@@ -37,11 +48,16 @@ private:
     std::vector<std::shared_ptr<SDL_Texture>> m_line_textures;
     bool m_needs_texture_update = true;
     int m_scroll_offset_y = 0;
-// Do obsługi kursora i wprowadzania tekstu
-size_t m_cursorPos = 0; // Pozycja kursora w m_text
-int m_text_offset_x = 0;
-Uint32 m_cursorBlinkTime = 0;
-bool m_showCursor = false;
+    size_t m_cursorPos = 0;
+    int m_text_offset_x = 0;
+    Uint32 m_cursorBlinkTime = 0;
+    bool m_showCursor = false;
+    bool m_locked = false;
+    size_t m_selectionStart = 0;
+    size_t m_selectionEnd = 0;
+    bool m_hasSelection = false;
+    bool m_isDragging = false;
+    size_t m_dragStartPos = 0;
 
     std::function<void(TextArea*)> m_onTextChanged;
 };

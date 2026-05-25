@@ -763,3 +763,592 @@ TEST_CASE("TextInput - setText Overloads", "[text_input]") {
         REQUIRE(ti.getText() == "rvalue test");
     }
 }
+
+TEST_CASE("TextInput - Delete Key", "[text_input]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Delete removes character after cursor") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("A"));
+        manager.processEvent(helper.createTextInputEvent("B"));
+        manager.processEvent(helper.createTextInputEvent("C"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        
+        REQUIRE(input->getText() == "ABC");
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        REQUIRE(input->getText() == "AB");
+    }
+
+    SECTION("Delete at end does nothing") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("X"));
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        REQUIRE(input->getText() == "X");
+    }
+
+    SECTION("Delete removes selection") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABC"));
+        
+        input->setSelection(1, 2);
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        REQUIRE(input->getText() == "AC");
+        REQUIRE_FALSE(input->hasSelection());
+    }
+
+    SECTION("Delete fires onTextChanged callback") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("AB"));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+
+        bool callbackFired = false;
+        input->setOnTextChanged([&](TextInput*) { callbackFired = true; });
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        REQUIRE(callbackFired);
+    }
+
+    SECTION("Delete at beginning removes first character") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABC"));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        REQUIRE(input->getText() == "BC");
+    }
+}
+
+TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("hasSelection returns false by default") {
+        TextInput ti(manager, 10, 20, 200, 30);
+        REQUIRE_FALSE(ti.hasSelection());
+    }
+
+    SECTION("setSelection sets hasSelection true") {
+        TextInput ti(manager, 10, 20, 200, 30);
+        ti.setText(std::string("Hello"));
+        ti.setSelection(1, 3);
+        REQUIRE(ti.hasSelection());
+    }
+
+    SECTION("getSelection returns selected text") {
+        TextInput ti(manager, 10, 20, 200, 30);
+        ti.setText(std::string("Hello"));
+        ti.setSelection(1, 4);
+        REQUIRE(ti.getSelection() == "ell");
+    }
+
+    SECTION("clearSelection clears selection") {
+        TextInput ti(manager, 10, 20, 200, 30);
+        ti.setText(std::string("Hello"));
+        ti.setSelection(1, 3);
+        ti.clearSelection();
+        REQUIRE_FALSE(ti.hasSelection());
+        REQUIRE(ti.getSelection().empty());
+    }
+
+    SECTION("setSelection clamps to text length") {
+        TextInput ti(manager, 10, 20, 200, 30);
+        ti.setText(std::string("Hi"));
+        ti.setSelection(0, 100);
+        REQUIRE(ti.getSelection() == "Hi");
+    }
+
+    SECTION("setSelection with reversed indices") {
+        TextInput ti(manager, 10, 20, 200, 30);
+        ti.setText(std::string("Hello"));
+        ti.setSelection(4, 1);
+        REQUIRE(ti.getSelection() == "ell");
+    }
+
+    SECTION("Cut removes selection and cursor moves to selection start") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABCDE"));
+        
+        input->setSelection(1, 4);
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_x, KMOD_CTRL));
+        
+        REQUIRE(input->getText() == "AE");
+        REQUIRE_FALSE(input->hasSelection());
+    }
+
+    SECTION("Cut fires onTextChanged callback") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABCDE"));
+        input->setSelection(1, 4);
+
+        bool callbackFired = false;
+        input->setOnTextChanged([&](TextInput*) { callbackFired = true; });
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_x, KMOD_CTRL));
+        REQUIRE(callbackFired);
+    }
+
+    SECTION("Paste inserts at cursor when no selection") {
+        SDL_SetClipboardText("test");
+        
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("AB"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL));
+        
+        REQUIRE(input->getText() == "AtestB");
+    }
+
+    SECTION("Paste replaces selection") {
+        SDL_SetClipboardText("NEW");
+        
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("Hello"));
+        
+        input->setSelection(1, 4);
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL));
+        
+        REQUIRE(input->getText() == "HNEWo");
+        REQUIRE_FALSE(input->hasSelection());
+    }
+
+    SECTION("Paste fires onTextChanged callback") {
+        SDL_SetClipboardText("X");
+        
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("AB"));
+
+        bool callbackFired = false;
+        input->setOnTextChanged([&](TextInput*) { callbackFired = true; });
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL));
+        REQUIRE(callbackFired);
+    }
+
+    SECTION("Copy with no selection does nothing to text") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("Test"));
+        
+        REQUIRE_FALSE(input->hasSelection());
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_c, KMOD_CTRL));
+        
+        REQUIRE(input->getText() == "Test");
+    }
+
+    SECTION("Cut with no selection does nothing") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("Test"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_x, KMOD_CTRL));
+        
+        REQUIRE(input->getText() == "Test");
+    }
+
+    SECTION("Copy copies selection to clipboard") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("Hello"));
+        input->setSelection(1, 4);
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_c, KMOD_CTRL));
+
+        if (SDL_HasClipboardText()) {
+            char* clipboard = SDL_GetClipboardText();
+            REQUIRE(std::string(clipboard) == "ell");
+            SDL_free(clipboard);
+        }
+    }
+
+    SECTION("Paste with empty clipboard does nothing") {
+        SDL_SetClipboardText("");
+
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("Test"));
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL));
+
+        REQUIRE(input->getText() == "Test");
+    }
+}
+
+TEST_CASE("TextInput - Backspace with Selection", "[text_input]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Backspace removes selection") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABCDE"));
+        
+        input->setSelection(1, 4);
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        
+        REQUIRE(input->getText() == "AE");
+        REQUIRE_FALSE(input->hasSelection());
+    }
+
+    SECTION("Backspace removes selection and fires callback") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABCDE"));
+        input->setSelection(1, 4);
+
+        bool callbackFired = false;
+        input->setOnTextChanged([&](TextInput*) { callbackFired = true; });
+
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        REQUIRE(callbackFired);
+    }
+
+    SECTION("Backspace with full text selection clears all") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABCDE"));
+        
+        input->setSelection(0, 5);
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        
+        REQUIRE(input->getText().empty());
+        REQUIRE_FALSE(input->hasSelection());
+    }
+}
+
+TEST_CASE("TextInput - Shift+Arrow Selection", "[text_input]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Shift+Left creates selection to the left") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABCDE"));
+        
+        REQUIRE(input->getText() == "ABCDE");
+        REQUIRE(input->hasSelection() == false);
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        
+        REQUIRE(input->hasSelection() == true);
+        REQUIRE(input->getSelection() == "E");
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        REQUIRE(input->getSelection() == "DE");
+    }
+
+    SECTION("Shift+Right creates selection to the right") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABC"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        
+        REQUIRE(input->hasSelection() == false);
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT));
+        REQUIRE(input->hasSelection() == true);
+        REQUIRE(input->getSelection() == "A");
+    }
+
+    SECTION("Arrow without Shift clears selection") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABC"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        REQUIRE(input->hasSelection() == true);
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        REQUIRE(input->hasSelection() == false);
+    }
+
+    SECTION("Typing replaces selection created with Shift+Arrow") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABC"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        REQUIRE(input->getSelection() == "BC");
+        
+        manager.processEvent(helper.createTextInputEvent("X"));
+        REQUIRE(input->getText() == "AX");
+        REQUIRE(input->hasSelection() == false);
+    }
+}
+
+TEST_CASE("TextInput - Ctrl+A Select All", "[text_input]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Ctrl+A selects all text") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("Hello World"));
+        
+        REQUIRE(input->hasSelection() == false);
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL));
+        
+        REQUIRE(input->hasSelection() == true);
+        REQUIRE(input->getSelection() == "Hello World");
+    }
+
+    SECTION("Ctrl+A on empty text creates no selection") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL));
+        
+        REQUIRE(input->hasSelection() == false);
+    }
+
+    SECTION("Ctrl+A then Delete clears all text") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("Test"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        
+        REQUIRE(input->getText().empty());
+    }
+}
+
+TEST_CASE("TextInput - Mouse Drag Selection", "[text_input]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Mouse drag creates selection") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        input->setText(std::string("Hello World"));
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 60, 55));
+        REQUIRE(input->hasSelection() == false);
+        
+        input->setSelection(2, 5);
+        REQUIRE(input->hasSelection() == true);
+        REQUIRE(input->getSelection() == "llo");
+    }
+
+    SECTION("Click clears existing selection") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        input->setText(std::string("Hello"));
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        
+        input->setSelection(1, 4);
+        REQUIRE(input->hasSelection() == true);
+        
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        REQUIRE(input->hasSelection() == false);
+    }
+}
+
+TEST_CASE("TextInput - Home/End Keys", "[text_input]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Home moves cursor to start") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABC"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME));
+        
+        manager.processEvent(helper.createTextInputEvent("X"));
+        REQUIRE(input->getText() == "XABC");
+    }
+
+    SECTION("End moves cursor to end") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABC"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_END));
+        
+        manager.processEvent(helper.createTextInputEvent("D"));
+        REQUIRE(input->getText() == "ABCD");
+    }
+
+    SECTION("Shift+Home selects from cursor to start") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABCDE"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_SHIFT));
+        
+        REQUIRE(input->hasSelection());
+        REQUIRE(input->getSelection() == "ABC");
+    }
+
+    SECTION("Shift+End selects from cursor to end") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABCDE"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_SHIFT));
+        
+        REQUIRE(input->hasSelection());
+        REQUIRE(input->getSelection() == "DE");
+    }
+
+    SECTION("Home on empty text does nothing harmful") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME));
+        manager.processEvent(helper.createTextInputEvent("X"));
+        REQUIRE(input->getText() == "X");
+    }
+
+    SECTION("End on empty text does nothing harmful") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_END));
+        manager.processEvent(helper.createTextInputEvent("X"));
+        REQUIRE(input->getText() == "X");
+    }
+
+    SECTION("Home then End moves to end again") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        manager.addElement(std::move(ti));
+
+        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createTextInputEvent("ABC"));
+        
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME));
+        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_END));
+        
+        manager.processEvent(helper.createTextInputEvent("D"));
+        REQUIRE(input->getText() == "ABCD");
+    }
+}
