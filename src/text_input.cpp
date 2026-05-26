@@ -1,4 +1,5 @@
 #include "text_input.hpp"
+#include "SDL_blendmode.h"
 #include "style.hpp"
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
@@ -169,9 +170,10 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
             end_x - start_x,
             line_height
         };
-        
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(renderer, 100, 150, 255, 180);
         SDL_RenderFillRect(renderer, &selection_rect);
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
     }
     
     SDL_RenderSetClipRect(renderer, nullptr);

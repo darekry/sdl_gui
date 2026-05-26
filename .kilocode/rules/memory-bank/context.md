@@ -1,5 +1,29 @@
 # Aktualny stan projektu
 
+## Ostatnie zmiany (2026-05-26)
+
+### Fix overlay rendering issues (COMPLETED ✓)
+
+Naprawiono dwa problemy z nakładkami:
+
+**Problem 1: StringGrid/ListView selection overflow**
+- Zaznaczony element w StringGrid/ListView gdy przewija się poza widoczny obszar, niebieska nakładka zaznaczenia pozostaje widoczna i może przewinąć poza obszar widgetu.
+- **Root cause**: `drawSelection()` był wywoływane PO wyczyszczeniu clip rect (line 706: `SDL_RenderSetClipRect(renderer, nullptr)`).
+- **Fix**: Przeniesiono `drawSelection()` przed clearing clip rect - teraz selection jest clipped do cell area.
+- **File**: `src/string_grid.cpp:705` - `drawSelection()` teraz wewnątrz clipped region.
+
+**Problem 2: TextInput selection overlay not visible**
+- Zaznaczenie tekstu w TextInput nie było widoczne.
+- **Root cause**: GUIManager::render() wywoływało `renderOverlay()` tylko dla elementów gdzie `isOverlay() == true`. TextInput ma `isOverlay() == false`, więc `renderOverlay()` nigdy nie było wywoływane.
+- **Fix**: Dodano renderowanie overlay dla keyboard focus element niezależnie od `isOverlay()`.
+- **File**: `src/gui_manager.cpp:124-127` - nowy blok render overlay dla `m_keyboardFocusElement`.
+
+**Zmienione pliki**:
+- `src/string_grid.cpp` - `drawSelection()` moved inside clipped region
+- `src/gui_manager.cpp` - added renderOverlay for keyboard focus element
+
+**Tests**: All 24 tests passed.
+
 ## Ostatnie zmiany (2026-05-23)
 
 ### Dokumentacja - cleanup i reorganizacja (COMPLETED ✓)

@@ -121,6 +121,11 @@ void GUIManager::render() {
         }
     }
 
+    // Render overlay for keyboard focus element (e.g., TextInput cursor/selection)
+    if (m_keyboardFocusElement && !m_keyboardFocusElement->isMarkedForDeletion()) {
+        m_keyboardFocusElement->renderOverlay(m_renderer);
+    }
+
     if (cursor) {
         cursor->renderOverlay(m_renderer);
     }

@@ -702,6 +702,7 @@ void StringGrid::drawDirect(SDL_Renderer* renderer) {
     
     VisibleRange range = calculateVisibleRange();
     drawCells(renderer, offsetX, offsetY, cellBackgroundColor, textColor, range);
+    drawSelection(renderer, offsetX, offsetY);
     
     SDL_RenderSetClipRect(renderer, nullptr);
     
@@ -713,7 +714,6 @@ void StringGrid::drawDirect(SDL_Renderer* renderer) {
         drawRowHeaders(renderer, offsetX, offsetY, headerBackgroundColor, headerTextColor, gridLineColor);
     }
     
-    drawSelection(renderer, offsetX, offsetY);
     drawGridLines(renderer, offsetX, offsetY, gridLineColor);
 }
 
