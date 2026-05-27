@@ -1,5 +1,44 @@
 # Aktualny stan projektu
 
+## Ostatnie zmiany (2026-05-27)
+
+### WYSIWYG Editor - IMPLEMENTED ✓
+
+Zaimplementowany wizualny edytor layoutów GUI z dwoma oknami:
+
+**Architektura:**
+- WindowManager zarządza dwoma oknami (Editor + Preview)
+- EditorState - centralny stan współdzielony między oknami
+- EditorWindow (400x700): palette, properties panel, elements list
+- PreviewWindow (800x600): canvas z grid, drag handling, selection highlight
+
+**Funkcje:**
+1. Palette: 14 widget types (Button, Label, Checkbox, RadioButton, RadioGroup, Slider, TextInput, TextArea, ComboBox, ListView, Panel, TabControl, Canvas, StringGrid)
+2. Click-to-add: Wybierz widget → kliknij canvas → add at snapped position (20px grid)
+3. Drag-to-move: Kliknij element → select → drag → snap to grid
+4. Properties panel: ID, X, Y, W, H inputs, style state selector
+5. Elements list: Tree structure, Delete, Duplicate, Add as Child buttons
+6. Selection highlight: Blue border na selected element
+7. Save XML/JSON: layout.xml/layout.json z MessageBox confirmation
+8. Load: Wczytanie z layout.xml/layout.json z MessageBox confirmation
+
+**Pliki utworzone:**
+- `src/editor/editor_element.hpp` - EditorElement struct
+- `src/editor/editor_state.hpp/cpp` - Central state management
+- `src/editor/editor_window.hpp/cpp` - Editor window UI
+- `src/editor/preview_window.hpp/cpp` - Preview canvas with drag
+- `src/editor/layout_exporter.hpp/cpp` - XML/JSON export
+- `src/editor/layout_importer.hpp/cpp` - XML/JSON import
+- `examples/example_wysiwyg_editor.cpp` - Integration example
+
+**Build:** 32 examples compiled successfully
+
+**Decyzje implementacyjne:**
+- Draggable elements: YES (drag-to-move z snap)
+- Resize handles: NO (rozmiar przez properties)
+- Full hierarchy: YES (children w Panel)
+- Grid + Snap: YES (20px grid)
+
 ## Ostatnie zmiany (2026-05-26)
 
 ### Fix overlay rendering issues (COMPLETED ✓)
