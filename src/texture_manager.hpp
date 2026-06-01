@@ -7,8 +7,12 @@
 
 import std.compat;
 
+struct StringHash {
+    using is_transparent = void;
+    size_t operator()(std::string_view sv) const noexcept { return std::hash<std::string_view>{}(sv); }
+    size_t operator()(const std::string& s) const noexcept { return std::hash<std::string>{}(s); }
+};
 
-// Typ dla współdzielonego wskaźnika na teksturę
 using SharedTexture = std::shared_ptr<SDL_Texture>;
 
 /**
@@ -70,7 +74,7 @@ public:
 
 private:
     SDL_Renderer* m_renderer;
-    std::map<std::string, SharedTexture, std::less<>> m_textureCache; // Mapa przechowująca załadowane tekstury
+    std::unordered_map<std::string, SharedTexture, StringHash, std::equal_to<>> m_textureCache;
     SharedTexture m_defaultTexture; // Domyślna tekstura
     bool m_initialized = false; // SDL_image initialization status
 };

@@ -4,41 +4,38 @@
 
 import std.compat;
 
-// Klasa Theme przechowuje domyślne style dla wszystkich typów komponentów i stanów.
-// Umożliwia globalną zmianę wyglądu aplikacji runtime.
+struct ThemeTypeCompare {
+    using is_transparent = void;
+    
+    bool operator()(const std::string& lhs, const std::string& rhs) const {
+        return lhs < rhs;
+    }
+    
+    bool operator()(std::string_view lhs, const std::string& rhs) const {
+        return lhs < rhs;
+    }
+    
+    bool operator()(const std::string& lhs, std::string_view rhs) const {
+        return lhs < rhs;
+    }
+};
+
 class Theme {
 public:
-    // === Per-type, per-state styles ===
+    void setStyle(std::string_view type, ElementState state, Style style);
     
-    /** Set style for a specific component type and state */
-    void setStyle(const std::string& type, ElementState state, Style style);
+    Style getStyle(std::string_view type, ElementState state) const;
     
-    /** Get style for a specific component type and state 
-     *  Returns type-specific style merged with default style
-     *  Falls back to Normal state if requested state not defined
-     */
-    Style getStyle(const std::string& type, ElementState state) const;
+    void setStyle(std::string_view type, Style style);
     
-    // === Legacy API (backward compatible) ===
-    
-    /** Set style for Normal state of a component type */
-    void setStyle(const std::string& type, Style style);
-    
-    /** Get style for Normal state of a component type */
-    Style getStyle(const std::string& type) const;
-    
-    // === Default style ===
+    Style getStyle(std::string_view type) const;
     
     void setDefaultStyle(Style style);
     const Style& getDefaultStyle() const;
     
-    // === Factory ===
-    
-    /** Create default theme in Windows 95/98 style */
     static Theme createDefaultTheme();
 
 private:
-    // Mapa: Typ komponentu -> Stan -> Styl
-    std::map<std::string, std::map<ElementState, Style>> m_typeStyles;
+    std::map<std::string, std::map<ElementState, Style>, ThemeTypeCompare> m_typeStyles;
     Style m_defaultStyle;
 };

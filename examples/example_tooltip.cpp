@@ -47,6 +47,9 @@ int main(int, char**) {
                 guiManager.processEvent(e);
             }
 
+            // Aktualizacja timery (wymagane dla tooltipów!)
+            guiManager.update();
+
             // Aktualizacja stanu i bezpieczne usuwanie elementów (ważne dla tooltipów!)
             guiManager.cleanup();
 

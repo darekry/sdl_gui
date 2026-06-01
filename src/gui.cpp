@@ -331,57 +331,71 @@ void GUIElement::setState(ElementState newState) {
     }
 }
 void GUIElement::setStyle(ElementState state, Style style) {
-    m_localStyles[state] = std::move(style);
+    m_localStyles[stateIndex(state)] = std::move(style);
     markDirty();
 }
 Style GUIElement::getComposedStyle(ElementState state) const {
-    // Composition chain: local[state] → theme[type][state] → theme[type][Normal] → theme.default
+    // Start with theme style as base result
+    Style result = m_manager.getTheme().getStyle(getComponentType(), state);
     
-    // 1. Pobierz styl bazowy dla tego typu widgetu i stanu z motywu.
-    //    getStyle(type, state) already handles fallback to Normal and merge with default.
-    Style themeStyle = m_manager.getTheme().getStyle(getComponentType(), state);
-
-    // 2. Znajdź styl lokalny dla konkretnego stanu i połącz go.
-    auto it = m_localStyles.find(state);
-    if (it != m_localStyles.end()) {
-        Style localCopy = it->second;
-        localCopy.mergeWith(themeStyle);
-        return localCopy;
+    size_t idx = stateIndex(state);
+    if (m_localStyles[idx].has_value()) {
+        // Merge local style directly into result (avoid intermediate copy)
+        result.mergeWith(*m_localStyles[idx]);
+        return result;
     }
     
-    // 3. Jeśli nie ma stylu lokalnego dla tego stanu, spróbuj stanu Normal.
-    it = m_localStyles.find(ElementState::Normal);
-    if (it != m_localStyles.end()) {
-        Style localCopy = it->second;
-        localCopy.mergeWith(themeStyle);
-        return localCopy;
+    // Fallback: try Normal state local style
+    size_t normalIdx = stateIndex(ElementState::Normal);
+    if (m_localStyles[normalIdx].has_value()) {
+        result.mergeWith(*m_localStyles[normalIdx]);
+        return result;
     }
-
-    // 4. Jeśli brak jakiegokolwiek stylu lokalnego, zwróć styl z motywu.
-    return themeStyle;
+    
+    return result;
 }
 
 void GUIElement::setBackgroundColor(ElementState state, SDL_Color color) {
-    m_localStyles[state].backgroundColor = color;
+    size_t idx = stateIndex(state);
+    if (!m_localStyles[idx].has_value()) {
+        m_localStyles[idx] = Style();
+    }
+    m_localStyles[idx]->backgroundColor = color;
     markDirty();
 }
 
 void GUIElement::setTextColor(ElementState state, SDL_Color color) {
-    m_localStyles[state].textColor = color;
+    size_t idx = stateIndex(state);
+    if (!m_localStyles[idx].has_value()) {
+        m_localStyles[idx] = Style();
+    }
+    m_localStyles[idx]->textColor = color;
     markDirty();
 }
 
 void GUIElement::setTexture(ElementState state, SharedTexture texture) {
-    m_localStyles[state].texture = std::move(texture);
+    size_t idx = stateIndex(state);
+    if (!m_localStyles[idx].has_value()) {
+        m_localStyles[idx] = Style();
+    }
+    m_localStyles[idx]->texture = std::move(texture);
     markDirty();
 }
 void GUIElement::setBorder(ElementState state, SDL_Color color, int width) {
-    m_localStyles[state].borderColor = color;
-    m_localStyles[state].borderWidth = width;
+    size_t idx = stateIndex(state);
+    if (!m_localStyles[idx].has_value()) {
+        m_localStyles[idx] = Style();
+    }
+    m_localStyles[idx]->borderColor = color;
+    m_localStyles[idx]->borderWidth = width;
     markDirty();
 }
 void GUIElement::setBorderRadius(ElementState state, int radius) {
-    m_localStyles[state].borderRadius = radius;
+    size_t idx = stateIndex(state);
+    if (!m_localStyles[idx].has_value()) {
+        m_localStyles[idx] = Style();
+    }
+    m_localStyles[idx]->borderRadius = radius;
     markDirty();
 }
 

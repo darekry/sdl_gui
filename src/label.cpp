@@ -15,8 +15,8 @@ void Label::recalculateSize() {
     auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
     if (font) {
         int textWidth = 0, textHeight = 0;
-        if (TTF_SizeText(font.get(), m_text.c_str(), &textWidth, &textHeight) != 0) {
-            LOG_DEBUG("Label: TTF_SizeText failed: %s", TTF_GetError());
+        if (TTF_SizeUTF8(font.get(), m_text.c_str(), &textWidth, &textHeight) != 0) {
+            LOG_DEBUG("Label: TTF_SizeUTF8 failed: %s", TTF_GetError());
             textWidth = textHeight = 0;
         }
         setSize(textWidth, textHeight);
@@ -24,7 +24,7 @@ void Label::recalculateSize() {
 }
 
 Label::Label(GUIManager& manager, int x, int y, std::string_view text, int font_size)
-    : GUIElement(manager, x, y, 0, 0), m_text(text), m_font_size(font_size) {
+    : GUIElement(manager, x, y, 0, 0), m_text(text), m_font_size(font_size), m_textTextureDirty(true) {
     recalculateSize();
     markDirty();
 }
@@ -32,6 +32,7 @@ Label::Label(GUIManager& manager, int x, int y, std::string_view text, int font_
 void Label::setText(std::string_view text) {
     if (m_text != text) {
         m_text = text;
+        m_textTextureDirty = true;
         recalculateSize();
         markDirty();
     }
@@ -45,28 +46,47 @@ void Label::draw(SDL_Renderer* renderer) {
     const auto& resolvedStyle = getComposedStyle(m_state);
     if (!resolvedStyle.textColor.has_value()) {
         LOG_DEBUG("no text color");
-
         return;
     }
 
     int font_size = m_font_size > 0 ? m_font_size : (resolvedStyle.fontSize.value_or(m_manager.getTheme().getDefaultStyle().fontSize.value_or(16)));
-    auto& fontManager = m_manager.getFontManager();
-    auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
-    
-    if (!font) {
-        LOG_DEBUG("no font");
-        return;
+    SDL_Color currentColor = resolvedStyle.textColor.value();
+
+    bool needsRecreate = m_textTextureDirty ||
+                         m_cachedTextContent != m_text ||
+                         m_cachedFontSize != font_size ||
+                         (m_cachedTextColor.r != currentColor.r ||
+                          m_cachedTextColor.g != currentColor.g ||
+                          m_cachedTextColor.b != currentColor.b ||
+                          m_cachedTextColor.a != currentColor.a);
+
+    if (needsRecreate) {
+        auto& fontManager = m_manager.getFontManager();
+        auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
+
+        if (!font) {
+            LOG_DEBUG("no font");
+            return;
+        }
+
+        auto& textureManager = m_manager.getTextureManager();
+        m_cachedTextTexture = textureManager.createTextureFromText(m_text, font, currentColor);
+
+        if (!m_cachedTextTexture) {
+            LOG_DEBUG("no shared texture");
+            return;
+        }
+
+        m_cachedTextContent = m_text;
+        m_cachedTextColor = currentColor;
+        m_cachedFontSize = font_size;
+        m_textTextureDirty = false;
     }
 
-    auto& textureManager = m_manager.getTextureManager();
-    SharedTexture textTexture = textureManager.createTextureFromText(m_text, font, resolvedStyle.textColor.value());
-
-    if (!textTexture) {
-        LOG_DEBUG("no shared texture");
-
+    if (!m_cachedTextTexture) {
         return;
     }
 
     SDL_Rect dstRect = {0, 0, m_width, m_height};
-    SDL_RenderCopy(renderer, textTexture.get(), nullptr, &dstRect);
+    SDL_RenderCopy(renderer, m_cachedTextTexture.get(), nullptr, &dstRect);
 }

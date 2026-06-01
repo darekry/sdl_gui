@@ -73,6 +73,9 @@ bool Panel::handleEvent(const SDL_Event& event) {
         }
     }
 
+    // Call parent to handle tooltip timer logic
+    GUIElement::handleEvent(event);
+    
     return false;
 }
 

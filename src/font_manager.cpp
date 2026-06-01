@@ -54,7 +54,8 @@ SharedFont FontManager::loadFont(std::string_view path, int size) {
 void FontManager::loadDefaultFont(std::string_view path, int size) {
     m_defaultFont = loadFont(path, size);
     if (!m_defaultFont) {
-        LOG_DEBUG("FontManager ERROR: Failed to load default font from %s", std::string(path).c_str());
+        std::string pathStr(path);  // Create once for logging
+        LOG_DEBUG("FontManager ERROR: Failed to load default font from %s", pathStr.c_str());
     }
 }
 
@@ -79,10 +80,39 @@ void FontManager::getTextSize(std::string_view text, std::string_view fontPath, 
 
     auto font = loadFont(fontPath, fontSize);
     if (font) {
-        if (TTF_SizeUTF8(font.get(), text.data(), width, height) != 0) {
+        *width = getTextWidth(font.get(), text);
+        int h = 0;
+        if (TTF_SizeUTF8(font.get(), text.data(), nullptr, &h) != 0) {
             LOG_DEBUG("TTF_SizeUTF8 failed: %s", TTF_GetError());
-            *width = 0;
             *height = 0;
+        } else {
+            *height = h;
         }
     }
+}
+
+int FontManager::getTextWidth(TTF_Font* font, std::string_view text) {
+    if (!font || text.empty()) return 0;
+
+    uintptr_t fontPtr = reinterpret_cast<uintptr_t>(font);
+    auto key = std::make_pair(fontPtr, std::string(text));
+
+    auto it = m_textWidthCache.find(key);
+    if (it != m_textWidthCache.end()) {
+        return it->second;
+    }
+
+    int width = 0;
+    TTF_SizeUTF8(font, text.data(), &width, nullptr);
+
+    if (m_textWidthCache.size() >= MAX_TEXT_CACHE_SIZE) {
+        m_textWidthCache.clear();
+    }
+
+    m_textWidthCache.emplace(std::move(key), width);
+    return width;
+}
+
+void FontManager::clearTextWidthCache() {
+    m_textWidthCache.clear();
 }

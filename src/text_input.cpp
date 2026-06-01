@@ -4,6 +4,7 @@
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
 #include "theme.hpp"
+#include "utf8_utils.hpp"
 
 
 TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
@@ -46,8 +47,9 @@ void TextInput::updateTextOffset() {
     if (!font) return;
 
     int text_width = 0;
-    if (TTF_SizeText(font.get(), m_text.substr(0, m_cursorPos).c_str(), &text_width, nullptr) != 0) {
-        LOG_DEBUG("TextInput: TTF_SizeText failed: %s", TTF_GetError());
+    std::string textBeforeCursor = utf8::substrChars(m_text, 0, m_cursorPos);
+    if (TTF_SizeUTF8(font.get(), textBeforeCursor.c_str(), &text_width, nullptr) != 0) {
+        LOG_DEBUG("TextInput: TTF_SizeUTF8 failed: %s", TTF_GetError());
         text_width = 0;
     }
 
@@ -63,8 +65,8 @@ void TextInput::updateTextOffset() {
     }
 
     int total_text_width = 0;
-    if (TTF_SizeText(font.get(), m_text.c_str(), &total_text_width, nullptr) != 0) {
-        LOG_DEBUG("TextInput: TTF_SizeText failed: %s", TTF_GetError());
+    if (TTF_SizeUTF8(font.get(), m_text.c_str(), &total_text_width, nullptr) != 0) {
+        LOG_DEBUG("TextInput: TTF_SizeUTF8 failed: %s", TTF_GetError());
         total_text_width = 0;
     }
 
@@ -158,10 +160,12 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
         int end_x = 0;
         
         if (sel_start > 0) {
-            TTF_SizeText(font.get(), m_text.substr(0, sel_start).c_str(), &start_x, nullptr);
+            std::string textBeforeSel = utf8::substrChars(m_text, 0, sel_start);
+            TTF_SizeUTF8(font.get(), textBeforeSel.c_str(), &start_x, nullptr);
         }
         if (sel_end > 0) {
-            TTF_SizeText(font.get(), m_text.substr(0, sel_end).c_str(), &end_x, nullptr);
+            std::string textBeforeEnd = utf8::substrChars(m_text, 0, sel_end);
+            TTF_SizeUTF8(font.get(), textBeforeEnd.c_str(), &end_x, nullptr);
         }
         
         SDL_Rect selection_rect = {
@@ -184,8 +188,9 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
     
     int cursor_x_pos = 0;
     if (m_cursorPos > 0) {
-        if (TTF_SizeText(font.get(), m_text.substr(0, m_cursorPos).c_str(), &cursor_x_pos, nullptr) != 0) {
-            LOG_DEBUG("TextInput: TTF_SizeText failed for cursor: %s", TTF_GetError());
+        std::string textBeforeCursor = utf8::substrChars(m_text, 0, m_cursorPos);
+        if (TTF_SizeUTF8(font.get(), textBeforeCursor.c_str(), &cursor_x_pos, nullptr) != 0) {
+            LOG_DEBUG("TextInput: TTF_SizeUTF8 failed for cursor: %s", TTF_GetError());
             cursor_x_pos = 0;
         }
     }
@@ -220,17 +225,22 @@ bool TextInput::handleEvent(const SDL_Event& e) {
             auto abs_pos = getAbsolutePosition();
             int click_x = e.button.x - abs_pos.x - 5;
             
-            size_t click_pos = 0;
+size_t click_pos = 0;
             if (click_x <= 0 || m_text.empty()) {
                 click_pos = 0;
             } else {
-                // Binary search for click position
+                // Reusable buffer to avoid allocations in binary search
+                std::string workingBuffer;
+                workingBuffer.reserve(m_text.size());
+                
+                size_t totalChars = utf8::charCount(m_text);
                 size_t left = 0;
-                size_t right = m_text.length();
+                size_t right = totalChars;
                 while (left < right) {
                     size_t mid = left + (right - left) / 2;
+                    workingBuffer = utf8::substrChars(m_text, 0, mid);
                     int text_width = 0;
-                    TTF_SizeText(font.get(), m_text.substr(0, mid).c_str(), &text_width, nullptr);
+                    TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &text_width, nullptr);
                     if (text_width < click_x) {
                         left = mid + 1;
                     } else {
@@ -240,9 +250,11 @@ bool TextInput::handleEvent(const SDL_Event& e) {
                 
                 int width_at_left = 0;
                 int width_at_right = 0;
-                TTF_SizeText(font.get(), m_text.substr(0, left).c_str(), &width_at_left, nullptr);
+                workingBuffer = utf8::substrChars(m_text, 0, left);
+                TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &width_at_left, nullptr);
                 if (left > 0) {
-                    TTF_SizeText(font.get(), m_text.substr(0, left - 1).c_str(), &width_at_right, nullptr);
+                    workingBuffer = utf8::substrChars(m_text, 0, left - 1);
+                    TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &width_at_right, nullptr);
                 }
                 
                 if (left > 0 && abs(click_x - width_at_right) < abs(click_x - width_at_left)) {
@@ -271,16 +283,22 @@ bool TextInput::handleEvent(const SDL_Event& e) {
             auto abs_pos = getAbsolutePosition();
             int mouse_x = e.motion.x - abs_pos.x - 5;
             
-            size_t mouse_pos = 0;
+size_t mouse_pos = 0;
             if (mouse_x <= 0 || m_text.empty()) {
                 mouse_pos = 0;
             } else {
+                // Reusable buffer to avoid allocations in binary search
+                std::string workingBuffer;
+                workingBuffer.reserve(m_text.size());
+                
+                size_t totalChars = utf8::charCount(m_text);
                 size_t left = 0;
-                size_t right = m_text.length();
+                size_t right = totalChars;
                 while (left < right) {
                     size_t mid = left + (right - left) / 2;
+                    workingBuffer = utf8::substrChars(m_text, 0, mid);
                     int text_width = 0;
-                    TTF_SizeText(font.get(), m_text.substr(0, mid).c_str(), &text_width, nullptr);
+                    TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &text_width, nullptr);
                     if (text_width < mouse_x) {
                         left = mid + 1;
                     } else {
@@ -290,9 +308,11 @@ bool TextInput::handleEvent(const SDL_Event& e) {
                 
                 int width_at_left = 0;
                 int width_at_right = 0;
-                TTF_SizeText(font.get(), m_text.substr(0, left).c_str(), &width_at_left, nullptr);
+                workingBuffer = utf8::substrChars(m_text, 0, left);
+                TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &width_at_left, nullptr);
                 if (left > 0) {
-                    TTF_SizeText(font.get(), m_text.substr(0, left - 1).c_str(), &width_at_right, nullptr);
+                    workingBuffer = utf8::substrChars(m_text, 0, left - 1);
+                    TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &width_at_right, nullptr);
                 }
                 
                 if (left > 0 && abs(mouse_x - width_at_right) < abs(mouse_x - width_at_left)) {
@@ -339,8 +359,8 @@ bool TextInput::handleEvent(const SDL_Event& e) {
                     eventHandled = handleClipboardCut();
                     break;
                 case SDLK_a:
-                    setSelection(0, m_text.length());
-                    m_cursorPos = m_text.length();
+                    setSelection(0, utf8::charCount(m_text));
+                    m_cursorPos = utf8::charCount(m_text);
                     updateTextOffset();
                     markDirty();
                     eventHandled = true;
@@ -374,7 +394,7 @@ bool TextInput::handleEvent(const SDL_Event& e) {
                 m_cursorPos = new_pos;
                 updateTextOffset();
                 eventHandled = true;
-            } else if (e.key.keysym.sym == SDLK_RIGHT && m_cursorPos < m_text.length()) {
+            } else if (e.key.keysym.sym == SDLK_RIGHT && m_cursorPos < utf8::charCount(m_text)) {
                 size_t new_pos = m_cursorPos + 1;
                 if (shiftPressed) {
                     if (!m_hasSelection) {
@@ -407,11 +427,11 @@ bool TextInput::handleEvent(const SDL_Event& e) {
                         m_selectionStart = m_cursorPos;
                         m_hasSelection = true;
                     }
-                    m_selectionEnd = m_text.length();
+                    m_selectionEnd = utf8::charCount(m_text);
                 } else {
                     clearSelection();
                 }
-                m_cursorPos = m_text.length();
+                m_cursorPos = utf8::charCount(m_text);
                 updateTextOffset();
                 eventHandled = true;
             }
@@ -422,5 +442,8 @@ bool TextInput::handleEvent(const SDL_Event& e) {
         resetCursorBlink();
     }
 
+    // Call parent to handle tooltip timer logic
+    GUIElement::handleEvent(e);
+    
     return eventHandled;
 }

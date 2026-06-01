@@ -55,6 +55,9 @@ bool Checkbox::handleEvent(const SDL_Event& e) {
         }
     }
 
+    // Call parent to handle tooltip timer logic
+    GUIElement::handleEvent(e);
+    
     return false;
 }
 

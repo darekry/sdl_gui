@@ -60,7 +60,10 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
         return nullptr;
     }
 
-    std::string cacheKey = std::string(text) + "|" + std::to_string(reinterpret_cast<uintptr_t>(font.get())) 
+    // Create text string ONCE - needed for both cache key and SDL call
+    std::string textStr(text);
+    
+    std::string cacheKey = textStr + "|" + std::to_string(reinterpret_cast<uintptr_t>(font.get())) 
                           + "|" + std::to_string(color.r) + "," + std::to_string(color.g) 
                           + "," + std::to_string(color.b) + "," + std::to_string(color.a);
     
@@ -69,7 +72,7 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
         return it->second;
     }
 
-    auto* textSurface = TTF_RenderUTF8_Blended(font.get(), std::string(text).c_str(), color);
+    auto* textSurface = TTF_RenderUTF8_Blended(font.get(), textStr.c_str(), color);
     if (!textSurface) {
         LOG_DEBUG("TextureManager ERROR: Unable to render text surface! SDL_ttf Error: %s", TTF_GetError());
         return nullptr;
@@ -91,7 +94,11 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
 }
 
 SharedTexture TextureManager::createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color) {
-    std::string cacheKey = std::string(text) + "|" + std::string(fontPath) + "|" + std::to_string(fontSize)
+    // Create strings ONCE - needed for both cache key and SDL calls
+    std::string textStr(text);
+    std::string fontPathStr(fontPath);
+    
+    std::string cacheKey = textStr + "|" + fontPathStr + "|" + std::to_string(fontSize)
                           + "|" + std::to_string(color.r) + "," + std::to_string(color.g) 
                           + "," + std::to_string(color.b) + "," + std::to_string(color.a);
     
@@ -100,13 +107,13 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, std::
         return it->second;
     }
 
-    auto* font = TTF_OpenFont(std::string(fontPath).c_str(), fontSize);
+    auto* font = TTF_OpenFont(fontPathStr.c_str(), fontSize);
     if (!font) {
-        LOG_DEBUG("TextureManager ERROR: Unable to load font %s! SDL_ttf Error: %s", std::string(fontPath).c_str(), TTF_GetError());
+        LOG_DEBUG("TextureManager ERROR: Unable to load font %s! SDL_ttf Error: %s", fontPathStr.c_str(), TTF_GetError());
         return nullptr;
     }
 
-    auto* textSurface = TTF_RenderUTF8_Blended(font, std::string(text).c_str(), color);
+    auto* textSurface = TTF_RenderUTF8_Blended(font, textStr.c_str(), color);
     TTF_CloseFont(font);
     
     if (!textSurface) {
@@ -187,9 +194,12 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
     }
     SDL_FillRect(bgSurface, NULL, SDL_MapRGB(bgSurface->format, 200, 200, 200)); // Szare tło
 
+    // Create text string ONCE for SDL call
+    std::string textStr(text);
+    
     // Utwórz teksturę z tekstem
     auto textColor = SDL_Color{ 0, 0, 0, 255 }; // Czarny
-    auto* textSurface = TTF_RenderUTF8_Blended(defaultFont.get(), std::string(text).c_str(), textColor);
+    auto* textSurface = TTF_RenderUTF8_Blended(defaultFont.get(), textStr.c_str(), textColor);
     if (!textSurface) {
         LOG_DEBUG("TextureManager ERROR: Unable to render text for default texture. SDL_ttf Error: %s", TTF_GetError());
         SDL_FreeSurface(bgSurface);

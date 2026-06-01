@@ -645,6 +645,7 @@ static bool build_combined_header(void) {
 
 // Release: kompiluj tylko .pic.o (używane dla .a i .so)
 static bool build_release(void) {
+    nob_mkdir_if_not_exists(OUTPUT_DIR);
     nob_mkdir_if_not_exists(OUTPUT_DIR "/release");
     nob_mkdir_if_not_exists(OUTPUT_DIR "/release/composite");
     nob_mkdir_if_not_exists(DIST_DIR);

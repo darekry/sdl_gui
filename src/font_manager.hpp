@@ -10,6 +10,15 @@ using SharedFont = std::shared_ptr<TTF_Font>;
 // Klucz dla mapy cache'u czcionek (ścieżka + rozmiar)
 using FontKey = std::pair<std::string, int>;
 
+// Hash function for text width cache key (font_ptr, text)
+struct TextWidthKeyHash {
+    size_t operator()(const std::pair<uintptr_t, std::string>& key) const noexcept {
+        size_t h1 = std::hash<uintptr_t>{}(key.first);
+        size_t h2 = std::hash<std::string>{}(key.second);
+        return h1 ^ (h2 << 1);
+    }
+};
+
 // Komparator dla klucza cache'u czcionek, umożliwiający transparentne wyszukiwanie
 struct FontCacheKeyCompare {
     using is_transparent = void;
@@ -72,8 +81,16 @@ public:
     // Metoda do obliczania rozmiaru tekstu
     void getTextSize(std::string_view text, std::string_view fontPath, int fontSize, int* width, int* height);
 
+    // Get cached text width, or compute and cache it
+    int getTextWidth(TTF_Font* font, std::string_view text);
+    void clearTextWidthCache();
+
 private:
     std::map<FontKey, SharedFont, FontCacheKeyCompare> m_fontCache; // Mapa przechowująca załadowane czcionki
     SharedFont m_defaultFont; // Domyślna czcionka
     bool m_initialized = false; // SDL_ttf initialization status
+
+    // Cache for text widths: (font_ptr, text) -> width
+    std::unordered_map<std::pair<uintptr_t, std::string>, int, TextWidthKeyHash> m_textWidthCache;
+    static constexpr size_t MAX_TEXT_CACHE_SIZE = 1000;
 };

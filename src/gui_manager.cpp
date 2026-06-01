@@ -210,7 +210,6 @@ void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
     const int fontSize = TOOLTIP_FONT_SIZE;
     const int padding = TOOLTIP_PADDING;
 
-    // Precyzyjne obliczanie rozmiaru tekstu
     int textWidth = 0;
     int textHeight = 0;
     m_fontManager.getTextSize(text, "assets/fonts/font.ttf", fontSize, &textWidth, &textHeight);
@@ -218,21 +217,36 @@ void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
     auto targetPos = target->getAbsolutePosition();
     int posX = targetPos.x;
     int posY = targetPos.y + target->getHeight();
+    int panelWidth = textWidth + (2 * padding);
+    int panelHeight = textHeight + (2 * padding);
 
-    // Utwórz panel
-    auto panel = std::make_unique<Panel>(*this, posX, posY, (textWidth + (2 * padding)), (textHeight + (2 * padding)));
-    panel->setBackgroundColor(ElementState::Normal, TOOLTIP_BG_COLOR);
-    panel->setBorder(ElementState::Normal, {0, 0, 0, 255}, 1);
-
-    // Utwórz etykietę i dodaj ją do panelu
-    auto label = std::make_unique<Label>(*this, padding, padding, text, fontSize);
-    panel->addChild(std::move(label));
-
-    tooltipElement = std::move(panel);
+    if (!m_tooltipPanel) {
+        m_tooltipPanel = std::make_unique<Panel>(*this, posX, posY, panelWidth, panelHeight);
+        m_tooltipPanel->setBackgroundColor(ElementState::Normal, TOOLTIP_BG_COLOR);
+        m_tooltipPanel->setBorder(ElementState::Normal, {0, 0, 0, 255}, 1);
+        
+        auto label = std::make_unique<Label>(*this, padding, padding, "", fontSize);
+        m_tooltipLabel = label.get();
+        m_tooltipPanel->addChild(std::move(label));
+    }
+    
+    m_tooltipPanel->setPosition(posX, posY);
+    m_tooltipPanel->setSize(panelWidth, panelHeight);
+    
+    if (m_tooltipLabel) {
+        m_tooltipLabel->setText(text);
+    }
+    
+    m_tooltipPanel->setVisible(true);
+    tooltipElement = std::move(m_tooltipPanel);
 }
 
 void GUIManager::hideTooltip() {
-    tooltipElement.reset();
+    if (tooltipElement) {
+        GUIElement* raw = tooltipElement.release();
+        m_tooltipPanel.reset(static_cast<Panel*>(raw));
+        m_tooltipPanel->setVisible(false);
+    }
 }
 
 

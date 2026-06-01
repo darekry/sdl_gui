@@ -159,10 +159,13 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             } else {
                 size_t left = 0;
                 size_t right = line.length();
+                std::string workingBuffer;
+                workingBuffer.reserve(line.size());
                 while (left < right) {
                     size_t mid = left + (right - left) / 2;
+                    workingBuffer.assign(line.data(), mid);
                     int text_width = 0;
-                    TTF_SizeText(font.get(), line.substr(0, mid).c_str(), &text_width, nullptr);
+                    TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &text_width, nullptr);
                     if (text_width < click_x) {
                         left = mid + 1;
                     } else {
@@ -172,9 +175,11 @@ bool TextArea::handleEvent(const SDL_Event& e) {
                 
                 int width_at_left = 0;
                 int width_at_prev = 0;
-                TTF_SizeText(font.get(), line.substr(0, left).c_str(), &width_at_left, nullptr);
+                workingBuffer.assign(line.data(), left);
+                TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &width_at_left, nullptr);
                 if (left > 0) {
-                    TTF_SizeText(font.get(), line.substr(0, left - 1).c_str(), &width_at_prev, nullptr);
+                    workingBuffer.assign(line.data(), left - 1);
+                    TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &width_at_prev, nullptr);
                 }
                 
                 if (left > 0 && abs(click_x - width_at_prev) < abs(click_x - width_at_left)) {
@@ -233,10 +238,13 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             } else {
                 size_t left = 0;
                 size_t right = line.length();
+                std::string workingBuffer;
+                workingBuffer.reserve(line.size());
                 while (left < right) {
                     size_t mid = left + (right - left) / 2;
+                    workingBuffer.assign(line.data(), mid);
                     int text_width = 0;
-                    TTF_SizeText(font.get(), line.substr(0, mid).c_str(), &text_width, nullptr);
+                    TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &text_width, nullptr);
                     if (text_width < mouse_x) {
                         left = mid + 1;
                     } else {
@@ -246,9 +254,11 @@ bool TextArea::handleEvent(const SDL_Event& e) {
                 
                 int width_at_left = 0;
                 int width_at_prev = 0;
-                TTF_SizeText(font.get(), line.substr(0, left).c_str(), &width_at_left, nullptr);
+                workingBuffer.assign(line.data(), left);
+                TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &width_at_left, nullptr);
                 if (left > 0) {
-                    TTF_SizeText(font.get(), line.substr(0, left - 1).c_str(), &width_at_prev, nullptr);
+                    workingBuffer.assign(line.data(), left - 1);
+                    TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &width_at_prev, nullptr);
                 }
                 
                 if (left > 0 && abs(mouse_x - width_at_prev) < abs(mouse_x - width_at_left)) {
@@ -637,6 +647,9 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         }
     }
 
+    // Call parent to handle tooltip timer logic
+    GUIElement::handleEvent(e);
+    
     return eventHandled;
 }
 
@@ -685,11 +698,17 @@ void TextArea::renderOverlay(SDL_Renderer* renderer) {
             int start_x = 0;
             int end_x = 0;
             
+            // Use reusable buffer to avoid allocations
+            std::string workingBuffer;
+            workingBuffer.reserve(line.size());
+            
             if (line_sel_start > 0 && line_sel_start <= line.length()) {
-                TTF_SizeText(font.get(), line.substr(0, line_sel_start).c_str(), &start_x, nullptr);
+                workingBuffer.assign(line.data(), line_sel_start);
+                TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &start_x, nullptr);
             }
             if (line_sel_end > 0 && line_sel_end <= line.length()) {
-                TTF_SizeText(font.get(), line.substr(0, line_sel_end).c_str(), &end_x, nullptr);
+                workingBuffer.assign(line.data(), line_sel_end);
+                TTF_SizeUTF8(font.get(), workingBuffer.c_str(), &end_x, nullptr);
             }
             
             int y_offset = static_cast<int>(line_idx) * line_height + m_scroll_offset_y;
@@ -727,7 +746,7 @@ void TextArea::renderOverlay(SDL_Renderer* renderer) {
     posInLines = std::min(posInLines, lineContent.length());
 
     auto textBeforeCursor = lineContent.substr(0, posInLines);
-    TTF_SizeText(font.get(), textBeforeCursor.c_str(), &x, nullptr);
+    TTF_SizeUTF8(font.get(), textBeforeCursor.c_str(), &x, nullptr);
 
     y = static_cast<int>(currentLineIndex) * line_height + m_scroll_offset_y;
 
@@ -774,7 +793,7 @@ void TextArea::recalculateLines() {
     while (stream >> word) {
         auto testLine = currentLine.empty() ? word : (currentLine + " " + word);
         auto width = 0;
-        TTF_SizeText(font.get(), testLine.c_str(), &width, nullptr);
+        TTF_SizeUTF8(font.get(), testLine.c_str(), &width, nullptr);
     
         if (width > m_width - 4) { // 4px padding
             m_lines.push_back(currentLine);
@@ -844,7 +863,7 @@ void TextArea::update_text_offset() {
     
     auto text_before_cursor = m_lines[current_line_idx].substr(0, pos_in_lines);
     auto cursor_pos_x=0;
-    TTF_SizeText(font.get(), text_before_cursor.c_str(), &cursor_pos_x, nullptr);
+    TTF_SizeUTF8(font.get(), text_before_cursor.c_str(), &cursor_pos_x, nullptr);
 
 
     auto padding = 2;
@@ -858,7 +877,7 @@ void TextArea::update_text_offset() {
     }
     
     auto total_text_width=0;
-    TTF_SizeText(font.get(), m_lines[current_line_idx].c_str(), &total_text_width, nullptr);
+    TTF_SizeUTF8(font.get(), m_lines[current_line_idx].c_str(), &total_text_width, nullptr);
 
     if (total_text_width <= visible_width) {
         m_text_offset_x = 0;

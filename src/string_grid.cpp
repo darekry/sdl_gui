@@ -1241,14 +1241,16 @@ void StringGrid::ensureCellVisible(size_t row, size_t col) {
 }
 
 SharedTexture StringGrid::createLocalTextTexture(std::string_view text, TTF_Font* font, SDL_Color color) {
-    std::string key = std::string(text) + "|" + std::to_string(color.r) + "," + std::to_string(color.g) + "," + std::to_string(color.b) + "," + std::to_string(color.a);
+    // Create text string ONCE for both cache key and SDL call
+    std::string textStr(text);
+    std::string key = textStr + "|" + std::to_string(color.r) + "," + std::to_string(color.g) + "," + std::to_string(color.b) + "," + std::to_string(color.a);
     
     auto it = m_localTextureCache.find(key);
     if (it != m_localTextureCache.end()) {
         return it->second;
     }
     
-    SDL_Surface* surface = TTF_RenderUTF8_Blended(font, std::string(text).c_str(), color);
+    SDL_Surface* surface = TTF_RenderUTF8_Blended(font, textStr.c_str(), color);
     if (!surface) {
         LOG_DEBUG("StringGrid: TTF_RenderUTF8_Blended failed: %s", TTF_GetError());
         return nullptr;

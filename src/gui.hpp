@@ -146,7 +146,10 @@ protected:
     GUIElement* m_parent;
     bool m_isDirty = true;
         std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_cachedTexture{nullptr, SDL_DestroyTexture};
-        std::map<ElementState, Style> m_localStyles;
+        std::array<std::optional<Style>, 4> m_localStyles;
+        static constexpr size_t stateIndex(ElementState state) {
+            return static_cast<size_t>(state);
+        }
         ElementState m_state = ElementState::Normal;
     bool m_style_dirty = true;
     std::vector<std::unique_ptr<GUIElement>> m_children;

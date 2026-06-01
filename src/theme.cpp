@@ -1,13 +1,10 @@
 #include "theme.hpp"
 
-// === Per-type, per-state API ===
-
-void Theme::setStyle(const std::string& type, ElementState state, Style style) {
-    m_typeStyles[type][state] = std::move(style);
+void Theme::setStyle(std::string_view type, ElementState state, Style style) {
+    m_typeStyles[std::string(type)][state] = std::move(style);
 }
 
-Style Theme::getStyle(const std::string& type, ElementState state) const {
-    // 1. Spróbuj znaleźć styl dla konkretnego typu i stanu
+Style Theme::getStyle(std::string_view type, ElementState state) const {
     auto typeIt = m_typeStyles.find(type);
     if (typeIt != m_typeStyles.end()) {
         auto stateIt = typeIt->second.find(state);
@@ -17,7 +14,6 @@ Style Theme::getStyle(const std::string& type, ElementState state) const {
             return result;
         }
         
-        // Fallback: jeśli nie ma stylu dla tego stanu, spróbuj Normal
         auto normalIt = typeIt->second.find(ElementState::Normal);
         if (normalIt != typeIt->second.end()) {
             Style result = normalIt->second;
@@ -26,17 +22,14 @@ Style Theme::getStyle(const std::string& type, ElementState state) const {
         }
     }
     
-    // 2. Jeśli brak stylu dla typu, zwróć default style
     return m_defaultStyle;
 }
 
-// === Legacy API (backward compatible) ===
-
-void Theme::setStyle(const std::string& type, Style style) {
+void Theme::setStyle(std::string_view type, Style style) {
     setStyle(type, ElementState::Normal, std::move(style));
 }
 
-Style Theme::getStyle(const std::string& type) const {
+Style Theme::getStyle(std::string_view type) const {
     return getStyle(type, ElementState::Normal);
 }
 

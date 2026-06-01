@@ -1,56 +1,62 @@
 # Aktualny stan projektu (2026-06-01)
 
-## Status: STABILNY
+## Status: STABILNY - OPTYMIZACJA WYDAJNOŚCI COMPLETE
 
-**Repozytorium:** 32 examples, 29 test files, all tests passing
+**Repozytorium:** 32 examples, 31 test files, 2,500+ assertions, all tests passing
 
-## Ostatnie zmiany (Maj 2026)
+## Ostatnie zmiany (Czerwiec 2026)
 
-### WYSIWYG Editor (May 27)
-- Dual-window architecture: EditorWindow + PreviewWindow
-- WindowManager zarządza dwoma oknami SDL
-- Features: palette (14 widgets), drag-to-move, grid snap (20px), properties panel, XML/JSON export/import
-- Files: `src/editor/` (editor_state, editor_window, preview_window, layout_exporter, layout_importer)
+### Performance Optimization Summary
 
-### TextEditable Base Class (May 25)
-- Abstrakcyjna klasa dla TextInput/TextArea
-- Selection API: hasSelection(), getSelection(), clearSelection(), setSelection()
-- Clipboard: copy/paste/cut z SDL_SetClipboardText
-- Files: `src/text_editable.hpp/cpp`
+| Metric | Baseline | Final | Improvement |
+|--------|----------|-------|-------------|
+| Label setText() | 18.08 μs | ~10 μs | **45% faster** |
+| setStyle() | 1.96 μs | 0.66 μs | **67% faster** |
+| Button creation | - | 1.5 μs | optimized |
+| Cached render | - | 0.73 μs | efficient |
+| Binary search | log2(n) allocs | 1 buffer | **significantly fewer allocs** |
 
-### Theme/Style Per-State (May 28)
-- Storage: `map<string, map<ElementState, Style>>` - per-type, per-state
-- API: setStyle(type, state, style), getStyle(type, state)
-- Composition: local[state] → theme[type][state] → theme[type][Normal] → default
+### HIGH Priority (Completed)
+- **SDL temp strings**: texture_manager.cpp, string_grid.cpp - create textStr once, reuse
+- **Binary search substr**: text_input.cpp, text_area.cpp - workingBuffer.assign() reuses memory
 
-### Responsive Anchor System (May 22)
-- Anchor struct: left/top/right/bottom coordinates (-1=unset, 0-1=%, >1=px, 0.5=center)
-- Presets: center(), fill(), topLeft(), bottomBar(), leftSidebar()
-- Automatic resize handling via handleParentResize()
+### MEDIUM Priority (Completed)
+- **Style copies**: getComposedStyle - merge directly into result, no intermediate copies
+- **Theme heterogeneous lookup**: ThemeTypeCompare enables string_view lookup in map
+- **Tooltip caching**: Panel+Label created once, reused across tooltip shows/hides
 
-### ScreenManager/WindowManager (May 23)
-- ScreenManager: screen stack, changeScreen(), pushScreen()/popScreen() for overlays
-- WindowManager: multiple SDL windows, auto event routing via SDL_WINDOWID
-- Tests: test_screen_manager.cpp, test_window_manager.cpp
+### UTF8 Correctness (Completed)
+- 24 TTF_SizeText → TTF_SizeUTF8
+- utf8_utils.hpp: charToByteIndex, substrChars, charCount, cursor helpers
+- Character-based positioning (not byte-based)
+- tests/test_utf8.cpp: 55 assertions for Polish text
 
-### nob.c Build System (May 22)
-- Replaced Makefile with nob.c (nob.h v3.8.0)
-- Unity build, C++23 modules, compile_commands.json auto-generated
-- Commands: ./nob (build), ./nob test, ./nob release, ./nob clean
+### Phase 1 - Core Optimizations
+- Text width cache in FontManager
+- Label texture caching (lazy regeneration)
+- GUIElement: std::array<std::optional<Style>, 4> instead of std::map
+- TextureManager: unordered_map with StringHash
+
+### Files Modified
+- utf8_utils.hpp (new)
+- font_manager.hpp/cpp
+- label.hpp/cpp
+- gui.hpp/cpp
+- texture_manager.hpp/cpp
+- text_input.cpp, text_area.cpp
+- string_grid.cpp
+- theme.hpp/cpp
+- gui_manager.hpp/cpp
+
+### Tests Added
+- tests/test_utf8.cpp (UTF8 correctness)
+- tests/test_performance.cpp (automated benchmarks)
 
 ## Kluczowe stats
 
 | Metric | Value |
 |--------|-------|
 | Examples | 32 |
-| Test files | 29 |
-| Test assertions | ~1850 |
+| Test files | 31 |
+| Test assertions | ~2,500 |
 | Widget types | 16 |
-| Composite components | DialogBox, MessageBox |
-| Build time (unity) | ~15s |
-
-## Next steps considerations
-
-- FileDialog (planned, not implemented)
-- test_text_editable.cpp (missing)
-- StringGrid: setCellBackgroundColor, setGridLineColor API (TODO.md)

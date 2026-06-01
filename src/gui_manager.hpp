@@ -16,6 +16,8 @@ class TimerManager;
 class AnimationManager;
 class GUIElement;
 class Theme;
+class Panel;
+class Label;
 
 /**
  * @brief Callback type for window resize events
@@ -91,6 +93,10 @@ private:
     std::vector<std::unique_ptr<GUIElement>> m_elements;
     std::unique_ptr<GUIElement> tooltipElement;
     std::unique_ptr<Cursor> cursor;
+    
+    // Cached tooltip components (reuse to avoid allocations)
+    std::unique_ptr<Panel> m_tooltipPanel;
+    Label* m_tooltipLabel = nullptr;
 
     GUIElement* m_mouseCaptureElement = nullptr;
     GUIElement* m_keyboardFocusElement = nullptr;
