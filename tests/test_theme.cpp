@@ -89,4 +89,94 @@ TEST_CASE("Theme functionality", "[theme]") {
         REQUIRE(theme.getStyle("Checkbox").backgroundColor.has_value());
         REQUIRE(theme.getStyle("Checkbox").backgroundColor->r == 150);
     }
+
+    // === New per-state API tests ===
+
+    SECTION("Per-state styles can be set and retrieved") {
+        Theme theme;
+        
+        Style normalStyle;
+        normalStyle.backgroundColor = SDL_Color{200, 200, 200, 255};
+        theme.setStyle("Button", ElementState::Normal, normalStyle);
+        
+        Style hoverStyle;
+        hoverStyle.backgroundColor = SDL_Color{220, 220, 220, 255};
+        theme.setStyle("Button", ElementState::Hover, hoverStyle);
+        
+        Style pressedStyle;
+        pressedStyle.backgroundColor = SDL_Color{150, 150, 150, 255};
+        theme.setStyle("Button", ElementState::Pressed, pressedStyle);
+
+        Style normalRetrieved = theme.getStyle("Button", ElementState::Normal);
+        REQUIRE(normalRetrieved.backgroundColor.has_value());
+        REQUIRE(normalRetrieved.backgroundColor->r == 200);
+
+        Style hoverRetrieved = theme.getStyle("Button", ElementState::Hover);
+        REQUIRE(hoverRetrieved.backgroundColor.has_value());
+        REQUIRE(hoverRetrieved.backgroundColor->r == 220);
+
+        Style pressedRetrieved = theme.getStyle("Button", ElementState::Pressed);
+        REQUIRE(pressedRetrieved.backgroundColor.has_value());
+        REQUIRE(pressedRetrieved.backgroundColor->r == 150);
+    }
+
+    SECTION("getStyle with state falls back to Normal state") {
+        Theme theme;
+        
+        Style normalStyle;
+        normalStyle.backgroundColor = SDL_Color{180, 180, 180, 255};
+        theme.setStyle("Button", ElementState::Normal, normalStyle);
+        
+        // No Hover style defined - should fallback to Normal
+        Style hoverRetrieved = theme.getStyle("Button", ElementState::Hover);
+        REQUIRE(hoverRetrieved.backgroundColor.has_value());
+        REQUIRE(hoverRetrieved.backgroundColor->r == 180);
+    }
+
+    SECTION("getStyle with state falls back to default style") {
+        Theme theme;
+        Style defaultStyle;
+        defaultStyle.backgroundColor = SDL_Color{212, 208, 200, 255};
+        theme.setDefaultStyle(defaultStyle);
+        
+        // No Button style defined at all - should return default
+        Style retrieved = theme.getStyle("Button", ElementState::Normal);
+        REQUIRE(retrieved.backgroundColor.has_value());
+        REQUIRE(retrieved.backgroundColor->r == 212);
+    }
+
+    SECTION("Legacy getStyle(type) returns Normal state") {
+        Theme theme;
+        
+        Style normalStyle;
+        normalStyle.backgroundColor = SDL_Color{100, 100, 100, 255};
+        theme.setStyle("Button", ElementState::Normal, normalStyle);
+        
+        Style hoverStyle;
+        hoverStyle.backgroundColor = SDL_Color{150, 150, 150, 255};
+        theme.setStyle("Button", ElementState::Hover, hoverStyle);
+        
+        // Legacy API should return Normal state
+        Style legacyRetrieved = theme.getStyle("Button");
+        REQUIRE(legacyRetrieved.backgroundColor.has_value());
+        REQUIRE(legacyRetrieved.backgroundColor->r == 100);
+    }
+
+    SECTION("Default theme has per-state Button styles") {
+        Theme theme = Theme::createDefaultTheme();
+        
+        Style normalBtn = theme.getStyle("Button", ElementState::Normal);
+        REQUIRE(normalBtn.borderRadius.has_value());
+        REQUIRE(*normalBtn.borderRadius == 4);
+        
+        Style hoverBtn = theme.getStyle("Button", ElementState::Hover);
+        REQUIRE(hoverBtn.backgroundColor.has_value());
+        // Hover should have different/lighter background
+        REQUIRE(hoverBtn.backgroundColor->r > normalBtn.backgroundColor->r);
+        
+        Style pressedBtn = theme.getStyle("Button", ElementState::Pressed);
+        REQUIRE(pressedBtn.backgroundColor.has_value());
+        // Pressed should have darker background
+        REQUIRE(pressedBtn.backgroundColor->r < normalBtn.backgroundColor->r);
+    }
 }

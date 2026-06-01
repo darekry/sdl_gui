@@ -335,17 +335,17 @@ void GUIElement::setStyle(ElementState state, Style style) {
     markDirty();
 }
 Style GUIElement::getComposedStyle(ElementState state) const {
-    // 1. Pobierz styl bazowy dla tego typu widgetu z motywu.
-    //    Ten styl jest już połączony ze stylem domyślnym motywu.
-    Style finalStyle = m_manager.getTheme().getStyle(getComponentType());
+    // Composition chain: local[state] → theme[type][state] → theme[type][Normal] → theme.default
+    
+    // 1. Pobierz styl bazowy dla tego typu widgetu i stanu z motywu.
+    //    getStyle(type, state) already handles fallback to Normal and merge with default.
+    Style themeStyle = m_manager.getTheme().getStyle(getComponentType(), state);
 
     // 2. Znajdź styl lokalny dla konkretnego stanu i połącz go.
     auto it = m_localStyles.find(state);
     if (it != m_localStyles.end()) {
-        // Styl lokalny ma pierwszeństwo, więc najpierw go kopiujemy,
-        // a potem uzupełniamy brakujące pola ze stylu z motywu.
         Style localCopy = it->second;
-        localCopy.mergeWith(finalStyle);
+        localCopy.mergeWith(themeStyle);
         return localCopy;
     }
     
@@ -353,12 +353,12 @@ Style GUIElement::getComposedStyle(ElementState state) const {
     it = m_localStyles.find(ElementState::Normal);
     if (it != m_localStyles.end()) {
         Style localCopy = it->second;
-        localCopy.mergeWith(finalStyle);
+        localCopy.mergeWith(themeStyle);
         return localCopy;
     }
 
     // 4. Jeśli brak jakiegokolwiek stylu lokalnego, zwróć styl z motywu.
-    return finalStyle;
+    return themeStyle;
 }
 
 void GUIElement::setBackgroundColor(ElementState state, SDL_Color color) {

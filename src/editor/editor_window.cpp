@@ -20,7 +20,7 @@ EditorWindow::EditorWindow(WindowManager& windowManager, EditorState& state)
     auto& guiManager = m_window->getGUIManager();
     
     m_mainPanel = new Panel(guiManager, 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-    m_mainPanel->setBackgroundColor(ElementState::Normal, guiManager.getTheme().getBackgroundColor());
+    m_mainPanel->setBackgroundColor(ElementState::Normal, guiManager.getTheme().getDefaultStyle().backgroundColor.value_or(SDL_Color{255, 255, 255, 255}));
     guiManager.addElement(std::unique_ptr<GUIElement>(m_mainPanel));
     
     createPalettePanel();

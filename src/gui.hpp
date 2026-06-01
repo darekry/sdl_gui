@@ -8,6 +8,7 @@
 #include "style.hpp"
 #include "anchor.hpp"
 
+
 #if DEBUG
 #include <SDL2/SDL_log.h>
 #define LOG_DEBUG(...) SDL_Log(__VA_ARGS__)
@@ -30,7 +31,6 @@ public:
 
     GUIElement(GUIManager& manager, int x, int y, int width, int height);
     virtual ~GUIElement();
-
     void setTooltip(const std::string& text);
     void setID(std::string_view id);
     [[nodiscard]] std::string_view getID() const;
