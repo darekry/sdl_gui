@@ -64,6 +64,12 @@ private:
     void updatePositionFromInputs();
     void updateSizeFromInputs();
     void updateColorFromSliders(const std::string& colorKey);
+    void updateTextFromInput();
+    void updateFontSizeFromInput();
+    void updateBorderFromInputs();
+    void updateStyleFromInputs();
+    void populateStyleFields();
+    void updateCheckboxesFromElement();
 
     WindowManager& m_windowManager;
     EditorState& m_editorState;
@@ -82,12 +88,18 @@ private:
     TextInput* m_yInput = nullptr;
     TextInput* m_wInput = nullptr;
     TextInput* m_hInput = nullptr;
+    TextInput* m_textInput = nullptr;
+    TextInput* m_fontSizeInput = nullptr;
+    TextInput* m_borderWidthInput = nullptr;
+    TextInput* m_borderRadiusInput = nullptr;
     std::map<std::string, TextInput*> m_propertyInputs;
     std::map<std::string, Checkbox*> m_propertyCheckboxes;
     std::map<std::string, TextArea*> m_propertyTextAreas;
     std::map<std::string, ComboBox*> m_propertyCombos;
     ComboBox* m_styleStateCombo = nullptr;
-    std::map<std::string, std::array<Slider*, 4>> m_colorSliders;
+    std::array<Slider*, 4> m_bgColorSliders = {nullptr, nullptr, nullptr, nullptr};
+    std::array<Slider*, 4> m_textColorSliders = {nullptr, nullptr, nullptr, nullptr};
+    std::array<Slider*, 4> m_borderColorSliders = {nullptr, nullptr, nullptr, nullptr};
     ElementState m_currentStyleState = ElementState::Normal;
 
     Panel* m_elementsListPanel = nullptr;
@@ -97,10 +109,14 @@ private:
     Button* m_addAsChildButton = nullptr;
     bool m_addAsChildMode = false;
 
+    void createDynamicPropertyFields();
+    void clearDynamicPropertyFields();
+    void addWidgetSpecificProperties(const std::string& widgetType, int startY);
+    
     static constexpr int WINDOW_WIDTH = 400;
-    static constexpr int WINDOW_HEIGHT = 700;
+    static constexpr int WINDOW_HEIGHT = 900;
     static constexpr int PALETTE_HEIGHT = 120;
-    static constexpr int PROPERTIES_HEIGHT = 350;
+    static constexpr int PROPERTIES_HEIGHT = 550;
     static constexpr int ELEMENTS_LIST_HEIGHT = 150;
     static constexpr int BOTTOM_BUTTONS_HEIGHT = 50;
 };

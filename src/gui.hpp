@@ -68,7 +68,15 @@ public:
     [[nodiscard]] int getOriginalHeight() const { return m_originalHeight; }
     SDL_Point getAbsolutePosition() const;
     SDL_Point getRelativePosition() const { return {m_x, m_y}; }
-    bool contains(int x, int y) const;
+    
+    virtual bool contains(int x, int y) const;
+    
+    SDL_Point toLocalCoords(int globalX, int globalY) const;
+    
+    void setRotation(double angleDegrees);
+    double getRotation() const { return m_rotation; }
+    void setRotationCenter(int cx, int cy);
+    SDL_Point getRotationCenter() const { return m_rotationCenter; }
     virtual bool handleEvent(const SDL_Event& e);
     void render(SDL_Renderer* renderer);
     void renderToCache();
@@ -153,4 +161,7 @@ protected:
         ElementState m_state = ElementState::Normal;
     bool m_style_dirty = true;
     std::vector<std::unique_ptr<GUIElement>> m_children;
+    
+    double m_rotation = 0.0;
+    SDL_Point m_rotationCenter = {-1, -1};
 };

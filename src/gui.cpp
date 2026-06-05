@@ -59,6 +59,21 @@ bool GUIElement::contains(int x, int y) const {
             y >= absPos.y && y < absPos.y + m_height);
 }
 
+SDL_Point GUIElement::toLocalCoords(int globalX, int globalY) const {
+    auto abs = getAbsolutePosition();
+    return {globalX - abs.x, globalY - abs.y};
+}
+
+void GUIElement::setRotation(double angleDegrees) {
+    m_rotation = angleDegrees;
+    markDirty();
+}
+
+void GUIElement::setRotationCenter(int cx, int cy) {
+    m_rotationCenter = {cx, cy};
+    markDirty();
+}
+
 void GUIElement::addChild(std::unique_ptr<GUIElement> child) {
     if (child && child->m_parent != this) {
         child->m_parent = this;
@@ -183,19 +198,30 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
         }
 
         if (m_cachedTexture) {
-            SDL_Rect src_rect;
-            src_rect.x = clipped_rect.x - abs_pos.x;
-            src_rect.y = clipped_rect.y - abs_pos.y;
-            src_rect.w = clipped_rect.w;
-            src_rect.h = clipped_rect.h;
-            SDL_RenderCopy(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
+            if (m_rotation != 0.0) {
+                SDL_Rect dst_rect = {abs_pos.x, abs_pos.y, m_width, m_height};
+                SDL_Point center = m_rotationCenter.x >= 0 
+                    ? m_rotationCenter 
+                    : SDL_Point{m_width / 2, m_height / 2};
+                SDL_RenderCopyEx(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
+                                 m_rotation, &center, SDL_FLIP_NONE);
+            } else {
+                SDL_Rect src_rect;
+                src_rect.x = clipped_rect.x - abs_pos.x;
+                src_rect.y = clipped_rect.y - abs_pos.y;
+                src_rect.w = clipped_rect.w;
+                src_rect.h = clipped_rect.h;
+                SDL_RenderCopy(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
+            }
         }
     }
 
     SDL_Rect child_clip_rect = m_clip_children ? clipped_rect : parent_clip_rect;
-    for (auto& child : m_children) {
-        if (child && child->isVisible()) {
-            child->render(renderer, child_clip_rect);
+    if (m_rotation == 0.0) {
+        for (auto& child : m_children) {
+            if (child && child->isVisible()) {
+                child->render(renderer, child_clip_rect);
+            }
         }
     }
 }
@@ -235,6 +261,23 @@ void GUIElement::renderToCache() {
     SDL_RenderClear(renderer);
 
     draw(renderer);
+
+    if (m_rotation != 0.0) {
+        SDL_SetRenderTarget(renderer, nullptr);
+        for (auto& child : m_children) {
+            if (child && child->isVisible() && child->m_isDirty) {
+                child->renderToCache();
+            }
+        }
+        
+        SDL_SetRenderTarget(renderer, m_cachedTexture.get());
+        for (auto& child : m_children) {
+            if (child && child->isVisible() && child->m_cachedTexture) {
+                SDL_Rect childDst = {child->m_x, child->m_y, child->m_width, child->m_height};
+                SDL_RenderCopy(renderer, child->m_cachedTexture.get(), nullptr, &childDst);
+            }
+        }
+    }
 
     SDL_SetRenderTarget(renderer, oldTarget);
     m_isDirty = false;
@@ -313,7 +356,7 @@ void GUIElement::setState(ElementState newState) {
         return;
     }
 
-    LOG_DEBUG("setState for %s from %d to %d", getComponentType(), static_cast<int>(m_state), static_cast<int>(newState));
+  //  LOG_DEBUG("setState for %s from %d to %d", getComponentType(), static_cast<int>(m_state), static_cast<int>(newState));
 
         const auto oldStyle = getComposedStyle(m_state);
         const auto newStyle = getComposedStyle(newState);
@@ -326,8 +369,6 @@ void GUIElement::setState(ElementState newState) {
     if (oldStyle != newStyle) {
         LOG_DEBUG("Styles are different, marking dirty.");
         markDirty();
-    } else {
-        LOG_DEBUG("Styles are the same, not marking dirty.");
     }
 }
 void GUIElement::setStyle(ElementState state, Style style) {

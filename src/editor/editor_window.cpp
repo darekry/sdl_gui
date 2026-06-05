@@ -186,7 +186,132 @@ void EditorWindow::createPropertiesPanel() {
     });
     m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_hInput));
     
-    addStyleStateSelector(labelY + ROW_HEIGHT);
+    labelY += ROW_HEIGHT;
+    
+    auto textLabel = new Label(guiManager, LABEL_X, labelY, "Text:", 12);
+    textLabel->setTextColor(ElementState::Normal, SDL_Color{160, 160, 180, 255});
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(textLabel));
+    
+    m_textInput = new TextInput(guiManager, INPUT_X, labelY - 2, INPUT_WIDTH * 3, INPUT_HEIGHT);
+    m_textInput->setBackgroundColor(ElementState::Normal, SDL_Color{50, 50, 60, 255});
+    m_textInput->setTextColor(ElementState::Normal, SDL_Color{200, 200, 220, 255});
+    m_textInput->setBorder(ElementState::Normal, SDL_Color{70, 70, 90, 255}, 1);
+    m_textInput->setOnTextChanged([this](TextInput*) {
+        updateTextFromInput();
+    });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_textInput));
+    
+    labelY += ROW_HEIGHT;
+    
+    auto fontSizeLabel = new Label(guiManager, LABEL_X, labelY, "FontSize:", 12);
+    fontSizeLabel->setTextColor(ElementState::Normal, SDL_Color{160, 160, 180, 255});
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(fontSizeLabel));
+    
+    m_fontSizeInput = new TextInput(guiManager, INPUT_X + 50, labelY - 2, INPUT_WIDTH, INPUT_HEIGHT);
+    m_fontSizeInput->setBackgroundColor(ElementState::Normal, SDL_Color{50, 50, 60, 255});
+    m_fontSizeInput->setTextColor(ElementState::Normal, SDL_Color{200, 200, 220, 255});
+    m_fontSizeInput->setBorder(ElementState::Normal, SDL_Color{70, 70, 90, 255}, 1);
+    m_fontSizeInput->setOnTextChanged([this](TextInput*) {
+        updateFontSizeFromInput();
+    });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_fontSizeInput));
+    
+    labelY += ROW_HEIGHT;
+    
+    addStyleStateSelector(labelY);
+    labelY += ROW_HEIGHT;
+    
+    auto bgLabel = new Label(guiManager, LABEL_X, labelY, "BgColor:", 12);
+    bgLabel->setTextColor(ElementState::Normal, SDL_Color{160, 160, 180, 255});
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(bgLabel));
+    
+    constexpr int SLIDER_WIDTH = 60;
+    constexpr int SLIDER_HEIGHT = 16;
+    constexpr int SLIDER_X = 70;
+    
+    m_bgColorSliders[0] = new Slider(guiManager, SLIDER_X, labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 0, Orientation::Horizontal);
+    m_bgColorSliders[0]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_bgColorSliders[0]));
+    
+    m_bgColorSliders[1] = new Slider(guiManager, SLIDER_X + SLIDER_WIDTH + 5, labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 0, Orientation::Horizontal);
+    m_bgColorSliders[1]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_bgColorSliders[1]));
+    
+    m_bgColorSliders[2] = new Slider(guiManager, SLIDER_X + 2 * (SLIDER_WIDTH + 5), labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 0, Orientation::Horizontal);
+    m_bgColorSliders[2]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_bgColorSliders[2]));
+    
+    m_bgColorSliders[3] = new Slider(guiManager, SLIDER_X + 3 * (SLIDER_WIDTH + 5), labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 255, Orientation::Horizontal);
+    m_bgColorSliders[3]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_bgColorSliders[3]));
+    
+    labelY += ROW_HEIGHT;
+    
+    auto textColLabel = new Label(guiManager, LABEL_X, labelY, "TextColor:", 12);
+    textColLabel->setTextColor(ElementState::Normal, SDL_Color{160, 160, 180, 255});
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(textColLabel));
+    
+    m_textColorSliders[0] = new Slider(guiManager, SLIDER_X, labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 0, Orientation::Horizontal);
+    m_textColorSliders[0]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_textColorSliders[0]));
+    
+    m_textColorSliders[1] = new Slider(guiManager, SLIDER_X + SLIDER_WIDTH + 5, labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 0, Orientation::Horizontal);
+    m_textColorSliders[1]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_textColorSliders[1]));
+    
+    m_textColorSliders[2] = new Slider(guiManager, SLIDER_X + 2 * (SLIDER_WIDTH + 5), labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 0, Orientation::Horizontal);
+    m_textColorSliders[2]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_textColorSliders[2]));
+    
+    m_textColorSliders[3] = new Slider(guiManager, SLIDER_X + 3 * (SLIDER_WIDTH + 5), labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 255, Orientation::Horizontal);
+    m_textColorSliders[3]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_textColorSliders[3]));
+    
+    labelY += ROW_HEIGHT;
+    
+    auto borderColLabel = new Label(guiManager, LABEL_X, labelY, "BrdColor:", 12);
+    borderColLabel->setTextColor(ElementState::Normal, SDL_Color{160, 160, 180, 255});
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(borderColLabel));
+    
+    m_borderColorSliders[0] = new Slider(guiManager, SLIDER_X, labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 0, Orientation::Horizontal);
+    m_borderColorSliders[0]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_borderColorSliders[0]));
+    
+    m_borderColorSliders[1] = new Slider(guiManager, SLIDER_X + SLIDER_WIDTH + 5, labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 0, Orientation::Horizontal);
+    m_borderColorSliders[1]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_borderColorSliders[1]));
+    
+    m_borderColorSliders[2] = new Slider(guiManager, SLIDER_X + 2 * (SLIDER_WIDTH + 5), labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 0, Orientation::Horizontal);
+    m_borderColorSliders[2]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_borderColorSliders[2]));
+    
+    m_borderColorSliders[3] = new Slider(guiManager, SLIDER_X + 3 * (SLIDER_WIDTH + 5), labelY - 2, SLIDER_WIDTH, SLIDER_HEIGHT, 0, 255, 255, Orientation::Horizontal);
+    m_borderColorSliders[3]->setOnChangeCallback([this](GUIElement*) { updateStyleFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_borderColorSliders[3]));
+    
+    labelY += ROW_HEIGHT;
+    
+    auto bwLabel = new Label(guiManager, LABEL_X, labelY, "BrdrW:", 12);
+    bwLabel->setTextColor(ElementState::Normal, SDL_Color{160, 160, 180, 255});
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(bwLabel));
+    
+    m_borderWidthInput = new TextInput(guiManager, INPUT_X + 30, labelY - 2, INPUT_WIDTH, INPUT_HEIGHT);
+    m_borderWidthInput->setBackgroundColor(ElementState::Normal, SDL_Color{50, 50, 60, 255});
+    m_borderWidthInput->setTextColor(ElementState::Normal, SDL_Color{200, 200, 220, 255});
+    m_borderWidthInput->setBorder(ElementState::Normal, SDL_Color{70, 70, 90, 255}, 1);
+    m_borderWidthInput->setOnTextChanged([this](TextInput*) { updateBorderFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_borderWidthInput));
+    
+    auto brLabel = new Label(guiManager, INPUT_X + 30 + INPUT_WIDTH + 10, labelY, "BrdrR:", 12);
+    brLabel->setTextColor(ElementState::Normal, SDL_Color{160, 160, 180, 255});
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(brLabel));
+    
+    m_borderRadiusInput = new TextInput(guiManager, INPUT_X + 30 + INPUT_WIDTH + 10 + 45, labelY - 2, INPUT_WIDTH, INPUT_HEIGHT);
+    m_borderRadiusInput->setBackgroundColor(ElementState::Normal, SDL_Color{50, 50, 60, 255});
+    m_borderRadiusInput->setTextColor(ElementState::Normal, SDL_Color{200, 200, 220, 255});
+    m_borderRadiusInput->setBorder(ElementState::Normal, SDL_Color{70, 70, 90, 255}, 1);
+    m_borderRadiusInput->setOnTextChanged([this](TextInput*) { updateBorderFromInputs(); });
+    m_propertiesPanel->addChild(std::unique_ptr<GUIElement>(m_borderRadiusInput));
 }
 
 void EditorWindow::addStyleStateSelector(int y) {
@@ -482,6 +607,15 @@ void EditorWindow::updatePropertiesPanel() {
         m_yInput->setText(std::string(""));
         m_wInput->setText(std::string(""));
         m_hInput->setText(std::string(""));
+        m_textInput->setText(std::string(""));
+        m_fontSizeInput->setText(std::string(""));
+        m_borderWidthInput->setText(std::string(""));
+        m_borderRadiusInput->setText(std::string(""));
+        for (int i = 0; i < 4; ++i) {
+            m_bgColorSliders[i]->setValue(0);
+            m_textColorSliders[i]->setValue(255);
+            m_borderColorSliders[i]->setValue(0);
+        }
         return;
     }
     
@@ -492,10 +626,147 @@ void EditorWindow::updatePropertiesPanel() {
     m_hInput->setText(std::to_string(selected->height));
     
     std::string text = selected->getProperty("text", "");
-    if (selected->type == "TextArea") {
-        if (m_propertyTextAreas.find("text") == m_propertyTextAreas.end()) {
-        }
+    m_textInput->setText(std::string(text));
+    
+    std::string fontSize = selected->getProperty("fontSize", "");
+    m_fontSizeInput->setText(std::string(fontSize));
+    
+    populateStyleFields();
+}
+
+void EditorWindow::populateStyleFields() {
+    auto* selected = m_editorState.getSelectedElement();
+    if (!selected) return;
+    
+    Style style;
+    if (selected->hasStyle(m_currentStyleState)) {
+        style = selected->styles[m_currentStyleState];
     }
+    
+    if (style.backgroundColor) {
+        m_bgColorSliders[0]->setValue(style.backgroundColor->r);
+        m_bgColorSliders[1]->setValue(style.backgroundColor->g);
+        m_bgColorSliders[2]->setValue(style.backgroundColor->b);
+        m_bgColorSliders[3]->setValue(style.backgroundColor->a);
+    } else {
+        m_bgColorSliders[0]->setValue(0);
+        m_bgColorSliders[1]->setValue(0);
+        m_bgColorSliders[2]->setValue(0);
+        m_bgColorSliders[3]->setValue(255);
+    }
+    
+    if (style.textColor) {
+        m_textColorSliders[0]->setValue(style.textColor->r);
+        m_textColorSliders[1]->setValue(style.textColor->g);
+        m_textColorSliders[2]->setValue(style.textColor->b);
+        m_textColorSliders[3]->setValue(style.textColor->a);
+    } else {
+        m_textColorSliders[0]->setValue(0);
+        m_textColorSliders[1]->setValue(0);
+        m_textColorSliders[2]->setValue(0);
+        m_textColorSliders[3]->setValue(255);
+    }
+    
+    if (style.borderColor) {
+        m_borderColorSliders[0]->setValue(style.borderColor->r);
+        m_borderColorSliders[1]->setValue(style.borderColor->g);
+        m_borderColorSliders[2]->setValue(style.borderColor->b);
+        m_borderColorSliders[3]->setValue(style.borderColor->a);
+    } else {
+        m_borderColorSliders[0]->setValue(0);
+        m_borderColorSliders[1]->setValue(0);
+        m_borderColorSliders[2]->setValue(0);
+        m_borderColorSliders[3]->setValue(255);
+    }
+    
+    if (style.borderWidth) {
+        m_borderWidthInput->setText(std::to_string(*style.borderWidth));
+    } else {
+        m_borderWidthInput->setText(std::string(""));
+    }
+    
+    if (style.borderRadius) {
+        m_borderRadiusInput->setText(std::to_string(*style.borderRadius));
+    } else {
+        m_borderRadiusInput->setText(std::string(""));
+    }
+}
+
+void EditorWindow::updateTextFromInput() {
+    if (!m_editorState.hasSelectedElement()) return;
+    m_editorState.updateElementProperty(m_editorState.getSelectedElementIndex(), "text", m_textInput->getText());
+    if (onElementUpdated) onElementUpdated(m_editorState.getSelectedElementIndex());
+}
+
+void EditorWindow::updateFontSizeFromInput() {
+    if (!m_editorState.hasSelectedElement()) return;
+    m_editorState.updateElementProperty(m_editorState.getSelectedElementIndex(), "fontSize", m_fontSizeInput->getText());
+    if (onElementUpdated) onElementUpdated(m_editorState.getSelectedElementIndex());
+}
+
+void EditorWindow::updateBorderFromInputs() {
+    if (!m_editorState.hasSelectedElement()) return;
+    
+    Style style;
+    if (m_editorState.getSelectedElement()->hasStyle(m_currentStyleState)) {
+        style = m_editorState.getSelectedElement()->styles[m_currentStyleState];
+    }
+    
+    try {
+        int bw = std::stoi(m_borderWidthInput->getText());
+        style.borderWidth = bw;
+    } catch (...) {
+        style.borderWidth = std::nullopt;
+    }
+    
+    try {
+        int br = std::stoi(m_borderRadiusInput->getText());
+        style.borderRadius = br;
+    } catch (...) {
+        style.borderRadius = std::nullopt;
+    }
+    
+    m_editorState.updateElementStyle(m_editorState.getSelectedElementIndex(), m_currentStyleState, style);
+    if (onElementUpdated) onElementUpdated(m_editorState.getSelectedElementIndex());
+}
+
+void EditorWindow::updateStyleFromInputs() {
+    if (!m_editorState.hasSelectedElement()) return;
+    
+    Style style;
+    if (m_editorState.getSelectedElement()->hasStyle(m_currentStyleState)) {
+        style = m_editorState.getSelectedElement()->styles[m_currentStyleState];
+    }
+    
+    SDL_Color bgColor{
+        static_cast<Uint8>(m_bgColorSliders[0]->getValue()),
+        static_cast<Uint8>(m_bgColorSliders[1]->getValue()),
+        static_cast<Uint8>(m_bgColorSliders[2]->getValue()),
+        static_cast<Uint8>(m_bgColorSliders[3]->getValue())
+    };
+    style.backgroundColor = bgColor;
+    
+    SDL_Color textColor{
+        static_cast<Uint8>(m_textColorSliders[0]->getValue()),
+        static_cast<Uint8>(m_textColorSliders[1]->getValue()),
+        static_cast<Uint8>(m_textColorSliders[2]->getValue()),
+        static_cast<Uint8>(m_textColorSliders[3]->getValue())
+    };
+    style.textColor = textColor;
+    
+    SDL_Color borderColor{
+        static_cast<Uint8>(m_borderColorSliders[0]->getValue()),
+        static_cast<Uint8>(m_borderColorSliders[1]->getValue()),
+        static_cast<Uint8>(m_borderColorSliders[2]->getValue()),
+        static_cast<Uint8>(m_borderColorSliders[3]->getValue())
+    };
+    style.borderColor = borderColor;
+    
+    m_editorState.updateElementStyle(m_editorState.getSelectedElementIndex(), m_currentStyleState, style);
+    if (onElementUpdated) onElementUpdated(m_editorState.getSelectedElementIndex());
+}
+
+void EditorWindow::updateCheckboxesFromElement() {
 }
 
 void EditorWindow::updatePositionFromInputs() {
