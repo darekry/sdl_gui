@@ -1,10 +1,15 @@
-# Aktualny stan projektu (2026-06-01)
+# Aktualny stan projektu (2026-06-05)
 
-## Status: STABILNY - OPTYMIZACJA WYDAJNOŚCI COMPLETE
+## Status: STABILNY - REGRESSION FIX APPLIED
 
 **Repozytorium:** 32 examples, 31 test files, 2,500+ assertions, all tests passing
 
 ## Ostatnie zmiany (Czerwiec 2026)
+
+### Regression Fix (2026-06-05)
+- **BUG**: `getComposedStyle()` merge direction was inverted — theme returned fully-populated styles, `mergeWith` only fills gaps, so local overrides (setBackgroundColor, setStyle, etc.) were silently ignored.
+- **FIX**: Reversed composition order: start from local style (most specific), fill gaps from theme. `src/gui.cpp:378-398`
+- **Impact**: All widgets with custom styles (button colors, rounded corners, borders, etc.) now correctly display their overrides.
 
 ### Performance Optimization Summary
 

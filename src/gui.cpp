@@ -376,24 +376,25 @@ void GUIElement::setStyle(ElementState state, Style style) {
     markDirty();
 }
 Style GUIElement::getComposedStyle(ElementState state) const {
-    // Start with theme style as base result
-    Style result = m_manager.getTheme().getStyle(getComponentType(), state);
-    
     size_t idx = stateIndex(state);
+    
+    // Start from local style (most specific), fill gaps from theme
     if (m_localStyles[idx].has_value()) {
-        // Merge local style directly into result (avoid intermediate copy)
-        result.mergeWith(*m_localStyles[idx]);
+        Style result = *m_localStyles[idx];
+        result.mergeWith(m_manager.getTheme().getStyle(getComponentType(), state));
         return result;
     }
     
     // Fallback: try Normal state local style
     size_t normalIdx = stateIndex(ElementState::Normal);
     if (m_localStyles[normalIdx].has_value()) {
-        result.mergeWith(*m_localStyles[normalIdx]);
+        Style result = *m_localStyles[normalIdx];
+        result.mergeWith(m_manager.getTheme().getStyle(getComponentType(), state));
         return result;
     }
     
-    return result;
+    // No local styles: use theme directly
+    return m_manager.getTheme().getStyle(getComponentType(), state);
 }
 
 void GUIElement::setBackgroundColor(ElementState state, SDL_Color color) {
