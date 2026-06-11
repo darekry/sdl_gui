@@ -13,13 +13,13 @@ int main() {
         GUIManager gui(app.getRenderer());
 
         auto cursorPtr = std::make_unique<Cursor>(gui);
-        Cursor* cursor = cursorPtr.get();
+        auto cursorRef = gui.makeRef(cursorPtr.get());
         gui.setCursor(std::move(cursorPtr));
 
-        cursor->setCursorTexture(CursorState::Normal, "assets/button1.png", 8, 8);
-        cursor->setCursorTexture(CursorState::Hover, "assets/button2.png", 16, 16);
-        cursor->setAnimatedCursor(CursorState::Busy, "assets/button1.png", 4, 2, 8.0f, 16, 16);
-        cursor->setScale(0.5f);
+        cursorRef->setCursorTexture(CursorState::Normal, "assets/button1.png", 8, 8);
+        cursorRef->setCursorTexture(CursorState::Hover, "assets/button2.png", 16, 16);
+        cursorRef->setAnimatedCursor(CursorState::Busy, "assets/button1.png", 4, 2, 8.0f, 16, 16);
+        cursorRef->setScale(0.5f);
 
         auto infoPanel = std::make_unique<Panel>(gui, 50, 50, 300, 250);
         infoPanel->setBackgroundColor(ElementState::Normal, SDL_Color{200, 200, 220, 255});
@@ -29,10 +29,10 @@ int main() {
         infoPanel->addChild(std::move(titleLabel));
 
         auto currentStateLabel = std::make_unique<Label>(gui, 10, 40, "Stan: Normal", 14);
-        Label* statePtr = currentStateLabel.get();
+        auto stateRef = gui.makeRef(currentStateLabel.get());
         infoPanel->addChild(std::move(currentStateLabel));
 
-        cursor->setOnStateChanged([statePtr](CursorState state) {
+        cursorRef->setOnStateChanged([stateRef](CursorState state) {
             std::string stateName;
             switch (state) {
                 case CursorState::Normal: stateName = "Normal"; break;
@@ -43,34 +43,34 @@ int main() {
                 case CursorState::Text: stateName = "Text"; break;
                 default: stateName = "Custom"; break;
             }
-            statePtr->setText("Stan: " + stateName);
+            stateRef->setText("Stan: " + stateName);
         });
 
         auto btnNormal = std::make_unique<Button>(gui, 10, 70, 130, 30, "Normal");
-        btnNormal->setOnClickCallback([cursor](GUIElement*) {
-            cursor->setState(CursorState::Normal);
+        btnNormal->setOnClickCallback([cursorRef](GUIElement*) {
+            if (cursorRef) cursorRef->setState(CursorState::Normal);
             std::cout << "Kursor: Normal\n";
         });
         infoPanel->addChild(std::move(btnNormal));
 
         auto btnHover = std::make_unique<Button>(gui, 10, 110, 130, 30, "Hover");
-        btnHover->setOnClickCallback([cursor](GUIElement*) {
-            cursor->setState(CursorState::Hover);
+        btnHover->setOnClickCallback([cursorRef](GUIElement*) {
+            if (cursorRef) cursorRef->setState(CursorState::Hover);
             std::cout << "Kursor: Hover\n";
         });
         infoPanel->addChild(std::move(btnHover));
 
         auto btnBusy = std::make_unique<Button>(gui, 10, 150, 130, 30, "Busy (animowany)");
-        btnBusy->setOnClickCallback([cursor](GUIElement*) {
-            cursor->setState(CursorState::Busy);
+        btnBusy->setOnClickCallback([cursorRef](GUIElement*) {
+            if (cursorRef) cursorRef->setState(CursorState::Busy);
             std::cout << "Kursor: Busy (animowany)\n";
         });
         infoPanel->addChild(std::move(btnBusy));
 
         auto btnToggle = std::make_unique<Button>(gui, 10, 190, 130, 30, "Pokaż/Ukryj");
-        btnToggle->setOnClickCallback([cursor](GUIElement*) {
-            cursor->setVisible(!cursor->isVisible());
-            std::cout << "Widoczność kursora: " << (cursor->isVisible() ? "TAK" : "NIE") << "\n";
+        btnToggle->setOnClickCallback([cursorRef](GUIElement*) {
+            if (cursorRef) cursorRef->setVisible(!cursorRef->isVisible());
+            std::cout << "Widoczność kursora: " << (cursorRef && cursorRef->isVisible() ? "TAK" : "NIE") << "\n";
         });
         infoPanel->addChild(std::move(btnToggle));
 
@@ -108,22 +108,22 @@ int main() {
         interactionPanel->addChild(std::move(scaleSliderLabel));
 
         auto btnScaleSmall = std::make_unique<Button>(gui, 10, 220, 80, 30, "Mały");
-        btnScaleSmall->setOnClickCallback([cursor](GUIElement*) {
-            cursor->setScale(0.25f);
+        btnScaleSmall->setOnClickCallback([cursorRef](GUIElement*) {
+            if (cursorRef) cursorRef->setScale(0.25f);
             std::cout << "Skala kursora: 0.25\n";
         });
         interactionPanel->addChild(std::move(btnScaleSmall));
 
         auto btnScaleMedium = std::make_unique<Button>(gui, 100, 220, 80, 30, "Średni");
-        btnScaleMedium->setOnClickCallback([cursor](GUIElement*) {
-            cursor->setScale(0.5f);
+        btnScaleMedium->setOnClickCallback([cursorRef](GUIElement*) {
+            if (cursorRef) cursorRef->setScale(0.5f);
             std::cout << "Skala kursora: 0.5\n";
         });
         interactionPanel->addChild(std::move(btnScaleMedium));
 
         auto btnScaleLarge = std::make_unique<Button>(gui, 190, 220, 80, 30, "Duży");
-        btnScaleLarge->setOnClickCallback([cursor](GUIElement*) {
-            cursor->setScale(1.0f);
+        btnScaleLarge->setOnClickCallback([cursorRef](GUIElement*) {
+            if (cursorRef) cursorRef->setScale(1.0f);
             std::cout << "Skala kursora: 1.0\n";
         });
         interactionPanel->addChild(std::move(btnScaleLarge));

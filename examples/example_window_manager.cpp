@@ -159,7 +159,7 @@ void setupSettingsWindow(Window* window) {
     
     auto btnClose = std::make_unique<Button>(gui, 150, 280, 110, 40, "Close");
     btnClose->setOnClickCallback([window](GUIElement*) {
-        window->markForClose();
+        if (window) window->markForClose();
     });
     panel->addChild(std::move(btnClose));
     
@@ -198,13 +198,13 @@ void setupFormWindow(Window* window) {
     auto btnSubmit = std::make_unique<Button>(gui, 120, 360, 120, 40, "Submit");
     btnSubmit->setOnClickCallback([window](GUIElement*) {
         std::cout << "Form submitted!\n";
-        window->markForClose();
+        if (window) window->markForClose();
     });
     panel->addChild(std::move(btnSubmit));
     
     auto btnCancel = std::make_unique<Button>(gui, 20, 360, 90, 40, "Cancel");
     btnCancel->setOnClickCallback([window](GUIElement*) {
-        window->markForClose();
+        if (window) window->markForClose();
     });
     panel->addChild(std::move(btnCancel));
     

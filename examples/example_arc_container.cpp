@@ -49,9 +49,9 @@ int main(int, char**) {
         centerPanel->setStyle(ElementState::Normal, centerStyle);
         
         auto innerLabel = std::make_unique<Label>(guiManager, 15, 20, "OK");
-        Label* innerLabelPtr = innerLabel.get();
+        auto innerLabelRef = guiManager.makeRef(innerLabel.get());
         centerPanel->addChild(std::move(innerLabel));
-        Panel* centerPanelPtr = centerPanel.get();
+        auto centerPanelRef = guiManager.makeRef(centerPanel.get());
         guiManager.addElement(std::move(centerPanel));
         
         for (int i = 0; i < 12; ++i) {
@@ -59,11 +59,9 @@ int main(int, char**) {
             auto btn = std::make_unique<Button>(guiManager, 0, 0, 50, 30, 
                                                  std::to_string(i));
             btn->setStyle(ElementState::Normal, btnStyle);
-            btn->setOnClickCallback([i, innerLabelPtr, centerPanelPtr](GUIElement*) {
+            btn->setOnClickCallback([i, innerLabelRef, centerPanelRef](GUIElement*) {
                 double newRotation = 30.0 * (i );
-                centerPanelPtr->setRotation(newRotation);
-              //  innerLabelPtr->setText(std::to_string(i));
-               // centerPanelPtr->markDirtyRecursively();
+                if (centerPanelRef) centerPanelRef->setRotation(newRotation);
             });
             arc->addChildAtAngle(std::move(btn), angle-90, true, 00);
         }

@@ -71,6 +71,7 @@ int main(int, char**) {
             content->setStyle(ElementState::Normal, s);
         }
         Panel* content_p = content.get();
+        auto contentRef = gui.makeRef(content_p);
 
         // Wypełnienie zawartości wieloma wierszami (etykiety)
         {
@@ -104,12 +105,12 @@ int main(int, char**) {
         gui.addElement(std::move(container));
 
         // Callback suwaka: ustaw przesunięcie zawartości (y = -value)
-        slider_p->setOnChangeCallback([content_p](GUIElement* self) {
+        slider_p->setOnChangeCallback([contentRef](GUIElement* self) {
+            if (!contentRef) return;
             auto* s = static_cast<Slider*>(self);
             if (!s) return;
             const int value = s->getValue();
-            // X bez zmian, Y ujemny (scroll w górę)
-            content_p->setPosition(0, -value);
+            contentRef->setPosition(0, -value);
         });
 
         // Pętla zdarzeń

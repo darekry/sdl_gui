@@ -20,35 +20,32 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
 
         // Create context menu
         auto contextMenu = std::make_unique<ContextMenu>(manager);
-        ContextMenu* contextMenuPtr = contextMenu.get();
+        auto contextMenuRef = manager.makeRef(contextMenu.get());
 
         // Add menu items
-        contextMenuPtr->addItem("Copy", []() {
+        contextMenuRef->addItem("Copy", []() {
             std::cout << "Copy action triggered!" << std::endl;
         });
 
-        contextMenuPtr->addItem("Paste", []() {
+        contextMenuRef->addItem("Paste", []() {
             std::cout << "Paste action triggered!" << std::endl;
         });
 
-        contextMenuPtr->addSeparator();
+        contextMenuRef->addSeparator();
 
-        contextMenuPtr->addItem("Delete", []() {
+        contextMenuRef->addItem("Delete", []() {
             std::cout << "Delete action triggered!" << std::endl;
         }, true); // enabled
 
-        contextMenuPtr->addItem("Properties", []() {
+        contextMenuRef->addItem("Properties", []() {
             std::cout << "Properties action triggered!" << std::endl;
         });
 
         // Set up right-click handler for the button
-        triggerButtonPtr->setOnClickCallback([&](GUIElement* element) {
-            // For this example, we'll simulate right-click with left-click
-            // In real usage, you'd check for SDL_BUTTON_RIGHT
-          
-                auto pos = element->getAbsolutePosition();
-                contextMenuPtr->showAt(pos.x, pos.y + element->getHeight());
-            
+        triggerButtonPtr->setOnClickCallback([contextMenuRef](GUIElement* element) {
+            if (!contextMenuRef) return;
+            auto pos = element->getAbsolutePosition();
+            contextMenuRef->showAt(pos.x, pos.y + element->getHeight());
         });
 
         // Add elements to manager

@@ -29,7 +29,7 @@ int main() {
         auto windowPanel = std::make_unique<Panel>(guiManager, 100, 100, 300, 200);
         windowPanel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = guiManager.getTextureManager().addTexture("window_bg", createColorTexture(renderer, {.r=200, .g=200, .b=200, .a=255})), .borderColor = std::nullopt, .borderWidth = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
         windowPanel->setDraggable(true);
-        auto *windowPanel_p = windowPanel.get();
+        auto windowPanelRef = guiManager.makeRef(windowPanel.get());
         // Title bar
         auto titleBar = std::make_unique<Panel>(guiManager, 0, 0, 300, 30);
         titleBar->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = guiManager.getTextureManager().addTexture("title_bg", createColorTexture(renderer, {100, 100, 150, 255})), .borderColor = std::nullopt, .borderWidth = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
@@ -38,9 +38,11 @@ int main() {
 
         // Close button
         auto closeButton = std::make_unique<Button>(guiManager, 270, 5, 25, 20,"X");
-        closeButton->setOnClickCallback([windowPanel_p](GUIElement*){
-            windowPanel_p->markForDeletion();
-            std::cout << "Window marked for deletion.\n";
+        closeButton->setOnClickCallback([windowPanelRef](GUIElement*){
+            if (windowPanelRef) {
+                windowPanelRef->markForDeletion();
+                std::cout << "Window marked for deletion.\n";
+            }
         });
 
         // Content panel

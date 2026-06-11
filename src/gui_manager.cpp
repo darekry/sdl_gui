@@ -35,10 +35,11 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
         for (const auto& e : m_elements) {
             if (e.get() == raw_ptr) {
                 std::cerr << "ERROR: GUIManager::addElement() - element already exists in m_elements! ptr=" << raw_ptr << std::endl;
-                return nullptr;  // Reject duplicate
+                return nullptr;
             }
         }
         
+        registerElement(raw_ptr);
         m_elements.push_back(std::move(element));
         return raw_ptr;
     }

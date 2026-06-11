@@ -11,7 +11,7 @@ GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)
 }
 
 GUIElement::~GUIElement() {
-    // Stop tooltip timer if running
+    m_manager.unregisterElement(this);
     if (tooltipTimerId != 0) {
         stopTimer(tooltipTimerId);
         tooltipTimerId = 0;
@@ -76,6 +76,7 @@ void GUIElement::setRotationCenter(int cx, int cy) {
 
 void GUIElement::addChild(std::unique_ptr<GUIElement> child) {
     if (child && child->m_parent != this) {
+        m_manager.registerElement(child.get());
         child->m_parent = this;
         m_children.push_back(std::move(child));
         markDirty();

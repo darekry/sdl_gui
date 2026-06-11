@@ -17,7 +17,7 @@ int main() {
 
         // Stwórz AnimatedImage jako unique_ptr, zachowaj surowy wskaźnik do sterowania z przycisku
         auto anim_uptr = std::make_unique<AnimatedImage>(gui, 0, 0, 256, 128);
-        AnimatedImage* anim_ptr = anim_uptr.get();
+        auto animRef = gui.makeRef(anim_uptr.get());
         anim_uptr->setSpriteSheet("assets/anim.png", 9, 1);
         anim_uptr->setFPS(12.0f);
         anim_uptr->setLoop(true);
@@ -30,9 +30,9 @@ int main() {
         // Mały przycisk, który przełącza tryb cache/direct render dla animacji
         auto toggleBtn = std::make_unique<Button>(gui, 380, 110, 140, 32, "Toggle Cache");
         auto useCache = std::make_shared<bool>(false);
-        toggleBtn->setOnClickCallback([anim_ptr, useCache](GUIElement*) {
+        toggleBtn->setOnClickCallback([animRef, useCache](GUIElement*) {
             *useCache = !*useCache;
-            anim_ptr->setUseCache(*useCache);
+            if (animRef) animRef->setUseCache(*useCache);
             std::cout << "cache" << (*useCache ? "ON" : "OFF") << "\n";
         });
         gui.addElement(std::move(toggleBtn));

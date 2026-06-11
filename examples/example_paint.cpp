@@ -16,13 +16,13 @@ int main(int, char**) {
 
         // Canvas
         auto canvas = std::make_unique<Canvas>(guiManager, 20, 80, 640, 480);
-        auto* canvas_ptr = canvas.get();
+        auto canvasRef = guiManager.makeRef(canvas.get());
         guiManager.addElement(std::move(canvas));
 
         // Clear button
         auto clearBtn = std::make_unique<Button>(guiManager, 20, 20, 100, 40, "Clear");
-        clearBtn->setOnClickCallback([canvas_ptr](GUIElement*) {
-            canvas_ptr->clear();
+        clearBtn->setOnClickCallback([canvasRef](GUIElement*) {
+            if (canvasRef) canvasRef->clear();
         });
         guiManager.addElement(std::move(clearBtn));
 

@@ -20,12 +20,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
 
         // --- Etykieta statusu ---
         auto statusLabel = std::make_unique<Label>(guiManager, 20, 20, "Selected: None");
-        Label* statusLabelPtr = statusLabel.get();
+        auto statusLabelRef = guiManager.makeRef(statusLabel.get());
         guiManager.addElement(std::move(statusLabel));
 
         // --- StringGrid ---
         auto grid = std::make_unique<StringGrid>(guiManager, 20, 60, 660, 480, 10, 5);
-        StringGrid* gridPtr = grid.get();
+        auto gridRef = guiManager.makeRef(grid.get());
 
         // Ustawienie nagłówków kolumn
         grid->setColumnHeader(0, "ID");
@@ -51,84 +51,83 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         }
 
         // Callback: kliknięcie komórki
-        grid->setOnCellClick([statusLabelPtr](StringGrid*, CellCoord cell) {
-            if (cell.isValid()) {
+        grid->setOnCellClick([statusLabelRef](StringGrid*, CellCoord cell) {
+            if (cell.isValid() && statusLabelRef) {
                 std::string msg = "Clicked: Row " + std::to_string(cell.row + 1) + 
                                   ", Col " + std::to_string(cell.col + 1);
-                statusLabelPtr->setText(msg);
+                statusLabelRef->setText(msg);
             }
         });
 
         // Callback: podwójne kliknięcie (edycja)
-        grid->setOnCellDoubleClick([statusLabelPtr](StringGrid*, CellCoord cell) {
-            if (cell.isValid()) {
+        grid->setOnCellDoubleClick([statusLabelRef](StringGrid*, CellCoord cell) {
+            if (cell.isValid() && statusLabelRef) {
                 std::string msg = "Double-clicked: Row " + std::to_string(cell.row + 1) + 
                                   ", Col " + std::to_string(cell.col + 1) + " (editing)";
-                statusLabelPtr->setText(msg);
+                statusLabelRef->setText(msg);
             }
         });
 
         // Callback: edycja zakończona
-        grid->setOnCellEdit([statusLabelPtr](StringGrid* grid, CellCoord cell, std::string newText) {
-            if (cell.isValid()) {
+        grid->setOnCellEdit([statusLabelRef](StringGrid* grid, CellCoord cell, std::string newText) {
+            if (cell.isValid() && statusLabelRef) {
                 std::string msg = "Edited: Row " + std::to_string(cell.row + 1) + 
                                   ", Col " + std::to_string(cell.col + 1) + 
                                   " -> \"" + newText + "\"";
-                statusLabelPtr->setText(msg);
-                // Aktualizacja danych w gridzie
+                statusLabelRef->setText(msg);
                 grid->setCellText(cell.row, cell.col, newText);
             }
         });
 
         // Callback: zmiana zaznaczenia
-        grid->setOnSelectionChange([statusLabelPtr](StringGrid*, SelectionRange range) {
-            if (range.isValid()) {
+        grid->setOnSelectionChange([statusLabelRef](StringGrid*, SelectionRange range) {
+            if (range.isValid() && statusLabelRef) {
                 auto norm = range.normalized();
                 std::string msg = "Selected: Rows " + std::to_string(norm.start.row + 1) + 
                                   "-" + std::to_string(norm.end.row + 1) + 
                                   ", Cols " + std::to_string(norm.start.col + 1) + 
                                   "-" + std::to_string(norm.end.col + 1);
-                statusLabelPtr->setText(msg);
+                statusLabelRef->setText(msg);
             }
         });
 
-        guiManager.addElement(std::move(grid));
-
         // --- Przycisk "Add Row" ---
         auto addButton = std::make_unique<Button>(guiManager, 700, 60, 180, 40, "Add Row");
-        addButton->setOnClickCallback([gridPtr, statusLabelPtr](GUIElement*) {
-            size_t currentRows = gridPtr->getRowCount();
-            gridPtr->setRowCount(currentRows + 1);
-            // Wypełnij nowy wiersz danymi
-            gridPtr->setCellText(currentRows, 0, std::to_string(currentRows + 1));
-            gridPtr->setCellText(currentRows, 1, "Item " + std::to_string(currentRows + 1));
-            gridPtr->setCellText(currentRows, 2, std::to_string((currentRows + 1) * 100));
-            gridPtr->setCellText(currentRows, 3, currentRows % 2 == 0 ? "Active" : "Inactive");
-            gridPtr->setCellText(currentRows, 4, "Notes for row " + std::to_string(currentRows + 1));
-            statusLabelPtr->setText("Added row " + std::to_string(currentRows + 1));
+        addButton->setOnClickCallback([gridRef, statusLabelRef](GUIElement*) {
+            if (!gridRef || !statusLabelRef) return;
+            size_t currentRows = gridRef->getRowCount();
+            gridRef->setRowCount(currentRows + 1);
+            gridRef->setCellText(currentRows, 0, std::to_string(currentRows + 1));
+            gridRef->setCellText(currentRows, 1, "Item " + std::to_string(currentRows + 1));
+            gridRef->setCellText(currentRows, 2, std::to_string((currentRows + 1) * 100));
+            gridRef->setCellText(currentRows, 3, currentRows % 2 == 0 ? "Active" : "Inactive");
+            gridRef->setCellText(currentRows, 4, "Notes for row " + std::to_string(currentRows + 1));
+            statusLabelRef->setText("Added row " + std::to_string(currentRows + 1));
         });
         guiManager.addElement(std::move(addButton));
 
         // --- Przycisk "Clear" ---
         auto clearButton = std::make_unique<Button>(guiManager, 700, 110, 180, 40, "Clear");
-        clearButton->setOnClickCallback([gridPtr, statusLabelPtr](GUIElement*) {
-            gridPtr->clear();
-            statusLabelPtr->setText("Grid cleared");
+        clearButton->setOnClickCallback([gridRef, statusLabelRef](GUIElement*) {
+            if (!gridRef || !statusLabelRef) return;
+            gridRef->clear();
+            statusLabelRef->setText("Grid cleared");
         });
         guiManager.addElement(std::move(clearButton));
 
         // --- Przycisk "Reset Data" ---
         auto resetButton = std::make_unique<Button>(guiManager, 700, 160, 180, 40, "Reset Data");
-        resetButton->setOnClickCallback([gridPtr, statusLabelPtr](GUIElement*) {
-            gridPtr->setRowCount(10);
+        resetButton->setOnClickCallback([gridRef, statusLabelRef](GUIElement*) {
+            if (!gridRef || !statusLabelRef) return;
+            gridRef->setRowCount(10);
             for (size_t row = 0; row < 10; ++row) {
-                gridPtr->setCellText(row, 0, std::to_string(row + 1));
-                gridPtr->setCellText(row, 1, "Item " + std::to_string(row + 1));
-                gridPtr->setCellText(row, 2, std::to_string((row + 1) * 100));
-                gridPtr->setCellText(row, 3, row % 2 == 0 ? "Active" : "Inactive");
-                gridPtr->setCellText(row, 4, "Notes for row " + std::to_string(row + 1));
+                gridRef->setCellText(row, 0, std::to_string(row + 1));
+                gridRef->setCellText(row, 1, "Item " + std::to_string(row + 1));
+                gridRef->setCellText(row, 2, std::to_string((row + 1) * 100));
+                gridRef->setCellText(row, 3, row % 2 == 0 ? "Active" : "Inactive");
+                gridRef->setCellText(row, 4, "Notes for row " + std::to_string(row + 1));
             }
-            statusLabelPtr->setText("Data reset to default");
+            statusLabelRef->setText("Data reset to default");
         });
         guiManager.addElement(std::move(resetButton));
 

@@ -17,15 +17,15 @@ int main(int, char**) {
 
         // Tworzenie etykiety do wyświetlania wartości
         auto valueLabel = std::make_unique<Label>(guiManager, 320, 100, "50", 16);
-        auto* valueLabelPtr = valueLabel.get();
+        auto valueLabelRef = guiManager.makeRef(valueLabel.get());
         guiManager.addElement(std::move(valueLabel));
 
         // Tworzenie suwaka i ustawienie callbacku
         auto slider = std::make_unique<Slider>(guiManager, 100, 100, 200, 20, 0, 100, 50, Orientation::Horizontal);
-        slider->setOnChangeCallback([valueLabelPtr](GUIElement* element) {
+        slider->setOnChangeCallback([valueLabelRef](GUIElement* element) {
             Slider* slider_ptr = static_cast<Slider*>(element);
-            if (slider_ptr && valueLabelPtr) {
-                valueLabelPtr->setText(std::to_string(slider_ptr->getValue()));
+            if (slider_ptr && valueLabelRef) {
+                valueLabelRef->setText(std::to_string(slider_ptr->getValue()));
             }
         });
         guiManager.addElement(std::move(slider));

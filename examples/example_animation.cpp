@@ -16,23 +16,26 @@ int main() {
         auto panel = std::make_unique<Panel>(gui, 50, 200, 100, 100);
         panel->setBackgroundColor(ElementState::Normal, {200, 100, 100, 255});
         auto* animatable_panel = gui.addElement(std::move(panel));
+        auto panelRef = gui.makeRef(animatable_panel);
 
         // 2. Tworzenie przycisku uruchamiającego animację
         auto button = std::make_unique<Button>(gui, 350, 50, 100, 40, "Animuj!");
-        button->setOnClickCallback([&gui, animatable_panel](GUIElement*) {
+        button->setOnClickCallback([&gui, panelRef](GUIElement*) {
+            if (!panelRef) return;
             std::cout << "Rozpoczynam animację..." << std::endl;
 
-            const float start_pos_y = static_cast<float>(animatable_panel->getY());
+            const float start_pos_y = static_cast<float>(panelRef->getY());
             const float target_pos_y = 400.0f;
 
             Animation::CompleteCallback on_forward_complete = [
-                &gui, animatable_panel,
+                &gui, panelRef,
                 start_pos_y,
                 target_pos_y
             ]() {
+                if (!panelRef) return;
                 std::cout << "Animacja do celu zakończona. Powrót..." << std::endl;
                 gui.getAnimationManager()->createAnimation(
-                    &animatable_panel->m_y,
+                    &panelRef->m_y,
                     target_pos_y,
                     start_pos_y,
                     2000,
@@ -42,7 +45,7 @@ int main() {
             };
             
             gui.getAnimationManager()->createAnimation(
-                &animatable_panel->m_y,
+                &panelRef->m_y,
                 start_pos_y,
                 target_pos_y,
                 2000,

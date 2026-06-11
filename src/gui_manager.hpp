@@ -19,6 +19,9 @@ class Theme;
 class Panel;
 class Label;
 
+template<typename T>
+class ElementRef;
+
 /**
  * @brief Callback type for window resize events
  * Parameters: new window width, new window height
@@ -88,8 +91,13 @@ public:
     bool isElementAlive(GUIElement* element) const;
     void registerElement(GUIElement* element);
     void unregisterElement(GUIElement* element);
+    
+    template<typename T = GUIElement>
+    ElementRef<T> makeRef(T* element);
 
 private:
+    std::unordered_set<GUIElement*> m_liveElements;
+    
     std::vector<std::unique_ptr<GUIElement>> m_elements;
     std::unique_ptr<GUIElement> tooltipElement;
     std::unique_ptr<Cursor> cursor;
@@ -109,10 +117,37 @@ private:
 
     Theme m_theme;
     
-    std::unordered_set<GUIElement*> m_liveElements;
-    
     // === Resize handling ===
     int m_windowWidth = 0;
     int m_windowHeight = 0;
     ResizeCallback m_resizeCallback;
 };
+
+template<typename T>
+class ElementRef {
+public:
+    ElementRef() : m_manager(nullptr), m_ptr(nullptr) {}
+    ElementRef(GUIManager& manager, T* ptr) : m_manager(&manager), m_ptr(ptr) {}
+
+    T* get() const {
+        if (m_ptr && m_manager && m_manager->isElementAlive(m_ptr)) {
+            return m_ptr;
+        }
+        return nullptr;
+    }
+
+    T* operator->() const { return get(); }
+    T& operator*() const { return *get(); }
+    explicit operator bool() const { return get() != nullptr; }
+
+    bool operator==(std::nullptr_t) const { return get() == nullptr; }
+
+private:
+    GUIManager* m_manager;
+    T* m_ptr;
+};
+
+template<typename T>
+ElementRef<T> GUIManager::makeRef(T* element) {
+    return ElementRef<T>(*this, element);
+}

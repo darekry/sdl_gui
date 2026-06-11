@@ -16,53 +16,56 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         GUIManager guiManager(renderer);
 
         auto statusLabel = std::make_unique<Label>(guiManager, 20, 20, "Selected: None");
-        Label* statusLabelPtr = statusLabel.get();
+        auto statusLabelRef = guiManager.makeRef(statusLabel.get());
         guiManager.addElement(std::move(statusLabel));
 
         auto listView = std::make_unique<ListView>(guiManager, 20, 60, 300, 400);
-        ListView* listViewPtr = listView.get();
+        auto listViewRef = guiManager.makeRef(listView.get());
 
         for (size_t i = 1; i <= 20; ++i) {
             listView->addItem("Element " + std::to_string(i));
         }
 
-        listView->setOnRowClick([statusLabelPtr](ListView* lv, size_t row) {
+        listView->setOnRowClick([statusLabelRef](ListView* lv, size_t row) {
             std::string item = lv->getItem(row);
-            statusLabelPtr->setText("Selected: " + item + " (row " + std::to_string(row + 1) + ")");
+            if (statusLabelRef) statusLabelRef->setText("Selected: " + item + " (row " + std::to_string(row + 1) + ")");
         });
 
-        listView->setOnRowDoubleClick([statusLabelPtr](ListView* lv, size_t row) {
+        listView->setOnRowDoubleClick([statusLabelRef](ListView* lv, size_t row) {
             std::string item = lv->getItem(row);
-            statusLabelPtr->setText("Activated: " + item);
+            if (statusLabelRef) statusLabelRef->setText("Activated: " + item);
         });
 
         guiManager.addElement(std::move(listView));
 
         auto addButton = std::make_unique<Button>(guiManager, 340, 60, 150, 40, "Add Item");
-        addButton->setOnClickCallback([listViewPtr, statusLabelPtr](GUIElement*) {
-            size_t count = listViewPtr->getItemCount();
-            listViewPtr->addItem("Element " + std::to_string(count + 1));
-            statusLabelPtr->setText("Added Element " + std::to_string(count + 1));
+        addButton->setOnClickCallback([listViewRef, statusLabelRef](GUIElement*) {
+            if (!listViewRef || !statusLabelRef) return;
+            size_t count = listViewRef->getItemCount();
+            listViewRef->addItem("Element " + std::to_string(count + 1));
+            statusLabelRef->setText("Added Element " + std::to_string(count + 1));
         });
         guiManager.addElement(std::move(addButton));
 
         auto removeButton = std::make_unique<Button>(guiManager, 340, 110, 150, 40, "Remove Selected");
-        removeButton->setOnClickCallback([listViewPtr, statusLabelPtr](GUIElement*) {
-            auto selected = listViewPtr->getSelectedRow();
+        removeButton->setOnClickCallback([listViewRef, statusLabelRef](GUIElement*) {
+            if (!listViewRef || !statusLabelRef) return;
+            auto selected = listViewRef->getSelectedRow();
             if (selected.has_value()) {
-                std::string item = listViewPtr->getItem(selected.value());
-                listViewPtr->removeItem(selected.value());
-                statusLabelPtr->setText("Removed: " + item);
+                std::string item = listViewRef->getItem(selected.value());
+                listViewRef->removeItem(selected.value());
+                statusLabelRef->setText("Removed: " + item);
             } else {
-                statusLabelPtr->setText("No item selected");
+                statusLabelRef->setText("No item selected");
             }
         });
         guiManager.addElement(std::move(removeButton));
 
         auto clearButton = std::make_unique<Button>(guiManager, 340, 160, 150, 40, "Clear All");
-        clearButton->setOnClickCallback([listViewPtr, statusLabelPtr](GUIElement*) {
-            listViewPtr->clearItems();
-            statusLabelPtr->setText("List cleared");
+        clearButton->setOnClickCallback([listViewRef, statusLabelRef](GUIElement*) {
+            if (!listViewRef || !statusLabelRef) return;
+            listViewRef->clearItems();
+            statusLabelRef->setText("List cleared");
         });
         guiManager.addElement(std::move(clearButton));
 

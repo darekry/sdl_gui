@@ -20,11 +20,11 @@ int main() {
 
         // AnimatedImage z sprite-sheet
         auto anim_uptr = std::make_unique<AnimatedImage>(gui, 50, 50, 256, 256);
-        AnimatedImage* anim_ptr = anim_uptr.get();
-        anim_uptr->setSpriteSheet("assets/sprites/placeholder.png", 4, 4); // Zakładamy 4x4 klatki
+        auto animRef = gui.makeRef(anim_uptr.get());
+        anim_uptr->setSpriteSheet("assets/sprites/placeholder.png", 4, 4);
         anim_uptr->setFPS(12.0f);
         anim_uptr->setLoop(true);
-        anim_uptr->setUseCache(false); // Direct render dla płynności
+        anim_uptr->setUseCache(false);
         main_panel->addChild(std::move(anim_uptr));
 
         // Panel kontrolny
@@ -34,13 +34,12 @@ int main() {
         // Przycisk Start/Stop
         auto start_stop_btn = std::make_unique<Button>(gui, 20, 50, 120, 40, "Start");
         bool is_playing = false;
-        start_stop_btn->setOnClickCallback([&](GUIElement*) {
+        start_stop_btn->setOnClickCallback([animRef, &is_playing](GUIElement*) {
+            if (!animRef) return;
             if (is_playing) {
-                anim_ptr->pause();
-                //start_stop_btn->setText("Resume");
+                animRef->pause();
             } else {
-                anim_ptr->play();
-               // start_stop_btn->setText("Pause");
+                animRef->play();
             }
             is_playing = !is_playing;
         });
@@ -48,10 +47,9 @@ int main() {
 
         // Przycisk Stop
         auto stop_btn = std::make_unique<Button>(gui, 160, 50, 100, 40, "Stop");
-        stop_btn->setOnClickCallback([&](GUIElement*) {
-            anim_ptr->stop();
+        stop_btn->setOnClickCallback([animRef, &is_playing](GUIElement*) {
+            if (animRef) animRef->stop();
             is_playing = false;
-          //  start_stop_btn->setText("Start");
         });
         control_panel->addChild(std::move(stop_btn));
 
@@ -62,7 +60,8 @@ int main() {
         speed_combo->addItem("Fast (24 FPS)");
         speed_combo->addItem("Very Fast (60 FPS)");
         speed_combo->setSelectedIndex(1); // Normal
-        speed_combo->on_selection_changed = [&](int index, [[maybe_unused]] const std::string& item) {
+        speed_combo->on_selection_changed = [animRef](int index, [[maybe_unused]] const std::string& item) {
+            if (!animRef) return;
             float fps = 12.0f;
             switch (index) {
                 case 0: fps = 6.0f; break;
@@ -70,16 +69,18 @@ int main() {
                 case 2: fps = 24.0f; break;
                 case 3: fps = 60.0f; break;
             }
-            anim_ptr->setFPS(fps);
+            animRef->setFPS(fps);
         };
         control_panel->addChild(std::move(speed_combo));
         control_panel->addChild(std::make_unique<Label>(gui, 180, 115, "Preset Speed"));
 
         // Slider dla regulacji FPS
         auto fps_slider = std::make_unique<Slider>(gui, 20, 170, 200, 30, 1, 120, 12, Orientation::Horizontal);
-        fps_slider->setOnChangeCallback([&](GUIElement*) {
-            int fps = fps_slider->getValue();
-            anim_ptr->setFPS(static_cast<float>(fps));
+        Slider* fps_slider_raw = fps_slider.get();
+        fps_slider->setOnChangeCallback([animRef, fps_slider_raw](GUIElement*) {
+            if (!animRef || !fps_slider_raw) return;
+            int fps = fps_slider_raw->getValue();
+            animRef->setFPS(static_cast<float>(fps));
         });
         control_panel->addChild(std::move(fps_slider));
         control_panel->addChild(std::make_unique<Label>(gui, 230, 175, "Custom FPS"));

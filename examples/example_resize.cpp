@@ -113,12 +113,13 @@ int main(int, char**)
             .bottom = -1    // Not set
         });
         Label* sizeLabelPtr = sizeLabel.get();
+        auto sizeLabelRef = guiManager.makeRef(sizeLabelPtr);
         guiManager.addElement(std::move(sizeLabel));
         
         // Resize callback to update size display (custom logic on top of anchors)
-        guiManager.setResizeCallback([sizeLabelPtr](int w, int h) {
-            if (sizeLabelPtr) {
-                sizeLabelPtr->setText("Window: " + std::to_string(w) + " x " + std::to_string(h));
+        guiManager.setResizeCallback([sizeLabelRef](int w, int h) {
+            if (sizeLabelRef) {
+                sizeLabelRef->setText("Window: " + std::to_string(w) + " x " + std::to_string(h));
             }
         });
         
