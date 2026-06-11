@@ -133,7 +133,7 @@ void GUIManager::render() {
 }
 
 void GUIManager::cleanup() {
-    LOG_DEBUG("GUIManager::cleanup() - ENTER, m_elements.size = %zu", m_elements.size());
+  //  LOG_DEBUG("GUIManager::cleanup() - ENTER, m_elements.size = %zu", m_elements.size());
     
     if (tooltipElement && tooltipElement->isMarkedForDeletion()) {
         LOG_DEBUG("GUIManager::cleanup() - clearing tooltipElement");
@@ -163,7 +163,7 @@ void GUIManager::cleanup() {
         releaseMouse();
     }
     
-    LOG_DEBUG("GUIManager::cleanup() - calling cleanup on elements");
+  //  LOG_DEBUG("GUIManager::cleanup() - calling cleanup on elements");
     for (const auto& element : m_elements) {
         if (element) {
             element->cleanup();
@@ -177,7 +177,7 @@ void GUIManager::cleanup() {
         }
     }
     
-    LOG_DEBUG("GUIManager::cleanup() - total elements to remove: %zu", total_removed_count);
+  //  LOG_DEBUG("GUIManager::cleanup() - total elements to remove: %zu", total_removed_count);
 
     // Elements to be removed (and their children via unique_ptr destructor)
     // After erase, all children will be destroyed too
@@ -202,7 +202,7 @@ void GUIManager::cleanup() {
     // Note: We cannot safely access m_keyboardFocusElement here if it was destroyed
     // The hasAncestorMarkedForDeletion check above should have handled it
     
-    LOG_DEBUG("GUIManager::cleanup() - EXIT, m_elements.size = %zu", m_elements.size());
+ //   LOG_DEBUG("GUIManager::cleanup() - EXIT, m_elements.size = %zu", m_elements.size());
 }
 
 void GUIManager::showTooltip(GUIElement* target, const std::string& text) {

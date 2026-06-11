@@ -406,9 +406,9 @@ bool StringGrid::handleMouseButtonDown(const SDL_Event& e) {
     if (currentTime - lastClickTime < 500 && cell == lastClickCell) {
         if (m_editable) {
             startEditing(cell.row, cell.col);
-            if (m_onCellDoubleClick) {
-                m_onCellDoubleClick(this, cell);
-            }
+        }
+        if (m_onCellDoubleClick) {
+            m_onCellDoubleClick(this, cell);
         }
     } else {
         setSelectedCell(cell.row, cell.col);
