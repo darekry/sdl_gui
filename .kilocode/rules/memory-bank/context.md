@@ -1,26 +1,37 @@
-# Aktualny stan projektu (2026-06-11)
+# Aktualny stan projektu (2026-06-12)
 
-## Status: STABILNY - SAFE ELEMENT REFERENCES ADDED
+## Status: STABILNY - SCROLL AREA + TEXTURE REFACTOR
 
-**Repozytorium:** 34 examples, 31 test files, 2,500+ assertions, all tests passing (1 pre-existing leak in test_radio_group)
+**Repozytorium:** 36 examples, 31 test files, 2,500+ assertions, all tests passing (1 pre-existing leak in test_radio_group)
 
 ## Ostatnie zmiany
 
-### Safe Element References (2026-06-11)
-- **Problem**: Raw pointers to GUIElement captured in callbacks become dangling when target element is deleted
-- **Solution**: `ElementRef<T>` wrapper + automatic `registerElement`/`unregisterElement` via `m_liveElements` set
-- **Core files**: `src/gui_manager.hpp` (ElementRef template + makeRef), `src/gui.cpp` (register/unregister in addChild/~GUIElement), `src/gui_manager.cpp` (register in addElement)
-- **Updated**: 14 example files — raw pointer captures replaced with `ElementRef` + null-check
-- **Pattern**: `auto* ptr = element.get()` → `auto ref = manager.makeRef(element.get());` + `if (ref) ref->method()`
+### ProgressBar Widget (2026-06-12)
+- **Nowy widget**: `ProgressBar` — pasek postępu (poziomy/pionowy) dziedziczący po `Panel`
+- **Core files**: `src/progress_bar.hpp`, `src/progress_bar.cpp`
+- **Example**: `examples/example_progress_bar.cpp`
+- **API**: `setValue(float)`, `setRange(min,max)`, `setOrientation()`, `setShowText()`, `setTextFormat()`
+- **Styling**: dodany domyślny styl w `theme.cpp` dla "ProgressBar"
 
-### Regression Fix (2026-06-05)
-- `getComposedStyle()` merge direction inverted — local overrides silently ignored. Reversed order: local style first, fill gaps from theme.
+### ScrollArea Widget (2026-06-12)
+- **Nowy widget**: `ScrollArea` — generyczny, przewijalny kontener dla dowolnych drzew widgetów
+- **Architektura**: kompozycja z istniejących widgetów (Panel viewport + Panel content + Slider)
+- **Core files**: `src/scroll_area.hpp`, `src/scroll_area.cpp`
+- **Example**: `examples/example_scroll_area.cpp` — demonstruje pionowe/poziome przewijanie, auto-hide suwaków, mouse wheel
+- **API**: `setContent()`, `setContentSize()`, `setScrollEnabled()`, `setScrollOffset()`
+
+### Texture Rendering Refactor (2026-06-12)
+- **Problem**: `drawBackgroundAndBorder()` nie renderował `style.texture` — tylko Button i Panel robiły to ręcznie
+- **Solution**: Tekstura przeniesiona do `drawBackgroundAndBorder()` w `gui.cpp`, pomiędzy tłem a obramowaniem
+- **Usunięcie duplikacji**: Button::draw i Panel::draw — usunięty ręczny kod renderowania tekstury
+- **Checkbox fix**: Usunięta ścieżka `style.texture` jako symbolu checkmarka (kolidowała z nowym znaczeniem)
+- **Efekt**: Wszystkie widgety wołające `drawBackgroundAndBorder()` obsługują teraz tekstury per-stan automatycznie
 
 ## Kluczowe stats
 
 | Metric | Value |
 |--------|-------|
-| Examples | 34 |
+| Examples | 36 |
 | Test files | 31 |
 | Test assertions | ~2,500 |
-| Widget types | 16 |
+| Widget types | 18 |

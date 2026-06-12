@@ -85,14 +85,6 @@ const char* Panel::getComponentType() const {
 
 void Panel::draw(SDL_Renderer* renderer) {
     drawBackgroundAndBorder(renderer);
-
-    const Style& resolvedStyle = getComposedStyle(m_state);
-
-    // Rysuj teksturę
-    if (resolvedStyle.texture.has_value()) {
-        SDL_Rect destRect = {0, 0, m_width, m_height};
-        SDL_RenderCopy(renderer, resolvedStyle.texture.value().get(), nullptr, &destRect);
-    }
 }
 
 void Panel::onMouseCaptureLost() {

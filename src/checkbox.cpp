@@ -66,13 +66,10 @@ const char* Checkbox::getComponentType() const {
 }
 void Checkbox::draw(SDL_Renderer* renderer) {
     drawBackgroundAndBorder(renderer);
-    const auto& style = getComposedStyle(m_state);
 
-    // 3. Rysowanie "ptaszka", jeśli zaznaczony
     if (m_isChecked) {
-        if (style.texture) {
-            SDL_RenderCopy(renderer, (*style.texture).get(), nullptr, nullptr);
-        } else if (style.textColor) {
+        const auto& style = getComposedStyle(m_state);
+        if (style.textColor) {
             const auto& c = style.textColor.value();
             SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
 

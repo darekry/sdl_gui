@@ -122,6 +122,12 @@ Theme Theme::createDefaultTheme() {
     textAreaHover.borderColor = {100, 100, 100, 255};
     theme.setStyle("TextArea", ElementState::Hover, textAreaHover);
 
+    // === ProgressBar style ===
+    Style progressBarStyle;
+    progressBarStyle.borderWidth = 1;
+    progressBarStyle.borderRadius = 4;
+    theme.setStyle("ProgressBar", ElementState::Normal, progressBarStyle);
+
     // === StringGrid style ===
     Style stringGridStyle;
     stringGridStyle.backgroundColor = {255, 255, 255, 255};

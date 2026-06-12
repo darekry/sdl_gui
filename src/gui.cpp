@@ -463,6 +463,12 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
         }
     }
 
+    // Rysowanie tekstury tła (pomiędzy tłem a obramowaniem)
+    if (style.texture.has_value()) {
+        SDL_Rect texRect = {0, 0, m_width, m_height};
+        SDL_RenderCopy(renderer, style.texture.value().get(), nullptr, &texRect);
+    }
+
     // Rysowanie obramowania
     if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
         const SDL_Color& bc = *style.borderColor;
