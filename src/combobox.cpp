@@ -3,8 +3,8 @@
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 import std.compat;
 ComboBox::ComboBox(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h),
@@ -29,15 +29,15 @@ bool ComboBox::handleEvent(const SDL_Event& event) {
         return true;
     }
 
-    if (event.type == SDL_MOUSEBUTTONDOWN) {
+    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         if (contains(event.button.x, event.button.y)) {
             toggleDropdown();
             return true;
         }
     }
 
-    if (m_is_expanded && event.type == SDL_MOUSEBUTTONDOWN) {
-        const auto p = SDL_Point{event.button.x, event.button.y};
+    if (m_is_expanded && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        const auto p = SDL_Point{static_cast<int>(event.button.x), static_cast<int>(event.button.y)};
         auto abs_pos = getAbsolutePosition();
         auto combined_area = SDL_Rect{abs_pos.x, abs_pos.y, m_width, m_height + m_dropdown_panel->getHeight()};
         if (!SDL_PointInRect(&p, &combined_area)) {
@@ -64,9 +64,9 @@ void ComboBox::draw(SDL_Renderer* renderer) {
                 SharedTexture textTexture = textureManager.createTextureFromText(m_options[static_cast<size_t>(m_selected_index)], font, *style.textColor);
                 if (textTexture) {
                     int text_w, text_h;
-                    SDL_QueryTexture(textTexture.get(), nullptr, nullptr, &text_w, &text_h);
+                    ({ float _fw=0,_fh=0; SDL_GetTextureSize(textTexture.get(), &_fw, &_fh); text_w=static_cast<int>(_fw); text_h=static_cast<int>(_fh); });
                     SDL_Rect dstRect = { 5, (m_height - text_h) / 2, text_w, text_h };
-                    SDL_RenderCopy(renderer, textTexture.get(), nullptr, &dstRect);
+                    ({ SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, textTexture.get(), nullptr, &_dr); });
                 }
             }
         }
@@ -77,21 +77,24 @@ void ComboBox::draw(SDL_Renderer* renderer) {
     const int arrow_size = 6;
     const int arrow_margin = 10;
     
-    SDL_Point points[4];
-    int center_y = m_height / 2;
+    SDL_FPoint points[4];
+    float center_y = static_cast<float>(m_height) / 2.0f;
+    float aw = static_cast<float>(arrow_size);
+    float am = static_cast<float>(arrow_margin);
+    float fw = static_cast<float>(m_width);
 
     if (m_is_expanded) {
-        points[0] = {m_width - arrow_margin - arrow_size, center_y + arrow_size / 2};
-        points[1] = {m_width - arrow_margin, center_y - arrow_size / 2};
-        points[2] = {m_width - arrow_margin - arrow_size, center_y - arrow_size / 2};
+        points[0] = {fw - am - aw, center_y + aw / 2.0f};
+        points[1] = {fw - am, center_y - aw / 2.0f};
+        points[2] = {fw - am - aw, center_y - aw / 2.0f};
         points[3] = points[0]; 
     } else {
-        points[0] = {m_width - arrow_margin - arrow_size, center_y - arrow_size / 2};
-        points[1] = {m_width - arrow_margin, center_y + arrow_size / 2};
-        points[2] = {m_width - arrow_margin - arrow_size / 2, center_y + arrow_size / 2};
+        points[0] = {fw - am - aw, center_y - aw / 2.0f};
+        points[1] = {fw - am, center_y + aw / 2.0f};
+        points[2] = {fw - am - aw / 2.0f, center_y + aw / 2.0f};
         points[3] = points[0];
     }
-    SDL_RenderDrawLines(renderer, points, 3);
+    SDL_RenderLines(renderer, points, 3);
 
     if (m_is_expanded && m_needs_update) {
         createDropdownButtons();

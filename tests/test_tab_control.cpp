@@ -33,8 +33,8 @@ TEST_CASE("TabControl manages tabs and panels", "[tab_control]") {
         auto* secondButton = dynamic_cast<Button*>(tabs->getChildren()[2].get());
         REQUIRE(secondButton != nullptr);
         auto abs = secondButton->getAbsolutePosition();
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
 
         REQUIRE_FALSE(firstPanel->isVisible());
         REQUIRE(secondPanel->isVisible());
@@ -51,8 +51,8 @@ TEST_CASE("TabControl manages tabs and panels", "[tab_control]") {
         REQUIRE(firstPanel->isVisible());
         
         // Click on active tab
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
         
         // Should still be visible
         REQUIRE(firstPanel->isVisible());
@@ -318,8 +318,8 @@ TEST_CASE("TabControl tab button callbacks", "[tab_control]") {
         auto abs = button2->getAbsolutePosition();
         
         // Simulate click on second tab button
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, abs.x + 5, abs.y + 5));
         
         // Tab should have switched
         REQUIRE_FALSE(panel1->isVisible());

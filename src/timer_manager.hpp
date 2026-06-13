@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 import std.compat;
 
@@ -9,7 +9,7 @@ class GUIElement;
 
 struct TimerEvent {
     uint32_t id;
-    uint32_t executionTime;
+    Uint64 executionTime;
     GUIElement* target;
     std::function<void(GUIElement*)> callback;
     bool singleShot;

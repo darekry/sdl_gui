@@ -13,8 +13,8 @@ TEST_CASE("Canvas - Drawing Behavior", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(canvasPtr->getWidth() == 100);
     }
@@ -24,10 +24,10 @@ TEST_CASE("Canvas - Drawing Behavior", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 10));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 10, 10));
         manager.processEvent(helper.createMouseMotion(50, 50));
         manager.processEvent(helper.createMouseMotion(100, 100));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 100, 100));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 100, 100));
 
         REQUIRE(canvasPtr->getWidth() == 200);
     }
@@ -37,9 +37,9 @@ TEST_CASE("Canvas - Drawing Behavior", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         manager.processEvent(helper.createMouseMotion(40, 40));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 40, 40));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 40, 40));
 
         manager.processEvent(helper.createMouseMotion(60, 60));
 
@@ -51,12 +51,12 @@ TEST_CASE("Canvas - Drawing Behavior", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 25, 25));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 25, 25));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 25, 25));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 25, 25));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
         manager.processEvent(helper.createMouseMotion(75, 75));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 75, 75));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 75, 75));
 
         REQUIRE(canvasPtr->getWidth() == 100);
     }
@@ -71,9 +71,9 @@ TEST_CASE("Canvas - Drawing Bounds", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
         manager.processEvent(helper.createMouseMotion(80, 80));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 80, 80));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 80, 80));
 
         REQUIRE(canvasPtr->contains(50, 50));
     }
@@ -83,9 +83,9 @@ TEST_CASE("Canvas - Drawing Bounds", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 200, 200));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 200, 200));
         manager.processEvent(helper.createMouseMotion(210, 210));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 210, 210));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 210, 210));
 
         REQUIRE_FALSE(canvasPtr->contains(200, 200));
     }
@@ -95,9 +95,9 @@ TEST_CASE("Canvas - Drawing Bounds", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 0, 0));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 0, 0));
         manager.processEvent(helper.createMouseMotion(99, 99));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 99, 99));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 99, 99));
 
         REQUIRE(canvasPtr->contains(0, 0));
         REQUIRE(canvasPtr->contains(99, 99));
@@ -108,9 +108,9 @@ TEST_CASE("Canvas - Drawing Bounds", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 48, 48));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 48, 48));
         manager.processEvent(helper.createMouseMotion(49, 49));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 49, 49));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 49, 49));
 
         REQUIRE(canvasPtr->getWidth() == 50);
     }
@@ -120,9 +120,9 @@ TEST_CASE("Canvas - Drawing Bounds", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 25, 48));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 25, 48));
         manager.processEvent(helper.createMouseMotion(25, 49));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 25, 49));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 25, 49));
 
         REQUIRE(canvasPtr->getHeight() == 50);
     }
@@ -137,9 +137,9 @@ TEST_CASE("Canvas - Right Click", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_RIGHT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 50, 50));
         manager.processEvent(helper.createMouseMotion(60, 60));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT, 60, 60));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_RIGHT, 60, 60));
 
         REQUIRE(canvasPtr->isEnabled());
     }
@@ -149,11 +149,11 @@ TEST_CASE("Canvas - Right Click", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_RIGHT, 50, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_RIGHT, 50, 50));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 50));
 
         REQUIRE(canvasPtr->isEnabled());
     }
@@ -168,9 +168,9 @@ TEST_CASE("Canvas - Clear", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         manager.processEvent(helper.createMouseMotion(80, 80));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 80, 80));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 80, 80));
 
         REQUIRE_NOTHROW(canvasPtr->clear());
     }
@@ -180,14 +180,14 @@ TEST_CASE("Canvas - Clear", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 10));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 10, 10));
         manager.processEvent(helper.createMouseMotion(90, 90));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 90, 90));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 90, 90));
 
         canvasPtr->clear();
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 50));
 
         REQUIRE(canvasPtr->getWidth() == 100);
     }
@@ -202,8 +202,8 @@ TEST_CASE("Canvas - Clear", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         canvasPtr->clear();
         canvasPtr->clear();
@@ -236,13 +236,13 @@ TEST_CASE("Canvas - Position/Dimensions", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 110, 110));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 110, 110));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 110, 110));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 110, 110));
 
         canvasPtr->setPosition(200, 200);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 210, 210));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 210, 210));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 210, 210));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 210, 210));
 
         REQUIRE(canvasPtr->getX() == 200);
         REQUIRE(canvasPtr->getY() == 200);
@@ -280,9 +280,9 @@ TEST_CASE("Canvas - Disabled State", "[canvas]") {
         canvasPtr->setEnabled(false);
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
         manager.processEvent(helper.createMouseMotion(60, 60));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 60, 60));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 60, 60));
 
         REQUIRE_FALSE(canvasPtr->isEnabled());
     }
@@ -292,14 +292,14 @@ TEST_CASE("Canvas - Disabled State", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         canvasPtr->setEnabled(false);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
         manager.processEvent(helper.createMouseMotion(80, 80));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 80, 80));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 80, 80));
 
         REQUIRE_FALSE(canvasPtr->isEnabled());
     }
@@ -310,14 +310,14 @@ TEST_CASE("Canvas - Disabled State", "[canvas]") {
         canvasPtr->setEnabled(false);
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         canvasPtr->setEnabled(true);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
         manager.processEvent(helper.createMouseMotion(70, 70));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 70, 70));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 70, 70));
 
         REQUIRE(canvasPtr->isEnabled());
     }
@@ -338,9 +338,9 @@ TEST_CASE("Canvas - Hidden State", "[canvas]") {
         canvasPtr->setVisible(false);
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
         manager.processEvent(helper.createMouseMotion(60, 60));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 60, 60));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 60, 60));
 
         REQUIRE_FALSE(canvasPtr->isVisible());
     }
@@ -351,13 +351,13 @@ TEST_CASE("Canvas - Hidden State", "[canvas]") {
         manager.addElement(std::move(canvas));
 
         canvasPtr->setVisible(false);
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         canvasPtr->setVisible(true);
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
         manager.processEvent(helper.createMouseMotion(80, 80));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 80, 80));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 80, 80));
 
         REQUIRE(canvasPtr->isVisible());
     }
@@ -397,13 +397,13 @@ TEST_CASE("Canvas - Multiple Canvas", "[canvas]") {
         manager.addElement(std::move(canvas1));
         manager.addElement(std::move(canvas2));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
         manager.processEvent(helper.createMouseMotion(80, 80));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 80, 80));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 80, 80));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 200, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 200, 50));
         manager.processEvent(helper.createMouseMotion(230, 80));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 230, 80));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 230, 80));
 
         REQUIRE(ptr1->getWidth() == 100);
         REQUIRE(ptr2->getWidth() == 100);
@@ -419,8 +419,8 @@ TEST_CASE("Canvas - Multiple Canvas", "[canvas]") {
         manager.addElement(std::move(canvas1));
         manager.addElement(std::move(canvas2));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 25, 25));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 25, 25));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 25, 25));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 25, 25));
 
         ptr2->clear();
 
@@ -438,11 +438,11 @@ TEST_CASE("Canvas - Multiple Canvas", "[canvas]") {
         manager.addElement(std::move(canvas1));
         manager.addElement(std::move(canvas2));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 50));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 250, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 250, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 250, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 250, 50));
 
         ptr1->clear();
 
@@ -472,9 +472,9 @@ TEST_CASE("Canvas - Mouse Motion Without Button", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         manager.processEvent(helper.createMouseMotion(40, 40));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 40, 40));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 40, 40));
 
         manager.processEvent(helper.createMouseMotion(80, 80));
         manager.processEvent(helper.createMouseMotion(90, 90));
@@ -492,13 +492,13 @@ TEST_CASE("Canvas - Overlapping Drawing", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         manager.processEvent(helper.createMouseMotion(80, 80));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 80, 80));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 80, 80));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 80, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 80, 20));
         manager.processEvent(helper.createMouseMotion(20, 80));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 80));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 80));
 
         REQUIRE(canvasPtr->getWidth() == 100);
     }
@@ -508,14 +508,14 @@ TEST_CASE("Canvas - Overlapping Drawing", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 50));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 50));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 50));
 
         REQUIRE(canvasPtr->getWidth() == 100);
     }
@@ -525,17 +525,17 @@ TEST_CASE("Canvas - Overlapping Drawing", "[canvas]") {
         Canvas* canvasPtr = canvas.get();
         manager.addElement(std::move(canvas));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 10));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 10, 10));
         manager.processEvent(helper.createMouseMotion(190, 10));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 190, 10));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 190, 10));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 10));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 10));
         manager.processEvent(helper.createMouseMotion(100, 190));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 100, 190));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 100, 190));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 100));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 10, 100));
         manager.processEvent(helper.createMouseMotion(190, 100));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 190, 100));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 190, 100));
 
         REQUIRE(canvasPtr->getWidth() == 200);
     }

@@ -295,8 +295,8 @@ TEST_CASE("ListView - Row Click Selection", "[list_view]") {
         int clickX = 10 + 5;
         int clickY = 10 + ROW_HEIGHT / 2;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, clickY));
 
         REQUIRE(listViewPtr->getSelectedRow() == 0);
     }
@@ -313,8 +313,8 @@ TEST_CASE("ListView - Row Click Selection", "[list_view]") {
         int clickX = 10 + 5;
         int clickY = 10 + ROW_HEIGHT + ROW_HEIGHT / 2;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, clickY));
 
         REQUIRE(listViewPtr->getSelectedRow() == 1);
     }
@@ -331,8 +331,8 @@ TEST_CASE("ListView - Row Click Selection", "[list_view]") {
         int clickX = 10 + 5;
         int clickY = 10 + 2 * ROW_HEIGHT + ROW_HEIGHT / 2;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, clickY));
 
         REQUIRE(listViewPtr->getSelectedRow() == 2);
     }
@@ -346,12 +346,12 @@ TEST_CASE("ListView - Row Click Selection", "[list_view]") {
         listViewPtr->addItem("Row 1");
 
         int clickX = 10 + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
         REQUIRE(listViewPtr->getSelectedRow() == 0);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT + ROW_HEIGHT / 2));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT + ROW_HEIGHT / 2));
         REQUIRE(listViewPtr->getSelectedRow() == 1);
     }
 }
@@ -375,8 +375,8 @@ TEST_CASE("ListView - Row Click Callback", "[list_view]") {
         int clickX = 10 + 5;
         int clickY = 10 + ROW_HEIGHT + ROW_HEIGHT / 2;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, clickY));
 
         REQUIRE(clickedRow == 1);
     }
@@ -392,8 +392,8 @@ TEST_CASE("ListView - Row Click Callback", "[list_view]") {
         listViewPtr->setOnRowClick([&](ListView* src, size_t) { callbackSource = src; });
 
         int clickX = 10 + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
 
         REQUIRE(callbackSource == listViewPtr);
     }
@@ -410,11 +410,11 @@ TEST_CASE("ListView - Row Click Callback", "[list_view]") {
         listViewPtr->setOnRowClick([&](ListView*, size_t) { ++clickCount; });
 
         int clickX = 10 + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT / 2));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT + ROW_HEIGHT / 2));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT + ROW_HEIGHT / 2));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, 10 + ROW_HEIGHT + ROW_HEIGHT / 2));
 
         REQUIRE(clickCount == 2);
     }
@@ -439,10 +439,10 @@ TEST_CASE("ListView - Row Double-Click Callback", "[list_view]") {
         int clickX = 10 + 5;
         int clickY = 10 + ROW_HEIGHT + ROW_HEIGHT / 2;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, clickY));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
 
         REQUIRE(doubleClickedRow == 1);
     }
@@ -462,9 +462,9 @@ TEST_CASE("ListView - Row Double-Click Callback", "[list_view]") {
         int clickX = 10 + 5;
         int clickY = 10 + 2 * ROW_HEIGHT + ROW_HEIGHT / 2;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
 
         REQUIRE(clickedRow == 2);
     }
@@ -489,9 +489,9 @@ TEST_CASE("ListView - Row Activate Callback", "[list_view]") {
         int clickX = 10 + 5;
         int clickY = 10 + ROW_HEIGHT / 2;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
 
         REQUIRE(activatedRow == 0);
     }
@@ -509,7 +509,7 @@ TEST_CASE("ListView - Row Activate Callback", "[list_view]") {
         size_t activatedRow = SIZE_MAX;
         listViewPtr->setOnRowActivate([&](ListView*, size_t row) { activatedRow = row; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN));
 
         REQUIRE(activatedRow == 1);
     }
@@ -525,7 +525,7 @@ TEST_CASE("ListView - Row Activate Callback", "[list_view]") {
         bool activated = false;
         listViewPtr->setOnRowActivate([&](ListView*, size_t) { activated = true; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN));
 
         REQUIRE(!activated);
     }
@@ -543,7 +543,7 @@ TEST_CASE("ListView - Row Activate Callback", "[list_view]") {
         size_t activatedRow = SIZE_MAX;
         listViewPtr->setOnRowActivate([&](ListView*, size_t row) { activatedRow = row; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_KP_ENTER));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_KP_ENTER));
 
         REQUIRE(activatedRow == 0);
     }
@@ -564,7 +564,7 @@ TEST_CASE("ListView - Keyboard Navigation", "[list_view]") {
         listViewPtr->addItem("Row 2");
         listViewPtr->setSelectedRow(0);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN));
 
         REQUIRE(listViewPtr->getSelectedRow() == 1);
     }
@@ -580,7 +580,7 @@ TEST_CASE("ListView - Keyboard Navigation", "[list_view]") {
         listViewPtr->addItem("Row 2");
         listViewPtr->setSelectedRow(2);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_UP));
 
         REQUIRE(listViewPtr->getSelectedRow() == 1);
     }
@@ -595,7 +595,7 @@ TEST_CASE("ListView - Keyboard Navigation", "[list_view]") {
         listViewPtr->addItem("Row 1");
         listViewPtr->setSelectedRow(1);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN));
 
         REQUIRE(listViewPtr->getSelectedRow() == 1);
     }
@@ -610,7 +610,7 @@ TEST_CASE("ListView - Keyboard Navigation", "[list_view]") {
         listViewPtr->addItem("Row 1");
         listViewPtr->setSelectedRow(0);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_UP));
 
         REQUIRE(listViewPtr->getSelectedRow() == 0);
     }
@@ -624,7 +624,7 @@ TEST_CASE("ListView - Keyboard Navigation", "[list_view]") {
         listViewPtr->addItem("Row 0");
         listViewPtr->addItem("Row 1");
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN));
 
         REQUIRE(listViewPtr->getSelectedRow() == std::nullopt);
     }
@@ -637,10 +637,10 @@ TEST_CASE("ListView - Keyboard Navigation", "[list_view]") {
         listViewPtr->addItem("Row 0");
         listViewPtr->setSelectedRow(0);
 
-        bool handled = listViewPtr->handleEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        bool handled = listViewPtr->handleEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         REQUIRE(!handled);
 
-        handled = listViewPtr->handleEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT));
+        handled = listViewPtr->handleEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT));
         REQUIRE(!handled);
     }
 
@@ -656,9 +656,9 @@ TEST_CASE("ListView - Keyboard Navigation", "[list_view]") {
         listViewPtr->addItem("Row 3");
         listViewPtr->setSelectedRow(0);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN));
 
         REQUIRE(listViewPtr->getSelectedRow() == 3);
     }
@@ -728,8 +728,8 @@ TEST_CASE("ListView - Disabled State", "[list_view]") {
         int clickX = 10 + 5;
         int clickY = 10 + ROW_HEIGHT / 2;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, clickY));
 
         REQUIRE(listViewPtr->getSelectedRow() == std::nullopt);
     }
@@ -745,7 +745,7 @@ TEST_CASE("ListView - Disabled State", "[list_view]") {
         listViewPtr->addItem("Row 1");
         listViewPtr->setSelectedRow(0);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN));
 
         REQUIRE(listViewPtr->getSelectedRow() == 0);
     }
@@ -761,7 +761,7 @@ TEST_CASE("ListView - Disabled State", "[list_view]") {
         listViewPtr->addItem("Row 1");
         listViewPtr->setSelectedRow(0);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN));
 
         REQUIRE(listViewPtr->getSelectedRow() == 0);
     }
@@ -784,8 +784,8 @@ TEST_CASE("ListView - Hidden State", "[list_view]") {
         int clickX = 10 + 5;
         int clickY = 10 + ROW_HEIGHT / 2;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, clickX, clickY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, clickX, clickY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, clickX, clickY));
 
         REQUIRE(listViewPtr->getSelectedRow() == std::nullopt);
     }
@@ -801,7 +801,7 @@ TEST_CASE("ListView - Hidden State", "[list_view]") {
         listViewPtr->addItem("Row 1");
         listViewPtr->setSelectedRow(0);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN));
 
         REQUIRE(listViewPtr->getSelectedRow() == 0);
     }
@@ -830,7 +830,7 @@ TEST_CASE("ListView - Callback Independence", "[list_view]") {
 
         listViewPtr->setSelectedRow(0);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN));
 
         REQUIRE(clickRow == SIZE_MAX);
         REQUIRE(doubleClickRow == SIZE_MAX);
@@ -863,7 +863,7 @@ TEST_CASE("ListView - Callback Independence", "[list_view]") {
         bool activated = false;
         listViewPtr->setOnRowActivate([&](ListView*, size_t) { activated = true; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN));
 
         REQUIRE(!activated);
     }

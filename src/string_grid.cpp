@@ -2,7 +2,7 @@
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
-#include "SDL2/SDL_ttf.h"
+#include <SDL3_ttf/SDL_ttf.h>
 
 import std.compat;
 
@@ -373,8 +373,8 @@ void StringGrid::renderOverlay(SDL_Renderer* renderer) {
 // Event handler helpers
 bool StringGrid::handleMouseButtonDown(const SDL_Event& e) {
     auto absPos = getAbsolutePosition();
-    int localX = e.button.x - absPos.x;
-    int localY = e.button.y - absPos.y;
+    int localX = static_cast<int>(e.button.x) - absPos.x;
+    int localY = static_cast<int>(e.button.y) - absPos.y;
     
     int cellAreaX = getCellAreaX();
     int cellAreaY = getCellAreaY();
@@ -426,8 +426,8 @@ bool StringGrid::handleMouseMotion(const SDL_Event& e) {
     }
     
     auto absPos = getAbsolutePosition();
-    int localX = e.motion.x - absPos.x;
-    int localY = e.motion.y - absPos.y;
+    int localX = static_cast<int>(e.motion.x) - absPos.x;
+    int localY = static_cast<int>(e.motion.y) - absPos.y;
     
     CellCoord cell = getCellAtPosition(localX, localY);
     if (cell.isValid() && m_selectedCell) {
@@ -447,7 +447,7 @@ bool StringGrid::handleMouseWheel(const SDL_Event& e) {
     }
     
     int mouseX, mouseY;
-    SDL_GetMouseState(&mouseX, &mouseY);
+    ({ float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); });
     auto absPos = getAbsolutePosition();
     
     if (mouseX < absPos.x || mouseX >= absPos.x + m_width ||
@@ -466,7 +466,7 @@ bool StringGrid::handleMouseWheel(const SDL_Event& e) {
 
 bool StringGrid::handleKeyboard(const SDL_Event& e) {
     // Obsługa Ctrl+C - kopiowanie zaznaczenia do schowka
-    if (e.key.keysym.sym == SDLK_c && (SDL_GetModState() & KMOD_CTRL)) {
+    if (e.key.key == SDLK_C && (SDL_GetModState() & SDL_KMOD_CTRL)) {
         copySelectionToClipboard();
         return true;
     }
@@ -479,7 +479,7 @@ bool StringGrid::handleKeyboard(const SDL_Event& e) {
     size_t newRow = m_selectedCell->row;
     size_t newCol = m_selectedCell->col;
     
-    switch (e.key.keysym.sym) {
+    switch (e.key.key) {
         case SDLK_UP:
             if (newRow > 0) {
                 --newRow;
@@ -625,11 +625,11 @@ bool StringGrid::handleEvent(const SDL_Event& e) {
         if (m_cellEditor->handleEvent(e)) {
             return true;
         }
-        if (e.type == SDL_MOUSEBUTTONDOWN) {
+        if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
             SDL_Rect cellRect = getCellRect(m_editingCell.row, m_editingCell.col);
             auto absPos = getAbsolutePosition();
             SDL_Rect absCellRect = {absPos.x + cellRect.x, absPos.y + cellRect.y, cellRect.w, cellRect.h};
-            SDL_Point mousePoint = {e.button.x, e.button.y};
+            SDL_Point mousePoint = {static_cast<int>(e.button.x), static_cast<int>(e.button.y)};
             if (!SDL_PointInRect(&mousePoint, &absCellRect)) {
                 stopEditing();
             }
@@ -638,29 +638,29 @@ bool StringGrid::handleEvent(const SDL_Event& e) {
     
     // Handle mouse events
     switch (e.type) {
-        case SDL_MOUSEBUTTONDOWN:
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
             if (e.button.button == SDL_BUTTON_LEFT) {
                 if (handleMouseButtonDown(e)) {
                     return true;
                 }
             }
             break;
-        case SDL_MOUSEBUTTONUP:
+        case SDL_EVENT_MOUSE_BUTTON_UP:
             if (e.button.button == SDL_BUTTON_LEFT) {
                 m_isSelecting = false;
             }
             break;
-        case SDL_MOUSEMOTION:
+        case SDL_EVENT_MOUSE_MOTION:
             if (handleMouseMotion(e)) {
                 return true;
             }
             break;
-        case SDL_MOUSEWHEEL:
+        case SDL_EVENT_MOUSE_WHEEL:
             if (handleMouseWheel(e)) {
                 return true;
             }
             break;
-        case SDL_KEYDOWN:
+        case SDL_EVENT_KEY_DOWN:
             if (handleKeyboard(e)) {
                 return true;
             }
@@ -698,13 +698,13 @@ void StringGrid::drawDirect(SDL_Renderer* renderer) {
     int cellAreaHeight = getVisibleCellAreaHeight();
     
     SDL_Rect cellClipRect = {offsetX + cellAreaX, offsetY + cellAreaY, cellAreaWidth, cellAreaHeight};
-    SDL_RenderSetClipRect(renderer, &cellClipRect);
+    SDL_SetRenderClipRect(renderer, &cellClipRect);
     
     VisibleRange range = calculateVisibleRange();
     drawCells(renderer, offsetX, offsetY, cellBackgroundColor, textColor, range);
     drawSelection(renderer, offsetX, offsetY);
     
-    SDL_RenderSetClipRect(renderer, nullptr);
+    SDL_SetRenderClipRect(renderer, nullptr);
     
     if (m_showColumnHeaders) {
         drawColumnHeaders(renderer, offsetX, offsetY, headerBackgroundColor, headerTextColor, gridLineColor);
@@ -749,13 +749,13 @@ void StringGrid::renderText(SDL_Renderer* renderer, std::string_view text, int x
     if (!texture) return;
     
     int textWidth, textHeight;
-    SDL_QueryTexture(texture.get(), nullptr, nullptr, &textWidth, &textHeight);
+    ({ float _fw=0,_fh=0; SDL_GetTextureSize(texture.get(), &_fw, &_fh); textWidth=static_cast<int>(_fw); textHeight=static_cast<int>(_fh); });
     
     int drawX = centerX ? x - textWidth / 2 : x;
     int drawY = centerY ? y - textHeight / 2 : y;
     
     SDL_Rect destRect = {drawX, drawY, textWidth, textHeight};
-    SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
+    ({ SDL_FRect _dr = {static_cast<float>(destRect.x), static_cast<float>(destRect.y), static_cast<float>(destRect.w), static_cast<float>(destRect.h)}; SDL_RenderTexture(renderer, texture.get(), nullptr, &_dr); });
 }
 
 // Metody pomocnicze
@@ -985,7 +985,7 @@ void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,
     SDL_SetRenderDrawColor(renderer, cellBackgroundColor.r, cellBackgroundColor.g,
                            cellBackgroundColor.b, cellBackgroundColor.a);
     SDL_Rect cellRect = {screenX, screenY, width, height};
-    SDL_RenderFillRect(renderer, &cellRect);
+    ({ SDL_FRect _fr = {static_cast<float>(cellRect.x), static_cast<float>(cellRect.y), static_cast<float>(cellRect.w), static_cast<float>(cellRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
     
     if (row < m_data.size() && col < m_data[row].size() && !m_data[row][col].empty()) {
         auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
@@ -995,18 +995,18 @@ void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,
         if (!texture) return;
         
         int textWidth, textHeight;
-        SDL_QueryTexture(texture.get(), nullptr, nullptr, &textWidth, &textHeight);
+        ({ float _fw=0,_fh=0; SDL_GetTextureSize(texture.get(), &_fw, &_fh); textWidth=static_cast<int>(_fw); textHeight=static_cast<int>(_fh); });
         
         int textX = screenX + 4;
         int textY = screenY + (height - textHeight) / 2;
         
         SDL_Rect textClip = {screenX + 2, screenY, width - 4, height};
-        SDL_RenderSetClipRect(renderer, &textClip);
+        SDL_SetRenderClipRect(renderer, &textClip);
         
         SDL_Rect destRect = {textX, textY, textWidth, textHeight};
-        SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
+        ({ SDL_FRect _dr = {static_cast<float>(destRect.x), static_cast<float>(destRect.y), static_cast<float>(destRect.w), static_cast<float>(destRect.h)}; SDL_RenderTexture(renderer, texture.get(), nullptr, &_dr); });
         
-        SDL_RenderSetClipRect(renderer, nullptr);
+        SDL_SetRenderClipRect(renderer, nullptr);
     }
 }
 
@@ -1027,7 +1027,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
                 headerBackgroundColor.a);
             SDL_Rect activeRect = {offsetX + activeX, offsetY,
                                    static_cast<int>(m_columnWidths[m_sortColumn]), m_headerHeight};
-            SDL_RenderFillRect(renderer, &activeRect);
+            ({ SDL_FRect _fr = {static_cast<float>(activeRect.x), static_cast<float>(activeRect.y), static_cast<float>(activeRect.w), static_cast<float>(activeRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
         }
     }
     
@@ -1035,7 +1035,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
                            headerBackgroundColor.b, headerBackgroundColor.a);
     int headerBgX = offsetX + getCellAreaX();
     SDL_Rect headerBgRect = {headerBgX, offsetY, getVisibleCellAreaWidth(), m_headerHeight};
-    SDL_RenderFillRect(renderer, &headerBgRect);
+    ({ SDL_FRect _fr = {static_cast<float>(headerBgRect.x), static_cast<float>(headerBgRect.y), static_cast<float>(headerBgRect.w), static_cast<float>(headerBgRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
     
     auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
     
@@ -1045,7 +1045,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
         
         if (x + colWidth >= getCellAreaX() && x < m_width - (m_vSlider ? m_sliderWidth : 0)) {
             SDL_Rect headerRect = {offsetX + x, offsetY, colWidth, m_headerHeight};
-            SDL_RenderFillRect(renderer, &headerRect);
+            ({ SDL_FRect _fr = {static_cast<float>(headerRect.x), static_cast<float>(headerRect.y), static_cast<float>(headerRect.w), static_cast<float>(headerRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
             
             if (font && col < m_columnHeaders.size() && !m_columnHeaders[col].empty()) {
                 std::string headerText = m_columnHeaders[col];
@@ -1057,7 +1057,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
                 auto texture = createLocalTextTexture(headerText, font.get(), headerTextColor);
                 if (texture) {
                     int textWidth, textHeight;
-                    SDL_QueryTexture(texture.get(), nullptr, nullptr, &textWidth, &textHeight);
+                    ({ float _fw=0,_fh=0; SDL_GetTextureSize(texture.get(), &_fw, &_fh); textWidth=static_cast<int>(_fw); textHeight=static_cast<int>(_fh); });
                     
                     if (textWidth > colWidth - 8) {
                         textWidth = colWidth - 8;
@@ -1067,13 +1067,13 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
                     int textY = offsetY + (m_headerHeight - textHeight) / 2;
                     
                     SDL_Rect destRect = {textX, textY, textWidth, textHeight};
-                    SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
+                    ({ SDL_FRect _dr = {static_cast<float>(destRect.x), static_cast<float>(destRect.y), static_cast<float>(destRect.w), static_cast<float>(destRect.h)}; SDL_RenderTexture(renderer, texture.get(), nullptr, &_dr); });
                 }
             }
             
             SDL_SetRenderDrawColor(renderer, gridLineColor.r, gridLineColor.g,
                                    gridLineColor.b, gridLineColor.a);
-            SDL_RenderDrawLine(renderer, offsetX + x + colWidth - 1, offsetY,
+            SDL_RenderLine(renderer, offsetX + x + colWidth - 1, offsetY,
                               offsetX + x + colWidth - 1, offsetY + m_headerHeight);
         }
         
@@ -1084,7 +1084,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
                            gridLineColor.b, gridLineColor.a);
     int lineStartX = offsetX + getCellAreaX();
     int lineEndX = offsetX + m_width - (m_vSlider ? m_sliderWidth : 0);
-    SDL_RenderDrawLine(renderer, lineStartX, offsetY + m_headerHeight - 1,
+    SDL_RenderLine(renderer, lineStartX, offsetY + m_headerHeight - 1,
                        lineEndX, offsetY + m_headerHeight - 1);
 }
 
@@ -1095,7 +1095,7 @@ void StringGrid::drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY
                            headerBackgroundColor.b, headerBackgroundColor.a);
     int headerBgY = offsetY + getCellAreaY();
     SDL_Rect headerBgRect = {offsetX, headerBgY, m_rowHeaderWidth, getVisibleCellAreaHeight()};
-    SDL_RenderFillRect(renderer, &headerBgRect);
+    ({ SDL_FRect _fr = {static_cast<float>(headerBgRect.x), static_cast<float>(headerBgRect.y), static_cast<float>(headerBgRect.w), static_cast<float>(headerBgRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
     
     auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
     
@@ -1103,26 +1103,26 @@ void StringGrid::drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY
     for (size_t row = 0; row < m_data.size(); ++row) {
         if (y + m_rowHeight >= getCellAreaY() && y < m_height - (m_hSlider ? m_sliderWidth : 0)) {
             SDL_Rect headerRect = {offsetX, offsetY + y, m_rowHeaderWidth, m_rowHeight};
-            SDL_RenderFillRect(renderer, &headerRect);
+            ({ SDL_FRect _fr = {static_cast<float>(headerRect.x), static_cast<float>(headerRect.y), static_cast<float>(headerRect.w), static_cast<float>(headerRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
             
             if (font) {
                 std::string rowLabel = std::to_string(row + 1);
                 auto texture = createLocalTextTexture(rowLabel, font.get(), headerTextColor);
                 if (texture) {
                     int textWidth, textHeight;
-                    SDL_QueryTexture(texture.get(), nullptr, nullptr, &textWidth, &textHeight);
+                    ({ float _fw=0,_fh=0; SDL_GetTextureSize(texture.get(), &_fw, &_fh); textWidth=static_cast<int>(_fw); textHeight=static_cast<int>(_fh); });
                     
                     int textX = offsetX + (m_rowHeaderWidth - textWidth) / 2;
                     int textY = offsetY + y + (m_rowHeight - textHeight) / 2;
                     
                     SDL_Rect destRect = {textX, textY, textWidth, textHeight};
-                    SDL_RenderCopy(renderer, texture.get(), nullptr, &destRect);
+                    ({ SDL_FRect _dr = {static_cast<float>(destRect.x), static_cast<float>(destRect.y), static_cast<float>(destRect.w), static_cast<float>(destRect.h)}; SDL_RenderTexture(renderer, texture.get(), nullptr, &_dr); });
                 }
             }
             
             SDL_SetRenderDrawColor(renderer, gridLineColor.r, gridLineColor.g,
                                    gridLineColor.b, gridLineColor.a);
-            SDL_RenderDrawLine(renderer, offsetX, offsetY + y + m_rowHeight - 1, 
+            SDL_RenderLine(renderer, offsetX, offsetY + y + m_rowHeight - 1, 
                               offsetX + m_rowHeaderWidth, offsetY + y + m_rowHeight - 1);
         }
         y += m_rowHeight;
@@ -1132,7 +1132,7 @@ void StringGrid::drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY
                            gridLineColor.b, gridLineColor.a);
     int lineStartY = offsetY + getCellAreaY();
     int lineEndY = offsetY + m_height - (m_hSlider ? m_sliderWidth : 0);
-    SDL_RenderDrawLine(renderer, offsetX + m_rowHeaderWidth - 1, lineStartY,
+    SDL_RenderLine(renderer, offsetX + m_rowHeaderWidth - 1, lineStartY,
                        offsetX + m_rowHeaderWidth - 1, lineEndY);
 }
 
@@ -1162,7 +1162,7 @@ void StringGrid::drawSelection(SDL_Renderer* renderer, int offsetX, int offsetY)
     SDL_SetRenderDrawColor(renderer, m_selectionColor.r, m_selectionColor.g,
                            m_selectionColor.b, m_selectionColor.a);
     SDL_Rect selRect = {offsetX + startX, offsetY + startY, selWidth, selHeight};
-    SDL_RenderFillRect(renderer, &selRect);
+    ({ SDL_FRect _fr = {static_cast<float>(selRect.x), static_cast<float>(selRect.y), static_cast<float>(selRect.w), static_cast<float>(selRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
     
     if (m_selectedCell) {
         SDL_Rect activeCellRect = getCellRect(m_selectedCell->row, m_selectedCell->col);
@@ -1170,7 +1170,7 @@ void StringGrid::drawSelection(SDL_Renderer* renderer, int offsetX, int offsetY)
                                 activeCellRect.w, activeCellRect.h};
         SDL_SetRenderDrawColor(renderer, m_selectedCellBorderColor.r, m_selectedCellBorderColor.g,
                                m_selectedCellBorderColor.b, m_selectedCellBorderColor.a);
-        SDL_RenderDrawRect(renderer, &absCellRect);
+        ({ SDL_FRect _fr = {static_cast<float>(absCellRect.x), static_cast<float>(absCellRect.y), static_cast<float>(absCellRect.w), static_cast<float>(absCellRect.h)}; SDL_RenderRect(renderer, &_fr); });
     }
     
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
@@ -1189,7 +1189,7 @@ void StringGrid::drawGridLines(SDL_Renderer* renderer, int offsetX, int offsetY,
     int x = cellAreaX - m_hScrollOffset;
     for (size_t col = 0; col <= m_columnWidths.size(); ++col) {
         if (x >= cellAreaX && x <= cellAreaX + cellAreaWidth) {
-            SDL_RenderDrawLine(renderer, offsetX + x, offsetY + cellAreaY, 
+            SDL_RenderLine(renderer, offsetX + x, offsetY + cellAreaY, 
                               offsetX + x, offsetY + cellAreaY + cellAreaHeight);
         }
         if (col < m_columnWidths.size()) {
@@ -1201,7 +1201,7 @@ void StringGrid::drawGridLines(SDL_Renderer* renderer, int offsetX, int offsetY,
     int y = cellAreaY - m_vScrollOffset;
     for (size_t row = 0; row <= m_data.size(); ++row) {
         if (y >= cellAreaY && y <= cellAreaY + cellAreaHeight) {
-            SDL_RenderDrawLine(renderer, offsetX + cellAreaX, offsetY + y, 
+            SDL_RenderLine(renderer, offsetX + cellAreaX, offsetY + y, 
                               offsetX + cellAreaX + cellAreaWidth, offsetY + y);
         }
         y += m_rowHeight;
@@ -1250,14 +1250,14 @@ SharedTexture StringGrid::createLocalTextTexture(std::string_view text, TTF_Font
         return it->second;
     }
     
-    SDL_Surface* surface = TTF_RenderUTF8_Blended(font, textStr.c_str(), color);
+    SDL_Surface* surface = TTF_RenderText_Blended(font, textStr.c_str(), textStr.length(), color);
     if (!surface) {
-        LOG_DEBUG("StringGrid: TTF_RenderUTF8_Blended failed: %s", TTF_GetError());
+        LOG_DEBUG("StringGrid: TTF_RenderText_Blended failed: %s", SDL_GetError());
         return nullptr;
     }
     
     SDL_Texture* texture = SDL_CreateTextureFromSurface(m_manager.getRenderer(), surface);
-    SDL_FreeSurface(surface);
+    SDL_DestroySurface(surface);
     
     if (!texture) {
         LOG_DEBUG("StringGrid: SDL_CreateTextureFromSurface failed: %s", SDL_GetError());

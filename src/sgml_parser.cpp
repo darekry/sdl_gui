@@ -1,5 +1,5 @@
 #include "sgml_parser.hpp"
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 SGMLParser::SGMLParser(GUIManager& guiManager)
     : LayoutParser(guiManager)

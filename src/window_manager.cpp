@@ -4,25 +4,15 @@
 import std.compat;
 
 WindowManager::WindowManager() {
-    // Initialize SDL
-    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         std::cerr << "WindowManager::WindowManager() - SDL_Init failed: " << SDL_GetError() << "\n";
         throw std::runtime_error("SDL_Init failed: " + std::string(SDL_GetError()));
     }
     
-    // Initialize SDL_image
-    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        std::cerr << "WindowManager::WindowManager() - IMG_Init failed: " << IMG_GetError() << "\n";
+    if (!TTF_Init()) {
+        std::cerr << "WindowManager::WindowManager() - TTF_Init failed: " << SDL_GetError() << "\n";
         SDL_Quit();
-        throw std::runtime_error("IMG_Init failed: " + std::string(IMG_GetError()));
-    }
-    
-    // Initialize SDL_ttf
-    if (TTF_Init() == -1) {
-        std::cerr << "WindowManager::WindowManager() - TTF_Init failed: " << TTF_GetError() << "\n";
-        IMG_Quit();
-        SDL_Quit();
-        throw std::runtime_error("TTF_Init failed: " + std::string(TTF_GetError()));
+        throw std::runtime_error("TTF_Init failed: " + std::string(SDL_GetError()));
     }
     
     m_sdlInitialized = true;
@@ -36,19 +26,18 @@ WindowManager::~WindowManager() {
     
     if (m_sdlInitialized) {
         TTF_Quit();
-        IMG_Quit();
         SDL_Quit();
     }
 }
 
 Window* WindowManager::createWindow(const std::string& title, int width, int height, bool resizable) {
-    return createWindow(title, width, height, SDL_RENDERER_PRESENTVSYNC, resizable);
+    return createWindow(title, width, height, NULL, resizable);
 }
 
 Window* WindowManager::createWindow(const std::string& title, int width, int height,
-                                     Uint32 rendererFlags, bool resizable) {
+                                     const char* name, bool resizable) {
     try {
-        auto window = std::make_unique<Window>(title, width, height, rendererFlags, resizable);
+        auto window = std::make_unique<Window>(title, width, height, name, resizable);
         Window* rawPtr = window.get();
         m_windows.push_back(std::move(window));
         
@@ -129,7 +118,7 @@ bool WindowManager::processEvents() {
     
     while (SDL_PollEvent(&e)) {
         // Global quit event
-        if (e.type == SDL_QUIT) {
+        if (e.type == SDL_EVENT_QUIT) {
             m_shouldQuit = true;
             closeAllWindows();
             return false;
@@ -140,29 +129,49 @@ bool WindowManager::processEvents() {
         
         // Get windowID from various event types
         switch (e.type) {
-            case SDL_WINDOWEVENT:
+            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+            case SDL_EVENT_WINDOW_RESIZED:
+            case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+            case SDL_EVENT_WINDOW_SHOWN:
+            case SDL_EVENT_WINDOW_HIDDEN:
+            case SDL_EVENT_WINDOW_FOCUS_GAINED:
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+            case SDL_EVENT_WINDOW_MOVED:
+            case SDL_EVENT_WINDOW_MINIMIZED:
+            case SDL_EVENT_WINDOW_MAXIMIZED:
+            case SDL_EVENT_WINDOW_RESTORED:
+            case SDL_EVENT_WINDOW_MOUSE_ENTER:
+            case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+            case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+            case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:
+            case SDL_EVENT_WINDOW_SAFE_AREA_CHANGED:
+            case SDL_EVENT_WINDOW_OCCLUDED:
+            case SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
+            case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
+            case SDL_EVENT_WINDOW_DESTROYED:
+            case SDL_EVENT_WINDOW_HDR_STATE_CHANGED:
                 windowID = e.window.windowID;
                 break;
-            case SDL_KEYDOWN:
-            case SDL_KEYUP:
+            case SDL_EVENT_KEY_DOWN:
+            case SDL_EVENT_KEY_UP:
                 windowID = e.key.windowID;
                 break;
-            case SDL_TEXTINPUT:
+            case SDL_EVENT_TEXT_INPUT:
                 windowID = e.text.windowID;
                 break;
-            case SDL_MOUSEMOTION:
+            case SDL_EVENT_MOUSE_MOTION:
                 windowID = e.motion.windowID;
                 break;
-            case SDL_MOUSEBUTTONDOWN:
-            case SDL_MOUSEBUTTONUP:
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            case SDL_EVENT_MOUSE_BUTTON_UP:
                 windowID = e.button.windowID;
                 break;
-            case SDL_MOUSEWHEEL:
+            case SDL_EVENT_MOUSE_WHEEL:
                 windowID = e.wheel.windowID;
                 break;
             default:
-                // Events without windowID field (e.g., SDL_JOYDEVICEADDED, 
-                // SDL_CONTROLLERDEVICEADDED) are sent to focused window.
+                // Events without windowID field (e.g., SDL_EVENT_JOYSTICK_ADDED, 
+                // SDL_EVENT_GAMEPAD_ADDED) are sent to focused window.
                 // Most events have windowID and are handled above.
                 Window* focused = getFocusedWindow();
                 if (focused) {

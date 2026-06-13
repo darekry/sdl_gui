@@ -2,7 +2,7 @@
 
 #include "../src/animation_manager.hpp"
 #include "../src/easing.hpp"
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 TEST_CASE("AnimationManager functionality", "[animation_manager]") {
     AnimationManager animManager;

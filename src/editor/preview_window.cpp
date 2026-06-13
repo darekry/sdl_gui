@@ -306,11 +306,11 @@ void CanvasPanel::drawGrid(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
     
     for (int x = 0; x < m_width; x += gridSize) {
-        SDL_RenderDrawLine(renderer, x, 0, x, m_height);
+        SDL_RenderLine(renderer, x, 0, x, m_height);
     }
     
     for (int y = 0; y < m_height; y += gridSize) {
-        SDL_RenderDrawLine(renderer, 0, y, m_width, y);
+        SDL_RenderLine(renderer, 0, y, m_width, y);
     }
 }
 
@@ -344,7 +344,7 @@ void CanvasPanel::drawSelectionHighlight(SDL_Renderer* renderer, size_t index) {
     
     for (int i = 0; i < borderWidth; ++i) {
         SDL_Rect r = {x + i, y + i, w - 2*i, h - 2*i};
-        SDL_RenderDrawRect(renderer, &r);
+        ({ SDL_FRect _fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)}; SDL_RenderRect(renderer, &_fr); });
     }
 }
 
@@ -353,10 +353,10 @@ bool CanvasPanel::handleEvent(const SDL_Event& e) {
         return false;
     }
     
-    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+    if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
         SDL_Point abs = getAbsolutePosition();
-        int localX = e.button.x - abs.x;
-        int localY = e.button.y - abs.y;
+        int localX = static_cast<int>(e.button.x) - abs.x;
+        int localY = static_cast<int>(e.button.y) - abs.y;
         
         if (localX < 0 || localX >= m_width || localY < 0 || localY >= m_height) {
             return false;
@@ -372,11 +372,11 @@ bool CanvasPanel::handleEvent(const SDL_Event& e) {
             return true;
         }
     }
-    else if (e.type == SDL_MOUSEMOTION && m_isDragging) {
+    else if (e.type == SDL_EVENT_MOUSE_MOTION && m_isDragging) {
         updateDrag(e.motion.x, e.motion.y);
         return true;
     }
-    else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+    else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
         if (m_isDragging) {
             endDrag();
             return true;

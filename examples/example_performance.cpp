@@ -141,7 +141,7 @@ int main(int, char**) {
         // Main loop
         while (!quit) {
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) {
+                if (e.type == SDL_EVENT_QUIT) {
                     quit = true;
                 }
                 guiManager.processEvent(e);

@@ -278,11 +278,11 @@ void DialogBox::draw(SDL_Renderer* renderer) {
         SDL_SetRenderDrawColor(renderer, 
             titleBarColor.r, titleBarColor.g, titleBarColor.b, titleBarColor.a);
         SDL_Rect titleRect = {m_x, m_y, m_width, m_titleBarHeight};
-        SDL_RenderFillRect(renderer, &titleRect);
+        ({ SDL_FRect _fr = {static_cast<float>(titleRect.x), static_cast<float>(titleRect.y), static_cast<float>(titleRect.w), static_cast<float>(titleRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
         
         // Separator linia
         SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);
-        SDL_RenderDrawLine(renderer, m_x, m_y + m_titleBarHeight, 
+        SDL_RenderLine(renderer, m_x, m_y + m_titleBarHeight, 
             m_x + m_width, m_y + m_titleBarHeight);
     }
     
@@ -297,7 +297,7 @@ bool DialogBox::handleEvent(const SDL_Event& e) {
     if (Panel::handleEvent(e)) return true;
     
     // ESC zamknięcie dialogu
-    if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+    if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
         m_lastClickedButton = -1;  // Anulowano
         if (m_callback) {
             m_callback(-1);

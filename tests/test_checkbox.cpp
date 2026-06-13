@@ -131,12 +131,12 @@ TEST_CASE("Checkbox click toggle behavior", "[checkbox]") {
         REQUIRE_FALSE(cb->isChecked());
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
         REQUIRE(cb->isChecked());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
         REQUIRE_FALSE(cb->isChecked());
     }
 
@@ -152,8 +152,8 @@ TEST_CASE("Checkbox click toggle behavior", "[checkbox]") {
         manager.addElement(std::move(checkbox));
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE(changed);
         REQUIRE(lastState == true);
@@ -174,8 +174,8 @@ TEST_CASE("Checkbox click toggle behavior", "[checkbox]") {
         manager.addElement(std::move(checkbox));
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE(changed);
         REQUIRE(lastState == false);
@@ -186,8 +186,8 @@ TEST_CASE("Checkbox click toggle behavior", "[checkbox]") {
         Checkbox* cb = checkbox.get();
         manager.addElement(std::move(checkbox));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 50));
 
         REQUIRE_FALSE(cb->isChecked());
     }
@@ -198,8 +198,8 @@ TEST_CASE("Checkbox click toggle behavior", "[checkbox]") {
         manager.addElement(std::move(checkbox));
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 50));
 
         REQUIRE_FALSE(cb->isChecked());
     }
@@ -219,8 +219,8 @@ TEST_CASE("Checkbox disabled state", "[checkbox]") {
         REQUIRE_FALSE(cb->isChecked());
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE_FALSE(cb->isChecked());
     }
@@ -231,14 +231,14 @@ TEST_CASE("Checkbox disabled state", "[checkbox]") {
         manager.addElement(std::move(checkbox));
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
         REQUIRE(cb->isChecked());
 
         cb->setEnabled(false);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE(cb->isChecked());
     }
@@ -272,14 +272,14 @@ TEST_CASE("Checkbox disabled state", "[checkbox]") {
         manager.addElement(std::move(checkbox));
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
         REQUIRE_FALSE(cb->isChecked());
 
         cb->setEnabled(true);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
         REQUIRE(cb->isChecked());
     }
 }
@@ -298,8 +298,8 @@ TEST_CASE("Checkbox hidden state", "[checkbox]") {
         REQUIRE_FALSE(cb->isChecked());
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE_FALSE(cb->isChecked());
     }
@@ -325,15 +325,15 @@ TEST_CASE("Checkbox hidden state", "[checkbox]") {
         cb->setVisible(false);
         manager.addElement(std::move(checkbox));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
         REQUIRE_FALSE(cb->isChecked());
 
         cb->setVisible(true);
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
         REQUIRE(cb->isChecked());
     }
 }
@@ -386,21 +386,21 @@ TEST_CASE("Multiple checkboxes", "[checkbox]") {
         manager.addElement(std::move(cb2));
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE(cb1_ptr->isChecked());
         REQUIRE_FALSE(cb2_ptr->isChecked());
 
         manager.processEvent(helper.createMouseMotion(45, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 45, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 45, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 45, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 45, 15));
 
         REQUIRE(cb1_ptr->isChecked());
         REQUIRE(cb2_ptr->isChecked());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE_FALSE(cb1_ptr->isChecked());
         REQUIRE(cb2_ptr->isChecked());
@@ -487,8 +487,8 @@ TEST_CASE("Checkbox right-click does not toggle", "[checkbox]") {
         manager.addElement(std::move(checkbox));
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_RIGHT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_RIGHT, 15, 15));
 
         REQUIRE_FALSE(cb->isChecked());
     }
@@ -499,8 +499,8 @@ TEST_CASE("Checkbox right-click does not toggle", "[checkbox]") {
         manager.addElement(std::move(checkbox));
 
         manager.processEvent(helper.createMouseMotion(15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_MIDDLE, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_MIDDLE, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_MIDDLE, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_MIDDLE, 15, 15));
 
         REQUIRE_FALSE(cb->isChecked());
     }

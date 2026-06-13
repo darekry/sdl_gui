@@ -70,16 +70,16 @@ public:
     Window* createWindow(const std::string& title, int width, int height, bool resizable = false);
     
     /**
-     * @brief Create a new window with custom renderer flags
+     * @brief Create a new window with custom renderer name
      * @param title Window title
      * @param width Initial window width
      * @param height Initial window height
-     * @param rendererFlags SDL renderer flags
+     * @param name SDL renderer name (NULL for default)
      * @param resizable If true, window can be resized by user
      * @return Pointer to created Window, nullptr if creation failed
      */
     Window* createWindow(const std::string& title, int width, int height, 
-                         Uint32 rendererFlags, bool resizable);
+                         const char* name, bool resizable);
     
     /**
      * @brief Get window by SDL window ID
@@ -159,7 +159,7 @@ public:
     
     /**
      * @brief Check if application should quit
-     * True when all windows are closed or SDL_QUIT received
+     * True when all windows are closed or SDL_EVENT_QUIT received
      */
     bool shouldQuit() const { return m_shouldQuit; }
     

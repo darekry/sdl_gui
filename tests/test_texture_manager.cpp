@@ -14,8 +14,10 @@ TEST_CASE("TextureManager functionality", "[texture_manager]") {
         auto tex = texManager.loadTexture("assets/button1.png");
         REQUIRE(tex != nullptr);
         
-        int w, h;
-        SDL_QueryTexture(tex.get(), nullptr, nullptr, &w, &h);
+        float fw, fh;
+        SDL_GetTextureSize(tex.get(), &fw, &fh);
+        int w = static_cast<int>(fw);
+        int h = static_cast<int>(fh);
         REQUIRE(w > 0);
         REQUIRE(h > 0);
     }

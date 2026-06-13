@@ -1,5 +1,5 @@
 #include "panel.hpp"
-#include "SDL_rect.h"
+#include <SDL3/SDL_rect.h>
 #include "gui_manager.hpp"
 #include "style.hpp"
 #include "texture_manager.hpp"
@@ -33,11 +33,11 @@ bool Panel::handleEvent(const SDL_Event& event) {
 
     // Logika przeciągania - aktywowana tylko jeśli żadne dziecko nie obsłużyło zdarzenia
     if (m_is_draggable) {
-        if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT && contains(event.button.x, event.button.y)) {
+        if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT && contains(event.button.x, event.button.y)) {
             m_is_dragging = true;
             auto absPos = getAbsolutePosition();
-            m_drag_offset.x = event.button.x - absPos.x;
-            m_drag_offset.y = event.button.y - absPos.y;
+            m_drag_offset.x = static_cast<int>(event.button.x) - absPos.x;
+            m_drag_offset.y = static_cast<int>(event.button.y) - absPos.y;
             m_manager.captureMouse(this);
             return true;
         }
@@ -45,23 +45,23 @@ bool Panel::handleEvent(const SDL_Event& event) {
     
     // Obsługa przeciągania - sprawdzana PRZED hover, aby uniknąć lagów
     // Podczas drag używamy event.motion.x/y zamiast SDL_GetMouseState()
-    if (m_is_dragging && event.type == SDL_MOUSEMOTION) {
+    if (m_is_dragging && event.type == SDL_EVENT_MOUSE_MOTION) {
         int parentX = m_parent ? m_parent->getAbsolutePosition().x : 0;
         int parentY = m_parent ? m_parent->getAbsolutePosition().y : 0;
-        setPosition(event.motion.x - parentX - m_drag_offset.x, event.motion.y - parentY - m_drag_offset.y);
+        setPosition(static_cast<int>(event.motion.x) - parentX - m_drag_offset.x, static_cast<int>(event.motion.y) - parentY - m_drag_offset.y);
         return true;
     }
 
-    if (m_is_dragging && event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT) {
+    if (m_is_dragging && event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
         m_is_dragging = false;
         m_manager.releaseMouse();
         return true;
     }
 
     // Hover check - tylko gdy NIE przeciągamy
-    if (!m_is_dragging && event.type == SDL_MOUSEMOTION) {
+    if (!m_is_dragging && event.type == SDL_EVENT_MOUSE_MOTION) {
         int mouseX, mouseY;
-        SDL_GetMouseState(&mouseX, &mouseY);
+        ({ float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); });
         bool currentlyHovered = contains(mouseX, mouseY);
 
         if (currentlyHovered && !m_isHovered) {

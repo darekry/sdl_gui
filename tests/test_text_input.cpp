@@ -46,7 +46,7 @@ TEST_CASE("TextInput - Focus Behavior", "[text_input]") {
 
         REQUIRE_FALSE(input->hasKeyboardFocus());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         REQUIRE(input->hasKeyboardFocus());
     }
@@ -56,10 +56,10 @@ TEST_CASE("TextInput - Focus Behavior", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE(input->hasKeyboardFocus());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 300, 300));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 300, 300));
 
         REQUIRE_FALSE(input->hasKeyboardFocus());
     }
@@ -71,7 +71,7 @@ TEST_CASE("TextInput - Focus Behavior", "[text_input]") {
 
         REQUIRE_FALSE(input->hasKeyboardFocus());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE(input->hasKeyboardFocus());
 
         manager.setKeyboardFocus(nullptr);
@@ -113,7 +113,7 @@ TEST_CASE("TextInput - Text Editing", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         manager.processEvent(helper.createTextInputEvent("H"));
         manager.processEvent(helper.createTextInputEvent("i"));
@@ -181,17 +181,17 @@ TEST_CASE("TextInput - Text Editing", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("A"));
         manager.processEvent(helper.createTextInputEvent("B"));
         manager.processEvent(helper.createTextInputEvent("C"));
 
         REQUIRE(input->getText() == "ABC");
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         REQUIRE(input->getText() == "AB");
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         REQUIRE(input->getText() == "A");
     }
 
@@ -200,9 +200,9 @@ TEST_CASE("TextInput - Text Editing", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
 
         REQUIRE(input->getText().empty());
     }
@@ -212,13 +212,13 @@ TEST_CASE("TextInput - Text Editing", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("X"));
 
         bool callbackFired = false;
         input->setOnTextChanged([&](TextInput*) { callbackFired = true; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
 
         REQUIRE(callbackFired);
     }
@@ -228,7 +228,7 @@ TEST_CASE("TextInput - Text Editing", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         int callbackCount = 0;
         input->setOnTextChanged([&](TextInput*) { callbackCount++; });
@@ -260,7 +260,7 @@ TEST_CASE("TextInput - Locked State", "[text_input]") {
         input->setLocked(true);
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         REQUIRE_FALSE(input->hasKeyboardFocus());
     }
@@ -272,7 +272,7 @@ TEST_CASE("TextInput - Locked State", "[text_input]") {
         input->setLocked(false);
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         REQUIRE(input->hasKeyboardFocus());
     }
@@ -294,7 +294,7 @@ TEST_CASE("TextInput - Locked State", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         input->setLocked(true);
 
         manager.processEvent(helper.createTextInputEvent("X"));
@@ -308,10 +308,10 @@ TEST_CASE("TextInput - Locked State", "[text_input]") {
         input->setText(std::string("Test"));
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         input->setLocked(true);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
 
         REQUIRE(input->getText() == "Test");
     }
@@ -322,11 +322,11 @@ TEST_CASE("TextInput - Locked State", "[text_input]") {
         input->setText(std::string("Test"));
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         input->setLocked(true);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT));
 
         REQUIRE(input->getText() == "Test");
     }
@@ -336,7 +336,7 @@ TEST_CASE("TextInput - Locked State", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE(input->hasKeyboardFocus());
 
         input->setLocked(true);
@@ -350,11 +350,11 @@ TEST_CASE("TextInput - Locked State", "[text_input]") {
         manager.addElement(std::move(ti));
 
         input->setLocked(true);
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE_FALSE(input->hasKeyboardFocus());
 
         input->setLocked(false);
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE(input->hasKeyboardFocus());
 
         manager.processEvent(helper.createTextInputEvent("X"));
@@ -371,12 +371,12 @@ TEST_CASE("TextInput - Enter Key", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         bool enterPressed = false;
         input->setOnEnterPressed([&](TextInput*) { enterPressed = true; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN));
 
         REQUIRE(enterPressed);
     }
@@ -386,12 +386,12 @@ TEST_CASE("TextInput - Enter Key", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         TextInput* callbackSource = nullptr;
         input->setOnEnterPressed([&](TextInput* source) { callbackSource = source; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN));
 
         REQUIRE(callbackSource == input);
     }
@@ -404,7 +404,7 @@ TEST_CASE("TextInput - Enter Key", "[text_input]") {
         bool enterPressed = false;
         input->setOnEnterPressed([&](TextInput*) { enterPressed = true; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN));
 
         REQUIRE_FALSE(enterPressed);
     }
@@ -414,12 +414,12 @@ TEST_CASE("TextInput - Enter Key", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE(input->hasKeyboardFocus());
 
         input->setOnEnterPressed([&](TextInput*) { manager.setKeyboardFocus(nullptr); });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN));
 
         REQUIRE_FALSE(input->hasKeyboardFocus());
     }
@@ -434,14 +434,14 @@ TEST_CASE("TextInput - Cursor Position", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("A"));
         manager.processEvent(helper.createTextInputEvent("B"));
         manager.processEvent(helper.createTextInputEvent("C"));
 
         REQUIRE(input->getText() == "ABC");
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         manager.processEvent(helper.createTextInputEvent("X"));
 
         REQUIRE(input->getText() == "ABXC");
@@ -452,12 +452,12 @@ TEST_CASE("TextInput - Cursor Position", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("A"));
         manager.processEvent(helper.createTextInputEvent("B"));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT));
         manager.processEvent(helper.createTextInputEvent("C"));
 
         REQUIRE(input->getText() == "ABC");
@@ -468,11 +468,11 @@ TEST_CASE("TextInput - Cursor Position", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("X"));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         manager.processEvent(helper.createTextInputEvent("Y"));
 
         REQUIRE(input->getText() == "YX");
@@ -483,11 +483,11 @@ TEST_CASE("TextInput - Cursor Position", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("X"));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT));
         manager.processEvent(helper.createTextInputEvent("Y"));
 
         REQUIRE(input->getText() == "XY");
@@ -498,13 +498,13 @@ TEST_CASE("TextInput - Cursor Position", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("A"));
         manager.processEvent(helper.createTextInputEvent("B"));
         manager.processEvent(helper.createTextInputEvent("C"));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
 
         REQUIRE(input->getText() == "AC");
     }
@@ -514,13 +514,13 @@ TEST_CASE("TextInput - Cursor Position", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("1"));
         manager.processEvent(helper.createTextInputEvent("2"));
         manager.processEvent(helper.createTextInputEvent("3"));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         manager.processEvent(helper.createTextInputEvent("X"));
 
         REQUIRE(input->getText() == "1X23");
@@ -531,7 +531,7 @@ TEST_CASE("TextInput - Cursor Position", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("A"));
         manager.processEvent(helper.createTextInputEvent("B"));
         manager.processEvent(helper.createTextInputEvent("C"));
@@ -554,7 +554,7 @@ TEST_CASE("TextInput - Disabled State", "[text_input]") {
         input->setEnabled(false);
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         REQUIRE_FALSE(input->hasKeyboardFocus());
     }
@@ -564,7 +564,7 @@ TEST_CASE("TextInput - Disabled State", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         input->setEnabled(false);
 
         manager.processEvent(helper.createTextInputEvent("X"));
@@ -578,10 +578,10 @@ TEST_CASE("TextInput - Disabled State", "[text_input]") {
         input->setText(std::string("Test"));
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         input->setEnabled(false);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
 
         REQUIRE(input->getText() == "Test");
     }
@@ -591,14 +591,14 @@ TEST_CASE("TextInput - Disabled State", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("Test"));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
 
         input->setEnabled(false);
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         input->setEnabled(true);
 
         manager.processEvent(helper.createTextInputEvent("X"));
@@ -612,11 +612,11 @@ TEST_CASE("TextInput - Disabled State", "[text_input]") {
         input->setEnabled(false);
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE_FALSE(input->hasKeyboardFocus());
 
         input->setEnabled(true);
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE(input->hasKeyboardFocus());
 
         manager.processEvent(helper.createTextInputEvent("X"));
@@ -634,7 +634,7 @@ TEST_CASE("TextInput - Hidden State", "[text_input]") {
         input->setVisible(false);
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         REQUIRE(input->hasKeyboardFocus());
     }
@@ -645,7 +645,7 @@ TEST_CASE("TextInput - Hidden State", "[text_input]") {
         input->setVisible(false);
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("X"));
 
         REQUIRE(input->getText() == "X");
@@ -665,13 +665,13 @@ TEST_CASE("TextInput - Multiple TextInput", "[text_input]") {
         TextInput* input2 = ti2.get();
         manager.addElement(std::move(ti2));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("A"));
 
         REQUIRE(input1->getText() == "A");
         REQUIRE(input2->getText().empty());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 125, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 125, 15));
         manager.processEvent(helper.createTextInputEvent("B"));
 
         REQUIRE(input1->getText() == "A");
@@ -687,11 +687,11 @@ TEST_CASE("TextInput - Multiple TextInput", "[text_input]") {
         TextInput* input2 = ti2.get();
         manager.addElement(std::move(ti2));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         REQUIRE(input1->hasKeyboardFocus());
         REQUIRE_FALSE(input2->hasKeyboardFocus());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 125, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 125, 15));
         REQUIRE_FALSE(input1->hasKeyboardFocus());
         REQUIRE(input2->hasKeyboardFocus());
     }
@@ -705,7 +705,7 @@ TEST_CASE("TextInput - Multiple TextInput", "[text_input]") {
         TextInput* input2 = ti2.get();
         manager.addElement(std::move(ti2));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
 
         manager.processEvent(helper.createTextInputEvent("1"));
         manager.processEvent(helper.createTextInputEvent("2"));
@@ -724,7 +724,7 @@ TEST_CASE("TextInput - Unicode Text", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         manager.processEvent(helper.createTextInputEvent("ą"));
         manager.processEvent(helper.createTextInputEvent("ę"));
@@ -738,7 +738,7 @@ TEST_CASE("TextInput - Unicode Text", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         manager.processEvent(helper.createTextInputEvent("😀"));
 
@@ -773,16 +773,16 @@ TEST_CASE("TextInput - Delete Key", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("A"));
         manager.processEvent(helper.createTextInputEvent("B"));
         manager.processEvent(helper.createTextInputEvent("C"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         
         REQUIRE(input->getText() == "ABC");
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE));
         REQUIRE(input->getText() == "AB");
     }
 
@@ -791,10 +791,10 @@ TEST_CASE("TextInput - Delete Key", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("X"));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE));
         REQUIRE(input->getText() == "X");
     }
 
@@ -803,12 +803,12 @@ TEST_CASE("TextInput - Delete Key", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABC"));
         
         input->setSelection(1, 2);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE));
         REQUIRE(input->getText() == "AC");
         REQUIRE_FALSE(input->hasSelection());
     }
@@ -818,14 +818,14 @@ TEST_CASE("TextInput - Delete Key", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("AB"));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
 
         bool callbackFired = false;
         input->setOnTextChanged([&](TextInput*) { callbackFired = true; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE));
         REQUIRE(callbackFired);
     }
 
@@ -834,13 +834,13 @@ TEST_CASE("TextInput - Delete Key", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABC"));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE));
         REQUIRE(input->getText() == "BC");
     }
 }
@@ -896,12 +896,12 @@ TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABCDE"));
         
         input->setSelection(1, 4);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_x, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_X, SDL_KMOD_CTRL));
         
         REQUIRE(input->getText() == "AE");
         REQUIRE_FALSE(input->hasSelection());
@@ -912,14 +912,14 @@ TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABCDE"));
         input->setSelection(1, 4);
 
         bool callbackFired = false;
         input->setOnTextChanged([&](TextInput*) { callbackFired = true; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_x, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_X, SDL_KMOD_CTRL));
         REQUIRE(callbackFired);
     }
 
@@ -930,12 +930,12 @@ TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("AB"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_V, SDL_KMOD_CTRL));
         
         REQUIRE(input->getText() == "AtestB");
     }
@@ -947,12 +947,12 @@ TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("Hello"));
         
         input->setSelection(1, 4);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_V, SDL_KMOD_CTRL));
         
         REQUIRE(input->getText() == "HNEWo");
         REQUIRE_FALSE(input->hasSelection());
@@ -965,14 +965,14 @@ TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("AB"));
 
         bool callbackFired = false;
         input->setOnTextChanged([&](TextInput*) { callbackFired = true; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_V, SDL_KMOD_CTRL));
         REQUIRE(callbackFired);
     }
 
@@ -981,12 +981,12 @@ TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("Test"));
         
         REQUIRE_FALSE(input->hasSelection());
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_c, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_C, SDL_KMOD_CTRL));
         
         REQUIRE(input->getText() == "Test");
     }
@@ -996,10 +996,10 @@ TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("Test"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_x, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_X, SDL_KMOD_CTRL));
         
         REQUIRE(input->getText() == "Test");
     }
@@ -1009,11 +1009,11 @@ TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("Hello"));
         input->setSelection(1, 4);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_c, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_C, SDL_KMOD_CTRL));
 
         if (SDL_HasClipboardText()) {
             char* clipboard = SDL_GetClipboardText();
@@ -1029,10 +1029,10 @@ TEST_CASE("TextInput - Clipboard Operations", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("Test"));
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_V, SDL_KMOD_CTRL));
 
         REQUIRE(input->getText() == "Test");
     }
@@ -1047,12 +1047,12 @@ TEST_CASE("TextInput - Backspace with Selection", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABCDE"));
         
         input->setSelection(1, 4);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         
         REQUIRE(input->getText() == "AE");
         REQUIRE_FALSE(input->hasSelection());
@@ -1063,14 +1063,14 @@ TEST_CASE("TextInput - Backspace with Selection", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABCDE"));
         input->setSelection(1, 4);
 
         bool callbackFired = false;
         input->setOnTextChanged([&](TextInput*) { callbackFired = true; });
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         REQUIRE(callbackFired);
     }
 
@@ -1079,12 +1079,12 @@ TEST_CASE("TextInput - Backspace with Selection", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABCDE"));
         
         input->setSelection(0, 5);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         
         REQUIRE(input->getText().empty());
         REQUIRE_FALSE(input->hasSelection());
@@ -1100,18 +1100,18 @@ TEST_CASE("TextInput - Shift+Arrow Selection", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABCDE"));
         
         REQUIRE(input->getText() == "ABCDE");
         REQUIRE(input->hasSelection() == false);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT));
         
         REQUIRE(input->hasSelection() == true);
         REQUIRE(input->getSelection() == "E");
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT));
         REQUIRE(input->getSelection() == "DE");
     }
 
@@ -1120,16 +1120,16 @@ TEST_CASE("TextInput - Shift+Arrow Selection", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABC"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         
         REQUIRE(input->hasSelection() == false);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT, SDL_KMOD_SHIFT));
         REQUIRE(input->hasSelection() == true);
         REQUIRE(input->getSelection() == "A");
     }
@@ -1139,13 +1139,13 @@ TEST_CASE("TextInput - Shift+Arrow Selection", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABC"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT));
         REQUIRE(input->hasSelection() == true);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         REQUIRE(input->hasSelection() == false);
     }
 
@@ -1154,11 +1154,11 @@ TEST_CASE("TextInput - Shift+Arrow Selection", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABC"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT));
         REQUIRE(input->getSelection() == "BC");
         
         manager.processEvent(helper.createTextInputEvent("X"));
@@ -1176,12 +1176,12 @@ TEST_CASE("TextInput - Ctrl+A Select All", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("Hello World"));
         
         REQUIRE(input->hasSelection() == false);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL));
         
         REQUIRE(input->hasSelection() == true);
         REQUIRE(input->getSelection() == "Hello World");
@@ -1192,9 +1192,9 @@ TEST_CASE("TextInput - Ctrl+A Select All", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL));
         
         REQUIRE(input->hasSelection() == false);
     }
@@ -1204,11 +1204,11 @@ TEST_CASE("TextInput - Ctrl+A Select All", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("Test"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE));
         
         REQUIRE(input->getText().empty());
     }
@@ -1224,7 +1224,7 @@ TEST_CASE("TextInput - Mouse Drag Selection", "[text_input]") {
         input->setText(std::string("Hello World"));
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 60, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 60, 55));
         REQUIRE(input->hasSelection() == false);
         
         input->setSelection(2, 5);
@@ -1238,12 +1238,12 @@ TEST_CASE("TextInput - Mouse Drag Selection", "[text_input]") {
         input->setText(std::string("Hello"));
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         
         input->setSelection(1, 4);
         REQUIRE(input->hasSelection() == true);
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE(input->hasSelection() == false);
     }
 }
@@ -1257,10 +1257,10 @@ TEST_CASE("TextInput - Home/End Keys", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABC"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME));
         
         manager.processEvent(helper.createTextInputEvent("X"));
         REQUIRE(input->getText() == "XABC");
@@ -1271,11 +1271,11 @@ TEST_CASE("TextInput - Home/End Keys", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABC"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_END));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END));
         
         manager.processEvent(helper.createTextInputEvent("D"));
         REQUIRE(input->getText() == "ABCD");
@@ -1286,13 +1286,13 @@ TEST_CASE("TextInput - Home/End Keys", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABCDE"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME, SDL_KMOD_SHIFT));
         
         REQUIRE(input->hasSelection());
         REQUIRE(input->getSelection() == "ABC");
@@ -1303,13 +1303,13 @@ TEST_CASE("TextInput - Home/End Keys", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABCDE"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_SHIFT));
         
         REQUIRE(input->hasSelection());
         REQUIRE(input->getSelection() == "DE");
@@ -1320,8 +1320,8 @@ TEST_CASE("TextInput - Home/End Keys", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME));
         manager.processEvent(helper.createTextInputEvent("X"));
         REQUIRE(input->getText() == "X");
     }
@@ -1331,8 +1331,8 @@ TEST_CASE("TextInput - Home/End Keys", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_END));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END));
         manager.processEvent(helper.createTextInputEvent("X"));
         REQUIRE(input->getText() == "X");
     }
@@ -1342,11 +1342,11 @@ TEST_CASE("TextInput - Home/End Keys", "[text_input]") {
         TextInput* input = ti.get();
         manager.addElement(std::move(ti));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("ABC"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_END));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END));
         
         manager.processEvent(helper.createTextInputEvent("D"));
         REQUIRE(input->getText() == "ABCD");

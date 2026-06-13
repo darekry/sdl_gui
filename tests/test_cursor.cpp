@@ -432,7 +432,7 @@ TEST_CASE("Cursor - Event Handling", "[cursor][events]") {
         Cursor* cursorPtr = cursor.get();
         manager.addElement(std::move(cursor));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         bool handled = cursorPtr->handleEvent(event);
 
         REQUIRE(handled == false);

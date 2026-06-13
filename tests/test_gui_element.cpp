@@ -13,7 +13,7 @@ public:
     
     void draw(SDL_Renderer* renderer) override {
         SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
-        SDL_Rect r = {0, 0, m_width, m_height};
+        SDL_FRect r = {0, 0, static_cast<float>(m_width), static_cast<float>(m_height)};
         SDL_RenderFillRect(renderer, &r);
     }
     

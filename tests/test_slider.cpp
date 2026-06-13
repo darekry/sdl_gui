@@ -112,8 +112,8 @@ TEST_CASE("Slider - Increment/Decrement Buttons", "[slider]") {
         int btnX = sliderPtr->getX() + incBtn->getX() + 5;
         int btnY = sliderPtr->getY() + incBtn->getY() + 5;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, btnX, btnY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, btnX, btnY));
 
         REQUIRE(sliderPtr->getValue() == 51);
     }
@@ -129,8 +129,8 @@ TEST_CASE("Slider - Increment/Decrement Buttons", "[slider]") {
         int btnX = sliderPtr->getX() + decBtn->getX() + 5;
         int btnY = sliderPtr->getY() + decBtn->getY() + 5;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, btnX, btnY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, btnX, btnY));
 
         REQUIRE(sliderPtr->getValue() == 49);
     }
@@ -144,8 +144,8 @@ TEST_CASE("Slider - Increment/Decrement Buttons", "[slider]") {
         int btnX = sliderPtr->getX() + incBtn->getX() + 5;
         int btnY = sliderPtr->getY() + incBtn->getY() + 5;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, btnX, btnY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, btnX, btnY));
 
         REQUIRE(sliderPtr->getValue() == 100);
     }
@@ -159,8 +159,8 @@ TEST_CASE("Slider - Increment/Decrement Buttons", "[slider]") {
         int btnX = sliderPtr->getX() + decBtn->getX() + 5;
         int btnY = sliderPtr->getY() + decBtn->getY() + 5;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, btnX, btnY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, btnX, btnY));
 
         REQUIRE(sliderPtr->getValue() == 0);
     }
@@ -282,7 +282,7 @@ TEST_CASE("Slider - Dragging Track", "[slider]") {
         int trackX = 50 + 40 + 10;
         int trackY = 50 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, trackX, trackY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, trackX, trackY));
         REQUIRE(sliderPtr->getValue() != 50);
     }
 
@@ -294,9 +294,9 @@ TEST_CASE("Slider - Dragging Track", "[slider]") {
         int trackStartX = 50 + 40;
         int trackY = 50 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, trackStartX, trackY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, trackStartX, trackY));
         manager.processEvent(helper.createMouseMotion(trackStartX, trackY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, trackStartX, trackY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, trackStartX, trackY));
 
         REQUIRE(sliderPtr->getValue() == 0);
     }
@@ -309,7 +309,7 @@ TEST_CASE("Slider - Dragging Track", "[slider]") {
         int trackEndX = 50 + 40 + 119;
         int trackY = 50 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, trackEndX, trackY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, trackEndX, trackY));
         REQUIRE(sliderPtr->getValue() >= 99);
     }
 
@@ -321,7 +321,7 @@ TEST_CASE("Slider - Dragging Track", "[slider]") {
         int trackStartX = 50 + 40;
         int trackY = 50 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, trackStartX, trackY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, trackStartX, trackY));
         REQUIRE(sliderPtr->getValue() == 0);
 
         manager.processEvent(helper.createMouseMotion(trackStartX + 60, trackY));
@@ -367,7 +367,7 @@ TEST_CASE("Slider - Orientation", "[slider]") {
         int trackStartY = 50 + 40;
         int trackX = 50 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, trackX, trackStartY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, trackX, trackStartY));
         REQUIRE(sliderPtr->getValue() == 0);
     }
 }
@@ -386,8 +386,8 @@ TEST_CASE("Slider - Disabled State", "[slider]") {
         int btnX = sliderPtr->getX() + incBtn->getX() + 5;
         int btnY = sliderPtr->getY() + incBtn->getY() + 5;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, btnX, btnY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, btnX, btnY));
 
         REQUIRE(sliderPtr->getValue() == 50);
     }
@@ -402,8 +402,8 @@ TEST_CASE("Slider - Disabled State", "[slider]") {
         int btnX = sliderPtr->getX() + decBtn->getX() + 5;
         int btnY = sliderPtr->getY() + decBtn->getY() + 5;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, btnX, btnY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, btnX, btnY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, btnX, btnY));
 
         REQUIRE(sliderPtr->getValue() == 50);
     }
@@ -430,7 +430,7 @@ TEST_CASE("Slider - Disabled State", "[slider]") {
         int trackX = 50 + 40;
         int trackY = 50 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, trackX, trackY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, trackX, trackY));
         REQUIRE(sliderPtr->getValue() == 50);
     }
 }

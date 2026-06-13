@@ -67,8 +67,8 @@ TEST_CASE("ComboBox - Dropdown Behavior", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
 
         REQUIRE(cb->isExpanded());
     }
@@ -81,12 +81,12 @@ TEST_CASE("ComboBox - Dropdown Behavior", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         REQUIRE(cb->isExpanded());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
 
         REQUIRE_FALSE(cb->isExpanded());
     }
@@ -99,8 +99,8 @@ TEST_CASE("ComboBox - Dropdown Behavior", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
 
         REQUIRE(cb->isExpanded() == true);
     }
@@ -115,8 +115,8 @@ TEST_CASE("ComboBox - Dropdown Behavior", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         manager.render();
 
         REQUIRE(cb->isExpanded());
@@ -137,15 +137,15 @@ TEST_CASE("ComboBox - Item Selection", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         manager.render();
 
         int itemX = kComboX + 10;
         int itemY = kComboY + kComboHeight + kItemHeight / 2 + kItemHeight;
         manager.processEvent(helper.createMouseMotion(itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, itemX, itemY));
 
         REQUIRE(cb->getSelectedIndex() == 1);
         REQUIRE(cb->getSelectedItem() == "Second");
@@ -168,15 +168,15 @@ TEST_CASE("ComboBox - Item Selection", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         manager.render();
 
         int itemX = kComboX + 10;
         int itemY = kComboY + kComboHeight + kItemHeight / 2 + kItemHeight;
         manager.processEvent(helper.createMouseMotion(itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, itemX, itemY));
 
         REQUIRE(callbackIndex == 1);
         REQUIRE(callbackText == "Second");
@@ -194,15 +194,15 @@ TEST_CASE("ComboBox - Item Selection", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         manager.render();
 
         int itemX = kComboX + 10;
         int itemY = kComboY + kComboHeight + kItemHeight / 2 + kItemHeight * 2;
         manager.processEvent(helper.createMouseMotion(itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, itemX, itemY));
 
         REQUIRE(cb->getSelectedIndex() == 2);
     }
@@ -219,15 +219,15 @@ TEST_CASE("ComboBox - Item Selection", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         manager.render();
 
         int itemX = kComboX + 10;
         int itemY = kComboY + kComboHeight + kItemHeight / 2 + kItemHeight * 2;
         manager.processEvent(helper.createMouseMotion(itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, itemX, itemY));
 
         REQUIRE(cb->getSelectedItem() == "Third");
     }
@@ -241,16 +241,16 @@ TEST_CASE("ComboBox - Item Selection", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         manager.render();
         REQUIRE(cb->isExpanded());
 
         int itemX = kComboX + 10;
         int itemY = kComboY + kComboHeight + kItemHeight / 2;
         manager.processEvent(helper.createMouseMotion(itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, itemX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, itemX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, itemX, itemY));
 
         REQUIRE_FALSE(cb->isExpanded());
     }
@@ -269,14 +269,14 @@ TEST_CASE("ComboBox - Click Outside", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         REQUIRE(cb->isExpanded());
 
         int outsideX = kComboX - 20;
         int outsideY = kComboY - 20;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, outsideX, outsideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, outsideX, outsideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, outsideX, outsideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, outsideX, outsideY));
 
         REQUIRE_FALSE(cb->isExpanded());
     }
@@ -290,14 +290,14 @@ TEST_CASE("ComboBox - Click Outside", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         REQUIRE(cb->isExpanded());
 
         int outsideX = kComboX - 20;
         int outsideY = kComboY - 20;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, outsideX, outsideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, outsideX, outsideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, outsideX, outsideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, outsideX, outsideY));
 
         REQUIRE(cb->getSelectedIndex() == 0);
         REQUIRE(cb->getSelectedItem() == "First");
@@ -311,14 +311,14 @@ TEST_CASE("ComboBox - Click Outside", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         REQUIRE(cb->isExpanded());
 
         int outsideX = kComboX + kComboWidth + 50;
         int outsideY = kComboY + kComboHeight + 10;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, outsideX, outsideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, outsideX, outsideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, outsideX, outsideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, outsideX, outsideY));
 
         REQUIRE_FALSE(cb->isExpanded());
     }
@@ -528,8 +528,8 @@ TEST_CASE("ComboBox - Empty ComboBox", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
 
         REQUIRE(cb->isExpanded());
     }
@@ -541,12 +541,12 @@ TEST_CASE("ComboBox - Empty ComboBox", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         REQUIRE(cb->isExpanded());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
 
         REQUIRE_FALSE(cb->isExpanded());
     }
@@ -576,8 +576,8 @@ TEST_CASE("ComboBox - Disabled State", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
 
         REQUIRE_FALSE(cb->isExpanded());
     }
@@ -593,8 +593,8 @@ TEST_CASE("ComboBox - Disabled State", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
 
         REQUIRE_FALSE(cb->isExpanded());
     }
@@ -609,8 +609,8 @@ TEST_CASE("ComboBox - Disabled State", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
 
         REQUIRE(cb->getSelectedIndex() == 0);
         REQUIRE(cb->getSelectedItem() == "First");
@@ -626,13 +626,13 @@ TEST_CASE("ComboBox - Disabled State", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         REQUIRE_FALSE(cb->isExpanded());
 
         cb->setEnabled(true);
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
 
         REQUIRE(cb->isExpanded());
     }
@@ -676,14 +676,14 @@ TEST_CASE("ComboBox - Multiple Selection Changes", "[combobox]") {
 
         int insideX = kComboX + 5;
         int insideY = kComboY + 5;
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, insideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, insideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, insideY));
         manager.render();
 
         int itemY = kComboY + kComboHeight + kItemHeight / 2;
         manager.processEvent(helper.createMouseMotion(insideX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, insideX, itemY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, insideX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, insideX, itemY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, insideX, itemY));
 
         REQUIRE(callbackCount == 0);
     }

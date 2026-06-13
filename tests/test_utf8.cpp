@@ -135,7 +135,7 @@ TEST_CASE("TextInput with Polish text - cursor movement", "[utf8][textinput]") {
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("zażółć"));
         
         REQUIRE(inputPtr->getText() == "zażółć");
@@ -151,12 +151,12 @@ TEST_CASE("TextInput with Polish text - cursor movement", "[utf8][textinput]") {
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("zażółć"));
         
         REQUIRE(inputPtr->getText() == "zażółć");
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         
         REQUIRE(inputPtr->getText() == "zażół");
         REQUIRE(utf8::charCount(inputPtr->getText()) == 5);
@@ -171,18 +171,18 @@ TEST_CASE("TextInput with Polish text - cursor movement", "[utf8][textinput]") {
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("zażółć"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         REQUIRE(inputPtr->getText() == "zażół");
         REQUIRE(utf8::charCount(inputPtr->getText()) == 5);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         REQUIRE(inputPtr->getText() == "zażó");
         REQUIRE(utf8::charCount(inputPtr->getText()) == 4);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         REQUIRE(inputPtr->getText() == "zaż");
         REQUIRE(utf8::charCount(inputPtr->getText()) == 3);
         
@@ -195,11 +195,11 @@ TEST_CASE("TextInput with Polish text - cursor movement", "[utf8][textinput]") {
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("zażółć"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE));
         
         REQUIRE(inputPtr->getText() == "zażół");
         REQUIRE(utf8::charCount(inputPtr->getText()) == 5);
@@ -213,10 +213,10 @@ TEST_CASE("TextInput with Polish text - cursor movement", "[utf8][textinput]") {
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("zaż"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         manager.processEvent(helper.createTextInputEvent("X"));
         
         REQUIRE(inputPtr->getText() == "zaXż");
@@ -231,11 +231,11 @@ TEST_CASE("TextInput with Polish text - cursor movement", "[utf8][textinput]") {
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("ąę"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
         manager.processEvent(helper.createTextInputEvent("X"));
         
         REQUIRE(inputPtr->getText() == "Xąę");
@@ -279,7 +279,7 @@ TEST_CASE("TextInput selection with Polish text", "[utf8][selection]") {
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("zażółć"));
         
         inputPtr->setSelection(2, 4);
@@ -296,11 +296,11 @@ TEST_CASE("TextInput selection with Polish text", "[utf8][selection]") {
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("zażółć"));
         
         inputPtr->setSelection(2, 4);
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         
         REQUIRE(inputPtr->getText() == "załć");
         REQUIRE(utf8::charCount(inputPtr->getText()) == 4);
@@ -315,14 +315,14 @@ TEST_CASE("TextInput selection with Polish text", "[utf8][selection]") {
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("ąćęł"));
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT));
         REQUIRE(inputPtr->hasSelection());
         REQUIRE(utf8::charCount(inputPtr->getSelection()) == 1);
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT));
         REQUIRE(utf8::charCount(inputPtr->getSelection()) == 2);
         
         inputPtr->markForDeletion();

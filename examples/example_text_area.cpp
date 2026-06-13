@@ -1,5 +1,5 @@
-#include "SDL_clipboard.h"
-#include "SDL_stdinc.h"
+#include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_stdinc.h>
 #include "gui_manager.hpp"
 #include "text_area.hpp"
 #include "sdl_app.hpp"
@@ -43,7 +43,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
             }
 
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) {
+                if (e.type == SDL_EVENT_QUIT) {
                     quit = true;
                 }
                 guiManager.processEvent(e);

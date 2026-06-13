@@ -1,8 +1,104 @@
 #include "label.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
-#include "SDL2/SDL.h"
-#include "SDL2/SDL2_gfxPrimitives.h"
+#include <SDL3/SDL.h>
+import std.compat;
+
+void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color) {
+    if (radius <= 0.0f || rect.w < 2.0f * radius || rect.h < 2.0f * radius) {
+        SDL_SetRenderDrawColorFloat(renderer, color.r, color.g, color.b, color.a);
+        ({ SDL_FRect _fr = {static_cast<float>(rect.x), static_cast<float>(rect.y), static_cast<float>(rect.w), static_cast<float>(rect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+        return;
+    }
+
+    SDL_SetRenderDrawColorFloat(renderer, color.r, color.g, color.b, color.a);
+    float left = rect.x, top = rect.y;
+    float right = rect.x + rect.w, bottom = rect.y + rect.h;
+    float r = radius;
+
+    ({ SDL_FRect _fr = {left + r, top, right - left - 2.0f*r, r}; SDL_RenderFillRect(renderer, &_fr); });
+    ({ SDL_FRect _fr = {left + r, bottom - r, right - left - 2.0f*r, r}; SDL_RenderFillRect(renderer, &_fr); });
+    ({ SDL_FRect _fr = {left, top + r, r, bottom - top - 2.0f*r}; SDL_RenderFillRect(renderer, &_fr); });
+    ({ SDL_FRect _fr = {right - r, top + r, r, bottom - top - 2.0f*r}; SDL_RenderFillRect(renderer, &_fr); });
+    ({ SDL_FRect _fr = {left + r, top + r, right - left - 2.0f*r, bottom - top - 2.0f*r}; SDL_RenderFillRect(renderer, &_fr); });
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+    const int segments = 8;
+    std::vector<SDL_Vertex> verts;
+    float cx[4] = {left + r, right - r, right - r, left + r};
+    float cy[4] = {top + r, top + r, bottom - r, bottom - r};
+    float ba[4] = {3.1415927f, 4.712389f, 0, 1.5707963f};
+
+    for (int corner = 0; corner < 4; ++corner) {
+        for (int i = 0; i < segments; ++i) {
+            float a0 = ba[corner] + static_cast<float>(i) * 1.5707963f / static_cast<float>(segments);
+            float a1 = ba[corner] + static_cast<float>(i + 1) * 1.5707963f / static_cast<float>(segments);
+            verts.push_back({SDL_FPoint{cx[corner], cy[corner]}, color, SDL_FPoint{0, 0}});
+            verts.push_back({SDL_FPoint{cx[corner] + cosf(a0) * r, cy[corner] + sinf(a0) * r}, color, SDL_FPoint{0, 0}});
+            verts.push_back({SDL_FPoint{cx[corner] + cosf(a1) * r, cy[corner] + sinf(a1) * r}, color, SDL_FPoint{0, 0}});
+        }
+    }
+
+    SDL_RenderGeometry(renderer, NULL, verts.data(), static_cast<int>(verts.size()), NULL, 0);
+}
+
+void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color, float thickness) {
+    if (radius <= 0.0f || rect.w < 2.0f * radius || rect.h < 2.0f * radius) {
+        SDL_SetRenderDrawColorFloat(renderer, color.r, color.g, color.b, color.a);
+        for (float i = 0; i < thickness; ++i) {
+            SDL_FRect r = {rect.x + i, rect.y + i, rect.w - 2.0f * i, rect.h - 2.0f * i};
+            ({ SDL_FRect _fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)}; SDL_RenderRect(renderer, &_fr); });
+        }
+        return;
+    }
+
+    const int segments = 8;
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+    for (float t = 0; t < thickness; ++t) {
+        float rInner = radius - t - 1.0f;
+        float rOuter = radius - t;
+        if (rOuter <= 0.0f) rOuter = 0.0f;
+        if (rInner < 0.0f) rInner = 0.0f;
+        float x = rect.x + t, y = rect.y + t;
+        float w = rect.w - 2.0f * t, h = rect.h - 2.0f * t;
+        float ro = rOuter, ri = rInner;
+
+        SDL_SetRenderDrawColorFloat(renderer, color.r, color.g, color.b, color.a);
+        if (ro < 1.0f) {
+            ({ SDL_FRect _fr = {x, y, w, h}; SDL_RenderRect(renderer, &_fr); });
+            continue;
+        }
+
+        ({ SDL_FRect _fr = {x + ro, y, w - 2.0f*ro, 1.0f}; SDL_RenderFillRect(renderer, &_fr); });
+        ({ SDL_FRect _fr = {x + ro, y + h - 1.0f, w - 2.0f*ro, 1.0f}; SDL_RenderFillRect(renderer, &_fr); });
+        ({ SDL_FRect _fr = {x, y + ro, 1.0f, h - 2.0f*ro}; SDL_RenderFillRect(renderer, &_fr); });
+        ({ SDL_FRect _fr = {x + w - 1.0f, y + ro, 1.0f, h - 2.0f*ro}; SDL_RenderFillRect(renderer, &_fr); });
+
+        std::vector<SDL_Vertex> verts;
+        float cx[4] = {x + ro, x + w - ro, x + w - ro, x + ro};
+        float cy[4] = {y + ro, y + ro, y + h - ro, y + h - ro};
+        float ba[4] = {3.1415927f, 4.712389f, 0, 1.5707963f};
+
+        for (int corner = 0; corner < 4; ++corner) {
+            for (int i = 0; i < segments; ++i) {
+                float a0 = ba[corner] + static_cast<float>(i) * 1.5707963f / static_cast<float>(segments);
+                float a1 = ba[corner] + static_cast<float>(i + 1) * 1.5707963f / static_cast<float>(segments);
+                float c0 = cosf(a0), s0 = sinf(a0);
+                float c1 = cosf(a1), s1 = sinf(a1);
+                // quad strip: outer_a0 → outer_a1 → inner_a1, outer_a0 → inner_a1 → inner_a0
+                verts.push_back({SDL_FPoint{cx[corner] + c0*ro, cy[corner] + s0*ro}, color, SDL_FPoint{0,0}});
+                verts.push_back({SDL_FPoint{cx[corner] + c1*ro, cy[corner] + s1*ro}, color, SDL_FPoint{0,0}});
+                verts.push_back({SDL_FPoint{cx[corner] + c1*ri, cy[corner] + s1*ri}, color, SDL_FPoint{0,0}});
+                verts.push_back({SDL_FPoint{cx[corner] + c0*ro, cy[corner] + s0*ro}, color, SDL_FPoint{0,0}});
+                verts.push_back({SDL_FPoint{cx[corner] + c1*ri, cy[corner] + s1*ri}, color, SDL_FPoint{0,0}});
+                verts.push_back({SDL_FPoint{cx[corner] + c0*ri, cy[corner] + s0*ri}, color, SDL_FPoint{0,0}});
+            }
+        }
+        SDL_RenderGeometry(renderer, NULL, verts.data(), static_cast<int>(verts.size()), NULL, 0);
+    }
+}
 
 
 // Implementacja klasy GUIElement
@@ -116,7 +212,7 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
         return false;
     }
 
-    if (e.type == SDL_MOUSEMOTION) {
+    if (e.type == SDL_EVENT_MOUSE_MOTION) {
         bool currentlyHovered = contains(e.motion.x, e.motion.y);
 
         if (currentlyHovered && !m_isHovered) {
@@ -137,13 +233,13 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
     }
 
     // For mouse button events, check actual position at event time
-    bool mouseInside = m_isHovered || (e.type == SDL_MOUSEBUTTONDOWN && contains(e.button.x, e.button.y)) ||
-                       (e.type == SDL_MOUSEBUTTONUP && contains(e.button.x, e.button.y));
+    bool mouseInside = m_isHovered || (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && contains(e.button.x, e.button.y)) ||
+                       (e.type == SDL_EVENT_MOUSE_BUTTON_UP && contains(e.button.x, e.button.y));
     
     if (mouseInside) {
-        if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+        if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
             setState(ElementState::Pressed);
-        } else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+        } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
             if (m_state == ElementState::Pressed) {
                 // Only set Hover if mouse is actually inside at release time
                 if (contains(e.button.x, e.button.y)) {
@@ -159,7 +255,7 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
         // Mouse outside - set Normal (unless still pressed for drag scenarios)
         if (m_state != ElementState::Pressed) {
             setState(ElementState::Normal);
-        } else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+        } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
             // Released outside while pressed - set Normal
             setState(ElementState::Normal);
         }
@@ -171,7 +267,7 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
 
 void GUIElement::render(SDL_Renderer* renderer) {
     SDL_Rect viewport;
-    SDL_RenderGetViewport(renderer, &viewport);
+    SDL_GetRenderViewport(renderer, &viewport);
     render(renderer, viewport);
 }
 
@@ -184,14 +280,14 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
     SDL_Rect element_rect = {abs_pos.x, abs_pos.y, m_width, m_height};
     SDL_Rect clipped_rect;
 
-    if (!SDL_IntersectRect(&element_rect, &parent_clip_rect, &clipped_rect)) {
+    if (!SDL_GetRectIntersection(&element_rect, &parent_clip_rect, &clipped_rect)) {
         return; // Element jest całkowicie poza obszarem przycinania
     }
 
     if (wantsDirectRender()) {
-        SDL_RenderSetClipRect(renderer, &clipped_rect);
+        SDL_SetRenderClipRect(renderer, &clipped_rect);
         drawDirect(renderer);
-        SDL_RenderSetClipRect(renderer, &parent_clip_rect);
+        SDL_SetRenderClipRect(renderer, &parent_clip_rect);
         m_isDirty = false;
     } else {
         if (m_isDirty) {
@@ -200,11 +296,11 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
 
         if (m_cachedTexture) {
             if (m_rotation != 0.0) {
-                SDL_Rect dst_rect = {abs_pos.x, abs_pos.y, m_width, m_height};
-                SDL_Point center = m_rotationCenter.x >= 0 
-                    ? m_rotationCenter 
-                    : SDL_Point{m_width / 2, m_height / 2};
-                SDL_RenderCopyEx(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
+                SDL_FRect dst_rect = {static_cast<float>(abs_pos.x), static_cast<float>(abs_pos.y), static_cast<float>(m_width), static_cast<float>(m_height)};
+                SDL_FPoint center = m_rotationCenter.x >= 0 
+                    ? SDL_FPoint{static_cast<float>(m_rotationCenter.x), static_cast<float>(m_rotationCenter.y)} 
+                    : SDL_FPoint{static_cast<float>(m_width) / 2.0f, static_cast<float>(m_height) / 2.0f};
+                SDL_RenderTextureRotated(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
                                  m_rotation, &center, SDL_FLIP_NONE);
             } else {
                 SDL_Rect src_rect;
@@ -212,7 +308,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 src_rect.y = clipped_rect.y - abs_pos.y;
                 src_rect.w = clipped_rect.w;
                 src_rect.h = clipped_rect.h;
-                SDL_RenderCopy(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
+                ({ SDL_FRect _sr = {static_cast<float>(src_rect.x), static_cast<float>(src_rect.y), static_cast<float>(src_rect.w), static_cast<float>(src_rect.h)}; SDL_FRect _dr = {static_cast<float>(clipped_rect.x), static_cast<float>(clipped_rect.y), static_cast<float>(clipped_rect.w), static_cast<float>(clipped_rect.h)}; SDL_RenderTexture(renderer, m_cachedTexture.get(), &_sr, &_dr); });
             }
         }
     }
@@ -239,9 +335,13 @@ void GUIElement::renderToCache() {
 
     int tex_w = 0, tex_h = 0;
     if (m_cachedTexture) {
-        if (SDL_QueryTexture(m_cachedTexture.get(), nullptr, nullptr, &tex_w, &tex_h) != 0) {
-            LOG_DEBUG("GUIElement: SDL_QueryTexture failed: %s", SDL_GetError());
+        float tw = 0.0f, th = 0.0f;
+        if (!SDL_GetTextureSize(m_cachedTexture.get(), &tw, &th)) {
+            LOG_DEBUG("GUIElement: SDL_GetTextureSize failed: %s", SDL_GetError());
             tex_w = tex_h = 0;
+        } else {
+            tex_w = static_cast<int>(tw);
+            tex_h = static_cast<int>(th);
         }
     }
     if (!m_cachedTexture || tex_w != m_width || tex_h != m_height) {
@@ -275,7 +375,7 @@ void GUIElement::renderToCache() {
         for (auto& child : m_children) {
             if (child && child->isVisible() && child->m_cachedTexture) {
                 SDL_Rect childDst = {child->m_x, child->m_y, child->m_width, child->m_height};
-                SDL_RenderCopy(renderer, child->m_cachedTexture.get(), nullptr, &childDst);
+                ({ SDL_FRect _dr = {static_cast<float>(childDst.x), static_cast<float>(childDst.y), static_cast<float>(childDst.w), static_cast<float>(childDst.h)}; SDL_RenderTexture(renderer, child->m_cachedTexture.get(), nullptr, &_dr); });
             }
         }
     }
@@ -445,55 +545,29 @@ void GUIElement::setBorderRadius(ElementState state, int radius) {
 void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
     const Style& style = getComposedStyle(m_state);
     int radius = style.borderRadius.value_or(0);
-    // Clamp radius to half of the smaller dimension to avoid overflow
-    radius = std::min(radius, std::min(m_width, m_height) / 2);
+    SDL_FRect frect = {0, 0, static_cast<float>(m_width), static_cast<float>(m_height)};
+    SDL_FColor fcolor;
+    float fradius = static_cast<float>(radius);
 
-    // Rysowanie tła
     if (style.backgroundColor) {
-        const SDL_Color& bg = *style.backgroundColor;
-        if (radius > 0) {
-            // Zaokrąglone rogi - używamy SDL2_gfx
-            roundedBoxRGBA(renderer, 0, 0, m_width - 1, m_height - 1, radius,
-                           bg.r, bg.g, bg.b, bg.a);
-        } else {
-            // Ostre rogi - standardowy SDL
-            SDL_SetRenderDrawColor(renderer, bg.r, bg.g, bg.b, bg.a);
-            SDL_Rect bgRect = {0, 0, m_width, m_height};
-            SDL_RenderFillRect(renderer, &bgRect);
-        }
+        fcolor.r = style.backgroundColor->r / 255.0f;
+        fcolor.g = style.backgroundColor->g / 255.0f;
+        fcolor.b = style.backgroundColor->b / 255.0f;
+        fcolor.a = style.backgroundColor->a / 255.0f;
+        drawRoundedFilledRect(renderer, frect, fradius, fcolor);
     }
 
-    // Rysowanie tekstury tła (pomiędzy tłem a obramowaniem)
     if (style.texture.has_value()) {
-        SDL_Rect texRect = {0, 0, m_width, m_height};
-        SDL_RenderCopy(renderer, style.texture.value().get(), nullptr, &texRect);
+        SDL_FRect texRect = {0, 0, static_cast<float>(m_width), static_cast<float>(m_height)};
+        ({ SDL_FRect _dr = {static_cast<float>(texRect.x), static_cast<float>(texRect.y), static_cast<float>(texRect.w), static_cast<float>(texRect.h)}; SDL_RenderTexture(renderer, style.texture.value().get(), nullptr, &_dr); });
     }
 
-    // Rysowanie obramowania
     if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
-        const SDL_Color& bc = *style.borderColor;
-        int width = *style.borderWidth;
-        if (radius > 0) {
-            // Zaokrąglone obramowanie - używamy SDL2_gfx
-            // Rysujemy kilka obramowań z malejącym radius dla grubości > 1
-            for (int i = 0; i < width; ++i) {
-                int innerRadius = radius - i;
-                if (innerRadius < 0) innerRadius = 0;
-                roundedRectangleRGBA(renderer, i, i, m_width - 1 - i, m_height - 1 - i,
-                                      innerRadius, bc.r, bc.g, bc.b, bc.a);
-            }
-        } else {
-            // Ostre obramowanie - standardowy SDL
-            SDL_SetRenderDrawColor(renderer, bc.r, bc.g, bc.b, bc.a);
-            SDL_Rect borderRect = {0, 0, m_width, m_height};
-            for (int i = 0; i < width; ++i) {
-                SDL_RenderDrawRect(renderer, &borderRect);
-                borderRect.x++;
-                borderRect.y++;
-                borderRect.w -= 2;
-                borderRect.h -= 2;
-            }
-        }
+        fcolor.r = style.borderColor->r / 255.0f;
+        fcolor.g = style.borderColor->g / 255.0f;
+        fcolor.b = style.borderColor->b / 255.0f;
+        fcolor.a = style.borderColor->a / 255.0f;
+        drawRoundedRectBorder(renderer, frect, fradius, fcolor, static_cast<float>(*style.borderWidth));
     }
 }
 

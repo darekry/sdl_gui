@@ -3,25 +3,24 @@
 #include "button.hpp"
 #include "checkbox.hpp"
 #include "sdl_app.hpp"
-#include "SDL_log.h"
+#include <SDL3/SDL_log.h>
 #include "label.hpp"
 
 import std.compat;
 
 // Helper function to create a 1x1 texture of a specific color
 SDL_Texture* createColorTexture(SDL_Renderer* renderer, SDL_Color color) {
-    SDL_Surface* surface = SDL_CreateRGBSurface(0, 1, 1, 32, 0, 0, 0, 0);
+    SDL_Surface* surface = SDL_CreateSurface(1, 1, SDL_PIXELFORMAT_RGBA8888);
     if (!surface) return nullptr;
-    SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, color.r, color.g, color.b, color.a));
+    SDL_FillSurfaceRect(surface, NULL, SDL_MapSurfaceRGBA(surface, color.r, color.g, color.b, color.a));
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_FreeSurface(surface);
+    SDL_DestroySurface(surface);
     return texture;
 }
 
 int main() {
     try {
-        // Używamy SDL_RENDERER_ACCELERATED zamiast domyślnego VSync dla mniejszego lagu
-        SDLApp app("Draggable Window Example", 800, 600, SDL_RENDERER_ACCELERATED);
+        SDLApp app("Draggable Window Example", 800, 600);
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
@@ -66,7 +65,7 @@ int main() {
         SDL_Event e;
         while (!quit) {
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) {
+                if (e.type == SDL_EVENT_QUIT) {
                     quit = true;
                 }
                 guiManager.processEvent(e);

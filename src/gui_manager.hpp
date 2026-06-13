@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "SDL2/SDL.h"
+#include <SDL3/SDL.h>
 #include "gui.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
@@ -43,7 +43,7 @@ public:
     
     /**
      * @brief Handle window resize - updates all anchored elements
-     * Call this when window size changes (SDL_WINDOWEVENT_RESIZED)
+     * Call this when window size changes (SDL_EVENT_WINDOW_RESIZED)
      * @param width New window width
      * @param height New window height
      */

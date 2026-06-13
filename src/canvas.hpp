@@ -1,6 +1,6 @@
 #pragma once
 #include "gui.hpp"
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 class Canvas : public GUIElement {
 public:

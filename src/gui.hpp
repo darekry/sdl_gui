@@ -3,14 +3,14 @@
 
 #include "texture_manager.hpp"
 #include "font_manager.hpp"
-#include "SDL2/SDL.h"
+#include <SDL3/SDL.h>
 #include "animation_manager.hpp"
 #include "style.hpp"
 #include "anchor.hpp"
 
 
 #if DEBUG
-#include <SDL2/SDL_log.h>
+#include <SDL3/SDL_log.h>
 #define LOG_DEBUG(...) SDL_Log(__VA_ARGS__)
 #else
 #define LOG_DEBUG(...)
@@ -165,3 +165,6 @@ protected:
     double m_rotation = 0.0;
     SDL_Point m_rotationCenter = {-1, -1};
 };
+
+void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color);
+void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color, float thickness);

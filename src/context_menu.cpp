@@ -63,7 +63,7 @@ bool ContextMenu::handleEvent(const SDL_Event& event) {
     }
 
     // Check for clicks outside the menu area
-    if (event.type == SDL_MOUSEBUTTONDOWN) {
+    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         if (shouldCloseOnClick(event)) {
             closeMenu();
             return true;
@@ -152,9 +152,9 @@ void ContextMenu::closeMenu() {
 }
 
 bool ContextMenu::shouldCloseOnClick(const SDL_Event& event) const {
-    if (event.type != SDL_MOUSEBUTTONDOWN) return false;
+    if (event.type != SDL_EVENT_MOUSE_BUTTON_DOWN) return false;
 
-    const auto p = SDL_Point{event.button.x, event.button.y};
+    const auto p = SDL_Point{static_cast<int>(event.button.x), static_cast<int>(event.button.y)};
     auto abs_pos = getAbsolutePosition();
     auto menu_area = SDL_Rect{abs_pos.x, abs_pos.y, m_width, m_height};
 

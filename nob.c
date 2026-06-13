@@ -48,7 +48,6 @@ static const char * common_flags[] = {
     "-Wsign-promo",
     "-stdlib=libc++",
     "-std=c++23",
-    "-I/usr/include/SDL2",
     "-Isrc",
     "-Ilib",
 };
@@ -73,14 +72,36 @@ static const char * release_flags[] = {
 static Nob_Cmd g_common = {0};
 static Nob_Cmd g_debug = {0};
 static Nob_Cmd g_release = {0};
-static Nob_Compdb g_compdb = {0};  // compile_commands.json entries
+static Nob_Cmd g_sdl3_cflags = {0};  // SDL3 compile flags from pkg-config
+static Nob_Cmd g_sdl3_libs = {0};    // SDL3 link flags from pkg-config
+static Nob_Compdb g_compdb = {0};    // compile_commands.json entries
 static bool g_initialized = false;
+
+static void pkg_config_cmd(Nob_Cmd *cmd, const char *args) {
+    char buffer[8192] = {0};
+    char full_cmd[1024];
+    snprintf(full_cmd, sizeof(full_cmd),
+             "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig pkg-config %s 2>/dev/null", args);
+    FILE *fp = popen(full_cmd, "r");
+    if (!fp) return;
+    size_t n = fread(buffer, 1, sizeof(buffer) - 1, fp);
+    pclose(fp);
+    if (n == 0) return;
+    buffer[n] = '\0';
+    char *rest = buffer;
+    char *token;
+    while ((token = strtok_r(rest, " \t\n", &rest))) {
+        nob_cmd_append(cmd, nob_temp_strdup(token));
+    }
+}
 
 static void init_globals(void) {
     if (g_initialized) return;
     nob_da_append_many(&g_common, common_flags, NOB_ARRAY_LEN(common_flags));
     nob_da_append_many(&g_debug, debug_flags, NOB_ARRAY_LEN(debug_flags));
     nob_da_append_many(&g_release, release_flags, NOB_ARRAY_LEN(release_flags));
+    pkg_config_cmd(&g_sdl3_cflags, "sdl3 sdl3-image sdl3-ttf --cflags");
+    pkg_config_cmd(&g_sdl3_libs, "sdl3 sdl3-image sdl3-ttf --libs");
     g_initialized = true;
 }
 
@@ -94,8 +115,9 @@ static void cmd_add_mode(Nob_Cmd *cmd, bool release) {
     nob_cmd_extend(cmd, release ? &g_release : &g_debug);
 }
 
-static void cmd_add_sdl2_libs(Nob_Cmd *cmd) {
-    nob_cmd_append(cmd, "-lSDL2", "-lSDL2_image", "-lSDL2_ttf", "-lSDL2_gfx");
+static void cmd_add_sdl3(Nob_Cmd *cmd) {
+    nob_cmd_extend(cmd, &g_sdl3_cflags);
+    nob_cmd_extend(cmd, &g_sdl3_libs);
 }
 
 static const char *std_pcm_path(bool release) {
@@ -374,7 +396,7 @@ static bool build_examples(bool release) {
         cmd_add_mode(&cmd, release);
         cmd_add_modules(&cmd, release);
         nob_cmd_append(&cmd, "-o", exe, *src, unity_obj);
-        cmd_add_sdl2_libs(&cmd);
+        cmd_add_sdl3(&cmd);
         
         // Add to compile_commands.json BEFORE running
         nob_compdb_add(&g_compdb, &cmd, *src, .output = exe);
@@ -459,7 +481,7 @@ static bool build_tests(bool release) {
         cmd_add_mode(&cmd, release);
         cmd_add_modules(&cmd, release);
         nob_cmd_append(&cmd, "-o", exe, *src, unity_obj, helper_obj, catch_obj);
-        cmd_add_sdl2_libs(&cmd);
+        cmd_add_sdl3(&cmd);
         
         // Add to compile_commands.json BEFORE running
         nob_compdb_add(&g_compdb, &cmd, *src, .output = exe);
@@ -605,9 +627,9 @@ static bool build_combined_header(void) {
     nob_sb_append_cstr(&sb, "#include <optional>\n#include <string>\n#include <string_view>\n");
     nob_sb_append_cstr(&sb, "#include <variant>\n#include <vector>\n\n");
     nob_sb_append_cstr(&sb, "// External libraries\n");
-    nob_sb_append_cstr(&sb, "#include <SDL2/SDL.h>\n#include <SDL2/SDL_image.h>\n");
-    nob_sb_append_cstr(&sb, "#include <SDL2/SDL_ttf.h>\n#include <SDL2/SDL_pixels.h>\n");
-    nob_sb_append_cstr(&sb, "#include <SDL2/SDL_log.h>\n#include <SDL2/SDL2_gfxPrimitives.h>\n\n");
+    nob_sb_append_cstr(&sb, "#include <SDL3/SDL.h>\n#include <SDL3/SDL_image.h>\n");
+    nob_sb_append_cstr(&sb, "#include <SDL3/SDL_ttf.h>\n#include <SDL3/SDL_pixels.h>\n");
+    nob_sb_append_cstr(&sb, "#include <SDL3/SDL_log.h>\n\n");
     nob_sb_append_cstr(&sb, "// Project libraries\n#include \"tinyxml2.h\"\n\n");
     
     for (size_t i = 0; i < NOB_ARRAY_LEN(hpp_order); i++) {
@@ -783,7 +805,7 @@ static bool build_release(void) {
         nob_da_foreach(const char*, obj, &objects) {
             nob_cmd_append(&cmd, *obj);
         }
-        cmd_add_sdl2_libs(&cmd);
+        cmd_add_sdl3(&cmd);
         if (!nob_cmd_run(&cmd)) return false;
     }
     

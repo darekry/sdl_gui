@@ -31,8 +31,7 @@ int main(int, char**)
 {
     try {
         // Create RESIZABLE window
-        SDLApp app("Anchor System Demo - Resize the window!", 800, 600, 
-                   SDL_RENDERER_PRESENTVSYNC, true);
+        SDLApp app("Anchor System Demo - Resize the window!", 800, 600, true);
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
         
@@ -75,7 +74,7 @@ int main(int, char**)
         closeBtn->setAnchor(Anchor::bottomRight(10)); // 10px from bottom-right corner
         closeBtn->setOnClickCallback([](GUIElement*) {
             SDL_Event quitEvent;
-            quitEvent.type = SDL_QUIT;
+            quitEvent.type = SDL_EVENT_QUIT;
             SDL_PushEvent(&quitEvent);
         });
         guiManager.addElement(std::move(closeBtn));
@@ -133,15 +132,12 @@ int main(int, char**)
         while (!quit) {
             while (SDL_PollEvent(&e)) {
                 switch (e.type) {
-                    case SDL_QUIT:
+                    case SDL_EVENT_QUIT:
                         quit = true;
                         break;
                         
-                    case SDL_WINDOWEVENT:
-                        if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
-                            // Just call handleResize - anchors update automatically!
-                            guiManager.handleResize(e.window.data1, e.window.data2);
-                        }
+                    case SDL_EVENT_WINDOW_RESIZED:
+                        guiManager.handleResize(e.window.data1, e.window.data2);
                         break;
                         
                     default:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SDL2/SDL_ttf.h"
+#include <SDL3_ttf/SDL_ttf.h>
 #include "sdl_deleters.hpp"
 
 import std.compat;

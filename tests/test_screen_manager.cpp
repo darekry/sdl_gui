@@ -75,7 +75,7 @@ public:
     void onExit(GUIManager& manager) override {}
     
     bool handleEvent(GUIManager& manager, const SDL_Event& e) override {
-        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+        if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
             m_escPressed = true;
             return true;  // Consume event
         }
@@ -315,14 +315,14 @@ TEST_CASE("ScreenManager Event Handling", "[screen_manager][events]") {
         screenManager.addScreen("test", std::move(screen));
         screenManager.changeScreen("test");
         
-        SDL_Event e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_SPACE);
+        SDL_Event e = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_SPACE);
         screenManager.handleEvent(e);
         
         REQUIRE(screenPtr->m_eventCount == 1);
     }
     
     SECTION("handleEvent with no screen returns false") {
-        SDL_Event e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_SPACE);
+        SDL_Event e = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_SPACE);
         REQUIRE_FALSE(screenManager.handleEvent(e));
     }
     
@@ -332,7 +332,7 @@ TEST_CASE("ScreenManager Event Handling", "[screen_manager][events]") {
         screenManager.addScreen("preprocess", std::move(screen));
         screenManager.changeScreen("preprocess");
         
-        SDL_Event e = helper.createKeyEvent(SDL_KEYDOWN, SDLK_ESCAPE);
+        SDL_Event e = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_ESCAPE);
         bool handled = screenManager.handleEvent(e);
         
         REQUIRE(handled);

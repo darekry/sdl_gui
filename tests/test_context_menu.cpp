@@ -37,8 +37,8 @@ TEST_CASE("ContextMenu functionality", "[context_menu]") {
         auto optionX = 50 + 10;
         auto optionY = 50 + 12; // center of first item
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, optionX, optionY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, optionX, optionY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, optionX, optionY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, optionX, optionY));
 
         REQUIRE(action1Called);
         REQUIRE_FALSE(ctx->isVisible());
@@ -48,7 +48,7 @@ TEST_CASE("ContextMenu functionality", "[context_menu]") {
         ctx->showAt(50, 50);
         REQUIRE(ctx->isVisible());
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 10, 10));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 10, 10));
 
         REQUIRE_FALSE(action1Called);
         REQUIRE_FALSE(action2Called);

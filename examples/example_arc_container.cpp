@@ -10,10 +10,10 @@
  * - 12 buttons in a full circle (clock-like arrangement)
  * - Labels rotated to point outward from center
  * - Hit testing only within the arc region
- * - Rotation support via SDL_RenderCopyEx
+ * - Rotation support via SDL_RenderTextureRotated
  */
 
-#include "SDL_render.h"
+#include <SDL3/SDL_render.h>
 #include "arc_container.hpp"
 #include "gui_manager.hpp"
 #include "button.hpp"
@@ -26,8 +26,7 @@ import std.compat;
 
 int main(int, char**) {
     try {
-        SDLApp app("ArcContainer Demo - Radial Menu", 500, 500, 
-                   static_cast<SDL_RendererFlags>(SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED), true);
+        SDLApp app("ArcContainer Demo - Radial Menu", 500, 500, true);
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
         
@@ -77,7 +76,7 @@ int main(int, char**) {
         
         while (!quit) {
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) {
+                if (e.type == SDL_EVENT_QUIT) {
                     quit = true;
                 } else {
                     guiManager.processEvent(e);

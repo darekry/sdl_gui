@@ -17,8 +17,7 @@ TEST_CASE("WindowManager Construction and SDL Init", "[window_manager][init]") {
         WindowManager windowManager;
         
         // SDL should be initialized
-        REQUIRE(SDL_WasInit(SDL_INIT_EVERYTHING) != 0);
-        REQUIRE(IMG_Init(0) != 0);  // SDL_image initialized
+        REQUIRE(SDL_WasInit(SDL_INIT_VIDEO) != 0);
         REQUIRE(TTF_WasInit() == 1);  // SDL_ttf initialized
         
         // Initial state
@@ -30,7 +29,7 @@ TEST_CASE("WindowManager Construction and SDL Init", "[window_manager][init]") {
     SECTION("WindowManager destructor cleans up SDL") {
         {
             WindowManager windowManager;
-            REQUIRE(SDL_WasInit(SDL_INIT_EVERYTHING) != 0);
+            REQUIRE(SDL_WasInit(SDL_INIT_VIDEO) != 0);
         }
         // SDL_Quit called; SDL subsystems cleaned up by destructor
         // Note: SDL_WasInit behavior after quit depends on SDL internals (ref counting)
@@ -326,7 +325,7 @@ TEST_CASE("Window Callbacks", "[window][callbacks]") {
         // Callback not called automatically on markForClose
         REQUIRE_FALSE(callbackCalled);
         
-        // Callback would be called on SDL_WINDOWEVENT_CLOSE
+        // Callback would be called on SDL_EVENT_WINDOW_CLOSE_REQUESTED
     }
     
     SECTION("setOnResizeCallback is stored") {
@@ -336,7 +335,7 @@ TEST_CASE("Window Callbacks", "[window][callbacks]") {
             resizeH = newH;
         });
         
-        // Resize callback would be triggered on SDL_WINDOWEVENT_RESIZED
+        // Resize callback would be triggered on SDL_EVENT_WINDOW_RESIZED
         // Can't easily simulate without user interaction
     }
 }

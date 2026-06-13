@@ -28,13 +28,13 @@ bool Button::handleEvent(const SDL_Event& e) {
         return false;
     }
 
-    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
+    if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
         setState(ElementState::Pressed);
         m_manager.captureMouse(this);
         return true;
     }
 
-    if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+    if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
         if (m_state == ElementState::Pressed) {
             m_manager.releaseMouse();
             // Fix: Check mouse position before setting state
@@ -50,7 +50,7 @@ bool Button::handleEvent(const SDL_Event& e) {
         }
     }
 
-    if (e.type == SDL_MOUSEMOTION) {
+    if (e.type == SDL_EVENT_MOUSE_MOTION) {
         if (m_state != ElementState::Pressed) {
             if (contains(e.motion.x, e.motion.y)) {
                 setState(ElementState::Hover);

@@ -30,7 +30,7 @@ public:
             if ((*it)->handleEvent(event)) return true;
         }
 
-        if (event.type == SDL_MOUSEMOTION) {
+        if (event.type == SDL_EVENT_MOUSE_MOTION) {
             bool currentlyHovered = contains(event.motion.x, event.motion.y);
             
             if (currentlyHovered && !m_isHovered) {
@@ -108,7 +108,7 @@ public:
             if ((*it)->handleEvent(event)) return true;
         }
 
-        if (event.type == SDL_MOUSEMOTION) {
+        if (event.type == SDL_EVENT_MOUSE_MOTION) {
             bool currentlyHovered = contains(event.motion.x, event.motion.y);
             
             if (currentlyHovered && !m_isHovered) {
@@ -183,7 +183,7 @@ public:
             if ((*it)->handleEvent(event)) return true;
         }
 
-        if (event.type == SDL_MOUSEMOTION) {
+        if (event.type == SDL_EVENT_MOUSE_MOTION) {
             bool currentlyHovered = contains(event.motion.x, event.motion.y);
             
             if (currentlyHovered && !m_isHovered) {
@@ -224,7 +224,7 @@ public:
             if ((*it)->handleEvent(event)) return true;
         }
 
-        if (event.type == SDL_MOUSEMOTION) {
+        if (event.type == SDL_EVENT_MOUSE_MOTION) {
             bool currentlyHovered = contains(event.motion.x, event.motion.y);
             
             if (currentlyHovered && !m_isHovered) {
@@ -299,7 +299,7 @@ int main() {
         SDL_Event e;
         while (!quit) {
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) quit = true;
+                if (e.type == SDL_EVENT_QUIT) quit = true;
                 gui.processEvent(e);
             }
 

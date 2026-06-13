@@ -1,16 +1,16 @@
 #include "font_manager.hpp"
-#include "SDL2/SDL.h" // Potrzebne do SDL_GetError()
-#include "SDL2/SDL_log.h"
+#include <SDL3/SDL.h> // Potrzebne do SDL_GetError()
+#include <SDL3/SDL_log.h>
 #include "gui.hpp"
 
 
 
 FontManager::FontManager() {
     // Inicjalizacja SDL_ttf, jeśli nie została jeszcze zainicjowana
-    if (TTF_Init() == -1) {
+    if (!TTF_Init()) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, 
             "FontManager CRITICAL: SDL_ttf could not initialize! SDL_ttf Error: %s", 
-            TTF_GetError());
+            SDL_GetError());
         m_initialized = false;
         // Obiekt będzie działać w ograniczonym trybie - nie będzie mógł ładować czcionek
     } else {
@@ -39,7 +39,7 @@ SharedFont FontManager::loadFont(std::string_view path, int size) {
     LOG_DEBUG("FontManager: Loading font from file: %s (size %d)", path_str.c_str(), size);
     auto* loadedFont = TTF_OpenFont(path_str.c_str(), size);
     if (!loadedFont) {
-        LOG_DEBUG("FontManager ERROR: Unable to load font %s with size %d! SDL_ttf Error: %s", path_str.c_str(), size, TTF_GetError());
+        LOG_DEBUG("FontManager ERROR: Unable to load font %s with size %d! SDL_ttf Error: %s", path_str.c_str(), size, SDL_GetError());
         return nullptr;
     }
 
@@ -82,8 +82,8 @@ void FontManager::getTextSize(std::string_view text, std::string_view fontPath, 
     if (font) {
         *width = getTextWidth(font.get(), text);
         int h = 0;
-        if (TTF_SizeUTF8(font.get(), text.data(), nullptr, &h) != 0) {
-            LOG_DEBUG("TTF_SizeUTF8 failed: %s", TTF_GetError());
+        if (!TTF_GetStringSize(font.get(), text.data(), text.size(), nullptr, &h)) {
+            LOG_DEBUG("TTF_GetStringSize failed: %s", SDL_GetError());
             *height = 0;
         } else {
             *height = h;
@@ -103,7 +103,7 @@ int FontManager::getTextWidth(TTF_Font* font, std::string_view text) {
     }
 
     int width = 0;
-    TTF_SizeUTF8(font, text.data(), &width, nullptr);
+    TTF_GetStringSize(font, text.data(), text.size(), &width, nullptr);
 
     if (m_textWidthCache.size() >= MAX_TEXT_CACHE_SIZE) {
         m_textWidthCache.clear();

@@ -15,7 +15,7 @@
 #include "tab_control.hpp"
 #include "text_area.hpp"
 #include "text_input.hpp"
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 import std.compat;
 

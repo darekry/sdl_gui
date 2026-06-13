@@ -67,7 +67,7 @@ TEST_CASE("Button click behavior - complete cycle", "[button]") {
 
     SECTION("Mouse down inside button -> state becomes Pressed") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(btn->getState() == ElementState::Pressed);
         REQUIRE(clickCount == 0);
@@ -75,8 +75,8 @@ TEST_CASE("Button click behavior - complete cycle", "[button]") {
 
     SECTION("Mouse up inside button after press -> callback fires, state = Hover") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 1);
         REQUIRE(btn->getState() == ElementState::Hover);
@@ -84,8 +84,8 @@ TEST_CASE("Button click behavior - complete cycle", "[button]") {
 
     SECTION("Click callback receives correct pointer") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickedElement == btn);
     }
@@ -93,16 +93,16 @@ TEST_CASE("Button click behavior - complete cycle", "[button]") {
     SECTION("Multiple clicks increment counter") {
         for (int i = 0; i < 3; ++i) {
             manager.processEvent(helper.createMouseMotion(20, 20));
-            manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-            manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+            manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+            manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
         }
 
         REQUIRE(clickCount == 3);
     }
 
     SECTION("Click without prior hover still works") {
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 1);
     }
@@ -120,13 +120,13 @@ TEST_CASE("Button cancel behavior", "[button]") {
 
     SECTION("Press inside, move outside, release outside -> no onClick callback") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(btn->getState() == ElementState::Pressed);
 
         manager.processEvent(helper.createMouseMotion(200, 200));
         REQUIRE(btn->getState() == ElementState::Pressed);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 200, 200));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 200, 200));
         REQUIRE(clickCount == 0);
         // BUG FIX: State should be Normal after releasing outside, not Hover or Pressed
         REQUIRE(btn->getState() == ElementState::Normal);
@@ -134,8 +134,8 @@ TEST_CASE("Button cancel behavior", "[button]") {
 
     SECTION("Press inside, release outside without motion -> no callback, state Normal") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 200, 200));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 200, 200));
 
         REQUIRE(clickCount == 0);
         REQUIRE(btn->getState() == ElementState::Normal);
@@ -143,9 +143,9 @@ TEST_CASE("Button cancel behavior", "[button]") {
 
     SECTION("Press outside, release inside -> no callback") {
         manager.processEvent(helper.createMouseMotion(200, 200));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 200, 200));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 200, 200));
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 0);
         REQUIRE(btn->getState() == ElementState::Hover);
@@ -172,8 +172,8 @@ TEST_CASE("Button disabled state", "[button]") {
     SECTION("Disabled button ignores click") {
         btn->setEnabled(false);
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 0);
     }
@@ -187,8 +187,8 @@ TEST_CASE("Button disabled state", "[button]") {
         manager.processEvent(helper.createMouseMotion(20, 20));
         REQUIRE(btn->getState() == ElementState::Hover);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 1);
     }
@@ -221,8 +221,8 @@ TEST_CASE("Button visibility", "[button]") {
     SECTION("Hidden button does not respond to click") {
         btn->setVisible(false);
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 0);
     }
@@ -262,15 +262,15 @@ TEST_CASE("Multiple buttons interaction", "[button]") {
 
     SECTION("Each button can be clicked independently") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clicks1 == 1);
         REQUIRE(clicks2 == 0);
 
         manager.processEvent(helper.createMouseMotion(130, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 130, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 130, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 130, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 130, 20));
 
         REQUIRE(clicks1 == 1);
         REQUIRE(clicks2 == 1);
@@ -288,7 +288,7 @@ TEST_CASE("Multiple buttons interaction", "[button]") {
 
     SECTION("Pressing one button does not affect others") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(btn1->getState() == ElementState::Pressed);
         REQUIRE(btn2->getState() == ElementState::Normal);
@@ -340,8 +340,8 @@ TEST_CASE("Button callback types", "[button]") {
         btn->setOnClickCallback([&](GUIElement*) { ++clickCount; });
 
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 1);
     }
@@ -351,14 +351,14 @@ TEST_CASE("Button callback types", "[button]") {
         btn->setOnClickCallback([&](GUIElement*) { counter += 10; });
 
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(counter == 10);
 
         btn->setOnClickCallback([&](GUIElement*) { counter += 100; });
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(counter == 110);
     }
 
@@ -381,8 +381,8 @@ TEST_CASE("Button right-click does not trigger onClick", "[button]") {
 
     SECTION("Right-click does not trigger onClick callback") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_RIGHT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_RIGHT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_RIGHT, 20, 20));
 
         REQUIRE(clickCount == 0);
         REQUIRE(btn->getState() == ElementState::Hover);
@@ -390,8 +390,8 @@ TEST_CASE("Button right-click does not trigger onClick", "[button]") {
 
     SECTION("Middle-click does not trigger onClick callback") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_MIDDLE, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_MIDDLE, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_MIDDLE, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_MIDDLE, 20, 20));
 
         REQUIRE(clickCount == 0);
         REQUIRE(btn->getState() == ElementState::Hover);
@@ -409,18 +409,18 @@ TEST_CASE("Button rapid click sequence", "[button]") {
     manager.addElement(std::move(button));
 
     SECTION("Rapid double-click triggers two callbacks") {
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 2);
     }
 
     SECTION("Press twice without release between -> only one click") {
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 1);
     }
@@ -431,10 +431,10 @@ TEST_CASE("Button rapid click sequence", "[button]") {
         manager.processEvent(helper.createMouseMotion(20, 20));
         REQUIRE(btn->getState() == ElementState::Hover);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(btn->getState() == ElementState::Pressed);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(btn->getState() == ElementState::Hover);
         REQUIRE(clickCount == 1);
     }
@@ -452,7 +452,7 @@ TEST_CASE("Button state remains pressed during drag outside", "[button]") {
 
     SECTION("State stays Pressed while dragging outside") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(btn->getState() == ElementState::Pressed);
 
         manager.processEvent(helper.createMouseMotion(200, 200));
@@ -464,10 +464,10 @@ TEST_CASE("Button state remains pressed during drag outside", "[button]") {
 
     SECTION("Release inside after drag outside fires callback") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         manager.processEvent(helper.createMouseMotion(200, 200));
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
 
         REQUIRE(clickCount == 1);
         REQUIRE(btn->getState() == ElementState::Hover);
@@ -493,7 +493,7 @@ TEST_CASE("Button mouse capture behavior", "[button]") {
 
     SECTION("Pressing btn1 and moving to btn2 area doesn't affect btn2") {
         manager.processEvent(helper.createMouseMotion(20, 20));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(btn1->getState() == ElementState::Pressed);
 
         manager.processEvent(helper.createMouseMotion(130, 20));

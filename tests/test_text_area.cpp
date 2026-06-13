@@ -13,7 +13,7 @@ TEST_CASE("TextArea Focus Behavior", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         bool handled = area->handleEvent(event);
 
         REQUIRE(handled);
@@ -24,10 +24,10 @@ TEST_CASE("TextArea Focus Behavior", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
 
-        event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 400, 400);
+        event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 400, 400);
         bool handled = area->handleEvent(event);
 
         REQUIRE_FALSE(handled);
@@ -44,7 +44,7 @@ TEST_CASE("TextArea Focus Behavior", "[text_area]") {
         REQUIRE_FALSE(handled);
         REQUIRE(area->getText().empty());
 
-        SDL_Event clickEvent = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event clickEvent = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(clickEvent);
         area->render(manager.getRenderer());
 
@@ -60,10 +60,10 @@ TEST_CASE("TextArea Focus Behavior", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 100);
         REQUIRE(area->handleEvent(event));
 
-        event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 349, 100);
+        event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 349, 100);
         REQUIRE(area->handleEvent(event));
     }
 }
@@ -89,13 +89,13 @@ TEST_CASE("TextArea Multi-line Text", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
         event = helper.createTextInputEvent("A");
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         event = helper.createTextInputEvent("B");
         area->handleEvent(event);
@@ -108,20 +108,20 @@ TEST_CASE("TextArea Multi-line Text", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
         event = helper.createTextInputEvent("A");
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         event = helper.createTextInputEvent("B");
         area->handleEvent(event);
 
         REQUIRE(area->getText() == "A\nB");
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         area->handleEvent(event);
         REQUIRE(area->getText() == "A\n");
 
@@ -134,12 +134,12 @@ TEST_CASE("TextArea Multi-line Text", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
         for (int i = 0; i < 3; ++i) {
-            event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+            event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
             area->handleEvent(event);
         }
 
@@ -156,7 +156,7 @@ TEST_CASE("TextArea Cursor Navigation", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -169,7 +169,7 @@ TEST_CASE("TextArea Cursor Navigation", "[text_area]") {
 
         REQUIRE(area->getText() == "ABC");
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         area->handleEvent(event);
 
         event = helper.createTextInputEvent("X");
@@ -183,7 +183,7 @@ TEST_CASE("TextArea Cursor Navigation", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -192,12 +192,12 @@ TEST_CASE("TextArea Cursor Navigation", "[text_area]") {
         event = helper.createTextInputEvent("B");
         area->handleEvent(event);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         area->handleEvent(event);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
 
         event = helper.createTextInputEvent("X");
@@ -211,11 +211,11 @@ TEST_CASE("TextArea Cursor Navigation", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         bool handled = area->handleEvent(event);
 
         REQUIRE_FALSE(handled);
@@ -226,14 +226,14 @@ TEST_CASE("TextArea Cursor Navigation", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
         event = helper.createTextInputEvent("X");
         area->handleEvent(event);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         bool handled = area->handleEvent(event);
 
         REQUIRE_FALSE(handled);
@@ -244,20 +244,20 @@ TEST_CASE("TextArea Cursor Navigation", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
         event = helper.createTextInputEvent("A");
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         event = helper.createTextInputEvent("B");
         area->handleEvent(event);
 
         REQUIRE(area->getText() == "A\nB");
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         area->handleEvent(event);
 
         event = helper.createTextInputEvent("X");
@@ -271,7 +271,7 @@ TEST_CASE("TextArea Cursor Navigation", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -288,7 +288,7 @@ TEST_CASE("TextArea Cursor Navigation", "[text_area]") {
 
         area->setText("Hi");
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         area->handleEvent(event);
 
         REQUIRE(area->getText() == "H");
@@ -304,7 +304,7 @@ TEST_CASE("TextArea Text Editing", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -321,7 +321,7 @@ TEST_CASE("TextArea Text Editing", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -336,7 +336,7 @@ TEST_CASE("TextArea Text Editing", "[text_area]") {
 
         REQUIRE(area->getText() == "Test");
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         area->handleEvent(event);
         REQUIRE(area->getText() == "Tes");
 
@@ -349,11 +349,11 @@ TEST_CASE("TextArea Text Editing", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         bool handled = area->handleEvent(event);
 
         REQUIRE_FALSE(handled);
@@ -365,7 +365,7 @@ TEST_CASE("TextArea Text Editing", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -374,7 +374,7 @@ TEST_CASE("TextArea Text Editing", "[text_area]") {
         event = helper.createTextInputEvent("C");
         area->handleEvent(event);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         area->handleEvent(event);
 
         event = helper.createTextInputEvent("B");
@@ -444,7 +444,7 @@ TEST_CASE("TextArea Scrolling", "[text_area]") {
 
         area->setText("Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8");
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -478,7 +478,7 @@ TEST_CASE("TextArea Scrolling", "[text_area]") {
 
         area->setText("Line 1\nLine 2\nLine 3");
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -499,7 +499,7 @@ TEST_CASE("TextArea Disabled State", "[text_area]") {
 
         area->setEnabled(false);
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         bool handled = area->handleEvent(event);
 
         REQUIRE_FALSE(handled);
@@ -526,13 +526,13 @@ TEST_CASE("TextArea Disabled State", "[text_area]") {
 
         area->setEnabled(false);
 
-        SDL_Event event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        SDL_Event event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         REQUIRE_FALSE(area->handleEvent(event));
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         REQUIRE_FALSE(area->handleEvent(event));
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         REQUIRE_FALSE(area->handleEvent(event));
     }
 
@@ -570,7 +570,7 @@ TEST_CASE("TextArea Hidden State", "[text_area]") {
 
         area->setVisible(false);
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         bool handled = area->handleEvent(event);
 
         REQUIRE_FALSE(handled);
@@ -597,10 +597,10 @@ TEST_CASE("TextArea Hidden State", "[text_area]") {
 
         area->setVisible(false);
 
-        SDL_Event event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        SDL_Event event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         REQUIRE_FALSE(area->handleEvent(event));
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         REQUIRE_FALSE(area->handleEvent(event));
     }
 
@@ -655,7 +655,7 @@ TEST_CASE("TextArea Large Text", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -668,7 +668,7 @@ TEST_CASE("TextArea Large Text", "[text_area]") {
             area->handleEvent(event);
             event = helper.createTextInputEvent("e");
             area->handleEvent(event);
-            event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+            event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
             area->handleEvent(event);
         }
 
@@ -693,7 +693,7 @@ TEST_CASE("TextArea OnTextChanged Callback", "[text_area]") {
             callbackSource = source;
         });
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -725,7 +725,7 @@ TEST_CASE("TextArea OnTextChanged Callback", "[text_area]") {
         int callbackCount = 0;
         area->setOnTextChanged([&](TextArea*) { callbackCount++; });
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -733,7 +733,7 @@ TEST_CASE("TextArea OnTextChanged Callback", "[text_area]") {
         area->handleEvent(event);
         REQUIRE(callbackCount == 1);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         area->handleEvent(event);
         REQUIRE(callbackCount == 2);
     }
@@ -746,11 +746,11 @@ TEST_CASE("TextArea OnTextChanged Callback", "[text_area]") {
         int callbackCount = 0;
         area->setOnTextChanged([&](TextArea*) { callbackCount++; });
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 100, 100);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         REQUIRE(callbackCount == 1);
     }
@@ -794,7 +794,7 @@ TEST_CASE("TextArea - Locked State", "[text_area]") {
         area->setLocked(true);
         manager.addElement(std::move(ta));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
         REQUIRE_FALSE(area->isHovered());
     }
@@ -816,7 +816,7 @@ TEST_CASE("TextArea - Locked State", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         area->setLocked(true);
 
         manager.processEvent(helper.createTextInputEvent("X"));
@@ -830,10 +830,10 @@ TEST_CASE("TextArea - Locked State", "[text_area]") {
         area->setText("Test");
         manager.addElement(std::move(ta));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         area->setLocked(true);
 
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
 
         REQUIRE(area->getText() == "Test");
     }
@@ -848,7 +848,7 @@ TEST_CASE("TextArea - Delete Key", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -859,12 +859,12 @@ TEST_CASE("TextArea - Delete Key", "[text_area]") {
         event = helper.createTextInputEvent("C");
         area->handleEvent(event);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         area->handleEvent(event);
 
         REQUIRE(area->getText() == "ABC");
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE);
         area->handleEvent(event);
         REQUIRE(area->getText() == "AB");
     }
@@ -874,14 +874,14 @@ TEST_CASE("TextArea - Delete Key", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
         event = helper.createTextInputEvent("X");
         area->handleEvent(event);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE);
         area->handleEvent(event);
         REQUIRE(area->getText() == "X");
     }
@@ -891,7 +891,7 @@ TEST_CASE("TextArea - Delete Key", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -904,7 +904,7 @@ TEST_CASE("TextArea - Delete Key", "[text_area]") {
 
         area->setSelection(1, 2);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE);
         area->handleEvent(event);
         REQUIRE(area->getText() == "AC");
         REQUIRE_FALSE(area->hasSelection());
@@ -967,7 +967,7 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -979,7 +979,7 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
 
         area->setSelection(1, 4);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_x, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_X, SDL_KMOD_CTRL);
         area->handleEvent(event);
 
         REQUIRE(area->getText() == "AE");
@@ -993,7 +993,7 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -1002,10 +1002,10 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
         event = helper.createTextInputEvent("B");
         area->handleEvent(event);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         area->handleEvent(event);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_V, SDL_KMOD_CTRL);
         area->handleEvent(event);
 
         REQUIRE(area->getText() == "AtestB");
@@ -1018,7 +1018,7 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -1030,7 +1030,7 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
 
         area->setSelection(1, 4);
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_v, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_V, SDL_KMOD_CTRL);
         area->handleEvent(event);
 
         REQUIRE(area->getText() == "HNEWo");
@@ -1042,7 +1042,7 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
 
@@ -1052,7 +1052,7 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
             area->handleEvent(event);
         }
 
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_c, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_C, SDL_KMOD_CTRL);
         area->handleEvent(event);
 
         REQUIRE(area->getText() == "Test");
@@ -1069,18 +1069,18 @@ TEST_CASE("TextArea - Home/End Keys", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1094,14 +1094,14 @@ TEST_CASE("TextArea - Home/End Keys", "[text_area]") {
         area->setText("ABC");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("!");
@@ -1115,16 +1115,16 @@ TEST_CASE("TextArea - Home/End Keys", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME, SDL_KMOD_CTRL);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1138,11 +1138,11 @@ TEST_CASE("TextArea - Home/End Keys", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_CTRL);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1155,11 +1155,11 @@ TEST_CASE("TextArea - Home/End Keys", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1172,11 +1172,11 @@ TEST_CASE("TextArea - Home/End Keys", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1190,20 +1190,20 @@ TEST_CASE("TextArea - Home/End Keys", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1216,18 +1216,18 @@ TEST_CASE("TextArea - Home/End Keys", "[text_area]") {
         area->setText("Hello");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1245,16 +1245,16 @@ TEST_CASE("TextArea - Arrow Up/Down", "[text_area]") {
         area->setText("ABC\nDEF\nGHI");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_UP);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1268,13 +1268,13 @@ TEST_CASE("TextArea - Arrow Up/Down", "[text_area]") {
         area->setText("ABC\nDEF\nGHI");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1288,11 +1288,11 @@ TEST_CASE("TextArea - Arrow Up/Down", "[text_area]") {
         area->setText("ABC\nDEF");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_UP);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1306,13 +1306,13 @@ TEST_CASE("TextArea - Arrow Up/Down", "[text_area]") {
         area->setText("ABC\nDEF");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         bool handled = area->handleEvent(event);
         REQUIRE(handled);
     }
@@ -1323,18 +1323,18 @@ TEST_CASE("TextArea - Arrow Up/Down", "[text_area]") {
         area->setText("ABCD\nEFGH");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_UP);
         bool handled = area->handleEvent(event);
         REQUIRE(handled);
     }
@@ -1345,16 +1345,16 @@ TEST_CASE("TextArea - Arrow Up/Down", "[text_area]") {
         area->setText("ABCD\nEFGH");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         bool handled = area->handleEvent(event);
         REQUIRE(handled);
     }
@@ -1370,18 +1370,18 @@ TEST_CASE("TextArea - Page Up/Down", "[text_area]") {
         area->setText("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\nL9\nL10");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEUP);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_PAGEUP);
         bool handled = area->handleEvent(event);
         REQUIRE(handled);
     }
@@ -1392,11 +1392,11 @@ TEST_CASE("TextArea - Page Up/Down", "[text_area]") {
         area->setText("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8\nL9\nL10");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEDOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_PAGEDOWN);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1410,11 +1410,11 @@ TEST_CASE("TextArea - Page Up/Down", "[text_area]") {
         area->setText("L1\nL2\nL3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEUP);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_PAGEUP);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1428,13 +1428,13 @@ TEST_CASE("TextArea - Page Up/Down", "[text_area]") {
         area->setText("L1\nL2\nL3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_CTRL);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEDOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_PAGEDOWN);
         area->handleEvent(event);
         
         event = helper.createTextInputEvent("X");
@@ -1448,20 +1448,20 @@ TEST_CASE("TextArea - Page Up/Down", "[text_area]") {
         area->setText("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEUP, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_PAGEUP, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1473,11 +1473,11 @@ TEST_CASE("TextArea - Page Up/Down", "[text_area]") {
         area->setText("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_PAGEDOWN, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_PAGEDOWN, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1493,7 +1493,7 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1502,11 +1502,11 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
             area->handleEvent(event);
         }
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_CTRL);
         area->handleEvent(event);
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1518,7 +1518,7 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1527,11 +1527,11 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
             area->handleEvent(event);
         }
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME, SDL_KMOD_CTRL);
         area->handleEvent(event);
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1543,7 +1543,7 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1552,15 +1552,15 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
             area->handleEvent(event);
         }
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_CTRL);
         area->handleEvent(event);
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1572,7 +1572,7 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1581,13 +1581,13 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
             area->handleEvent(event);
         }
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME, SDL_KMOD_CTRL);
         area->handleEvent(event);
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1599,7 +1599,7 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1608,14 +1608,14 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
             area->handleEvent(event);
         }
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_CTRL);
         area->handleEvent(event);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         REQUIRE(area->hasSelection());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT);
         area->handleEvent(event);
         REQUIRE_FALSE(area->hasSelection());
     }
@@ -1625,7 +1625,7 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1634,11 +1634,11 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
             area->handleEvent(event);
         }
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME, SDL_KMOD_CTRL);
         area->handleEvent(event);
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_LEFT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE_FALSE(area->hasSelection());
@@ -1649,7 +1649,7 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1658,11 +1658,11 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
             area->handleEvent(event);
         }
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_CTRL);
         area->handleEvent(event);
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE_FALSE(area->hasSelection());
@@ -1679,11 +1679,11 @@ TEST_CASE("TextArea - Ctrl+A Select All", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1695,11 +1695,11 @@ TEST_CASE("TextArea - Ctrl+A Select All", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL);
         area->handleEvent(event);
         
         REQUIRE_FALSE(area->hasSelection());
@@ -1711,13 +1711,13 @@ TEST_CASE("TextArea - Ctrl+A Select All", "[text_area]") {
         area->setText("Test");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE);
         area->handleEvent(event);
         
         REQUIRE(area->getText().empty());
@@ -1729,13 +1729,13 @@ TEST_CASE("TextArea - Ctrl+A Select All", "[text_area]") {
         area->setText("Test");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         area->handleEvent(event);
         
         REQUIRE(area->getText().empty());
@@ -1747,14 +1747,14 @@ TEST_CASE("TextArea - Ctrl+A Select All", "[text_area]") {
         area->setText("Hello World");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
         area->setSelection(0, 5);
         REQUIRE(area->getSelection() == "Hello");
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL);
         area->handleEvent(event);
         
         REQUIRE(area->getSelection() == "Hello World");
@@ -1771,7 +1771,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         area->setText("Hello World");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1789,7 +1789,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1800,7 +1800,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         
         area->setSelection(1, 2);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         
         REQUIRE(area->getText() == "A\nC");
@@ -1812,7 +1812,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1821,7 +1821,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
             area->handleEvent(event);
         }
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL);
         area->handleEvent(event);
         event = helper.createTextInputEvent("N");
         area->handleEvent(event);
@@ -1835,7 +1835,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1846,7 +1846,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         
         area->setSelection(5, 6);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         area->handleEvent(event);
         
         REQUIRE(area->getText() == "HelloWorld");
@@ -1858,7 +1858,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1869,7 +1869,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         
         area->setSelection(0, 6);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE);
         area->handleEvent(event);
         
         REQUIRE(area->getText() == "World");
@@ -1881,7 +1881,7 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1913,14 +1913,14 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
         area->setSelection(0, 0);
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1933,11 +1933,11 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->setText("A\nB\nC");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_a, KMOD_CTRL);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_A, SDL_KMOD_CTRL);
         area->handleEvent(event);
         
         REQUIRE(area->getSelection() == "A\nB\nC");
@@ -1949,19 +1949,19 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
         
         area->setSelection(area->getText().length(), area->getText().length());
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_UP, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_UP, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -1972,7 +1972,7 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -1986,7 +1986,7 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->handleEvent(event);
         event = helper.createTextInputEvent("1");
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         event = helper.createTextInputEvent("L");
         area->handleEvent(event);
@@ -1998,7 +1998,7 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->handleEvent(event);
         event = helper.createTextInputEvent("2");
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         event = helper.createTextInputEvent("L");
         area->handleEvent(event);
@@ -2008,7 +2008,7 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->setSelection(0, 12);
         REQUIRE(area->hasSelection());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE);
         area->handleEvent(event);
         
         REQUIRE(area->getText() == "L3");
@@ -2021,13 +2021,13 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
         area->setSelection(5, 17);
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DELETE);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE);
         area->handleEvent(event);
         
         REQUIRE(area->getText() == "Line1");
@@ -2040,7 +2040,7 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -2058,7 +2058,7 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         TextArea* area = ta.get();
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
@@ -2066,13 +2066,13 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->handleEvent(event);
         event = helper.createTextInputEvent("1");
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         event = helper.createTextInputEvent("L");
         area->handleEvent(event);
         event = helper.createTextInputEvent("2");
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         event = helper.createTextInputEvent("L");
         area->handleEvent(event);
@@ -2082,7 +2082,7 @@ TEST_CASE("TextArea - Multi-line Selection", "[text_area]") {
         area->setSelection(0, 4);
         REQUIRE(area->hasSelection());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RETURN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN);
         area->handleEvent(event);
         
         REQUIRE(area->getText() == "\n2\nL3");
@@ -2100,17 +2100,17 @@ TEST_CASE("TextArea - Selection with Navigation Keys", "[text_area]") {
         area->setText("Hello World");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
         for (int i = 0; i < 6; ++i) {
-            event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+            event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
             area->handleEvent(event);
         }
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -2123,17 +2123,17 @@ TEST_CASE("TextArea - Selection with Navigation Keys", "[text_area]") {
         area->setText("Hello World");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
         for (int i = 0; i < 3; ++i) {
-            event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+            event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
             area->handleEvent(event);
         }
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -2146,17 +2146,17 @@ TEST_CASE("TextArea - Selection with Navigation Keys", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_DOWN);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DOWN);
         area->handleEvent(event);
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_HOME, KMOD_CTRL | KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_HOME, SDL_KMOD_CTRL | SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());
@@ -2169,17 +2169,17 @@ TEST_CASE("TextArea - Selection with Navigation Keys", "[text_area]") {
         area->setText("Line1\nLine2\nLine3");
         manager.addElement(std::move(ta));
 
-        SDL_Event event = helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
         area->handleEvent(event);
         area->render(manager.getRenderer());
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_RIGHT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RIGHT);
         area->handleEvent(event);
         area->clearSelection();
         
-        event = helper.createKeyEvent(SDL_KEYDOWN, SDLK_END, KMOD_CTRL | KMOD_SHIFT);
+        event = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_END, SDL_KMOD_CTRL | SDL_KMOD_SHIFT);
         area->handleEvent(event);
         
         REQUIRE(area->hasSelection());

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <SDL2/SDL_pixels.h>
-#include <SDL2/SDL_log.h>
+#include <SDL3/SDL_pixels.h>
+#include <SDL3/SDL_log.h>
 
 import std.compat;
 

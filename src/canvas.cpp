@@ -96,7 +96,7 @@ void Canvas::putBrush(SDL_Renderer* renderer, int x, int y) {
     if (rw <= 0 || rh <= 0) return;
 
     SDL_Rect r{ rx, ry, rw, rh };
-    SDL_RenderFillRect(renderer, &r);
+    ({ SDL_FRect _fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)}; SDL_RenderFillRect(renderer, &_fr); });
 }
 
 void Canvas::drawSegment(SDL_Renderer* renderer, SDL_Point a, SDL_Point b) {
@@ -145,7 +145,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
     SDL_Renderer* renderer = m_manager.getRenderer();
     ensureTexture(renderer);
 
-    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
+    if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
         if (contains(e.button.x, e.button.y)) {
             SDL_Point local = windowToLocal(e.button.x, e.button.y);
             local.x = iclamp(local.x, 0, std::max(0, m_texW - 1));
@@ -163,7 +163,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
             m_manager.captureMouse(this);
             return true;
         }
-    } else if (e.type == SDL_MOUSEMOTION) {
+    } else if (e.type == SDL_EVENT_MOUSE_MOTION) {
         if (m_drawing) {
             SDL_Point cur = windowToLocal(e.motion.x, e.motion.y);
             cur.x = iclamp(cur.x, 0, std::max(0, m_texW - 1));
@@ -173,7 +173,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
             m_last = cur;
             return true;
         }
-    } else if (e.type == SDL_MOUSEBUTTONUP && e.button.button == SDL_BUTTON_LEFT) {
+    } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
         if (m_drawing) {
             m_drawing = false;
             m_manager.releaseMouse();
@@ -199,5 +199,5 @@ void Canvas::drawDirect(SDL_Renderer* renderer) {
 
     SDL_Point abs = getAbsolutePosition();
     SDL_Rect dest{ abs.x, abs.y, m_width, m_height };
-    SDL_RenderCopy(renderer, m_canvasTex.get(), nullptr, &dest);
+    ({ SDL_FRect _dr = {static_cast<float>(dest.x), static_cast<float>(dest.y), static_cast<float>(dest.w), static_cast<float>(dest.h)}; SDL_RenderTexture(renderer, m_canvasTex.get(), nullptr, &_dr); });
 }

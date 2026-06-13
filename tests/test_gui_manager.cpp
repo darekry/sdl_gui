@@ -126,10 +126,10 @@ TEST_CASE("GUIManager Event Processing - Mouse Button", "[gui_manager][events][m
         manager.processEvent(helper.createMouseMotion(20, 20));
         REQUIRE(btn->getState() == ElementState::Hover);
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(btn->getState() == ElementState::Pressed);
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(clicks == 1);
         REQUIRE(btn->getState() == ElementState::Hover);
     }
@@ -144,13 +144,13 @@ TEST_CASE("GUIManager Event Processing - Mouse Button", "[gui_manager][events][m
         manager.addElement(std::move(btn1));
         manager.addElement(std::move(btn2));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 25));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 50, 25));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 25));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 25));
         REQUIRE(clicks1 == 1);
         REQUIRE(clicks2 == 0);
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 200, 25));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 200, 25));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 200, 25));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 200, 25));
         REQUIRE(clicks1 == 1);
         REQUIRE(clicks2 == 1);
     }
@@ -165,13 +165,13 @@ TEST_CASE("GUIManager Event Processing - Keyboard", "[gui_manager][events][keybo
         TextInput* inputPtr = input.get();
         manager.addElement(std::move(input));
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
         REQUIRE(inputPtr->hasKeyboardFocus());
         
         manager.processEvent(helper.createTextInputEvent("H"));
         REQUIRE(inputPtr->getText() == "H");
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         REQUIRE(inputPtr->getText().empty());
     }
 
@@ -185,7 +185,7 @@ TEST_CASE("GUIManager Event Processing - Keyboard", "[gui_manager][events][keybo
         manager.processEvent(helper.createTextInputEvent("A"));
         REQUIRE(inputPtr->getText().empty());
         
-        manager.processEvent(helper.createKeyEvent(SDL_KEYDOWN, SDLK_BACKSPACE));
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
         REQUIRE(inputPtr->getText().empty());
     }
 }
@@ -321,7 +321,7 @@ TEST_CASE("GUIManager Focus Management", "[gui_manager][focus]") {
         
         REQUIRE_FALSE(ptr->hasKeyboardFocus());
         
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         
         REQUIRE(ptr->hasKeyboardFocus());
         REQUIRE(manager.getKeyboardFocus() == ptr);
@@ -448,7 +448,7 @@ TEST_CASE("GUIManager Mouse Capture", "[gui_manager][capture]") {
         manager.captureMouse(capturePtr);
         
         manager.processEvent(helper.createMouseMotion(200, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 200, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 200, 50));
         
         REQUIRE(capturePtr->receivedEvents.size() == 2);
         REQUIRE(otherPtr->receivedEvents.empty());
@@ -456,7 +456,7 @@ TEST_CASE("GUIManager Mouse Capture", "[gui_manager][capture]") {
         manager.releaseMouse();
         
         manager.processEvent(helper.createMouseMotion(200, 50));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 200, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 200, 50));
         
         REQUIRE(otherPtr->receivedEvents.size() >= 1);
     }

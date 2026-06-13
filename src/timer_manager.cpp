@@ -23,7 +23,7 @@ void TimerManager::removeTimer(uint32_t timerId) {
 }
 
 void TimerManager::update() {
-    uint32_t currentTime = SDL_GetTicks();
+    Uint64 currentTime = SDL_GetTicks();
 
     // Collect timers that need to execute, to avoid iterator invalidation
     // if callbacks modify the timers vector

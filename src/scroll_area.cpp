@@ -153,9 +153,9 @@ void ScrollArea::updateSliderRanges() {
 bool ScrollArea::handleEvent(const SDL_Event& e) {
     if (!m_visible || !m_enabled) return false;
 
-    if (e.type == SDL_MOUSEWHEEL) {
+    if (e.type == SDL_EVENT_MOUSE_WHEEL) {
         int mx, my;
-        SDL_GetMouseState(&mx, &my);
+        ({ float _mx,_my; SDL_GetMouseState(&_mx, &_my); mx = static_cast<int>(_mx); my = static_cast<int>(_my); });
         if (contains(mx, my)) {
             if (m_vSlider && m_vSlider->isVisible()) {
                 int step = 60;

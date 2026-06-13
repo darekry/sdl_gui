@@ -1,4 +1,4 @@
-#include "SDL2/SDL.h"
+#include <SDL3/SDL.h>
 #include "gui_manager.hpp"
 #include "gui.hpp"
 #include "timer_manager.hpp"
@@ -48,14 +48,14 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
 
 bool GUIManager::processEvent(const SDL_Event& event) {
     // 1. Zdarzenia myszy
-    if (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP) {
+    if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
         if (m_mouseCaptureElement) {
             // Jeśli element przechwycił mysz, wysyłaj zdarzenia tylko do niego
             return m_mouseCaptureElement->handleEvent(event);
         }
     }
     // 2. Zdarzenia klawiatury
-    else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP || event.type == SDL_TEXTINPUT) {
+    else if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP || event.type == SDL_EVENT_TEXT_INPUT) {
         if (m_keyboardFocusElement) {
             // Jeśli element ma fokus klawiatury, wysyłaj zdarzenia tylko do niego
             return m_keyboardFocusElement->handleEvent(event);
@@ -76,7 +76,7 @@ bool GUIManager::processEvent(const SDL_Event& event) {
     }
 
     // Specjalna obsługa kliknięcia poza elementami z focusem
-    if (event.type == SDL_MOUSEBUTTONDOWN && m_keyboardFocusElement) {
+    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && m_keyboardFocusElement) {
         bool click_on_focusable = false;
         for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it) {
             if ((*it)->contains(event.button.x, event.button.y)) {

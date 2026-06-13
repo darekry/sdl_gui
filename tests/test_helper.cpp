@@ -1,27 +1,23 @@
 #include "test_helper.hpp"
-#include <cstring> // std::strncpy
 #include "../src/sdl_deleters.hpp"
 #include "../src/gui_manager.hpp"
 #include "../src/font_manager.hpp"
 #include "../src/texture_manager.hpp"
 
 TestHelper::TestHelper() {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         throw std::runtime_error("SDL could not initialize! SDL_Error: " + std::string(SDL_GetError()));
     }
-    if (TTF_Init() == -1) {
-        throw std::runtime_error("SDL_ttf could not initialize! SDL_ttf Error: " + std::string(TTF_GetError()));
-    }
-    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        throw std::runtime_error("SDL_image could not initialize! SDL_image Error: " + std::string(IMG_GetError()));
+    if (!TTF_Init()) {
+        throw std::runtime_error("SDL_ttf could not initialize! SDL_ttf Error: " + std::string(SDL_GetError()));
     }
 
-    m_window = SDL_CreateWindow("Test Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_HIDDEN);
+    m_window = SDL_CreateWindow("Test Window", 800, 600, SDL_WINDOW_HIDDEN);
     if (!m_window) {
         throw std::runtime_error("Window could not be created! SDL_Error: " + std::string(SDL_GetError()));
     }
 
-    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    m_renderer = SDL_CreateRenderer(m_window, NULL);
     if (!m_renderer) {
         throw std::runtime_error("Renderer could not be created! SDL_Error: " + std::string(SDL_GetError()));
     }
@@ -36,7 +32,6 @@ TestHelper::~TestHelper() {
     if (m_window) {
         SDL_DestroyWindow(m_window);
     }
-    IMG_Quit();
     TTF_Quit();
     SDL_Quit();
 }
@@ -47,26 +42,25 @@ GUIManager& TestHelper::getManager() {
 }
 
 // ---- New unified API implementations ----
-SDL_Event TestHelper::createMouseButton(Uint32 type, Uint8 button, int x, int y) {
+SDL_Event TestHelper::createMouseButton(SDL_EventType type, Uint8 button, int x, int y) {
     SDL_Event e;
     SDL_memset(&e, 0, sizeof(e));
     e.type = type;
     e.button.type = type;
     e.button.button = button;
-    e.button.state = (type == SDL_MOUSEBUTTONDOWN ? SDL_PRESSED : SDL_RELEASED);
     e.button.clicks = 1;
-    e.button.x = x;
-    e.button.y = y;
+    e.button.x = static_cast<float>(x);
+    e.button.y = static_cast<float>(y);
     return e;
 }
 
 SDL_Event TestHelper::createMouseMotion(int x, int y, Uint32 state) {
     SDL_Event e;
     SDL_memset(&e, 0, sizeof(e));
-    e.type = SDL_MOUSEMOTION;
-    e.motion.type = SDL_MOUSEMOTION;
-    e.motion.x = x;
-    e.motion.y = y;
+    e.type = SDL_EVENT_MOUSE_MOTION;
+    e.motion.type = SDL_EVENT_MOUSE_MOTION;
+    e.motion.x = static_cast<float>(x);
+    e.motion.y = static_cast<float>(y);
     e.motion.state = state;
     return e;
 }
@@ -74,59 +68,54 @@ SDL_Event TestHelper::createMouseMotion(int x, int y, Uint32 state) {
 SDL_Event TestHelper::createMouseWheel(Sint32 y, Sint32 x) {
     SDL_Event e;
     SDL_memset(&e, 0, sizeof(e));
-    e.type = SDL_MOUSEWHEEL;
-    e.wheel.type = SDL_MOUSEWHEEL;
+    e.type = SDL_EVENT_MOUSE_WHEEL;
+    e.wheel.type = SDL_EVENT_MOUSE_WHEEL;
     e.wheel.x = x;
     e.wheel.y = y;
     return e;
 }
 
-SDL_Event TestHelper::createKeyEvent(Uint32 type, SDL_Keycode key) {
+SDL_Event TestHelper::createKeyEvent(SDL_EventType type, SDL_Keycode key) {
     SDL_Event e;
     SDL_memset(&e, 0, sizeof(e));
     e.type = type;
     e.key.type = type;
-    e.key.keysym.sym = key;
-    e.key.state = (type == SDL_KEYDOWN ? SDL_PRESSED : SDL_RELEASED);
+    e.key.key = key;
     return e;
 }
 
-SDL_Event TestHelper::createKeyEvent(Uint32 type, SDL_Keycode key, Uint16 mod) {
+SDL_Event TestHelper::createKeyEvent(SDL_EventType type, SDL_Keycode key, Uint16 mod) {
     SDL_Event e;
     SDL_memset(&e, 0, sizeof(e));
     e.type = type;
     e.key.type = type;
-    e.key.keysym.sym = key;
-    e.key.keysym.mod = mod;
-    e.key.state = (type == SDL_KEYDOWN ? SDL_PRESSED : SDL_RELEASED);
+    e.key.key = key;
+    e.key.mod = mod;
     return e;
 }
 
 SDL_Event TestHelper::createTextInputEvent(const char* text) {
     SDL_Event e;
     SDL_memset(&e, 0, sizeof(e));
-    e.type = SDL_TEXTINPUT;
-    if (text) {
-        std::strncpy(e.text.text, text, SDL_TEXTINPUTEVENT_TEXT_SIZE - 1);
-        e.text.text[SDL_TEXTINPUTEVENT_TEXT_SIZE - 1] = '\0';
-    }
+    e.type = SDL_EVENT_TEXT_INPUT;
+    e.text.text = text;
     return e;
 }
 
 // ---- Backward-compat alias ----
-SDL_Event TestHelper::createMouseEvent(Uint32 type, Uint8 button, int x, int y) {
-    if (type == SDL_MOUSEMOTION) {
+SDL_Event TestHelper::createMouseEvent(SDL_EventType type, Uint8 button, int x, int y) {
+    if (type == SDL_EVENT_MOUSE_MOTION) {
         return createMouseMotion(x, y, 0);
     }
     return createMouseButton(type, button, x, y);
 }
 
 // ---- Legacy snake_case wrappers (backward compatibility) ----
-SDL_Event TestHelper::create_mouse_event(Uint32 type, Uint8 button, int x, int y) {
+SDL_Event TestHelper::create_mouse_event(SDL_EventType type, Uint8 button, int x, int y) {
     return createMouseEvent(type, button, x, y);
 }
 
-SDL_Event TestHelper::create_key_event(Uint32 type, SDL_Keycode key) {
+SDL_Event TestHelper::create_key_event(SDL_EventType type, SDL_Keycode key) {
     return createKeyEvent(type, key);
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 #include "easing.hpp"
 
@@ -47,7 +47,7 @@ public:
                 .id = id,
                 .callback = callback,
                 .interval_ms = interval_ms,
-                .last_execution_time = SDL_GetTicks64()
+                .last_execution_time = SDL_GetTicks()
             }
         );
         return id;
@@ -80,7 +80,7 @@ public:
                 .target_property = target_property,
                 .start_value = start_value,
                 .end_value = end_value,
-                .start_time = SDL_GetTicks64(),
+                .start_time = SDL_GetTicks(),
                 .duration_ms = duration,
                 .easing_function = easing,
                 .on_complete_callback = on_complete,
@@ -90,7 +90,7 @@ public:
     }
 
     void update() {
-        Uint64 current_time = SDL_GetTicks64();
+        Uint64 current_time = SDL_GetTicks();
         
         if (!active_animations.empty()) {
             std::vector<Animation::CompleteCallback> completed_callbacks;

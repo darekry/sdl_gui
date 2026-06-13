@@ -1,7 +1,7 @@
 #include "animated_image.hpp"
 #include "gui_manager.hpp"
 #include "sdl_deleters.hpp"
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 import std.compat;
 
@@ -45,7 +45,7 @@ void AnimatedImage::recalcFrameGeometry() {
     }
 
     int texW = 0, texH = 0;
-    SDL_QueryTexture(m_texture.get(), nullptr, nullptr, &texW, &texH);
+    ({ float _fw=0,_fh=0; SDL_GetTextureSize(m_texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); });
 
     // columns = ceil(totalFrames / rows)
     m_cols = (m_totalFrames + m_rows - 1) / m_rows;
@@ -133,7 +133,7 @@ void AnimatedImage::draw(SDL_Renderer* renderer) {
     }
 
     // Render current frame from sprite sheet
-    SDL_RenderCopy(renderer, m_texture.get(), &m_srcRect, &dst);
+    ({ SDL_FRect _sr = {static_cast<float>(m_srcRect.x), static_cast<float>(m_srcRect.y), static_cast<float>(m_srcRect.w), static_cast<float>(m_srcRect.h)}; SDL_FRect _dr = {static_cast<float>(dst.x), static_cast<float>(dst.y), static_cast<float>(dst.w), static_cast<float>(dst.h)}; SDL_RenderTexture(renderer, m_texture.get(), &_sr, &_dr); });
 }
 
 bool AnimatedImage::wantsDirectRender() const {
@@ -193,7 +193,7 @@ void AnimatedImage::drawDirect(SDL_Renderer* renderer) {
         }
     }
 
-    SDL_RenderCopy(renderer, m_texture.get(), &m_srcRect, &dst);
+    ({ SDL_FRect _sr = {static_cast<float>(m_srcRect.x), static_cast<float>(m_srcRect.y), static_cast<float>(m_srcRect.w), static_cast<float>(m_srcRect.h)}; SDL_FRect _dr = {static_cast<float>(dst.x), static_cast<float>(dst.y), static_cast<float>(dst.w), static_cast<float>(dst.h)}; SDL_RenderTexture(renderer, m_texture.get(), &_sr, &_dr); });
 }
 
 void AnimatedImage::setFrame(int frameIndex) {

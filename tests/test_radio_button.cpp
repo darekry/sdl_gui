@@ -131,8 +131,8 @@ TEST_CASE("RadioButton disabled state", "[radio_button]") {
         rbPtr->setOnChange([&](RadioButton*, bool) { callbackCount++; });
         manager.addElement(std::move(rb));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE_FALSE(rbPtr->isSelected());
         REQUIRE(callbackCount == 0);
@@ -171,8 +171,8 @@ TEST_CASE("RadioButton hidden state", "[radio_button]") {
         rbPtr->setOnChange([&](RadioButton*, bool) { callbackCount++; });
         manager.addElement(std::move(rb));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE_FALSE(rbPtr->isSelected());
         REQUIRE(callbackCount == 0);
@@ -201,8 +201,8 @@ TEST_CASE("RadioButton click behavior in RadioGroup", "[radio_button][radio_grou
         rbPtr->setOnChange([&](RadioButton*, bool) { callbackCount++; });
         manager.addElement(std::move(rb));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE(rbPtr->isSelected());
         REQUIRE(callbackCount == 1);
@@ -216,8 +216,8 @@ TEST_CASE("RadioButton click behavior in RadioGroup", "[radio_button][radio_grou
         rbPtr->setOnChange([&](RadioButton*, bool) { callbackCount++; });
         manager.addElement(std::move(rb));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 15, 15));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
 
         REQUIRE(rbPtr->isSelected());
         REQUIRE(callbackCount == 0);

@@ -1,4 +1,4 @@
-#include "SDL_log.h"
+#include <SDL3/SDL_log.h>
 #include "gui_manager.hpp"
 #include "combobox.hpp"
 #include "sdl_app.hpp"
@@ -32,7 +32,7 @@ int main(int, char**) {
         SDL_Event e;
         while (!quit) {
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) {
+                if (e.type == SDL_EVENT_QUIT) {
                     quit = true;
                 }
                 guiManager.processEvent(e);

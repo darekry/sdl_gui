@@ -4,8 +4,8 @@
 #include "slider.hpp"
 #include "text_input.hpp"
 #include "sdl_deleters.hpp"
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_ttf.h"
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 import std.compat;
 

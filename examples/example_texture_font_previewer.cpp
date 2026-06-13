@@ -75,7 +75,7 @@ int main() {
         SDL_Event e;
         while (!quit) {
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) quit = true;
+                if (e.type == SDL_EVENT_QUIT) quit = true;
                 gui.processEvent(e);
             }
 

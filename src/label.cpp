@@ -1,5 +1,5 @@
 #include "label.hpp"
-#include "SDL_log.h"
+#include <SDL3/SDL_log.h>
 #include "gui_manager.hpp"
 #include "gui.hpp"
 
@@ -15,8 +15,8 @@ void Label::recalculateSize() {
     auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
     if (font) {
         int textWidth = 0, textHeight = 0;
-        if (TTF_SizeUTF8(font.get(), m_text.c_str(), &textWidth, &textHeight) != 0) {
-            LOG_DEBUG("Label: TTF_SizeUTF8 failed: %s", TTF_GetError());
+        if (!TTF_GetStringSize(font.get(), m_text.c_str(), m_text.length(), &textWidth, &textHeight)) {
+            LOG_DEBUG("Label: TTF_GetStringSize failed: %s", SDL_GetError());
             textWidth = textHeight = 0;
         }
         setSize(textWidth, textHeight);
@@ -88,5 +88,5 @@ void Label::draw(SDL_Renderer* renderer) {
     }
 
     SDL_Rect dstRect = {0, 0, m_width, m_height};
-    SDL_RenderCopy(renderer, m_cachedTextTexture.get(), nullptr, &dstRect);
+    ({ SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, m_cachedTextTexture.get(), nullptr, &_dr); });
 }

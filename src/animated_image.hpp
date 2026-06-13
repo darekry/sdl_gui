@@ -4,7 +4,7 @@
 #include "gui.hpp"
 #include "texture_manager.hpp"
 #include "animation_manager.hpp"
-#include "SDL2/SDL.h"
+#include <SDL3/SDL.h>
 
 import std.compat;
 class AnimatedImage : public GUIElement {

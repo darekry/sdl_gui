@@ -1,5 +1,6 @@
 #include "arc_container.hpp"
-#include <cmath>
+#define M_PI std::numbers::pi
+import std.compat;
 
 ArcContainer::ArcContainer(GUIManager& manager, int centerX, int centerY, int radius,
                            float startAngleDeg, float endAngleDeg)

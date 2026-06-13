@@ -37,7 +37,7 @@ public:
      * @throw std::runtime_error if SDL window/renderer creation fails
      */
     Window(const std::string& title, int width, int height,
-           Uint32 rendererFlags = SDL_RENDERER_PRESENTVSYNC,
+           const char* name = NULL,
            bool resizable = false);
     
     /**

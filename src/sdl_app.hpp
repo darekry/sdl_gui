@@ -1,8 +1,8 @@
 #pragma once
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 import std.compat;
 
@@ -15,51 +15,39 @@ public:
      * @param title Window title
      * @param width Initial window width
      * @param height Initial window height
-     * @param rendererFlags SDL renderer flags (default: VSync)
      * @param resizable If true, window can be resized by user
      */
     SDLApp(const char* title, int width, int height, 
-           SDL_RendererFlags rendererFlags = SDL_RENDERER_PRESENTVSYNC,
            bool resizable = false) {
-        if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+        if (!SDL_Init(SDL_INIT_VIDEO)) {
             std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
             throw std::runtime_error("SDL_Init failed");
         }
 
-        if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-            std::cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
-            SDL_Quit();
-            throw std::runtime_error("IMG_Init failed");
-        }
-
-        if (TTF_Init() == -1) {
-            std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << TTF_GetError() << std::endl;
-            IMG_Quit();
+        if (!TTF_Init()) {
+            std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << SDL_GetError() << std::endl;
             SDL_Quit();
             throw std::runtime_error("TTF_Init failed");
         }
 
-        Uint32 windowFlags = SDL_WINDOW_SHOWN;
+        SDL_WindowFlags windowFlags = 0;
         if (resizable) {
             windowFlags |= SDL_WINDOW_RESIZABLE;
         }
 
-        m_window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-                                      width, height, windowFlags);
+        m_window = SDL_CreateWindow(title, width, height, windowFlags);
         if (!m_window) {
             std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
             TTF_Quit();
-            IMG_Quit();
             SDL_Quit();
             throw std::runtime_error("SDL_CreateWindow failed");
         }
 
-        m_renderer = SDL_CreateRenderer(m_window, -1, rendererFlags);
+        m_renderer = SDL_CreateRenderer(m_window, NULL);
         if (!m_renderer) {
             std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
             SDL_DestroyWindow(m_window);
             TTF_Quit();
-            IMG_Quit();
             SDL_Quit();
             throw std::runtime_error("SDL_CreateRenderer failed");
         }
@@ -69,7 +57,6 @@ public:
         SDL_DestroyRenderer(m_renderer);
         SDL_DestroyWindow(m_window);
         TTF_Quit();
-        IMG_Quit();
         SDL_Quit();
     }
 

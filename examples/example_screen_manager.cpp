@@ -155,7 +155,7 @@ public:
     }
     
     bool handleEvent(GUIManager&, const SDL_Event& e) override {
-        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+        if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
             if (m_onPause) m_onPause();
             return true;
         }
@@ -216,7 +216,7 @@ public:
     }
     
     bool handleEvent(GUIManager&, const SDL_Event& e) override {
-        if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+        if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
             if (m_onResume) m_onResume();
             return true;
         }
@@ -290,7 +290,7 @@ int main(int, char**) {
         
         while (!quit) {
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) {
+                if (e.type == SDL_EVENT_QUIT) {
                     quit = true;
                 } else {
                     screenManager.handleEvent(e);

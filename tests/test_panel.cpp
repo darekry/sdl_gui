@@ -91,8 +91,8 @@ TEST_CASE("Panel event forwarding to children", "[panel]") {
         int buttonCenterX = 50 + 10 + 40;
         int buttonCenterY = 50 + 10 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
         REQUIRE(clicked);
     }
 
@@ -105,8 +105,8 @@ TEST_CASE("Panel event forwarding to children", "[panel]") {
         int panelAreaX = 50 + 150;
         int panelAreaY = 50 + 100;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, panelAreaX, panelAreaY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, panelAreaX, panelAreaY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, panelAreaX, panelAreaY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, panelAreaX, panelAreaY));
         REQUIRE_FALSE(buttonClicked);
     }
 
@@ -119,8 +119,8 @@ TEST_CASE("Panel event forwarding to children", "[panel]") {
         int outsideX = 300;
         int outsideY = 300;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, outsideX, outsideY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, outsideX, outsideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, outsideX, outsideY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, outsideX, outsideY));
         REQUIRE_FALSE(buttonClicked);
     }
 }
@@ -135,9 +135,9 @@ TEST_CASE("Draggable panel behavior", "[panel]") {
         panelPtr->setDraggable(true);
         manager.addElement(std::move(panel));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 110, 110));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 110, 110));
         manager.processEvent(helper.createMouseMotion(160, 170));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 160, 170));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 160, 170));
 
         REQUIRE(panelPtr->getX() == 150);
         REQUIRE(panelPtr->getY() == 160);
@@ -148,9 +148,9 @@ TEST_CASE("Draggable panel behavior", "[panel]") {
         Panel* panelPtr = panel.get();
         manager.addElement(std::move(panel));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 110, 110));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 110, 110));
         manager.processEvent(helper.createMouseMotion(160, 170));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 160, 170));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 160, 170));
 
         REQUIRE(panelPtr->getX() == 100);
         REQUIRE(panelPtr->getY() == 100);
@@ -162,7 +162,7 @@ TEST_CASE("Draggable panel behavior", "[panel]") {
         panelPtr->setDraggable(true);
         manager.addElement(std::move(panel));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 75, 75));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 75, 75));
 
         manager.processEvent(helper.createMouseMotion(125, 95));
 
@@ -176,7 +176,7 @@ TEST_CASE("Draggable panel behavior", "[panel]") {
         panelPtr->setDraggable(true);
         manager.addElement(std::move(panel));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 150, 130));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 150, 130));
         REQUIRE(panelPtr->getX() == 100);
         REQUIRE(panelPtr->getY() == 100);
 
@@ -195,9 +195,9 @@ TEST_CASE("Draggable panel behavior", "[panel]") {
         panelPtr->setDraggable(true);
         manager.addElement(std::move(panel));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 150, 130));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 150, 130));
         manager.processEvent(helper.createMouseMotion(200, 160));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 200, 160));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 200, 160));
 
         REQUIRE(panelPtr->getX() == 150);
         REQUIRE(panelPtr->getY() == 130);
@@ -213,7 +213,7 @@ TEST_CASE("Draggable panel behavior", "[panel]") {
         panelPtr->setDraggable(true);
         manager.addElement(std::move(panel));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 50, 50));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 50));
 
         manager.processEvent(helper.createMouseMotion(70, 80));
         REQUIRE(panelPtr->getX() == 20);
@@ -238,9 +238,9 @@ TEST_CASE("Draggable panel behavior", "[panel]") {
         REQUIRE(absBefore.x == 120);
         REQUIRE(absBefore.y == 130);
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 250, 150));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 250, 150));
         manager.processEvent(helper.createMouseMotion(300, 200));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, 300, 200));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 300, 200));
 
         REQUIRE(buttonPtr->getX() == 20);
         REQUIRE(buttonPtr->getY() == 30);
@@ -256,7 +256,7 @@ TEST_CASE("Draggable panel behavior", "[panel]") {
         panelPtr->setDraggable(true);
         manager.addElement(std::move(panel));
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, 250, 150));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 250, 150));
         manager.processEvent(helper.createMouseMotion(300, 200));
 
         REQUIRE(panelPtr->getX() == 150);
@@ -277,8 +277,8 @@ TEST_CASE("Draggable panel behavior", "[panel]") {
         int buttonCenterX = 50 + 10 + 40;
         int buttonCenterY = 50 + 10 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
 
         REQUIRE(buttonClicked);
         REQUIRE(panelPtr->getX() == 50);
@@ -306,8 +306,8 @@ TEST_CASE("Panel visibility affects children", "[panel]") {
         int buttonCenterX = 50 + 10 + 40;
         int buttonCenterY = 50 + 10 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
 
         REQUIRE_FALSE(buttonClicked);
     }
@@ -319,8 +319,8 @@ TEST_CASE("Panel visibility affects children", "[panel]") {
         int buttonCenterX = 50 + 10 + 40;
         int buttonCenterY = 50 + 10 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
 
         REQUIRE(buttonClicked);
     }
@@ -346,8 +346,8 @@ TEST_CASE("Panel enabled state affects event handling", "[panel]") {
         int buttonCenterX = 50 + 10 + 40;
         int buttonCenterY = 50 + 10 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
 
         REQUIRE(buttonClicked);
     }
@@ -410,8 +410,8 @@ TEST_CASE("Panel with nested children", "[panel]") {
         int buttonCenterX = 10 + 20 + 30 + 40;
         int buttonCenterY = 10 + 20 + 30 + 20;
 
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
-        manager.processEvent(helper.createMouseButton(SDL_MOUSEBUTTONUP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, buttonCenterX, buttonCenterY));
 
         REQUIRE(buttonClicked);
     }

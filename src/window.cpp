@@ -4,24 +4,22 @@
 import std.compat;
 
 Window::Window(const std::string& title, int width, int height,
-               Uint32 rendererFlags, bool resizable)
+               const char* name, bool resizable)
     : m_title(title) {
     
-    Uint32 windowFlags = SDL_WINDOW_SHOWN;
+    SDL_WindowFlags windowFlags = 0;
     if (resizable) {
         windowFlags |= SDL_WINDOW_RESIZABLE;
     }
     
-    m_window = SDL_CreateWindow(title.c_str(), 
-                                SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                width, height, windowFlags);
+    m_window = SDL_CreateWindow(title.c_str(), width, height, windowFlags);
     
     if (!m_window) {
         std::cerr << "Window::Window() - SDL_CreateWindow failed: " << SDL_GetError() << "\n";
         throw std::runtime_error("SDL_CreateWindow failed: " + std::string(SDL_GetError()));
     }
     
-    m_renderer = SDL_CreateRenderer(m_window, -1, rendererFlags);
+    m_renderer = SDL_CreateRenderer(m_window, name);
     if (!m_renderer) {
         std::cerr << "Window::Window() - SDL_CreateRenderer failed: " << SDL_GetError() << "\n";
         SDL_DestroyWindow(m_window);
@@ -66,53 +64,52 @@ void Window::hide() {
 }
 
 bool Window::processEvent(const SDL_Event& e) {
-    // Handle window-specific events
     switch (e.type) {
-        case SDL_WINDOWEVENT:
-            switch (e.window.event) {
-                case SDL_WINDOWEVENT_CLOSE:
-                    // User clicked close button
-                    if (m_onCloseCallback) {
-                        m_onCloseCallback(this);
-                    } else {
-                        markForClose();
-                    }
-                    return true;
-                    
-                case SDL_WINDOWEVENT_RESIZED: {
-                    int w = e.window.data1;
-                    int h = e.window.data2;
-                    m_guiManager->handleResize(w, h);
-                    if (m_onResizeCallback) {
-                        m_onResizeCallback(this, w, h);
-                    }
-                    return true;
-                }
-                    
-                case SDL_WINDOWEVENT_SHOWN:
-                    m_visible = true;
-                    return true;
-                    
-                case SDL_WINDOWEVENT_HIDDEN:
-                    m_visible = false;
-                    return true;
-                    
-                case SDL_WINDOWEVENT_FOCUS_GAINED:
-                    m_focused = true;
-                    return true;
-                    
-                case SDL_WINDOWEVENT_FOCUS_LOST:
-                    m_focused = false;
-                    return true;
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+            if (m_onCloseCallback) {
+                m_onCloseCallback(this);
+            } else {
+                markForClose();
             }
-            break;
-            
-        // Note: Keyboard events (SDL_KEYDOWN, SDL_KEYUP, SDL_TEXTINPUT) are
-        // passed directly to GUIManager. ESC key handling can be implemented
-        // by user via onCloseCallback or in the GUIManager's keyboard focus element.
+            return true;
+
+        case SDL_EVENT_WINDOW_RESIZED: {
+            int w = e.window.data1;
+            int h = e.window.data2;
+            m_guiManager->handleResize(w, h);
+            if (m_onResizeCallback) {
+                m_onResizeCallback(this, w, h);
+            }
+            return true;
+        }
+
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+            int w = e.window.data1;
+            int h = e.window.data2;
+            m_guiManager->handleResize(w, h);
+            if (m_onResizeCallback) {
+                m_onResizeCallback(this, w, h);
+            }
+            return true;
+        }
+
+        case SDL_EVENT_WINDOW_SHOWN:
+            m_visible = true;
+            return true;
+
+        case SDL_EVENT_WINDOW_HIDDEN:
+            m_visible = false;
+            return true;
+
+        case SDL_EVENT_WINDOW_FOCUS_GAINED:
+            m_focused = true;
+            return true;
+
+        case SDL_EVENT_WINDOW_FOCUS_LOST:
+            m_focused = false;
+            return true;
     }
     
-    // Pass to GUIManager
     return m_guiManager->processEvent(e);
 }
 

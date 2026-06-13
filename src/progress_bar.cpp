@@ -2,10 +2,8 @@
 #include "gui_manager.hpp"
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
-#include "SDL2/SDL2_gfxPrimitives.h"
-
-#include <cmath>
-
+#include "gui.hpp"
+import std.compat;
 namespace {
     constexpr float kEpsilon = 1e-6f;
 }
@@ -105,17 +103,18 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
                 ? (fillRect.w - 1) / 2
                 : (fillRect.h - 1) / 2;
             int effectiveRadius = std::min(borderRadius, maxRadius);
-            if (effectiveRadius > 0) {
-                roundedBoxRGBA(renderer, fillRect.x, fillRect.y,
-                               fillRect.x + fillRect.w, fillRect.y + fillRect.h,
-                               effectiveRadius, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-            } else {
-                SDL_SetRenderDrawColor(renderer, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-                SDL_RenderFillRect(renderer, &fillRect);
-            }
+            SDL_FRect ffillRect = {
+                static_cast<float>(fillRect.x), static_cast<float>(fillRect.y),
+                static_cast<float>(fillRect.w), static_cast<float>(fillRect.h)
+            };
+            SDL_FColor ffillColor = {
+                fillColor.r / 255.0f, fillColor.g / 255.0f,
+                fillColor.b / 255.0f, fillColor.a / 255.0f
+            };
+            drawRoundedFilledRect(renderer, ffillRect, static_cast<float>(effectiveRadius), ffillColor);
         } else {
             SDL_SetRenderDrawColor(renderer, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-            SDL_RenderFillRect(renderer, &fillRect);
+            ({ SDL_FRect _fr = {static_cast<float>(fillRect.x), static_cast<float>(fillRect.y), static_cast<float>(fillRect.w), static_cast<float>(fillRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
         }
     }
 
@@ -140,14 +139,14 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
 
             if (textTex) {
                 int tw = 0, th = 0;
-                SDL_QueryTexture(textTex.get(), nullptr, nullptr, &tw, &th);
+                ({ float _fw=0,_fh=0; SDL_GetTextureSize(textTex.get(), &_fw, &_fh); tw=static_cast<int>(_fw); th=static_cast<int>(_fh); });
                 SDL_Rect dstRect = {
                     (m_width - tw) / 2,
                     (m_height - th) / 2,
                     tw,
                     th
                 };
-                SDL_RenderCopy(renderer, textTex.get(), nullptr, &dstRect);
+                ({ SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, textTex.get(), nullptr, &_dr); });
             }
         }
     }
