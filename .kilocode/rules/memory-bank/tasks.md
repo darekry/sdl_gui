@@ -12,16 +12,16 @@
     *   Jeśli widget wymaga częstych aktualizacji (np. co klatkę), możesz zrezygnować z cache'owania, nadpisując metodę `wantsDirectRender()` tak, aby zwracała `true`, i implementując logikę rysowania w `drawDirect()`.
 
 3.  **Zaktualizuj system budowania**:
-    *   `nob.c` automatycznie wykrywa nowe pliki `.cpp` w katalogu `src/` (unity build), więc ręczna edycja nie jest konieczna.
+    *   `nob.c` automatycznie wykrywa nowe pliki `.cpp` w katalogu `src/`, `src/composite/` i `src/editor/` (unity build), więc ręczna edycja nie jest konieczna.
 
 4.  **Dodaj przykład użycia**:
     *   Stwórz plik `example_my_widget.cpp` w katalogu [`examples/`](examples/:1), aby pokazać, jak używać nowego widgetu.
-    *   Uruchom `make` i przetestuj przykład: `./output/example_my_widget`.
+    *   Uruchom `./nob` i przetestuj przykład: `./output/example_my_widget`.
 
 5.  **Dodaj testy (opcjonalnie, ale zalecane)**:
     *   Stwórz plik `test_my_widget.cpp` w katalogu [`tests/`](tests/:1).
     *   Napisz testy sprawdzające kluczowe funkcjonalności widgetu.
-    *   Uruchom testy za pomocą `make test`.
+    *   Uruchom testy za pomocą `./nob test`.
 
 ## Jak uruchomić testy
 

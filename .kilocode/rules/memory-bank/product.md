@@ -2,7 +2,7 @@
 
 ## Cel
 
-Dostarczyć prostą, wydajną bibliotekę GUI opartą na SDL2, którą można łatwo użyć do tworzenia narzędzi, prototypów i lekkich aplikacji desktopowych w C++.
+Dostarczyć prostą, wydajną bibliotekę GUI opartą na SDL3, którą można łatwo użyć do tworzenia narzędzi, prototypów i lekkich aplikacji desktopowych w C++.
 
 ## Problemy, które projekt rozwiązuje
 
@@ -35,10 +35,12 @@ Przyjazne mechanizmy stylowania:
 
 - **Prosty model dodawania widgetów**: utwórz instancję elementu dziedziczącego po `GUIElement`, dodaj do `GUIManager` przez `addElement`
 - **Minimalne zarządzanie zasobami**: menedżery automatycznie cache'ują zasoby i zwracają współdzielone wskaźniki (`SharedTexture`, `SharedFont`)
-- **Przykłady gotowego użycia**: katalog [`examples/`](examples/) zawiera 31 przykładów demonstrujących poszczególne widgety i funkcjonalności
+- **Responsywny layout**: system anchorów (Anchor) umożliwia pozycjonowanie procentowe, stretch i centrowanie
+- **Przykłady gotowego użycia**: katalog [`examples/`](examples/) zawiera 38 przykładów demonstrujących poszczególne widgety i funkcjonalności
 
 ## Ograniczenia i założenia
 
-- Biblioteka bazuje na SDL2 (SDL_image, SDL_ttf)
+- Biblioteka bazuje na SDL3 (sdl3, sdl3-image, sdl3-ttf)
+- Renderowanie GPU: wsparcie dla SDL_gpu, shaderów (ShaderPanel)
 - Projekt celuje w prostotę i czytelność, nie w pełną funkcjonalność produkcyjnego GUI frameworka
-- Wymaga C++23 i kompilatora z obsługą modułów (clang++ z libc++)
+- Wymaga C++23 i kompilatora z obsługą modułów (clang++-22 z libc++)

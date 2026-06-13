@@ -1,15 +1,15 @@
 # Aktualny stan projektu (2026-06-13)
 
-## Status: MIGRACJA SDL2 → SDL3 W TOKU
+## Status: MIGRACJA SDL2 → SDL3 ZAKOŃCZONA ✅
 
-**Repozytorium:** Core library (src/), examples (37), i tests (31) skompilowane z SDL3.  
-**Pre-existing issue:** `__promote_t` STL/module error rozwiązany przez `std::numbers::pi` zamiast `M_PI`.
+**Repozytorium:** Core library (src/), examples (38), tests (31 plików) skompilowane z SDL3.  
+Wszystkie 10 stages migracji zakończone. Projekt w pełni funkcjonalny na SDL3.
 
 ## Ostatnie zmiany
 
-### SDL2 → SDL3 Migration (2026-06-13)
+### SDL2 → SDL3 Migration (2026-06-13) ✅ Complete
 
-**Completed (Stages 1-9):**
+**Completed (Stages 1-10):**
 - **Stage 1:** `nob.c` — pkg-config SDL3, **bugfix: dangling pointer w pkg_config_cmd()** (`nob_temp_strdup`)
 - **Stage 2:** Skrypty automatyzacyjne: rename_headers, rename_symbols, rename_macros
 - **Stage 3:** Core files — SDL_WINDOWEVENT decomposition, SDL_CreateWindow/CreateRenderer API, SDL_INIT flags, **sdl_app.hpp: IMG_Init block removed**
@@ -17,8 +17,12 @@
 - **Stage 5:** SDL_gfx replacement — `drawRoundedFilledRect()`, `drawRoundedRectBorder()` via SDL_RenderGeometry
 - **Stage 6:** Return type fixes — SDL_Init, TTF_Init, IMG_Init removed
 - **Stage 7:** TimerManager — Uint64 ticks
-- **Stage 8:** Examples — wszystkie 37 kompilują się (sdl_app.hpp, example_resize, example_window, example_arc_container)
+- **Stage 8:** Examples — wszystkie 38 kompilują się (sdl_app.hpp, example_resize, example_window, example_arc_container, example_gpu_shader)
 - **Stage 9:** Tests — wszystkie 31 kompilują się (test_helper refactor na SDL3 event API, SDL_Rect→SDL_FRect, SDL_QueryTexture→SDL_GetTextureSize, SDL_INIT_EVERYTHING→SDL_INIT_VIDEO)
+- **Stage 10:** GPU shader example ✅ Done
+  - Must use `SDL_CreateGPURenderer`, not `SDL_CreateRenderer`
+  - Shader at blit-time (SDL_RenderTexture), not draw-time (SDL_RenderGeometry)
+  - Fragment shader interface: location 0 = vertex color, location 1 = UV
 
 **Key API changes handled:**
 | SDL2 | SDL3 |
@@ -47,11 +51,7 @@
 | TTF_SizeUTF8 returns int (0=success) | TTF_GetStringSize returns bool (true=success) |
 
 **Remaining:**
-- ~~Stage 10: GPU shader example~~ ✅ Done (2026-06-13)
-  - Key discovery: must use `SDL_CreateGPURenderer`, not `SDL_CreateRenderer`
-  - Shader at blit-time (SDL_RenderTexture), not draw-time (SDL_RenderGeometry)
-  - Fragment shader interface: location 0 = vertex color, location 1 = UV
-  - Sampler2D at set=2 binding=0 not receiving texture — possible SDL 3.5.0 bug
+- Brak — wszystkie etapy migracji zakończone
 
 ### Post-migration bugfixes (2026-06-13):
 - **nob.c**: pkg_config_cmd() dangling pointer fix (`nob_temp_strdup`)
@@ -59,10 +59,23 @@
 - **text_editable.cpp + text_area.cpp**: `SDL_StartTextInput(NULL)` → `SDL_GetRenderWindow(m_manager.getRenderer())` (SDL3 requires valid window)
 - **text_input.cpp**: debug log messages updated from `TTF_SizeUTF8` to `TTF_GetStringSize`
 
+### Parser update (2026-06-13):
+- **New widgets in JSON/XML parsers**: ProgressBar, ScrollArea, ArcContainer
+- **New parameters**: 
+  - Slider: `wheelStep`
+  - TextArea: `locked`
+  - StringGrid: `rowHeight`, `headerHeight`, `rowHeaderWidth`, `hScrollEnabled`, `vScrollEnabled`
+  - AnimatedImage: `scaleMode`, `preserveAspect`, `useCache`, `frameDuration`
+  - ComboBox: `selectedIndex`, comma-separated items support
+  - Common (all widgets): `tooltip`, `rotation`, `rotationCenterX`/`rotationCenterY`, `clipChildren`
+- **Special children handling**: ArcContainer (angle-based layout), ScrollArea (setContent)
+
 ## Kluczowe stats
 
 | Metric | Value |
 |--------|-------|
-| Examples | 37 (all compile) |
-| Test files | 31 (all compile) |
-| Widget types | 18 |
+| Examples | 38 (all compile) |
+| Test files | 31 total (29 test + 2 infra: test_helper, test_main) |
+| Widget types | 21 (+ 3 composite: DialogBox, MessageBox, FileDialog) |
+| Editor modules | 5 (EditorWindow, EditorState, PreviewWindow, LayoutImporter, LayoutExporter) |
+| Parser-supported widgets | 18 (JSON + XML)

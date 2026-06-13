@@ -1,5 +1,6 @@
 #include "layout_parser.hpp"
 #include "animated_image.hpp"
+#include "arc_container.hpp"
 #include "button.hpp"
 #include "canvas.hpp"
 #include "checkbox.hpp"
@@ -8,8 +9,10 @@
 #include "label.hpp"
 #include "list_view.hpp"
 #include "panel.hpp"
+#include "progress_bar.hpp"
 #include "radio_button.hpp"
 #include "radio_group.hpp"
+#include "scroll_area.hpp"
 #include "slider.hpp"
 #include "string_grid.hpp"
 #include "tab_control.hpp"
@@ -106,7 +109,9 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     else if (type == "Slider")
     {
         Orientation orientation = getString(node, "orientation", "Horizontal") == "Vertical" ? Orientation::Vertical : Orientation::Horizontal;
-        element = std::make_unique<Slider>(m_guiManager, 0, 0, 100, 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "value", 0), orientation);
+        auto slider = std::make_unique<Slider>(m_guiManager, 0, 0, 100, 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "value", 0), orientation);
+        slider->setWheelStep(getInt(node, "wheelStep", 1));
+        element = std::move(slider);
     }
     else if (type == "StringGrid")
     {
@@ -114,6 +119,11 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
         grid->setShowRowHeaders(getBool(node, "showRowHeaders", true));
         grid->setShowColumnHeaders(getBool(node, "showColumnHeaders", true));
         grid->setEditable(getBool(node, "editable", true));
+        if (hasNode(node, "rowHeight")) grid->setRowHeight(getInt(node, "rowHeight", 24));
+        if (hasNode(node, "headerHeight")) grid->setHeaderHeight(getInt(node, "headerHeight", 28));
+        if (hasNode(node, "rowHeaderWidth")) grid->setRowHeaderWidth(getInt(node, "rowHeaderWidth", 50));
+        if (hasNode(node, "hScrollEnabled")) grid->setHorizontalScrollEnabled(getBool(node, "hScrollEnabled", true));
+        if (hasNode(node, "vScrollEnabled")) grid->setVerticalScrollEnabled(getBool(node, "vScrollEnabled", true));
         element = std::move(grid);
     }
     else if (type == "TextInput")
@@ -128,6 +138,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
         auto ta = std::make_unique<TextArea>(m_guiManager, 0, 0, 200, 150, getString(node, "fontPath", "assets/fonts/font.ttf"), getInt(node, "fontSize", 16));
         if (hasNode(node, "text")) ta->setText(std::string_view(getString(node, "text")));
         ta->setWordWrap(getBool(node, "wordWrap", true));
+        ta->setLocked(getBool(node, "locked", false));
         element = std::move(ta);
     }
     else if (type == "ComboBox")
@@ -139,6 +150,23 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
                 cb->addItem(getString(itemNode, "text", ""));
             });
         }
+        else if (hasNode(node, "items"))
+        {
+            std::string itemsAttr = getString(node, "items", "");
+            if (!itemsAttr.empty())
+            {
+                std::stringstream ss(itemsAttr);
+                std::string item;
+                while (std::getline(ss, item, ','))
+                {
+                    size_t start = item.find_first_not_of(" \t");
+                    size_t end = item.find_last_not_of(" \t");
+                    if (start != std::string::npos && end != std::string::npos)
+                        cb->addItem(item.substr(start, end - start + 1));
+                }
+            }
+        }
+        if (hasNode(node, "selectedIndex")) cb->setSelectedIndex(getInt(node, "selectedIndex", -1));
         element = std::move(cb);
     }
     else if (type == "TabControl")
@@ -164,14 +192,53 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
         auto ai = std::make_unique<AnimatedImage>(m_guiManager, 0, 0, 100, 100);
         if (hasNode(node, "path"))
             ai->setSpriteSheet(getString(node, "path"), getInt(node, "frames", 1), getInt(node, "rows", 1), getInt(node, "frameW", 0), getInt(node, "frameH", 0));
-        ai->setFPS(getFloat(node, "fps", 12.0f));
+        if (hasNode(node, "frameDuration"))
+            ai->setFrameDuration(getFloat(node, "frameDuration", 1.0f / 12.0f));
+        else
+            ai->setFPS(getFloat(node, "fps", 12.0f));
         ai->setLoop(getBool(node, "loop", true));
+        ai->setUseCache(getBool(node, "useCache", true));
+        ai->setPreserveAspect(getBool(node, "preserveAspect", true));
+        if (hasNode(node, "scaleMode"))
+        {
+            std::string scaleModeStr = getString(node, "scaleMode", "Fit");
+            if (scaleModeStr == "Center")
+                ai->setScaleMode(AnimatedImage::ScaleMode::Center);
+            else if (scaleModeStr == "None")
+                ai->setScaleMode(AnimatedImage::ScaleMode::None);
+            else
+                ai->setScaleMode(AnimatedImage::ScaleMode::Fit);
+        }
         if (getBool(node, "autoplay", true)) ai->play();
         element = std::move(ai);
     }
     else if (type == "Canvas")
     {
         element = std::make_unique<Canvas>(m_guiManager, 0, 0, 100, 100);
+    }
+    else if (type == "ProgressBar")
+    {
+        auto pb = std::make_unique<ProgressBar>(m_guiManager, 0, 0, 200, 30);
+        pb->setRange(getFloat(node, "min", 0.0f), getFloat(node, "max", 100.0f));
+        pb->setValue(getFloat(node, "value", 0.0f));
+        pb->setOrientation(getString(node, "orientation", "Horizontal") == "Vertical" ? Orientation::Vertical : Orientation::Horizontal);
+        pb->setShowText(getBool(node, "showText", true));
+        if (hasNode(node, "textFormat")) pb->setTextFormat(getString(node, "textFormat", "%.0f%%"));
+        element = std::move(pb);
+    }
+    else if (type == "ScrollArea")
+    {
+        auto sa = std::make_unique<ScrollArea>(m_guiManager, 0, 0, 300, 200);
+        if (hasNode(node, "contentWidth") || hasNode(node, "contentHeight"))
+            sa->setContentSize(getInt(node, "contentWidth", sa->getWidth()), getInt(node, "contentHeight", sa->getHeight()));
+        if (hasNode(node, "vScrollEnabled")) sa->setVerticalScroll(getBool(node, "vScrollEnabled", true));
+        if (hasNode(node, "hScrollEnabled")) sa->setHorizontalScroll(getBool(node, "hScrollEnabled", false));
+        element = std::move(sa);
+    }
+    else if (type == "ArcContainer")
+    {
+        element = std::make_unique<ArcContainer>(m_guiManager, 0, 0, getInt(node, "radius", 100),
+            getFloat(node, "startAngle", 0.0f), getFloat(node, "endAngle", 360.0f));
     }
     else if (type == "ListView")
     {
@@ -236,6 +303,11 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
         
         if (hasNode(node, "visible")) element->setVisible(getBool(node, "visible", true));
         if (hasNode(node, "enabled")) element->setEnabled(getBool(node, "enabled", true));
+        if (hasNode(node, "tooltip")) element->setTooltip(getString(node, "tooltip"));
+        if (hasNode(node, "clipChildren")) element->setClipChildren(getBool(node, "clipChildren", true));
+        if (hasNode(node, "rotation")) element->setRotation(getFloat(node, "rotation", 0.0));
+        if (hasNode(node, "rotationCenterX") || hasNode(node, "rotationCenterY"))
+            element->setRotationCenter(getInt(node, "rotationCenterX", -1), getInt(node, "rotationCenterY", -1));
 
         if (isArray(node, "styles"))
         {
@@ -244,7 +316,42 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
             });
         }
 
-        if (type != "TabControl")
+        if (type == "ArcContainer")
+        {
+            auto* arcContainer = static_cast<ArcContainer*>(element.get());
+            forEachInArray(node, "children", [this, arcContainer](void* childNode) {
+                auto childElement = parseNode(childNode);
+                if (childElement)
+                {
+                    float angle = getFloat(childNode, "angle", 0.0f);
+                    bool rotateChild = getBool(childNode, "rotateChild", true);
+                    int offset = getInt(childNode, "offset", 0);
+                    arcContainer->addChildAtAngle(std::move(childElement), angle, rotateChild, offset);
+                }
+            });
+        }
+        else if (type == "ScrollArea")
+        {
+            std::vector<std::unique_ptr<GUIElement>> contentChildren;
+            forEachInArray(node, "children", [this, &contentChildren](void* childNode) {
+                auto childElement = parseNode(childNode);
+                if (childElement) contentChildren.push_back(std::move(childElement));
+            });
+            if (!contentChildren.empty())
+            {
+                auto* sa = static_cast<ScrollArea*>(element.get());
+                if (contentChildren.size() == 1)
+                    sa->setContent(std::move(contentChildren[0]));
+                else
+                {
+                    auto panel = std::make_unique<Panel>(m_guiManager, 0, 0, 0, 0);
+                    for (auto& c : contentChildren)
+                        panel->addChild(std::move(c));
+                    sa->setContent(std::move(panel));
+                }
+            }
+        }
+        else if (type != "TabControl")
         {
             forEachInArray(node, "children", [this, &element](void* childNode) {
                 auto childElement = parseNode(childNode);

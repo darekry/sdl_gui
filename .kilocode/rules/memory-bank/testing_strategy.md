@@ -5,7 +5,7 @@
 - **Runner**: `./nob test`
 - **Helper**: `tests/test_helper.hpp/cpp` (headless SDL init)
 
-## Pokrycie testami (29 plików, ~1850 asercji)
+## Pokrycie testami (29 plików, ~28 widget/system tests)
 
 ### Widgety (17)
 Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor
@@ -13,22 +13,19 @@ Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioBu
 ### Menedżery (4)
 FontManager, TextureManager, TimerManager, AnimationManager
 
-### Systemy (4)
-GUIElement, GUIManager, Theme, Easing
+### Systemy (5)
+GUIElement, GUIManager, Theme, Easing, UTF8
 
 ### Screen/Window (2)
 ScreenManager, WindowManager
 
-### Brakujące
+### Brakujące testy
+- ArcContainer, ProgressBar, ScrollArea, ShaderPanel (nowe widgety)
 - test_text_editable.cpp
 - Style, SGMLParser, JsonParser, LayoutParser (header-only/interface)
 
 ## Testy integracyjne
 
-32 examples w `examples/` - manualna weryfikacja wizualna.
+38 examples w `examples/` - manualna weryfikacja wizualna.
 
-Kluczowe: example_button, example_string_grid, example_json_parser, example_wysiwyg_editor, example_window_manager
-
-## Testy wydajności
-
-`examples/example_performance.cpp` - dynamic add/remove, FPS counter
+Kluczowe: example_button, example_string_grid, example_json_parser, example_wysiwyg_editor, example_window_manager, example_gpu_shader, example_theme_playground

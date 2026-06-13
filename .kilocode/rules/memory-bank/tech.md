@@ -3,17 +3,15 @@
 ## Środowisko i zależności
 
 Projekt jest napisany w C++ i opiera się na następujących bibliotekach:
--   **SDL2**: Główna biblioteka do obsługi okien, zdarzeń i renderowania.
--   **SDL2_image**: Rozszerzenie do ładowania różnych formatów obrazów.
--   **SDL2_ttf**: Rozszerzenie do renderowania czcionek TrueType.
--   **SDL2_gfx**: Rozszerzenie do rysowania figur geometrycznych (zaokrąglone rogi).
+-   **SDL3**: Główna biblioteka do obsługi okien, zdarzeń i renderowania (GPU).
+-   **SDL3_image**: Rozszerzenie do ładowania różnych formatów obrazów (on-demand, bez IMG_Init).
+-   **SDL3_ttf**: Rozszerzenie do renderowania czcionek TrueType.
+-   **tinyxml2**: Parsowanie XML (wbudowane w `lib/tinyxml2.cpp`).
 -   **Catch2**: Framework do testów jednostkowych (wersja amalgamated w [`lib/`](lib/:1)).
 
-### Instalacja zależności (przykład dla systemów Debian/Ubuntu):
-```bash
-sudo apt-get update
-sudo apt-get install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-gfx-dev clang libc++-dev
-```
+### Instalacja zależności
+SDL3 instaluje się ze źródeł lub przez pkg-config. Biblioteki muszą być dostępne przez `pkg-config sdl3 sdl3-image sdl3-ttf`.
+Kompilator: `clang++-22` z `libc++` (LLVM-23).
 
 ## Proces budowania
 
@@ -44,16 +42,20 @@ cc -o nob nob.c
 
 ### Standard C++ i kompilator
 -   **Standard**: Projekt używa **C++23** (`-std=c++23`).
--   **Kompilator**: Domyślnie skonfigurowany jest `clang++-22` z biblioteką standardową `libc++`.
+-   **Kompilator**: `clang++-22` z biblioteką standardową `libc++` (LLVM-23).
+-   **Moduły**: Prekompilowane moduły `std.pcm` i `std.compat.pcm` z `/usr/lib/llvm-23/share/libc++/v1/`.
+-   **PKG_CONFIG_PATH**: `/usr/local/lib/pkgconfig` dla SDL3.
 
 ## Techniki i optymalizacje
 
--   **Unity Build**: Domyślna kompilacja (`./nob examples`) wykorzystuje technikę "unity build". Wszystkie pliki `.cpp` z katalogu [`src/`](src/:1) są łączone w jeden duży plik (`output/all.cpp`), co znacząco przyspiesza proces kompilacji.
--   **Optymalizacje kompilatora**: Używane są flagi `-O3`, `-march=native` (optymalizacje pod architekturę maszyny budującej) oraz `-flto` (Link-Time Optimization) w trybie release.
--   **Moduły C++23**: Projekt eksperymentalnie wykorzystuje prekompilowane moduły dla biblioteki standardowej (`std.pcm`, `std.compat.pcm`), co może dodatkowo przyspieszyć kompilację.
+-   **Unity Build**: Domyślna kompilacja (`./nob examples`) wykorzystuje technikę "unity build". Wszystkie pliki `.cpp` z `src/`, `src/composite/` i `src/editor/` są łączone w jeden plik (`output/all.cpp`), co znacząco przyspiesza proces kompilacji.
+-   **Optymalizacje kompilatora**: Używane są flagi `-O3`, `-march=native` oraz `-flto` (Link-Time Optimization) w trybie release. Debug mode używa `-g -O0 -fsanitize=address,undefined`.
+-   **Moduły C++23**: Prekompilowane moduły `std.pcm` i `std.compat.pcm` w `modules_cache/`, budowane z plików `.cppm` LLVM.
+-   **Nob_Procs**: Kompilacja przykładów i testów używa równoległego linkowania przez `Nob_Procs`.
 -   **Zarządzanie pamięcią**: Biblioteka intensywnie korzysta z inteligentnych wskaźników:
     -   `std::unique_ptr` do zarządzania hierarchią i cyklem życia elementów GUI.
     -   `std::shared_ptr` (`SharedTexture`, `SharedFont`) z niestandardowymi deleterami ([`src/sdl_deleters.hpp`](src/sdl_deleters.hpp:1)) do automatycznego zwalniania zasobów SDL.
+-   **GPU Renderer**: SDL_gpu używany przez ShaderPanel i elementy wymagające shaderów. Wymaga `SDL_CreateGPURenderer` (nie `SDL_CreateRenderer`).
 -   **Cache'owanie zasobów**: `TextureManager` i `FontManager` przechowują załadowane zasoby w mapach, aby uniknąć wielokrotnego ładowania tych samych plików.
 -   **Cache'owanie renderowania**: Każdy `GUIElement` domyślnie renderuje swoją zawartość do osobnej tekstury (`m_cachedTexture`), która jest odświeżana tylko w razie potrzeby (`m_isDirty = true`). To kluczowa optymalizacja, która minimalizuje liczbę operacji rysowania.
 
