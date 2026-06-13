@@ -18,22 +18,24 @@ int main() {
         // Główny panel dla animacji
         auto main_panel = std::make_unique<Panel>(gui, 50, 50, 900, 600);
 
-        // AnimatedImage z sprite-sheet
-        auto anim_uptr = std::make_unique<AnimatedImage>(gui, 50, 50, 256, 256);
+        // AnimatedImage z sprite-sheet (eksplozja: 15 klatek w 1 rzędzie)
+        auto anim_uptr = std::make_unique<AnimatedImage>(gui, 50, 50, 400, 200);
         auto animRef = gui.makeRef(anim_uptr.get());
-        anim_uptr->setSpriteSheet("assets/sprites/placeholder.png", 4, 4);
+        anim_uptr->setSpriteSheet("assets/explosion.png", 15, 1);
         anim_uptr->setFPS(12.0f);
         anim_uptr->setLoop(true);
-        anim_uptr->setUseCache(false);
+        anim_uptr->setPreserveAspect(true);
+        anim_uptr->setScaleMode(AnimatedImage::ScaleMode::Center);
         main_panel->addChild(std::move(anim_uptr));
+        animRef->play();
 
         // Panel kontrolny
         auto control_panel = std::make_unique<Panel>(gui, 350, 50, 500, 250);
         control_panel->addChild(std::make_unique<Label>(gui, 20, 20, "Animation Controls"));
 
         // Przycisk Start/Stop
-        auto start_stop_btn = std::make_unique<Button>(gui, 20, 50, 120, 40, "Start");
-        bool is_playing = false;
+        auto start_stop_btn = std::make_unique<Button>(gui, 20, 50, 120, 40, "Start/Stop");
+        bool is_playing = true;
         start_stop_btn->setOnClickCallback([animRef, &is_playing](GUIElement*) {
             if (!animRef) return;
             if (is_playing) {
@@ -76,10 +78,10 @@ int main() {
 
         // Slider dla regulacji FPS
         auto fps_slider = std::make_unique<Slider>(gui, 20, 170, 200, 30, 1, 120, 12, Orientation::Horizontal);
-        Slider* fps_slider_raw = fps_slider.get();
-        fps_slider->setOnChangeCallback([animRef, fps_slider_raw](GUIElement*) {
-            if (!animRef || !fps_slider_raw) return;
-            int fps = fps_slider_raw->getValue();
+        auto fpsSliderRef = gui.makeRef(fps_slider.get());
+        fps_slider->setOnChangeCallback([animRef, fpsSliderRef](GUIElement*) {
+            if (!animRef || !fpsSliderRef) return;
+            int fps = fpsSliderRef->getValue();
             animRef->setFPS(static_cast<float>(fps));
         });
         control_panel->addChild(std::move(fps_slider));
@@ -96,7 +98,7 @@ int main() {
                 if (e.type == SDL_EVENT_QUIT) quit = true;
                 gui.processEvent(e);
             }
-
+            gui.update();
             gui.cleanup();
 
             SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);

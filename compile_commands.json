@@ -1,6 +1,43 @@
 [
   {
     "directory": "/home/darekry/code/sdl_gui",
+    "file": "/usr/lib/llvm-23/share/libc++/v1/std.cppm",
+    "arguments": [
+      "clang++-22",
+      "-std=c++23",
+      "-stdlib=libc++",
+      "-Wno-reserved-identifier",
+      "-Wno-reserved-module-identifier",
+      "-g",
+      "-O0",
+      "--precompile",
+      "-o",
+      "modules_cache/std_debug.pcm",
+      "/usr/lib/llvm-23/share/libc++/v1/std.cppm"
+    ],
+    "output": "modules_cache/std_debug.pcm"
+  },
+  {
+    "directory": "/home/darekry/code/sdl_gui",
+    "file": "/usr/lib/llvm-23/share/libc++/v1/std.compat.cppm",
+    "arguments": [
+      "clang++-22",
+      "-std=c++23",
+      "-stdlib=libc++",
+      "-fmodule-file=std=modules_cache/std_debug.pcm",
+      "-Wno-reserved-identifier",
+      "-Wno-reserved-module-identifier",
+      "-g",
+      "-O0",
+      "--precompile",
+      "-o",
+      "modules_cache/std_compat_debug.pcm",
+      "/usr/lib/llvm-23/share/libc++/v1/std.compat.cppm"
+    ],
+    "output": "modules_cache/std_compat_debug.pcm"
+  },
+  {
+    "directory": "/home/darekry/code/sdl_gui",
     "file": "output/all.cpp",
     "arguments": [
       "clang++-22",
