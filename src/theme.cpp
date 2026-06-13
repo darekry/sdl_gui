@@ -126,6 +126,7 @@ Theme Theme::createDefaultTheme() {
     Style progressBarStyle;
     progressBarStyle.borderWidth = 1;
     progressBarStyle.borderRadius = 4;
+    progressBarStyle.borderColor = {0, 120, 215, 255};  // Blue fill bar
     theme.setStyle("ProgressBar", ElementState::Normal, progressBarStyle);
 
     // === StringGrid style ===

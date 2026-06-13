@@ -4,6 +4,8 @@
 #include "sdl_app.hpp"
 #include "label.hpp"
 #include "button.hpp"
+#include "animation_manager.hpp"
+#include "easing.hpp"
 
 import std.compat;
 
@@ -37,45 +39,57 @@ int main(int, char**) {
         vProgress->setValue(40.0f);
         guiManager.addElement(std::move(vProgress));
 
-        // Animated progress bar with buttons
-        auto aLabel = std::make_unique<Label>(guiManager, 50, 290, "Animated:", 16);
+        // Animated loading progress bar
+        auto aLabel = std::make_unique<Label>(guiManager, 50, 290, "Loading (5s):", 16);
         guiManager.addElement(std::move(aLabel));
 
         auto aProgress = std::make_unique<ProgressBar>(guiManager, 180, 290, 300, 30);
-        aProgress->setRange(0, 60);
+        aProgress->setRange(0, 100);
         aProgress->setValue(0);
-        aProgress->setTextFormat("%.0f / %.0f");
         auto aProgressRef = guiManager.makeRef(aProgress.get());
         guiManager.addElement(std::move(aProgress));
 
-        // Timer-based animation for demo
-        auto startBtn = std::make_unique<Button>(guiManager, 50, 340, 100, 30);
-        auto startLabel = std::make_unique<Label>(guiManager, 0, 0, "Start", 14);
+        auto animManager = guiManager.getAnimationManager();
+        auto startTime = std::make_shared<uint64_t>(0);
+        auto dirtyAnimId = std::make_shared<uint32_t>(0);
+
+        auto startBtn = std::make_unique<Button>(guiManager, 50, 340, 120, 30);
+        auto startLabel = std::make_unique<Label>(guiManager, 0, 0, "Start Loading", 14);
         startLabel->setPosition(
             (startBtn->getWidth() - startLabel->getWidth()) / 2,
             (startBtn->getHeight() - startLabel->getHeight()) / 2);
         startBtn->addChild(std::move(startLabel));
-        startBtn->setOnClickCallback([aProgressRef](GUIElement*) {
+
+        startBtn->setOnClickCallback([aProgressRef, animManager, startTime, dirtyAnimId](GUIElement*) {
             auto* pb = static_cast<ProgressBar*>(aProgressRef.get());
-            if (pb) {
-                pb->setValue(0);
+            if (!pb) return;
+
+            pb->setValue(0);
+
+            animManager->createAnimation(
+                pb->getValuePtr(),
+                0.0f,
+                pb->getMax(),
+                5000,
+                Easing::easeInOutQuad,
+                [aProgressRef]() {
+                    if (auto* pb = static_cast<ProgressBar*>(aProgressRef.get())) {
+                        pb->markDirty();
+                    }
+                    std::cout << "Loading complete!" << std::endl;
+                }
+            );
+
+            if (*dirtyAnimId) {
+                animManager->removeAnimation(*dirtyAnimId);
             }
+            *dirtyAnimId = animManager->addAnimation(30, [aProgressRef]() {
+                if (auto* pb = static_cast<ProgressBar*>(aProgressRef.get())) {
+                    pb->markDirty();
+                }
+            });
         });
         guiManager.addElement(std::move(startBtn));
-
-        auto incBtn = std::make_unique<Button>(guiManager, 160, 340, 100, 30);
-        auto incLabel = std::make_unique<Label>(guiManager, 0, 0, "+10", 14);
-        incLabel->setPosition(
-            (incBtn->getWidth() - incLabel->getWidth()) / 2,
-            (incBtn->getHeight() - incLabel->getHeight()) / 2);
-        incBtn->addChild(std::move(incLabel));
-        incBtn->setOnClickCallback([aProgressRef](GUIElement*) {
-            auto* pb = static_cast<ProgressBar*>(aProgressRef.get());
-            if (pb) {
-                pb->setValue(pb->getValue() + 10);
-            }
-        });
-        guiManager.addElement(std::move(incBtn));
 
         bool quit = false;
         SDL_Event e;
@@ -86,6 +100,8 @@ int main(int, char**) {
                 }
                 guiManager.processEvent(e);
             }
+
+            guiManager.update();
 
             SDL_SetRenderDrawColor(renderer, 212, 208, 200, 255);
             SDL_RenderClear(renderer);

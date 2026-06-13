@@ -73,8 +73,8 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
 
     if (ratio > 0.0f) {
         SDL_Color fillColor;
-        if (style.textColor) {
-            fillColor = *style.textColor;
+        if (style.borderColor) {
+            fillColor = *style.borderColor;
         } else {
             fillColor = {0, 120, 215, 255};
         }
@@ -101,9 +101,18 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
 
         int borderRadius = style.borderRadius.value_or(0);
         if (borderRadius > 0) {
-            roundedBoxRGBA(renderer, fillRect.x, fillRect.y,
-                           fillRect.x + fillRect.w, fillRect.y + fillRect.h,
-                           borderRadius, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+            int maxRadius = (m_orientation == Orientation::Horizontal)
+                ? (fillRect.w - 1) / 2
+                : (fillRect.h - 1) / 2;
+            int effectiveRadius = std::min(borderRadius, maxRadius);
+            if (effectiveRadius > 0) {
+                roundedBoxRGBA(renderer, fillRect.x, fillRect.y,
+                               fillRect.x + fillRect.w, fillRect.y + fillRect.h,
+                               effectiveRadius, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+            } else {
+                SDL_SetRenderDrawColor(renderer, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+                SDL_RenderFillRect(renderer, &fillRect);
+            }
         } else {
             SDL_SetRenderDrawColor(renderer, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
             SDL_RenderFillRect(renderer, &fillRect);

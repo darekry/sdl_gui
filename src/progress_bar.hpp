@@ -23,6 +23,8 @@ public:
 
     void setTextFormat(const std::string& format) { m_textFormat = format; markDirty(); }
 
+    float* getValuePtr() { return &m_value; }
+
     const char* getComponentType() const override;
 
 protected:
