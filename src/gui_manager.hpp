@@ -9,6 +9,7 @@
 #include "theme.hpp"
 #include "animation_manager.hpp"
 #include "cursor.hpp"
+#include <SDL3/SDL_gpu.h>
 
 import std.compat;
 
@@ -66,6 +67,7 @@ public:
     void setWindowSize(int width, int height);
 
     SDL_Renderer* getRenderer() const { return m_renderer; }
+    SDL_GPUDevice* getGPUDevice() const { return SDL_GetGPURendererDevice(m_renderer); }
     FontManager& getFontManager() { return m_fontManager; }
     const FontManager& getFontManager() const { return m_fontManager; }
     TextureManager& getTextureManager() { return m_textureManager; }

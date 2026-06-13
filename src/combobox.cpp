@@ -10,24 +10,22 @@ ComboBox::ComboBox(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h),
       m_is_expanded(false),
       m_selected_index(-1),
-      m_needs_update(true) {
-
-    auto dropdown_panel = std::make_unique<Panel>(manager, 0, h, w, 100);
-    dropdown_panel->setVisible(false);
-    m_dropdown_panel = dropdown_panel.get();
-
-    addChild(std::move(dropdown_panel));
-
+      m_needs_update(true),
+      m_dropdown_panel(nullptr) {
     setClipChildren(false);
     markDirty();
 }
 
+ComboBox::~ComboBox() {
+    if (m_is_expanded && m_dropdown_panel) {
+        m_dropdown_panel->setVisible(false);
+        m_dropdown_panel->markForDeletion();
+        m_dropdown_panel = nullptr;
+    }
+}
+
 bool ComboBox::handleEvent(const SDL_Event& event) {
     if (!m_enabled || !m_visible) return false;
-
-    if (m_is_expanded && m_dropdown_panel->handleEvent(event)) {
-        return true;
-    }
 
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         if (contains(event.button.x, event.button.y)) {
@@ -39,10 +37,11 @@ bool ComboBox::handleEvent(const SDL_Event& event) {
     if (m_is_expanded && event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         const auto p = SDL_Point{static_cast<int>(event.button.x), static_cast<int>(event.button.y)};
         auto abs_pos = getAbsolutePosition();
-        auto combined_area = SDL_Rect{abs_pos.x, abs_pos.y, m_width, m_height + m_dropdown_panel->getHeight()};
+        int dropdownHeight = m_dropdown_panel ? m_dropdown_panel->getHeight() : 0;
+        auto combined_area = SDL_Rect{abs_pos.x, abs_pos.y, m_width, m_height + dropdownHeight};
         if (!SDL_PointInRect(&p, &combined_area)) {
             toggleDropdown();
-            return true; 
+            return true;
         }
     }
     
@@ -149,9 +148,19 @@ void ComboBox::setSelectedIndex(int index) {
 
 void ComboBox::toggleDropdown() {
     m_is_expanded = !m_is_expanded;
-    m_dropdown_panel->setVisible(m_is_expanded);
-     if (m_is_expanded) {
+    if (m_is_expanded) {
+        auto abs = getAbsolutePosition();
+        auto dropdown = std::make_unique<Panel>(m_manager, abs.x, abs.y + m_height, m_width, 100);
+        dropdown->setVisible(true);
+        m_dropdown_panel = dropdown.get();
+        m_manager.addElement(std::move(dropdown));
         m_needs_update = true;
+    } else {
+        if (m_dropdown_panel) {
+            m_dropdown_panel->setVisible(false);
+            m_dropdown_panel->markForDeletion();
+            m_dropdown_panel = nullptr;
+        }
     }
     markDirty();
 }
@@ -162,6 +171,8 @@ void ComboBox::selectItem(int index) {
 }
 
 void ComboBox::createDropdownButtons() {
+    if (!m_dropdown_panel) return;
+
     m_dropdown_panel->clearChildren();
 
     const int item_h = 30;

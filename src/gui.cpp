@@ -104,6 +104,7 @@ void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius,
 // Implementacja klasy GUIElement
 GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)
     : m_x(x), m_y(y), m_width(width), m_height(height), m_manager(manager), m_parent(nullptr) {
+    m_manager.registerElement(this);
 }
 
 GUIElement::~GUIElement() {
@@ -300,15 +301,19 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 SDL_FPoint center = m_rotationCenter.x >= 0 
                     ? SDL_FPoint{static_cast<float>(m_rotationCenter.x), static_cast<float>(m_rotationCenter.y)} 
                     : SDL_FPoint{static_cast<float>(m_width) / 2.0f, static_cast<float>(m_height) / 2.0f};
+                if (m_gpuState) SDL_SetGPURenderState(renderer, m_gpuState);
                 SDL_RenderTextureRotated(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
                                  m_rotation, &center, SDL_FLIP_NONE);
+                if (m_gpuState) SDL_SetGPURenderState(renderer, nullptr);
             } else {
                 SDL_Rect src_rect;
                 src_rect.x = clipped_rect.x - abs_pos.x;
                 src_rect.y = clipped_rect.y - abs_pos.y;
                 src_rect.w = clipped_rect.w;
                 src_rect.h = clipped_rect.h;
+                if (m_gpuState) SDL_SetGPURenderState(renderer, m_gpuState);
                 ({ SDL_FRect _sr = {static_cast<float>(src_rect.x), static_cast<float>(src_rect.y), static_cast<float>(src_rect.w), static_cast<float>(src_rect.h)}; SDL_FRect _dr = {static_cast<float>(clipped_rect.x), static_cast<float>(clipped_rect.y), static_cast<float>(clipped_rect.w), static_cast<float>(clipped_rect.h)}; SDL_RenderTexture(renderer, m_cachedTexture.get(), &_sr, &_dr); });
+                if (m_gpuState) SDL_SetGPURenderState(renderer, nullptr);
             }
         }
     }

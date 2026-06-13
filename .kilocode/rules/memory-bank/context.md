@@ -47,7 +47,11 @@
 | TTF_SizeUTF8 returns int (0=success) | TTF_GetStringSize returns bool (true=success) |
 
 **Remaining:**
-- Stage 10: GPU shader example (nowe)
+- ~~Stage 10: GPU shader example~~ ✅ Done (2026-06-13)
+  - Key discovery: must use `SDL_CreateGPURenderer`, not `SDL_CreateRenderer`
+  - Shader at blit-time (SDL_RenderTexture), not draw-time (SDL_RenderGeometry)
+  - Fragment shader interface: location 0 = vertex color, location 1 = UV
+  - Sampler2D at set=2 binding=0 not receiving texture — possible SDL 3.5.0 bug
 
 ### Post-migration bugfixes (2026-06-13):
 - **nob.c**: pkg_config_cmd() dangling pointer fix (`nob_temp_strdup`)

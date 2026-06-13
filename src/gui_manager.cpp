@@ -17,11 +17,13 @@ GUIManager::GUIManager(SDL_Renderer* renderer)
     timerManager = std::make_unique<TimerManager>();
     animation_manager = std::make_unique<AnimationManager>();
 
-    // Załaduj domyślną czcionkę
+    Uint64 t0 = SDL_GetTicks();
     m_fontManager.loadDefaultFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
+    std::cout << "[GUIManager] loadDefaultFont: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
 
-    // Utwórz domyślną teksturę zastępczą
+    t0 = SDL_GetTicks();
     m_textureManager.createDefaultTexture(m_renderer, m_fontManager, "No Texture");
+    std::cout << "[GUIManager] createDefaultTexture: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
 }
 
 GUIManager::~GUIManager() = default;
@@ -308,6 +310,9 @@ AnimationManager* GUIManager::getAnimationManager() {
 
 void GUIManager::setCursor(std::unique_ptr<Cursor> new_cursor) {
     cursor = std::move(new_cursor);
+    if (cursor) {
+        registerElement(cursor.get());
+    }
 }
 
 GUIElement* GUIManager::findElementAt(int x, int y) {

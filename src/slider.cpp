@@ -76,17 +76,15 @@ bool Slider::handleEvent(const SDL_Event& e) {
         return true;
     }
     
-    auto absPos = getAbsolutePosition();
-    SDL_Rect trackArea;
-    if (m_orientation == Orientation::Horizontal) {
-        trackArea = {absPos.x + m_trackOffsetX, absPos.y, m_trackSize, getHeight()};
-    } else {
-        trackArea = {absPos.x, absPos.y + m_trackOffsetY, getWidth(), m_trackSize};
-    }
-    
-    SDL_Point mousePoint = {static_cast<int>(e.button.x), static_cast<int>(e.button.y)};
-
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
+        auto absPos = getAbsolutePosition();
+        SDL_Rect trackArea;
+        if (m_orientation == Orientation::Horizontal) {
+            trackArea = {absPos.x + m_trackOffsetX, absPos.y, m_trackSize, getHeight()};
+        } else {
+            trackArea = {absPos.x, absPos.y + m_trackOffsetY, getWidth(), m_trackSize};
+        }
+        SDL_Point mousePoint = {static_cast<int>(e.button.x), static_cast<int>(e.button.y)};
         if (SDL_PointInRect(&mousePoint, &trackArea)) {
             m_isDragging = true;
             updateValueFromMouse(e.button.x, e.button.y);

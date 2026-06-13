@@ -8,6 +8,7 @@
 class ComboBox : public GUIElement {
 public:
     ComboBox(GUIManager& manager, int x, int y, int w, int h);
+    ~ComboBox() override;
 
     bool handleEvent(const SDL_Event& event) override;
 

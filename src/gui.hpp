@@ -4,6 +4,7 @@
 #include "texture_manager.hpp"
 #include "font_manager.hpp"
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_gpu.h>
 #include "animation_manager.hpp"
 #include "style.hpp"
 #include "anchor.hpp"
@@ -80,6 +81,11 @@ public:
     virtual bool handleEvent(const SDL_Event& e);
     void render(SDL_Renderer* renderer);
     void renderToCache();
+    [[nodiscard]] SDL_Texture* getCachedTexture() const { return m_cachedTexture.get(); }
+    
+    void setGPUState(SDL_GPURenderState* state) { m_gpuState = state; }
+    [[nodiscard]] SDL_GPURenderState* getGPUState() const { return m_gpuState; }
+    
     virtual bool isOverlay() const { return false; }
     virtual void renderOverlay(SDL_Renderer* renderer);
     void setClipChildren(bool clip);
@@ -122,7 +128,7 @@ public:
     void setCanGetKeyboardFocus(bool canFocus);
     [[nodiscard]] bool hasKeyboardFocus() const;
 
-private:
+protected:
     void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
  
 protected:
@@ -161,6 +167,7 @@ protected:
         ElementState m_state = ElementState::Normal;
     bool m_style_dirty = true;
     std::vector<std::unique_ptr<GUIElement>> m_children;
+    SDL_GPURenderState* m_gpuState = nullptr;
     
     double m_rotation = 0.0;
     SDL_Point m_rotationCenter = {-1, -1};

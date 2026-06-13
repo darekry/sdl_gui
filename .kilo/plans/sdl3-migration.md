@@ -1,9 +1,9 @@
 # SDL2 → SDL3 Migration Plan
 
-## Status: **STAGES 1-9 DONE** (core `src/`, examples, and tests compile)
+## Status: **STAGES 1-10 DONE** — Migration complete 🎉
 
 **Date:** 2026-06-13  
-**Remaining:** Stages 10 (GPU shader)
+**Remaining:** Nothing — migration complete
 
 ---
 
@@ -224,10 +224,46 @@ Result: All 31 test files compile. Most tests pass at runtime (test_text_area ha
 
 ---
 
-## Stage 10: GPU Shader Example ⏳ TODO
+## Stage 10: GPU Shader Effects on GUI Elements ✅ DONE
 
-See original plan below — unchanged.
+### Implementation:
+Uses `SDL_CreateGPURenderer` (Vulkan GPU backend) + `SDL_GPURenderState` to apply
+a rainbow HSV fragment shader when blitting a panel's cached texture to screen.
 
+### Key API discoveries:
+1. `SDL_CreateGPURenderer(device, window)` creates GPU renderer (not OpenGL fallback)
+2. `SDL_CreateGPURenderer` internally calls `SDL_ClaimWindowForGPUDevice`
+3. Uses precompiled SPIR-V fragment shaders (embedded as C arrays via header)
+4. `SDL_GPURenderState` replaces the fragment shader during draw calls
+
+### SPIR-V shader interface (reverse-engineered from SDL 3.5.0 GPU renderer):
+- `layout(location = 0) in vec4` — vertex color (always white for `SDL_RenderTexture`)
+- `layout(location = 1) in vec2` — texture UV coordinates (interpolated, works during `SDL_RenderTexture`)
+- `layout(set = 2, binding = 0) uniform sampler2D` — source texture (NOT bound during geometry draws, may not be available with GPURenderState)
+- `layout(location = 0) out vec4` — output color
+
+### Architecture:
+1. `SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, ...)` — Vulkan GPU device
+2. `SDL_CreateGPURenderer(device, window)` — GPU renderer
+3. `SDL_CreateGPUShader(device, &spirvData)` — compile SPIR-V fragment shader
+4. `SDL_CreateGPURenderState(renderer, &stateInfo)` — custom render state
+5. `SDL_RenderTexture(renderer, cachedTex, NULL, &dst)` — blit cache with shader active
+6. Wrap in `SDL_SetGPURenderState(renderer, state)` / `NULL`
+
+### Files:
+- `examples/shaders/desaturate.frag` — GLSL rainbow fragment shader (HSV→RGB from UV.x)
+- `tools/compile_gpu_shaders.py` — glslc → SPIR-V → C header
+- `examples/example_gpu_shader_spirv.hpp` — Auto-generated SPIR-V arrays (committed)
+- `examples/example_gpu_shader.cpp` — Full working example
+- `src/gui.hpp` — Added `getCachedTexture()` getter
+
+### Build:
+- `./nob -r examples` — normal build (SPIR-V header is pre-generated)
+- `python3 tools/compile_gpu_shaders.py` — only needed when shader source changes
+- Requires `glslc` on developer machine for regeneration
+
+### Known limitations:
+- `sampler2D` at set=2 binding=0 doesn't receive the texture during `SDL_RenderTexture` with custom shader — possible SDL 3.5.0 limitation/bug. Current shader uses only UV coordinates, not texture sampling, so rounded corner alpha is lost.
 ---
 
 ## ⚠️ Known Issues
@@ -273,7 +309,7 @@ See original plan below — unchanged.
 | 7: TimerManager | ✅ | 2 | Uint64 ticks |
 | 8: Examples | ✅ | 4 (sdl_app.hpp, example_resize, example_window, example_arc_container) | WINDOWEVENT, SDL_CreateSurface, removed renderer flags |
 | 9: Tests | ✅ | 6 (test_helper, test_gui_element, test_texture_manager, test_window_manager + headers) | Full event API migration, SDL_Rect→SDL_FRect |
-| 10: GPU Shader | ⏳ | 1 (new) | SPIR-V shader example |
+| 10: GPU Shader | ✅ | 5 (new) | Full SDL3 GPU API pipeline example |
 
 ## Total Effort
 

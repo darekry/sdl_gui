@@ -1,17 +1,23 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_gpu.h>
+#include <SDL3/SDL_properties.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <stdlib.h>
+#include <dirent.h>
 
 import std.compat;
 
+struct GPUBackend {};
+inline constexpr GPUBackend GPU_VULKAN{};
 
 
 class SDLApp {
 public:
     /**
-     * @brief Construct a new SDLApp
+     * @brief Construct SDLApp with standard renderer (SDL_CreateRenderer)
      * @param title Window title
      * @param width Initial window width
      * @param height Initial window height
@@ -53,8 +59,112 @@ public:
         }
     }
 
+    /**
+     * @brief Construct SDLApp with GPU renderer (SDL_CreateGPURenderer, Vulkan/SPIRV)
+     * @param title Window title
+     * @param width Initial window width
+     * @param height Initial window height
+     * @param resizable If true, window can be resized by user
+     * @param backend Tag to select GPU backend (use GPU_VULKAN)
+     * @param gpuDebug Enable GPU debug mode
+     */
+    SDLApp(const char* title, int width, int height, 
+           bool resizable, GPUBackend /*backend*/, bool gpuDebug = false) {
+        Uint64 t0 = SDL_GetTicks();
+        if (!SDL_Init(SDL_INIT_VIDEO)) {
+            std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+            throw std::runtime_error("SDL_Init failed");
+        }
+        std::cout << "[SDLApp] SDL_Init: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+
+        t0 = SDL_GetTicks();
+        if (!TTF_Init()) {
+            std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << SDL_GetError() << std::endl;
+            SDL_Quit();
+            throw std::runtime_error("TTF_Init failed");
+        }
+        std::cout << "[SDLApp] TTF_Init: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+
+        SDL_WindowFlags windowFlags = 0;
+        if (resizable) {
+            windowFlags |= SDL_WINDOW_RESIZABLE;
+        }
+
+        t0 = SDL_GetTicks();
+        m_window = SDL_CreateWindow(title, width, height, windowFlags);
+        std::cout << "[SDLApp] SDL_CreateWindow: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+        if (!m_window) {
+            std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            TTF_Quit();
+            SDL_Quit();
+            throw std::runtime_error("SDL_CreateWindow failed");
+        }
+
+        std::cout << "[SDLApp] Window created" << std::endl;
+
+        if (!getenv("VK_ICD_FILENAMES") && !getenv("VK_DRIVER_FILES")) {
+            std::string icdPaths;
+            auto scanIcd = [&](const char* dir) {
+                DIR* d = opendir(dir);
+                if (!d) return;
+                struct dirent* ent;
+                while ((ent = readdir(d))) {
+                    std::string_view name = ent->d_name;
+                    if (!name.ends_with(".json")) continue;
+                    // skip mobile, VM, emulation, and slow SDL3-init ICDs
+                    if (name.contains("asahi") || name.contains("dzn") ||
+                        name.contains("freedreno") || name.contains("gfxstream") ||
+                        name.contains("virtio") || name.contains("hasvk") ||
+                        name.contains("radeon") || name.contains("nouveau") ||
+                        name.contains("nvidia")) continue;
+                    if (!icdPaths.empty()) icdPaths += ":";
+                    icdPaths += dir;
+                    icdPaths += "/";
+                    icdPaths += name;
+                }
+                closedir(d);
+            };
+            scanIcd("/usr/share/vulkan/icd.d");
+            scanIcd("/etc/vulkan/icd.d");
+
+            if (!icdPaths.empty()) {
+                setenv("VK_ICD_FILENAMES", icdPaths.c_str(), 1);
+                std::cout << "[SDLApp] VK_ICD_FILENAMES=" << icdPaths << std::endl;
+            }
+        }
+
+        t0 = SDL_GetTicks();
+        SDL_PropertiesID props = SDL_CreateProperties();
+        SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, "vulkan");
+        SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+        SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, gpuDebug);
+        m_gpuDevice = SDL_CreateGPUDeviceWithProperties(props);
+        SDL_DestroyProperties(props);
+        std::cout << "[SDLApp] SDL_CreateGPUDevice (vulkan): " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+        if (!m_gpuDevice) {
+            std::cerr << "GPU device could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            SDL_DestroyWindow(m_window);
+            TTF_Quit();
+            SDL_Quit();
+            throw std::runtime_error("SDL_CreateGPUDevice failed");
+        }
+
+        t0 = SDL_GetTicks();
+        m_renderer = SDL_CreateGPURenderer(m_gpuDevice, m_window);
+        std::cout << "[SDLApp] SDL_CreateGPURenderer: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+        if (!m_renderer) {
+            std::cerr << "GPU renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            SDL_DestroyGPUDevice(m_gpuDevice);
+            SDL_DestroyWindow(m_window);
+            TTF_Quit();
+            SDL_Quit();
+            throw std::runtime_error("SDL_CreateGPURenderer failed");
+        }
+    }
+
     ~SDLApp() {
         SDL_DestroyRenderer(m_renderer);
+        if (m_gpuDevice) SDL_DestroyGPUDevice(m_gpuDevice);
         SDL_DestroyWindow(m_window);
         TTF_Quit();
         SDL_Quit();
@@ -62,6 +172,7 @@ public:
 
     [[nodiscard]] SDL_Renderer* getRenderer() const { return m_renderer; }
     [[nodiscard]] SDL_Window* getWindow() const { return m_window; }
+    [[nodiscard]] SDL_GPUDevice* getGPUDevice() const { return m_gpuDevice; }
     
     /**
      * @brief Get current window size
@@ -73,4 +184,5 @@ public:
 private:
     SDL_Window* m_window = nullptr;
     SDL_Renderer* m_renderer = nullptr;
+    SDL_GPUDevice* m_gpuDevice = nullptr;
 };
