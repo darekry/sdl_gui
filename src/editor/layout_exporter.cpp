@@ -225,7 +225,7 @@ bool LayoutExporter::isNumericAttribute(const std::string& key, const std::strin
     if (numericKeys.find(key) != numericKeys.end()) {
         try {
             std::size_t pos;
-            std::stoi(value, &pos);
+            static_cast<void>(std::stoi(value, &pos));
             return pos == value.length();
         } catch (...) {
             return false;

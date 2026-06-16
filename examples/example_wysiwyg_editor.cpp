@@ -27,6 +27,7 @@
 #include "editor/editor_window.hpp"
 #include "editor/preview_window.hpp"
 #include "editor/editor_state.hpp"
+#include "logger.hpp"
 
 import std.compat;
 
@@ -79,16 +80,7 @@ int main(int, char**) {
             windowManager.closeWindow(w->getWindowID());
         });
         
-        std::cout << "WYSIWYG Editor started\n";
-        std::cout << "Editor Window: palette, properties, elements list\n";
-        std::cout << "Preview Window: interactive canvas with grid\n";
-        std::cout << "\nHow to use:\n";
-        std::cout << "1. Click a widget type in the palette (first window)\n";
-        std::cout << "2. Click on the preview canvas to add that widget\n";
-        std::cout << "3. Click on a widget in preview to select it\n";
-        std::cout << "4. Drag selected widgets to move them (snaps to grid)\n";
-        std::cout << "5. Edit properties in the properties panel\n";
-        std::cout << "6. Save layout with Save XML/Save JSON buttons\n";
+        LOG_INFO("WysiwygEditor", "WYSIWYG Editor started\nEditor Window: palette, properties, elements list\nPreview Window: interactive canvas with grid\n\nHow to use:\n1. Click a widget type in the palette (first window)\n2. Click on the preview canvas to add that widget\n3. Click on a widget in preview to select it\n4. Drag selected widgets to move them (snaps to grid)\n5. Edit properties in the properties panel\n6. Save layout with Save XML/Save JSON buttons");
         
         while (!windowManager.shouldQuit()) {
             windowManager.processEvents();
@@ -98,7 +90,7 @@ int main(int, char**) {
             SDL_Delay(16);
         }
         
-        std::cout << "WYSIWYG Editor exiting\n";
+        LOG_INFO("WysiwygEditor", "WYSIWYG Editor exiting");
         
     } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;

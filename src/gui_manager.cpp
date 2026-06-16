@@ -19,11 +19,11 @@ GUIManager::GUIManager(SDL_Renderer* renderer)
 
     Uint64 t0 = SDL_GetTicks();
     m_fontManager.loadDefaultFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
-    std::cout << "[GUIManager] loadDefaultFont: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+    LOG_INFO("GUIManager", "loadDefaultFont: {}ms", SDL_GetTicks() - t0);
 
     t0 = SDL_GetTicks();
     m_textureManager.createDefaultTexture(m_renderer, m_fontManager, "No Texture");
-    std::cout << "[GUIManager] createDefaultTexture: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+    LOG_INFO("GUIManager", "createDefaultTexture: {}ms", SDL_GetTicks() - t0);
 }
 
 GUIManager::~GUIManager() = default;
@@ -36,7 +36,7 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
         // Check if element is already in vector (duplicate detection)
         for (const auto& e : m_elements) {
             if (e.get() == raw_ptr) {
-                std::cerr << "ERROR: GUIManager::addElement() - element already exists in m_elements! ptr=" << raw_ptr << std::endl;
+                LOG_ERROR("GUIManager", "addElement() - element already exists in m_elements! ptr={}", static_cast<const void*>(raw_ptr));
                 return nullptr;
             }
         }
@@ -178,6 +178,7 @@ void GUIManager::cleanup() {
             total_removed_count += 1 + element->countDescendants();
         }
     }
+    (void)total_removed_count;
     
   //  LOG_DEBUG("GUIManager::cleanup() - total elements to remove: %zu", total_removed_count);
 
@@ -193,7 +194,7 @@ void GUIManager::cleanup() {
     std::size_t prefix_distance = static_cast<std::size_t>(std::distance(m_elements.begin(), new_end));
     if (prefix_distance < m_elements.size())
     {
-        LOG_DEBUG("GUIManager::cleanup() - erasing %zu elements from vector", m_elements.size() - prefix_distance);
+        LOG_DEBUG("GUIManager::cleanup() - erasing {} elements from vector", m_elements.size() - prefix_distance);
         m_elements.erase(new_end, m_elements.end());
     }
     
@@ -334,14 +335,14 @@ bool GUIManager::isElementAlive(GUIElement* element) const {
 void GUIManager::registerElement(GUIElement* element) {
     if (element) {
         m_liveElements.insert(element);
-        LOG_DEBUG("GUIManager::registerElement() - registered %p, total = %zu", element, m_liveElements.size());
+        LOG_DEBUG("GUIManager::registerElement() - registered {}, total = {}", static_cast<const void*>(element), m_liveElements.size());
     }
 }
 
 void GUIManager::unregisterElement(GUIElement* element) {
     if (element) {
         m_liveElements.erase(element);
-        LOG_DEBUG("GUIManager::unregisterElement() - unregistered %p, total = %zu", element, m_liveElements.size());
+        LOG_DEBUG("GUIManager::unregisterElement() - unregistered {}, total = {}", static_cast<const void*>(element), m_liveElements.size());
     }
 }
 

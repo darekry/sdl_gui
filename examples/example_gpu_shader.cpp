@@ -25,7 +25,7 @@ int main(int, char**) {
         Uint64 startupStart = SDL_GetTicks();
         SDLApp app("GPU Shader Demo — ENTER: toggle shader, ESC: quit",
                     700, 450, false, GPU_VULKAN);
-        std::cout << "[Main] SDLApp GPU init total: " << (SDL_GetTicks() - startupStart) << "ms" << std::endl;
+        LOG_INFO("GpuShader", "[Main] SDLApp GPU init total: {}ms", SDL_GetTicks() - startupStart);
 
         GUIManager gui(app.getRenderer());
 

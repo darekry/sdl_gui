@@ -303,14 +303,18 @@ void CanvasPanel::drawGrid(SDL_Renderer* renderer) {
     int gridSize = m_state.getGridSize();
     if (gridSize <= 0) return;
     
+    float fGridSize = static_cast<float>(gridSize);
+    float fW = static_cast<float>(m_width);
+    float fH = static_cast<float>(m_height);
+    
     SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
     
-    for (int x = 0; x < m_width; x += gridSize) {
-        SDL_RenderLine(renderer, x, 0, x, m_height);
+    for (float x = 0; x < fW; x += fGridSize) {
+        RenderLine(renderer, x, 0.0f, x, fH);
     }
     
-    for (int y = 0; y < m_height; y += gridSize) {
-        SDL_RenderLine(renderer, 0, y, m_width, y);
+    for (float y = 0; y < fH; y += fGridSize) {
+        RenderLine(renderer, 0.0f, y, fW, y);
     }
 }
 
@@ -344,7 +348,8 @@ void CanvasPanel::drawSelectionHighlight(SDL_Renderer* renderer, size_t index) {
     
     for (int i = 0; i < borderWidth; ++i) {
         SDL_Rect r = {x + i, y + i, w - 2*i, h - 2*i};
-        ({ SDL_FRect _fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)}; SDL_RenderRect(renderer, &_fr); });
+        SDL_FRect fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)};
+        SDL_RenderRect(renderer, &fr);
     }
 }
 
@@ -355,14 +360,14 @@ bool CanvasPanel::handleEvent(const SDL_Event& e) {
     
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
         SDL_Point abs = getAbsolutePosition();
-        int localX = static_cast<int>(e.button.x) - abs.x;
-        int localY = static_cast<int>(e.button.y) - abs.y;
+        float localX = e.button.x - static_cast<float>(abs.x);
+        float localY = e.button.y - static_cast<float>(abs.y);
         
-        if (localX < 0 || localX >= m_width || localY < 0 || localY >= m_height) {
+        if (localX < 0 || localX >= static_cast<float>(m_width) || localY < 0 || localY >= static_cast<float>(m_height)) {
             return false;
         }
         
-        auto hitElement = m_state.findElementAtPosition(e.button.x, e.button.y);
+        auto hitElement = m_state.findElementAtPosition(static_cast<int>(e.button.x), static_cast<int>(e.button.y));
         
         if (hitElement.has_value()) {
             handleElementClick(e.button.x, e.button.y, hitElement.value());
@@ -386,11 +391,13 @@ bool CanvasPanel::handleEvent(const SDL_Event& e) {
     return Panel::handleEvent(e);
 }
 
-void CanvasPanel::handleCanvasClick(int mouseX, int mouseY) {
+void CanvasPanel::handleCanvasClick(float mouseX, float mouseY) {
+    int ix = static_cast<int>(mouseX);
+    int iy = static_cast<int>(mouseY);
     const std::string& selectedType = m_state.getSelectedWidgetType();
     
     if (!selectedType.empty()) {
-        size_t newIndex = m_state.addElement(selectedType, mouseX, mouseY);
+        size_t newIndex = m_state.addElement(selectedType, ix, iy);
         
         if (m_previewWindow) {
             m_previewWindow->refreshElement(newIndex);
@@ -408,7 +415,7 @@ void CanvasPanel::handleCanvasClick(int mouseX, int mouseY) {
     }
 }
 
-void CanvasPanel::handleElementClick(int mouseX, int mouseY, size_t elementIndex) {
+void CanvasPanel::handleElementClick(float mouseX, float mouseY, size_t elementIndex) {
     m_state.selectElement(elementIndex);
     
     if (m_previewWindow && m_previewWindow->m_onSelectionChanged) {
@@ -421,27 +428,31 @@ void CanvasPanel::handleElementClick(int mouseX, int mouseY, size_t elementIndex
     }
 }
 
-void CanvasPanel::startDrag(int mouseX, int mouseY) {
+void CanvasPanel::startDrag(float mouseX, float mouseY) {
+    int ix = static_cast<int>(mouseX);
+    int iy = static_cast<int>(mouseY);
     const EditorElement* elem = m_state.getSelectedElement();
     if (!elem) return;
     
     m_isDragging = true;
-    m_dragOffsetX = mouseX - elem->x;
-    m_dragOffsetY = mouseY - elem->y;
+    m_dragOffsetX = ix - elem->x;
+    m_dragOffsetY = iy - elem->y;
     m_dragStartX = elem->x;
     m_dragStartY = elem->y;
     
     m_manager.captureMouse(this);
 }
 
-void CanvasPanel::updateDrag(int mouseX, int mouseY) {
+void CanvasPanel::updateDrag(float mouseX, float mouseY) {
+    int ix = static_cast<int>(mouseX);
+    int iy = static_cast<int>(mouseY);
     if (!m_isDragging) return;
     
     const EditorElement* elem = m_state.getSelectedElement();
     if (!elem) return;
     
-    int newX = snapToGrid(mouseX - m_dragOffsetX);
-    int newY = snapToGrid(mouseY - m_dragOffsetY);
+    int newX = snapToGrid(ix - m_dragOffsetX);
+    int newY = snapToGrid(iy - m_dragOffsetY);
     
     newX = std::max(0, newX);
     newY = std::max(0, newY);

@@ -24,21 +24,21 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
 
         // Add menu items
         contextMenuRef->addItem("Copy", []() {
-            std::cout << "Copy action triggered!" << std::endl;
+            LOG_INFO("ContextMenu", "Copy action triggered!");
         });
 
         contextMenuRef->addItem("Paste", []() {
-            std::cout << "Paste action triggered!" << std::endl;
+            LOG_INFO("ContextMenu", "Paste action triggered!");
         });
 
         contextMenuRef->addSeparator();
 
         contextMenuRef->addItem("Delete", []() {
-            std::cout << "Delete action triggered!" << std::endl;
+            LOG_INFO("ContextMenu", "Delete action triggered!");
         }, true); // enabled
 
         contextMenuRef->addItem("Properties", []() {
-            std::cout << "Properties action triggered!" << std::endl;
+            LOG_INFO("ContextMenu", "Properties action triggered!");
         });
 
         // Set up right-click handler for the button

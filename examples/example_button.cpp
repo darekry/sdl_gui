@@ -21,7 +21,7 @@ int main(int, char**) {
         // --- Przycisk 1: Domyślny wygląd z motywu ---
         auto buttonDefault = std::make_unique<Button>(guiManager, 50, 50, 200, 50, "Default Button");
         buttonDefault->setOnClickCallback([](GUIElement*) {
-            std::cout << "Default Button clicked!" << std::endl;
+            LOG_INFO("Button", "Default Button clicked!");
         });
         guiManager.addElement(std::move(buttonDefault));
 
@@ -34,7 +34,7 @@ int main(int, char**) {
         buttonCustomColor->setTextColor(ElementState::Normal, {255, 255, 255, 255});
 
         buttonCustomColor->setOnClickCallback([](GUIElement*) {
-            std::cout << "Colored Button clicked!" << std::endl;
+            LOG_INFO("Button", "Colored Button clicked!");
         });
         guiManager.addElement(std::move(buttonCustomColor));
 
@@ -53,7 +53,7 @@ int main(int, char**) {
         buttonStyled->setStyle(ElementState::Hover, hover_style);
         
         buttonStyled->setOnClickCallback([](GUIElement*) {
-            std::cout << "Styled Button clicked!" << std::endl;
+            LOG_INFO("Button", "Styled Button clicked!");
         });
         guiManager.addElement(std::move(buttonStyled));
 

@@ -43,7 +43,7 @@ static void create_n_items(TabData* tab, int n) {
         auto btn = std::make_unique<Button>(*tab->manager, x, y, btnW, btnH, lbl);
         // simple onclick to print its index
         btn->setOnClickCallback([idx](GUIElement*) {
-            std::cout << "[Perf] Button clicked: " << idx << std::endl;
+            LOG_INFO("Performance", "[Perf] Button clicked: {}", idx);
         });
 
         // capture raw pointer before moving

@@ -55,9 +55,9 @@ int main(int, char**) {
                 "Nie",
                 [](bool confirmed) {
                     if (confirmed) {
-                        std::cout << "Użytkownik wybrał: TAK (usuń plik)\n";
+                        LOG_INFO("Dialog", "Użytkownik wybrał: TAK (usuń plik)");
                     } else {
-                        std::cout << "Użytkownik wybrał: NIE (anuluj)\n";
+                        LOG_INFO("Dialog", "Użytkownik wybrał: NIE (anuluj)");
                     }
                 }
             );
@@ -72,7 +72,7 @@ int main(int, char**) {
                 "Operacja została zakończona sukcesem!",
                 "OK",
                 [](int) {
-                    std::cout << "Użytkownik kliknął OK\n";
+                    LOG_INFO("Dialog", "Użytkownik kliknął OK");
                 }
             );
         });
@@ -88,9 +88,9 @@ int main(int, char**) {
                 {"Zapisz", "Nie zapisuj", "Anuluj"},
                 [](int buttonIndex) {
                     switch (buttonIndex) {
-                        case 0: std::cout << "Wybrano: Zapisz\n"; break;
-                        case 1: std::cout << "Wybrano: Nie zapisuj\n"; break;
-                        case 2: std::cout << "Wybrano: Anuluj\n"; break;
+                        case 0: LOG_INFO("Dialog", "Wybrano: Zapisz"); break;
+                        case 1: LOG_INFO("Dialog", "Wybrano: Nie zapisuj"); break;
+                        case 2: LOG_INFO("Dialog", "Wybrano: Anuluj"); break;
                     }
                 },
                 450, 180
@@ -104,7 +104,7 @@ int main(int, char**) {
         auto btnInfo = std::make_unique<Button>(guiManager, 50, 140, 200, 40, "MessageBox Info");
         btnInfo->setOnClickCallback([&guiManager](GUIElement*) {
             MessageBox::showInfo(guiManager, "Plik został zapisany pomyślnie.", []() {
-                std::cout << "Info dialog closed\n";
+                LOG_INFO("Dialog", "Info dialog closed");
             });
         });
         mainPanel->addChild(std::move(btnInfo));
@@ -113,7 +113,7 @@ int main(int, char**) {
         auto btnError = std::make_unique<Button>(guiManager, 260, 140, 200, 40, "MessageBox Error");
         btnError->setOnClickCallback([&guiManager](GUIElement*) {
             MessageBox::showError(guiManager, "Błąd: Nie można otworzyć pliku. Sprawdź czy plik istnieje.", []() {
-                std::cout << "Error dialog closed\n";
+                LOG_INFO("Dialog", "Error dialog closed");
             });
         });
         mainPanel->addChild(std::move(btnError));
@@ -122,7 +122,7 @@ int main(int, char**) {
         auto btnWarning = std::make_unique<Button>(guiManager, 470, 140, 200, 40, "MessageBox Warning");
         btnWarning->setOnClickCallback([&guiManager](GUIElement*) {
             MessageBox::showWarning(guiManager, "Ostrzeżenie: Niewystarczająca ilość pamięci.", []() {
-                std::cout << "Warning dialog closed\n";
+                LOG_INFO("Dialog", "Warning dialog closed");
             });
         });
         mainPanel->addChild(std::move(btnWarning));
@@ -133,8 +133,8 @@ int main(int, char**) {
             MessageBox::showQuestion(
                 guiManager,
                 "Czy chcesz kontynuować instalację?",
-                []() { std::cout << "Kontynuuję instalację...\n"; },
-                []() { std::cout << "Instalacja anulowana.\n"; }
+                []() { LOG_INFO("Dialog", "Kontynuuję instalację..."); },
+                []() { LOG_INFO("Dialog", "Instalacja anulowana."); }
             );
         });
         mainPanel->addChild(std::move(btnQuestion));
@@ -148,7 +148,7 @@ int main(int, char**) {
                 "To jest własny dialog z własnym tekstem przycisku.",
                 "Rozumiem",
                 MessageBox::IconType::Info,
-                []() { std::cout << "Custom dialog closed\n"; }
+                []() { LOG_INFO("Dialog", "Custom dialog closed"); }
             );
         });
         mainPanel->addChild(std::move(btnCustom));

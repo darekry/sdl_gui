@@ -61,7 +61,7 @@ bool Panel::handleEvent(const SDL_Event& event) {
     // Hover check - tylko gdy NIE przeciągamy
     if (!m_is_dragging && event.type == SDL_EVENT_MOUSE_MOTION) {
         int mouseX, mouseY;
-        ({ float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); });
+        {  float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); }
         bool currentlyHovered = contains(mouseX, mouseY);
 
         if (currentlyHovered && !m_isHovered) {

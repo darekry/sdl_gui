@@ -33,17 +33,17 @@ bool ArcContainer::angleInRange(float angle, float start, float end) {
 
 bool ArcContainer::contains(int gx, int gy) const {
     auto abs = getAbsolutePosition();
-    SDL_Point local = {gx - abs.x, gy - abs.y};
     
-    float dx = gx - (abs.x + m_center.x - m_x);
-    float dy = gy - (abs.y + m_center.y - m_y);
+    float dx = static_cast<float>(gx - (abs.x + m_center.x - m_x));
+    float dy = static_cast<float>(gy - (abs.y + m_center.y - m_y));
     float dist = std::sqrt(dx * dx + dy * dy);
     
-    if (dist > m_radius + 10 || dist < m_innerRadius - 10) {
+    if (dist > static_cast<float>(m_radius) + 10.0f || dist < static_cast<float>(m_innerRadius) - 10.0f) {
         return false;
     }
     
-    float angleDeg = std::atan2(dy, dx) * 180.0f / M_PI;
+    constexpr float kPiF = 3.14159265358979f;
+    float angleDeg = std::atan2(dy, dx) * 180.0f / kPiF;
     angleDeg = normalizeAngle(angleDeg);
     
     return angleInRange(angleDeg, m_startAngle, m_endAngle);
@@ -51,19 +51,26 @@ bool ArcContainer::contains(int gx, int gy) const {
 
 void ArcContainer::addChildAtAngle(std::unique_ptr<GUIElement> child, float angleDeg,
                                     bool rotateChild, int offset) {
-    float rad = angleDeg * M_PI / 180.0f;
+    constexpr float kPiF = 3.14159265358979f;
+    float rad = angleDeg * kPiF / 180.0f;
     int effectiveRadius = m_radius + offset;
     
     int childW = child->m_width;
     int childH = child->m_height;
     
-    int x = static_cast<int>(m_center.x + std::cos(rad) * effectiveRadius - childW / 2);
-    int y = static_cast<int>(m_center.y + std::sin(rad) * effectiveRadius - childH / 2);
+    float cx = static_cast<float>(m_center.x);
+    float cy = static_cast<float>(m_center.y);
+    float fr = static_cast<float>(effectiveRadius);
+    float fchildW = static_cast<float>(childW);
+    float fchildH = static_cast<float>(childH);
+    
+    int x = static_cast<int>(cx + std::cos(rad) * fr - fchildW * 0.5f);
+    int y = static_cast<int>(cy + std::sin(rad) * fr - fchildH * 0.5f);
     
     child->setPosition(x - m_x, y - m_y);
     
     if (rotateChild) {
-        child->setRotation(angleDeg + 90.0f);
+        child->setRotation(static_cast<double>(angleDeg) + 90.0);
     }
     
     GUIElement::addChild(std::move(child));

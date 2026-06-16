@@ -612,9 +612,9 @@ void EditorWindow::updatePropertiesPanel() {
         m_borderWidthInput->setText(std::string(""));
         m_borderRadiusInput->setText(std::string(""));
         for (int i = 0; i < 4; ++i) {
-            m_bgColorSliders[i]->setValue(0);
-            m_textColorSliders[i]->setValue(255);
-            m_borderColorSliders[i]->setValue(0);
+            m_bgColorSliders[static_cast<size_t>(i)]->setValue(0);
+            m_textColorSliders[static_cast<size_t>(i)]->setValue(255);
+            m_borderColorSliders[static_cast<size_t>(i)]->setValue(0);
         }
         return;
     }

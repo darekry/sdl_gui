@@ -1,5 +1,6 @@
 #include "sgml_parser.hpp"
 #include <SDL3/SDL.h>
+#include "logger.hpp"
 
 SGMLParser::SGMLParser(GUIManager& guiManager)
     : LayoutParser(guiManager)
@@ -10,7 +11,7 @@ bool SGMLParser::loadFile(const std::string& file_path)
 {
     if (m_doc.LoadFile(file_path.c_str()) != tinyxml2::XML_SUCCESS)
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load XML file: %s", file_path.c_str());
+        LOG_ERROR("SGMLParser", "Failed to load XML file: {}", file_path);
         return false;
     }
     m_root = m_doc.RootElement();

@@ -22,6 +22,7 @@
 #include "checkbox.hpp"
 #include "text_input.hpp"
 #include "text_area.hpp"
+#include "logger.hpp"
 
 import std.compat;
 
@@ -49,10 +50,10 @@ void setupMainWindow(Window* window, WindowManager& manager) {
                 settingsWindow->setOnCloseCallback([](Window* w) {
                     w->markForClose();
                 });
-                std::cout << "Settings window created (ID=" << settingsWindow->getWindowID() << ")\n";
+                LOG_INFO("WindowManager", "Settings window created (ID={})", settingsWindow->getWindowID());
             }
         } else {
-            std::cout << "Settings window already open\n";
+            LOG_INFO("WindowManager", "Settings window already open");
         }
     });
     panel->addChild(std::move(btnSettings));
@@ -74,10 +75,10 @@ void setupMainWindow(Window* window, WindowManager& manager) {
             if (formWindow) {
                 setupFormWindow(formWindow);
                 formWindow->setOnCloseCallback([](Window* w) {
-                    std::cout << "Form window closed\n";
+                    LOG_INFO("WindowManager", "Form window closed");
                     w->markForClose();
                 });
-                std::cout << "Form window created (ID=" << formWindow->getWindowID() << ")\n";
+                LOG_INFO("WindowManager", "Form window created (ID={})", formWindow->getWindowID());
             }
         }
     });
@@ -86,7 +87,7 @@ void setupMainWindow(Window* window, WindowManager& manager) {
     auto btnCloseAll = std::make_unique<Button>(gui, 50, 160, 200, 50, "Close All Secondary");
     btnCloseAll->setOnClickCallback([&manager](GUIElement*) {
         manager.closeSecondaryWindows();
-        std::cout << "All secondary windows closed\n";
+        LOG_INFO("WindowManager", "All secondary windows closed");
     });
     panel->addChild(std::move(btnCloseAll));
     
@@ -105,7 +106,7 @@ void setupMainWindow(Window* window, WindowManager& manager) {
     gui.addElement(std::move(panel));
     
     window->setOnCloseCallback([&manager](Window*) {
-        std::cout << "Main window closed - exiting application\n";
+        LOG_INFO("WindowManager", "Main window closed - exiting application");
         manager.requestQuit();
     });
 }
@@ -127,7 +128,7 @@ void setupSettingsWindow(Window* window) {
     auto volumeSlider = std::make_unique<Slider>(gui, 100, 75, 150, 20, 0, 100, 75, Orientation::Horizontal);
     volumeSlider->setOnChangeCallback([](GUIElement* el) {
         Slider* s = static_cast<Slider*>(el);
-        std::cout << "Volume changed to " << s->getValue() << "%\n";
+        LOG_INFO("WindowManager", "Volume changed to {}%", s->getValue());
     });
     panel->addChild(std::move(volumeSlider));
     
@@ -137,7 +138,7 @@ void setupSettingsWindow(Window* window) {
     auto musicCheckbox = std::make_unique<Checkbox>(gui, 20, 120, 20, 20);
     musicCheckbox->setChecked(true);
     musicCheckbox->setOnChange([](Checkbox*, bool checked) {
-        std::cout << "Music: " << (checked ? "ON" : "OFF") << "\n";
+        LOG_INFO("WindowManager", "Music: {}", checked ? "ON" : "OFF");
     });
     panel->addChild(std::move(musicCheckbox));
     
@@ -147,7 +148,7 @@ void setupSettingsWindow(Window* window) {
     auto sfxCheckbox = std::make_unique<Checkbox>(gui, 20, 160, 20, 20);
     sfxCheckbox->setChecked(true);
     sfxCheckbox->setOnChange([](Checkbox*, bool checked) {
-        std::cout << "Sound Effects: " << (checked ? "ON" : "OFF") << "\n";
+        LOG_INFO("WindowManager", "Sound Effects: {}", checked ? "ON" : "OFF");
     });
     panel->addChild(std::move(sfxCheckbox));
     
@@ -197,7 +198,7 @@ void setupFormWindow(Window* window) {
     
     auto btnSubmit = std::make_unique<Button>(gui, 120, 360, 120, 40, "Submit");
     btnSubmit->setOnClickCallback([window](GUIElement*) {
-        std::cout << "Form submitted!\n";
+        LOG_INFO("WindowManager", "Form submitted!");
         if (window) window->markForClose();
     });
     panel->addChild(std::move(btnSubmit));
@@ -223,8 +224,8 @@ int main(int, char**) {
         
         setupMainWindow(mainWindow, windowManager);
         
-        std::cout << "Main window created (ID=" << mainWindow->getWindowID() << ")\n";
-        std::cout << "Click buttons to open secondary windows.\n";
+        LOG_INFO("WindowManager", "Main window created (ID={})", mainWindow->getWindowID());
+        LOG_INFO("WindowManager", "Click buttons to open secondary windows.");
         
         while (!windowManager.shouldQuit()) {
             windowManager.processEvents();
@@ -235,7 +236,7 @@ int main(int, char**) {
             SDL_Delay(16);
         }
         
-        std::cout << "Application exiting\n";
+        LOG_INFO("WindowManager", "Application exiting");
         
     } catch (const std::runtime_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;

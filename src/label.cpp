@@ -1,5 +1,4 @@
 #include "label.hpp"
-#include <SDL3/SDL_log.h>
 #include "gui_manager.hpp"
 #include "gui.hpp"
 
@@ -88,5 +87,5 @@ void Label::draw(SDL_Renderer* renderer) {
     }
 
     SDL_Rect dstRect = {0, 0, m_width, m_height};
-    ({ SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, m_cachedTextTexture.get(), nullptr, &_dr); });
+    { SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, m_cachedTextTexture.get(), nullptr, &_dr); }
 }

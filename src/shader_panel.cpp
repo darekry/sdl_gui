@@ -29,7 +29,7 @@ void ShaderPanel::setShader(const uint8_t* spirvData, size_t spirvSize) {
 
     SDL_GPUDevice* device = m_manager.getGPUDevice();
     if (!device) {
-        std::cerr << "ShaderPanel: GPU device not available (use SDL_CreateGPURenderer)" << std::endl;
+        LOG_ERROR("ShaderPanel", "GPU device not available (use SDL_CreateGPURenderer)");
         return;
     }
 
@@ -43,7 +43,7 @@ void ShaderPanel::setShader(const uint8_t* spirvData, size_t spirvSize) {
     fragInfo.props = 0;
     m_fragShader = SDL_CreateGPUShader(device, &fragInfo);
     if (!m_fragShader) {
-        std::cerr << "ShaderPanel: SDL_CreateGPUShader failed: " << SDL_GetError() << std::endl;
+        LOG_ERROR("ShaderPanel", "SDL_CreateGPUShader failed: {}", SDL_GetError());
         return;
     }
 
@@ -52,11 +52,11 @@ void ShaderPanel::setShader(const uint8_t* spirvData, size_t spirvSize) {
     stateInfo.props = 0;
     m_renderState = SDL_CreateGPURenderState(m_manager.getRenderer(), &stateInfo);
     if (!m_renderState) {
-        std::cerr << "ShaderPanel: SDL_CreateGPURenderState failed: " << SDL_GetError() << std::endl;
+        LOG_ERROR("ShaderPanel", "SDL_CreateGPURenderState failed: {}", SDL_GetError());
         releaseShader();
         return;
     }
-    std::cout << "[ShaderPanel] setShader (GPU shader + render state): " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+    LOG_INFO("ShaderPanel", "setShader (GPU shader + render state): {}ms", SDL_GetTicks() - t0);
 
     if (m_shaderEnabled) {
         setGPUState(m_renderState);

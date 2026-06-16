@@ -11,13 +11,13 @@ import std.compat;
 class HoverAnimatedLift : public Panel {
 public:
     float m_anim_y_offset = 0.0f;
-    int m_base_y = 0;
-    int m_lift_amount = 15;
+    float m_base_y = 0;
+    float m_lift_amount = 15;
     uint32_t m_anim_duration = 200;
     uint32_t m_current_anim_id = 0;
 
     HoverAnimatedLift(GUIManager& manager, int x, int y, int width, int height)
-        : Panel(manager, x, y, width, height), m_base_y(y) {
+        : Panel(manager, x, y, width, height), m_base_y(static_cast<float>(y)) {
         setBackgroundColor(ElementState::Normal, {100, 150, 200, 255});
         setBackgroundColor(ElementState::Hover, {120, 170, 220, 255});
         setBorderRadius(ElementState::Normal, 8);
@@ -88,14 +88,14 @@ public:
 class HoverAnimatedScale : public Panel {
 public:
     float m_anim_scale = 1.0f;
-    int m_base_width = 0;
-    int m_base_height = 0;
+    float m_base_width = 0;
+    float m_base_height = 0;
     float m_scale_factor = 1.15f;
     uint32_t m_anim_duration = 200;
     uint32_t m_current_anim_id = 0;
 
     HoverAnimatedScale(GUIManager& manager, int x, int y, int width, int height)
-        : Panel(manager, x, y, width, height), m_base_width(width), m_base_height(height) {
+        : Panel(manager, x, y, width, height), m_base_width(static_cast<float>(width)), m_base_height(static_cast<float>(height)) {
         setBackgroundColor(ElementState::Normal, {200, 100, 150, 255});
         setBackgroundColor(ElementState::Hover, {220, 120, 170, 255});
         setBorderRadius(ElementState::Normal, 8);
@@ -166,11 +166,11 @@ public:
 
 class HoverStaticLift : public Panel {
 public:
-    int m_base_y = 0;
-    int m_lift_amount = 15;
+    float m_base_y = 0;
+    float m_lift_amount = 15;
 
     HoverStaticLift(GUIManager& manager, int x, int y, int width, int height)
-        : Panel(manager, x, y, width, height), m_base_y(y) {
+        : Panel(manager, x, y, width, height), m_base_y(static_cast<float>(y)) {
         setBackgroundColor(ElementState::Normal, {100, 150, 200, 255});
         setBackgroundColor(ElementState::Hover, {120, 170, 220, 255});
         setBorderRadius(ElementState::Normal, 8);
@@ -206,12 +206,12 @@ public:
 
 class HoverStaticScale : public Panel {
 public:
-    int m_base_width = 0;
-    int m_base_height = 0;
+    float m_base_width = 0;
+    float m_base_height = 0;
     float m_scale_factor = 1.15f;
 
     HoverStaticScale(GUIManager& manager, int x, int y, int width, int height)
-        : Panel(manager, x, y, width, height), m_base_width(width), m_base_height(height) {
+        : Panel(manager, x, y, width, height), m_base_width(static_cast<float>(width)), m_base_height(static_cast<float>(height)) {
         setBackgroundColor(ElementState::Normal, {200, 100, 150, 255});
         setBackgroundColor(ElementState::Hover, {220, 120, 170, 255});
         setBorderRadius(ElementState::Normal, 8);
@@ -236,8 +236,8 @@ public:
             } else if (!currentlyHovered && m_isHovered) {
                 m_isHovered = false;
                 setState(ElementState::Normal);
-                m_width = m_base_width;
-                m_height = m_base_height;
+                m_width = static_cast<int>(m_base_width);
+                m_height = static_cast<int>(m_base_height);
                 markDirty();
             }
         }

@@ -48,7 +48,7 @@ public:
         
         auto btnSettings = std::make_unique<Button>(manager, 100, 160, 200, 50, "Settings");
         btnSettings->setOnClickCallback([](GUIElement*) {
-            std::cout << "Settings screen not implemented in this demo\n";
+            LOG_INFO("ScreenManager", "Settings screen not implemented in this demo");
         });
         panel->addChild(std::move(btnSettings));
         
@@ -111,15 +111,15 @@ public:
         m_volumeSlider = volumeSlider.get();
         volumeSlider->setOnChangeCallback([](GUIElement* el) {
             Slider* s = static_cast<Slider*>(el);
-            std::cout << "Volume: " << s->getValue() << "%\n";
+            LOG_INFO("ScreenManager", "Volume: {}%", s->getValue());
         });
         panel->addChild(std::move(volumeSlider));
         
         auto diffCheckbox = std::make_unique<Checkbox>(manager, 50, 130, 20, 20);
         m_diffCheckbox = diffCheckbox.get();
         diffCheckbox->setChecked(false);
-        diffCheckbox->setOnChange([](Checkbox* cb, bool checked) {
-            std::cout << "Hard Mode: " << (checked ? "ON" : "OFF") << "\n";
+        diffCheckbox->setOnChange([](Checkbox*, bool checked) {
+            LOG_INFO("ScreenManager", "Hard Mode: {}", checked ? "ON" : "OFF");
         });
         panel->addChild(std::move(diffCheckbox));
         
@@ -261,7 +261,7 @@ int main(int, char**) {
             screenManager.changeScreen("game");
         });
         menuPtr->setOnQuit([&]() {
-            std::cout << "Quit requested\n";
+            LOG_INFO("ScreenManager", "Quit requested");
         });
         
         gamePtr->setOnPause([&]() {

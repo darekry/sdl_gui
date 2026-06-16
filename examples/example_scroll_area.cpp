@@ -68,7 +68,7 @@ int main(int, char**) {
             auto btn = std::make_unique<Button>(gui, 200, 5, 90, 30,
                 "Select");
             btn->setOnClickCallback([i](GUIElement*) {
-                std::cout << "Selected item " << (i + 1) << std::endl;
+                LOG_INFO("ScrollArea", "Selected item {}", i + 1);
             });
             row->addChild(std::move(btn));
 

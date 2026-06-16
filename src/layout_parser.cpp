@@ -31,7 +31,7 @@ std::unique_ptr<GUIElement> LayoutParser::loadLayout(const std::string& file_pat
 {
     if (!loadFile(file_path))
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load layout file: %s", file_path.c_str());
+        LOG_ERROR("LayoutParser", "Failed to load layout file: {}", file_path);
         return nullptr;
     }
 
@@ -278,7 +278,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else
     {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unknown GUI element type: %s", type.c_str());
+        LOG_WARNING("LayoutParser", "Unknown GUI element type: {}", type);
         return nullptr;
     }
 
@@ -305,7 +305,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
         if (hasNode(node, "enabled")) element->setEnabled(getBool(node, "enabled", true));
         if (hasNode(node, "tooltip")) element->setTooltip(getString(node, "tooltip"));
         if (hasNode(node, "clipChildren")) element->setClipChildren(getBool(node, "clipChildren", true));
-        if (hasNode(node, "rotation")) element->setRotation(getFloat(node, "rotation", 0.0));
+        if (hasNode(node, "rotation")) element->setRotation(static_cast<double>(getFloat(node, "rotation", 0.0f)));
         if (hasNode(node, "rotationCenterX") || hasNode(node, "rotationCenterY"))
             element->setRotationCenter(getInt(node, "rotationCenterX", -1), getInt(node, "rotationCenterY", -1));
 

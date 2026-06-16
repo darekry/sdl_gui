@@ -67,7 +67,7 @@ void Cursor::setAnimatedCursor(CursorState state, const std::string& path, int t
     if (data.texture) {
         int texW = 0;
         int texH = 0;
-        ({ float _fw=0,_fh=0; SDL_GetTextureSize(data.texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); });
+        {  float _fw=0,_fh=0; SDL_GetTextureSize(data.texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); }
         data.cols = (data.totalFrames + data.rows - 1) / data.rows;
         if (data.cols <= 0) data.cols = 1;
         data.frameW = (data.cols > 0) ? texW / data.cols : texW;
@@ -131,7 +131,7 @@ void Cursor::renderOverlay(SDL_Renderer* renderer) {
 
     int mouseX = 0;
     int mouseY = 0;
-    ({ float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); });
+    {  float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); }
 
     auto it = m_cursors.find(m_currentState);
     if (it == m_cursors.end()) {
@@ -155,14 +155,14 @@ void Cursor::renderCursor(SDL_Renderer* renderer, const CursorData& data, int mo
     dst.x = mouseX - static_cast<int>(std::round(static_cast<float>(data.hotspotX) * m_scale)) + m_offsetX;
     dst.y = mouseY - static_cast<int>(std::round(static_cast<float>(data.hotspotY) * m_scale)) + m_offsetY;
 
-    ({ SDL_FRect _sr = {static_cast<float>(src.x), static_cast<float>(src.y), static_cast<float>(src.w), static_cast<float>(src.h)}; SDL_FRect _dr = {static_cast<float>(dst.x), static_cast<float>(dst.y), static_cast<float>(dst.w), static_cast<float>(dst.h)}; SDL_RenderTexture(renderer, data.texture.get(), &_sr, &_dr); });
+    { SDL_FRect _sr = {static_cast<float>(src.x), static_cast<float>(src.y), static_cast<float>(src.w), static_cast<float>(src.h)}; SDL_FRect _dr = {static_cast<float>(dst.x), static_cast<float>(dst.y), static_cast<float>(dst.w), static_cast<float>(dst.h)}; SDL_RenderTexture(renderer, data.texture.get(), &_sr, &_dr); }
 }
 
 SDL_Rect Cursor::getSrcRect(const CursorData& data) const {
     if (!data.isAnimated || data.totalFrames <= 1 || data.cols <= 0 || data.rows <= 0) {
         int texW = 0;
         int texH = 0;
-        ({ float _fw=0,_fh=0; SDL_GetTextureSize(data.texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); });
+        {  float _fw=0,_fh=0; SDL_GetTextureSize(data.texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); }
         return SDL_Rect{0, 0, texW, texH};
     }
 

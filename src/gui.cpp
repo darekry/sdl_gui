@@ -7,7 +7,7 @@ import std.compat;
 void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color) {
     if (radius <= 0.0f || rect.w < 2.0f * radius || rect.h < 2.0f * radius) {
         SDL_SetRenderDrawColorFloat(renderer, color.r, color.g, color.b, color.a);
-        ({ SDL_FRect _fr = {static_cast<float>(rect.x), static_cast<float>(rect.y), static_cast<float>(rect.w), static_cast<float>(rect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+        { SDL_FRect _fr = {static_cast<float>(rect.x), static_cast<float>(rect.y), static_cast<float>(rect.w), static_cast<float>(rect.h)}; SDL_RenderFillRect(renderer, &_fr); }
         return;
     }
 
@@ -16,11 +16,11 @@ void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius,
     float right = rect.x + rect.w, bottom = rect.y + rect.h;
     float r = radius;
 
-    ({ SDL_FRect _fr = {left + r, top, right - left - 2.0f*r, r}; SDL_RenderFillRect(renderer, &_fr); });
-    ({ SDL_FRect _fr = {left + r, bottom - r, right - left - 2.0f*r, r}; SDL_RenderFillRect(renderer, &_fr); });
-    ({ SDL_FRect _fr = {left, top + r, r, bottom - top - 2.0f*r}; SDL_RenderFillRect(renderer, &_fr); });
-    ({ SDL_FRect _fr = {right - r, top + r, r, bottom - top - 2.0f*r}; SDL_RenderFillRect(renderer, &_fr); });
-    ({ SDL_FRect _fr = {left + r, top + r, right - left - 2.0f*r, bottom - top - 2.0f*r}; SDL_RenderFillRect(renderer, &_fr); });
+    { SDL_FRect _fr = {left + r, top, right - left - 2.0f*r, r}; SDL_RenderFillRect(renderer, &_fr); }
+    { SDL_FRect _fr = {left + r, bottom - r, right - left - 2.0f*r, r}; SDL_RenderFillRect(renderer, &_fr); }
+    { SDL_FRect _fr = {left, top + r, r, bottom - top - 2.0f*r}; SDL_RenderFillRect(renderer, &_fr); }
+    { SDL_FRect _fr = {right - r, top + r, r, bottom - top - 2.0f*r}; SDL_RenderFillRect(renderer, &_fr); }
+    { SDL_FRect _fr = {left + r, top + r, right - left - 2.0f*r, bottom - top - 2.0f*r}; SDL_RenderFillRect(renderer, &_fr); }
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
@@ -48,7 +48,7 @@ void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius,
         SDL_SetRenderDrawColorFloat(renderer, color.r, color.g, color.b, color.a);
         for (float i = 0; i < thickness; ++i) {
             SDL_FRect r = {rect.x + i, rect.y + i, rect.w - 2.0f * i, rect.h - 2.0f * i};
-            ({ SDL_FRect _fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)}; SDL_RenderRect(renderer, &_fr); });
+            { SDL_FRect _fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)}; SDL_RenderRect(renderer, &_fr); }
         }
         return;
     }
@@ -67,14 +67,14 @@ void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius,
 
         SDL_SetRenderDrawColorFloat(renderer, color.r, color.g, color.b, color.a);
         if (ro < 1.0f) {
-            ({ SDL_FRect _fr = {x, y, w, h}; SDL_RenderRect(renderer, &_fr); });
+            { SDL_FRect _fr = {x, y, w, h}; SDL_RenderRect(renderer, &_fr); }
             continue;
         }
 
-        ({ SDL_FRect _fr = {x + ro, y, w - 2.0f*ro, 1.0f}; SDL_RenderFillRect(renderer, &_fr); });
-        ({ SDL_FRect _fr = {x + ro, y + h - 1.0f, w - 2.0f*ro, 1.0f}; SDL_RenderFillRect(renderer, &_fr); });
-        ({ SDL_FRect _fr = {x, y + ro, 1.0f, h - 2.0f*ro}; SDL_RenderFillRect(renderer, &_fr); });
-        ({ SDL_FRect _fr = {x + w - 1.0f, y + ro, 1.0f, h - 2.0f*ro}; SDL_RenderFillRect(renderer, &_fr); });
+        { SDL_FRect _fr = {x + ro, y, w - 2.0f*ro, 1.0f}; SDL_RenderFillRect(renderer, &_fr); }
+        { SDL_FRect _fr = {x + ro, y + h - 1.0f, w - 2.0f*ro, 1.0f}; SDL_RenderFillRect(renderer, &_fr); }
+        { SDL_FRect _fr = {x, y + ro, 1.0f, h - 2.0f*ro}; SDL_RenderFillRect(renderer, &_fr); }
+        { SDL_FRect _fr = {x + w - 1.0f, y + ro, 1.0f, h - 2.0f*ro}; SDL_RenderFillRect(renderer, &_fr); }
 
         std::vector<SDL_Vertex> verts;
         float cx[4] = {x + ro, x + w - ro, x + w - ro, x + ro};
@@ -154,6 +154,10 @@ bool GUIElement::contains(int x, int y) const {
     auto absPos = getAbsolutePosition();
     return (x >= absPos.x && x < absPos.x + m_width &&
             y >= absPos.y && y < absPos.y + m_height);
+}
+
+bool GUIElement::contains(float x, float y) const {
+    return contains(static_cast<int>(x), static_cast<int>(y));
 }
 
 SDL_Point GUIElement::toLocalCoords(int globalX, int globalY) const {
@@ -312,7 +316,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 src_rect.w = clipped_rect.w;
                 src_rect.h = clipped_rect.h;
                 if (m_gpuState) SDL_SetGPURenderState(renderer, m_gpuState);
-                ({ SDL_FRect _sr = {static_cast<float>(src_rect.x), static_cast<float>(src_rect.y), static_cast<float>(src_rect.w), static_cast<float>(src_rect.h)}; SDL_FRect _dr = {static_cast<float>(clipped_rect.x), static_cast<float>(clipped_rect.y), static_cast<float>(clipped_rect.w), static_cast<float>(clipped_rect.h)}; SDL_RenderTexture(renderer, m_cachedTexture.get(), &_sr, &_dr); });
+                { SDL_FRect _sr = {static_cast<float>(src_rect.x), static_cast<float>(src_rect.y), static_cast<float>(src_rect.w), static_cast<float>(src_rect.h)}; SDL_FRect _dr = {static_cast<float>(clipped_rect.x), static_cast<float>(clipped_rect.y), static_cast<float>(clipped_rect.w), static_cast<float>(clipped_rect.h)}; SDL_RenderTexture(renderer, m_cachedTexture.get(), &_sr, &_dr); }
                 if (m_gpuState) SDL_SetGPURenderState(renderer, nullptr);
             }
         }
@@ -380,7 +384,7 @@ void GUIElement::renderToCache() {
         for (auto& child : m_children) {
             if (child && child->isVisible() && child->m_cachedTexture) {
                 SDL_Rect childDst = {child->m_x, child->m_y, child->m_width, child->m_height};
-                ({ SDL_FRect _dr = {static_cast<float>(childDst.x), static_cast<float>(childDst.y), static_cast<float>(childDst.w), static_cast<float>(childDst.h)}; SDL_RenderTexture(renderer, child->m_cachedTexture.get(), nullptr, &_dr); });
+                { SDL_FRect _dr = {static_cast<float>(childDst.x), static_cast<float>(childDst.y), static_cast<float>(childDst.w), static_cast<float>(childDst.h)}; SDL_RenderTexture(renderer, child->m_cachedTexture.get(), nullptr, &_dr); }
             }
         }
     }
@@ -564,7 +568,7 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
 
     if (style.texture.has_value()) {
         SDL_FRect texRect = {0, 0, static_cast<float>(m_width), static_cast<float>(m_height)};
-        ({ SDL_FRect _dr = {static_cast<float>(texRect.x), static_cast<float>(texRect.y), static_cast<float>(texRect.w), static_cast<float>(texRect.h)}; SDL_RenderTexture(renderer, style.texture.value().get(), nullptr, &_dr); });
+        { SDL_FRect _dr = {static_cast<float>(texRect.x), static_cast<float>(texRect.y), static_cast<float>(texRect.w), static_cast<float>(texRect.h)}; SDL_RenderTexture(renderer, style.texture.value().get(), nullptr, &_dr); }
     }
 
     if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
@@ -641,7 +645,7 @@ void GUIElement::applyAnchor(int parentWidth, int parentHeight) {
         if (value < 0) return -1; // Not set
         if (value <= 1.0f) {
             // Percentage
-            return static_cast<int>((isHorizontal ? parentWidth : parentHeight) * value);
+            return static_cast<int>(static_cast<float>(isHorizontal ? parentWidth : parentHeight) * value);
         }
         // Fixed pixels (subtract 1 to distinguish from percentages)
         return static_cast<int>(value - 1.0f);

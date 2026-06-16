@@ -49,7 +49,7 @@ int main(int, char**) {
                 guiManager,
                 "Open File",
                 [statusLabelRef](const std::string& path) {
-                    std::cout << "Open file: " << path << '\n';
+                    LOG_INFO("FileDialog", "Open file: {}", path);
                     if (statusLabelRef) {
                         statusLabelRef->setText("Selected file: " + path);
                     }
@@ -65,7 +65,7 @@ int main(int, char**) {
                 guiManager,
                 "Save File",
                 [statusLabelRef](const std::string& path) {
-                    std::cout << "Save file: " << path << '\n';
+                    LOG_INFO("FileDialog", "Save file: {}", path);
                     if (statusLabelRef) {
                         statusLabelRef->setText("Save to: " + path);
                     }
@@ -81,7 +81,7 @@ int main(int, char**) {
                 guiManager,
                 "Open C++ Source",
                 [statusLabelRef](const std::string& path) {
-                    std::cout << "Open .cpp: " << path << '\n';
+                    LOG_INFO("FileDialog", "Open .cpp: {}", path);
                     if (statusLabelRef) {
                         statusLabelRef->setText("Selected: " + path);
                     }

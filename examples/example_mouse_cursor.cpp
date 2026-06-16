@@ -49,28 +49,28 @@ int main() {
         auto btnNormal = std::make_unique<Button>(gui, 10, 70, 130, 30, "Normal");
         btnNormal->setOnClickCallback([cursorRef](GUIElement*) {
             if (cursorRef) cursorRef->setState(CursorState::Normal);
-            std::cout << "Kursor: Normal\n";
+            LOG_INFO("MouseCursor", "Kursor: Normal");
         });
         infoPanel->addChild(std::move(btnNormal));
 
         auto btnHover = std::make_unique<Button>(gui, 10, 110, 130, 30, "Hover");
         btnHover->setOnClickCallback([cursorRef](GUIElement*) {
             if (cursorRef) cursorRef->setState(CursorState::Hover);
-            std::cout << "Kursor: Hover\n";
+            LOG_INFO("MouseCursor", "Kursor: Hover");
         });
         infoPanel->addChild(std::move(btnHover));
 
         auto btnBusy = std::make_unique<Button>(gui, 10, 150, 130, 30, "Busy (animowany)");
         btnBusy->setOnClickCallback([cursorRef](GUIElement*) {
             if (cursorRef) cursorRef->setState(CursorState::Busy);
-            std::cout << "Kursor: Busy (animowany)\n";
+            LOG_INFO("MouseCursor", "Kursor: Busy (animowany)");
         });
         infoPanel->addChild(std::move(btnBusy));
 
         auto btnToggle = std::make_unique<Button>(gui, 10, 190, 130, 30, "Pokaż/Ukryj");
         btnToggle->setOnClickCallback([cursorRef](GUIElement*) {
             if (cursorRef) cursorRef->setVisible(!cursorRef->isVisible());
-            std::cout << "Widoczność kursora: " << (cursorRef && cursorRef->isVisible() ? "TAK" : "NIE") << "\n";
+            LOG_INFO("MouseCursor", "Widoczność kursora: {}", cursorRef && cursorRef->isVisible() ? "TAK" : "NIE");
         });
         infoPanel->addChild(std::move(btnToggle));
 
@@ -88,19 +88,19 @@ int main() {
 
         auto testButton1 = std::make_unique<Button>(gui, 10, 90, 150, 40, "Test 1");
         testButton1->setOnClickCallback([](GUIElement*) {
-            std::cout << "Kliknięto Test 1\n";
+            LOG_INFO("MouseCursor", "Kliknięto Test 1");
         });
         interactionPanel->addChild(std::move(testButton1));
 
         auto testButton2 = std::make_unique<Button>(gui, 170, 90, 150, 40, "Test 2");
         testButton2->setOnClickCallback([](GUIElement*) {
-            std::cout << "Kliknięto Test 2\n";
+            LOG_INFO("MouseCursor", "Kliknięto Test 2");
         });
         interactionPanel->addChild(std::move(testButton2));
 
         auto testButton3 = std::make_unique<Button>(gui, 10, 140, 150, 40, "Test 3");
         testButton3->setOnClickCallback([](GUIElement*) {
-            std::cout << "Kliknięto Test 3\n";
+            LOG_INFO("MouseCursor", "Kliknięto Test 3");
         });
         interactionPanel->addChild(std::move(testButton3));
 
@@ -110,21 +110,21 @@ int main() {
         auto btnScaleSmall = std::make_unique<Button>(gui, 10, 220, 80, 30, "Mały");
         btnScaleSmall->setOnClickCallback([cursorRef](GUIElement*) {
             if (cursorRef) cursorRef->setScale(0.25f);
-            std::cout << "Skala kursora: 0.25\n";
+            LOG_INFO("MouseCursor", "Skala kursora: 0.25");
         });
         interactionPanel->addChild(std::move(btnScaleSmall));
 
         auto btnScaleMedium = std::make_unique<Button>(gui, 100, 220, 80, 30, "Średni");
         btnScaleMedium->setOnClickCallback([cursorRef](GUIElement*) {
             if (cursorRef) cursorRef->setScale(0.5f);
-            std::cout << "Skala kursora: 0.5\n";
+            LOG_INFO("MouseCursor", "Skala kursora: 0.5");
         });
         interactionPanel->addChild(std::move(btnScaleMedium));
 
         auto btnScaleLarge = std::make_unique<Button>(gui, 190, 220, 80, 30, "Duży");
         btnScaleLarge->setOnClickCallback([cursorRef](GUIElement*) {
             if (cursorRef) cursorRef->setScale(1.0f);
-            std::cout << "Skala kursora: 1.0\n";
+            LOG_INFO("MouseCursor", "Skala kursora: 1.0");
         });
         interactionPanel->addChild(std::move(btnScaleLarge));
 

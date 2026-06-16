@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-
+#include "logger.hpp"
 #include "easing.hpp"
 
 import std.compat;
@@ -71,7 +71,7 @@ public:
         Animation::CompleteCallback on_complete = nullptr
     ) {
         if (!target_property) {
-            std::cerr << "AnimationManager Error: target_property cannot be null." << std::endl;
+            LOG_ERROR("AnimationManager", "target_property cannot be null.");
             return;
         }
         *target_property = static_cast<T>(start_value);

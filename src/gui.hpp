@@ -1,22 +1,17 @@
 #pragma once
 
+import std.compat;
 
 #include "texture_manager.hpp"
 #include "font_manager.hpp"
+#include "sdl_rect_helpers.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 #include "animation_manager.hpp"
 #include "style.hpp"
 #include "anchor.hpp"
 
-
-#if DEBUG
-#include <SDL3/SDL_log.h>
-#define LOG_DEBUG(...) SDL_Log(__VA_ARGS__)
-#else
-#define LOG_DEBUG(...)
-#endif
-import std.compat;
+#include "logger.hpp"
 
 class GUIManager;
 
@@ -71,6 +66,7 @@ public:
     SDL_Point getRelativePosition() const { return {m_x, m_y}; }
     
     virtual bool contains(int x, int y) const;
+    bool contains(float x, float y) const;
     
     SDL_Point toLocalCoords(int globalX, int globalY) const;
     

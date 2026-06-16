@@ -48,17 +48,16 @@ int main(int, char**) {
         centerPanel->setStyle(ElementState::Normal, centerStyle);
         
         auto innerLabel = std::make_unique<Label>(guiManager, 15, 20, "OK");
-        auto innerLabelRef = guiManager.makeRef(innerLabel.get());
         centerPanel->addChild(std::move(innerLabel));
         auto centerPanelRef = guiManager.makeRef(centerPanel.get());
         guiManager.addElement(std::move(centerPanel));
         
         for (int i = 0; i < 12; ++i) {
-            float angle = i * 30.0f;
+            float angle = static_cast<float>(i) * 30.0f;
             auto btn = std::make_unique<Button>(guiManager, 0, 0, 50, 30, 
                                                  std::to_string(i));
             btn->setStyle(ElementState::Normal, btnStyle);
-            btn->setOnClickCallback([i, innerLabelRef, centerPanelRef](GUIElement*) {
+            btn->setOnClickCallback([i, centerPanelRef](GUIElement*) {
                 double newRotation = 30.0 * (i );
                 if (centerPanelRef) centerPanelRef->setRotation(newRotation);
             });

@@ -117,13 +117,13 @@ void TextInput::draw(SDL_Renderer* renderer) {
     
     if (!m_text.empty() && m_textTexture) {
         int textWidth = 0, textHeight = 0;
-        ({ float _fw=0,_fh=0; SDL_GetTextureSize(m_textTexture.get(), &_fw, &_fh); textWidth=static_cast<int>(_fw); textHeight=static_cast<int>(_fh); });
+        {  float _fw=0,_fh=0; SDL_GetTextureSize(m_textTexture.get(), &_fw, &_fh); textWidth=static_cast<int>(_fw); textHeight=static_cast<int>(_fh); }
         
         SDL_Rect clip_rect = {5, 0, getWidth() - 10, getHeight()};
         SDL_SetRenderClipRect(renderer, &clip_rect);
         
         SDL_Rect renderQuad = {5 + m_text_offset_x, (getHeight() - textHeight) / 2, textWidth, textHeight};
-        ({ SDL_FRect _dr = {static_cast<float>(renderQuad.x), static_cast<float>(renderQuad.y), static_cast<float>(renderQuad.w), static_cast<float>(renderQuad.h)}; SDL_RenderTexture(renderer, m_textTexture.get(), nullptr, &_dr); });
+        { SDL_FRect _dr = {static_cast<float>(renderQuad.x), static_cast<float>(renderQuad.y), static_cast<float>(renderQuad.w), static_cast<float>(renderQuad.h)}; SDL_RenderTexture(renderer, m_textTexture.get(), nullptr, &_dr); }
         
         SDL_SetRenderClipRect(renderer, nullptr);
     }
@@ -176,7 +176,7 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
         };
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(renderer, 100, 150, 255, 180);
-        ({ SDL_FRect _fr = {static_cast<float>(selection_rect.x), static_cast<float>(selection_rect.y), static_cast<float>(selection_rect.w), static_cast<float>(selection_rect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+        { SDL_FRect _fr = {static_cast<float>(selection_rect.x), static_cast<float>(selection_rect.y), static_cast<float>(selection_rect.w), static_cast<float>(selection_rect.h)}; SDL_RenderFillRect(renderer, &_fr); }
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
     }
     
@@ -206,7 +206,7 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
     
     auto color = *style.textColor;
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    ({ SDL_FRect _fr = {static_cast<float>(cursor_rect.x), static_cast<float>(cursor_rect.y), static_cast<float>(cursor_rect.w), static_cast<float>(cursor_rect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+    { SDL_FRect _fr = {static_cast<float>(cursor_rect.x), static_cast<float>(cursor_rect.y), static_cast<float>(cursor_rect.w), static_cast<float>(cursor_rect.h)}; SDL_RenderFillRect(renderer, &_fr); }
     
     SDL_SetRenderClipRect(renderer, nullptr);
 }

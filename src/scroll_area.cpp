@@ -155,7 +155,7 @@ bool ScrollArea::handleEvent(const SDL_Event& e) {
 
     if (e.type == SDL_EVENT_MOUSE_WHEEL) {
         int mx, my;
-        ({ float _mx,_my; SDL_GetMouseState(&_mx, &_my); mx = static_cast<int>(_mx); my = static_cast<int>(_my); });
+        {  float _mx,_my; SDL_GetMouseState(&_mx, &_my); mx = static_cast<int>(_mx); my = static_cast<int>(_my); }
         if (contains(mx, my)) {
             if (m_vSlider && m_vSlider->isVisible()) {
                 int step = 60;

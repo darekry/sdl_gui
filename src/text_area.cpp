@@ -112,11 +112,11 @@ void TextArea::draw(SDL_Renderer* renderer) {
     for (const auto& texture : m_line_textures) {
         if (texture) {
             int texW, texH;
-            ({ float _fw=0,_fh=0; SDL_GetTextureSize(texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); });
+            {  float _fw=0,_fh=0; SDL_GetTextureSize(texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); }
             SDL_Rect destRect = {2 + m_text_offset_x, yOffset + 2, texW, texH};
 
             if (destRect.y + destRect.h > 0 && destRect.y < m_height) {
-                 ({ SDL_FRect _dr = {static_cast<float>(destRect.x), static_cast<float>(destRect.y), static_cast<float>(destRect.w), static_cast<float>(destRect.h)}; SDL_RenderTexture(renderer, texture.get(), nullptr, &_dr); });
+                 { SDL_FRect _dr = {static_cast<float>(destRect.x), static_cast<float>(destRect.y), static_cast<float>(destRect.w), static_cast<float>(destRect.h)}; SDL_RenderTexture(renderer, texture.get(), nullptr, &_dr); }
             }
         }
         yOffset += TTF_GetFontHeight(font.get());
@@ -295,7 +295,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
             if (font) {
                 int line_height = TTF_GetFontHeight(font.get());
-                m_scroll_offset_y += e.wheel.y * line_height;
+                m_scroll_offset_y += static_cast<int>(e.wheel.y) * line_height;
 
                 int max_scroll = static_cast<int>(m_lines.size() * static_cast<size_t>(line_height)) - m_height;
                 max_scroll = std::max(max_scroll, 0);
@@ -387,7 +387,6 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             markDirty();
             eventHandled = true;
         } else if (e.key.key == SDLK_UP) {
-            bool shiftPressed = (e.key.mod & SDL_KMOD_SHIFT);
             
             size_t current_line = getLineFromPosition(m_cursorPos);
             if (current_line > 0) {
@@ -410,7 +409,6 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             markDirty();
             eventHandled = true;
         } else if (e.key.key == SDLK_DOWN) {
-            bool shiftPressed = (e.key.mod & SDL_KMOD_SHIFT);
             
             size_t current_line = getLineFromPosition(m_cursorPos);
             if (current_line < m_lines.size() - 1) {
@@ -434,7 +432,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             eventHandled = true;
         } else if (e.key.key == SDLK_HOME) {
             bool ctrlPressed = (e.key.mod & SDL_KMOD_CTRL);
-            bool shiftPressed = (e.key.mod & SDL_KMOD_SHIFT);
+
             
             if (ctrlPressed) {
                 size_t new_pos = 0;
@@ -469,7 +467,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             eventHandled = true;
         } else if (e.key.key == SDLK_END) {
             bool ctrlPressed = (e.key.mod & SDL_KMOD_CTRL);
-            bool shiftPressed = (e.key.mod & SDL_KMOD_SHIFT);
+
             
             if (ctrlPressed) {
                 size_t new_pos = m_text.length();
@@ -503,7 +501,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             markDirty();
             eventHandled = true;
         } else if (e.key.key == SDLK_PAGEUP) {
-            bool shiftPressed = (e.key.mod & SDL_KMOD_SHIFT);
+
             
             auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
             if (font) {
@@ -513,7 +511,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
                 size_t current_line = getLineFromPosition(m_cursorPos);
                 size_t current_column = getColumnFromPosition(m_cursorPos);
                 size_t target_line = current_line > static_cast<size_t>(visible_lines) 
-                    ? current_line - visible_lines : 0;
+                    ? current_line - static_cast<size_t>(visible_lines) : 0;
                 size_t new_pos = getPositionFromLineAndColumn(target_line, current_column);
                 
                 if (shiftPressed) {
@@ -528,7 +526,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
                 m_cursorPos = new_pos;
                 
                 m_scroll_offset_y += visible_lines * line_height;
-                int max_scroll = static_cast<int>(m_lines.size() * line_height) - m_height;
+                int max_scroll = static_cast<int>(m_lines.size()) * line_height - m_height;
                 max_scroll = std::max(max_scroll, 0);
                 m_scroll_offset_y = std::clamp(m_scroll_offset_y, -max_scroll, 0);
             }
@@ -537,7 +535,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             markDirty();
             eventHandled = true;
         } else if (e.key.key == SDLK_PAGEDOWN) {
-            bool shiftPressed = (e.key.mod & SDL_KMOD_SHIFT);
+
             
             auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
             if (font) {
@@ -546,7 +544,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
                 
                 size_t current_line = getLineFromPosition(m_cursorPos);
                 size_t current_column = getColumnFromPosition(m_cursorPos);
-                size_t target_line = std::min(current_line + visible_lines, m_lines.size() - 1);
+                size_t target_line = std::min(current_line + static_cast<size_t>(visible_lines), m_lines.size() - 1);
                 size_t new_pos = getPositionFromLineAndColumn(target_line, current_column);
                 
                 if (shiftPressed) {
@@ -561,7 +559,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
                 m_cursorPos = new_pos;
                 
                 m_scroll_offset_y -= visible_lines * line_height;
-                int max_scroll = static_cast<int>(m_lines.size() * line_height) - m_height;
+                int max_scroll = static_cast<int>(m_lines.size()) * line_height - m_height;
                 max_scroll = std::max(max_scroll, 0);
                 m_scroll_offset_y = std::clamp(m_scroll_offset_y, -max_scroll, 0);
             }
@@ -722,7 +720,7 @@ void TextArea::renderOverlay(SDL_Renderer* renderer) {
             
             // Semi-transparent blue selection highlight
             SDL_SetRenderDrawColor(renderer, 100, 150, 255, 180);
-            ({ SDL_FRect _fr = {static_cast<float>(selection_rect.x), static_cast<float>(selection_rect.y), static_cast<float>(selection_rect.w), static_cast<float>(selection_rect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+            { SDL_FRect _fr = {static_cast<float>(selection_rect.x), static_cast<float>(selection_rect.y), static_cast<float>(selection_rect.w), static_cast<float>(selection_rect.h)}; SDL_RenderFillRect(renderer, &_fr); }
         }
     }
     
@@ -755,7 +753,7 @@ void TextArea::renderOverlay(SDL_Renderer* renderer) {
     const auto style = getComposedStyle(m_state);
     SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    ({ SDL_FRect _fr = {static_cast<float>(cursorRect.x), static_cast<float>(cursorRect.y), static_cast<float>(cursorRect.w), static_cast<float>(cursorRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+    { SDL_FRect _fr = {static_cast<float>(cursorRect.x), static_cast<float>(cursorRect.y), static_cast<float>(cursorRect.w), static_cast<float>(cursorRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
     
     // Reset clip rect
     SDL_SetRenderClipRect(renderer, nullptr);

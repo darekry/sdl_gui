@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL_pixels.h>
-#include <SDL3/SDL_log.h>
+#include "logger.hpp"
 
 import std.compat;
 
@@ -93,47 +93,46 @@ struct Style {
     }
 };
 
-// Funkcja do logowania właściwości obiektu Style
 inline void logStyle(const Style& style, const char* styleName) {
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "--- Logging Style: %s ---", styleName);
+    LOG_DEBUG("Style", "--- Logging Style: {} ---", styleName);
     if (style.backgroundColor.has_value()) {
         const auto& c = style.backgroundColor.value();
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BackgroundColor: (%d, %d, %d, %d)", c.r, c.g, c.b, c.a);
+        LOG_DEBUG("Style", "  BackgroundColor: ({}, {}, {}, {})", c.r, c.g, c.b, c.a);
     } else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BackgroundColor: nullopt");
+        LOG_DEBUG("Style", "  BackgroundColor: nullopt");
     }
     if (style.textColor.has_value()) {
         const auto& c = style.textColor.value();
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  TextColor: (%d, %d, %d, %d)", c.r, c.g, c.b, c.a);
+        LOG_DEBUG("Style", "  TextColor: ({}, {}, {}, {})", c.r, c.g, c.b, c.a);
     } else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  TextColor: nullopt");
+        LOG_DEBUG("Style", "  TextColor: nullopt");
     }
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  Texture: %s", (style.texture.has_value() ? "set" : "nullopt"));
+    LOG_DEBUG("Style", "  Texture: {}", (style.texture.has_value() ? "set" : "nullopt"));
     if (style.borderColor.has_value()) {
         const auto& c = style.borderColor.value();
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderColor: (%d, %d, %d, %d)", c.r, c.g, c.b, c.a);
+        LOG_DEBUG("Style", "  BorderColor: ({}, {}, {}, {})", c.r, c.g, c.b, c.a);
     } else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderColor: nullopt");
+        LOG_DEBUG("Style", "  BorderColor: nullopt");
     }
     if (style.borderWidth.has_value()) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderWidth: %d", style.borderWidth.value());
+        LOG_DEBUG("Style", "  BorderWidth: {}", style.borderWidth.value());
     } else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderWidth: nullopt");
+        LOG_DEBUG("Style", "  BorderWidth: nullopt");
     }
     if (style.borderRadius.has_value()) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderRadius: %d", style.borderRadius.value());
+        LOG_DEBUG("Style", "  BorderRadius: {}", style.borderRadius.value());
     } else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  BorderRadius: nullopt");
+        LOG_DEBUG("Style", "  BorderRadius: nullopt");
     }
     if (style.fontSize.has_value()) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  FontSize: %d", style.fontSize.value());
+        LOG_DEBUG("Style", "  FontSize: {}", style.fontSize.value());
     } else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  FontSize: nullopt");
+        LOG_DEBUG("Style", "  FontSize: nullopt");
     }
     if (style.fontName.has_value()) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  FontName: %s", style.fontName.value().c_str());
+        LOG_DEBUG("Style", "  FontName: {}", style.fontName.value());
     } else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "  FontName: nullopt");
+        LOG_DEBUG("Style", "  FontName: nullopt");
     }
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "--------------------------------------");
+    LOG_DEBUG("Style", "--------------------------------------");
 }

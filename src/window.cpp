@@ -15,13 +15,13 @@ Window::Window(const std::string& title, int width, int height,
     m_window = SDL_CreateWindow(title.c_str(), width, height, windowFlags);
     
     if (!m_window) {
-        std::cerr << "Window::Window() - SDL_CreateWindow failed: " << SDL_GetError() << "\n";
+        LOG_ERROR("Window", "SDL_CreateWindow failed: {}", SDL_GetError());
         throw std::runtime_error("SDL_CreateWindow failed: " + std::string(SDL_GetError()));
     }
     
     m_renderer = SDL_CreateRenderer(m_window, name);
     if (!m_renderer) {
-        std::cerr << "Window::Window() - SDL_CreateRenderer failed: " << SDL_GetError() << "\n";
+        LOG_ERROR("Window", "SDL_CreateRenderer failed: {}", SDL_GetError());
         SDL_DestroyWindow(m_window);
         throw std::runtime_error("SDL_CreateRenderer failed: " + std::string(SDL_GetError()));
     }
@@ -30,7 +30,7 @@ Window::Window(const std::string& title, int width, int height,
     m_guiManager = std::make_unique<GUIManager>(m_renderer);
     m_guiManager->setWindowSize(width, height);
     
-    LOG_DEBUG("Window::Window() - created window '%s' (ID=%u)", title.c_str(), m_windowID);
+    LOG_DEBUG("Window", "created window '{}' (ID={})", title, m_windowID);
 }
 
 Window::~Window() {
@@ -46,7 +46,7 @@ Window::~Window() {
         m_window = nullptr;
     }
     
-    LOG_DEBUG("Window::~Window() - destroyed window '%s'", m_title.c_str());
+    LOG_DEBUG("Window", "destroyed window '{}'", m_title);
 }
 
 void Window::getSize(int& width, int& height) const {

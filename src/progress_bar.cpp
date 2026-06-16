@@ -114,7 +114,7 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
             drawRoundedFilledRect(renderer, ffillRect, static_cast<float>(effectiveRadius), ffillColor);
         } else {
             SDL_SetRenderDrawColor(renderer, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-            ({ SDL_FRect _fr = {static_cast<float>(fillRect.x), static_cast<float>(fillRect.y), static_cast<float>(fillRect.w), static_cast<float>(fillRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+            { SDL_FRect _fr = {static_cast<float>(fillRect.x), static_cast<float>(fillRect.y), static_cast<float>(fillRect.w), static_cast<float>(fillRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
         }
     }
 
@@ -139,14 +139,14 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
 
             if (textTex) {
                 int tw = 0, th = 0;
-                ({ float _fw=0,_fh=0; SDL_GetTextureSize(textTex.get(), &_fw, &_fh); tw=static_cast<int>(_fw); th=static_cast<int>(_fh); });
+                {  float _fw=0,_fh=0; SDL_GetTextureSize(textTex.get(), &_fw, &_fh); tw=static_cast<int>(_fw); th=static_cast<int>(_fh); }
                 SDL_Rect dstRect = {
                     (m_width - tw) / 2,
                     (m_height - th) / 2,
                     tw,
                     th
                 };
-                ({ SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, textTex.get(), nullptr, &_dr); });
+                { SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, textTex.get(), nullptr, &_dr); }
             }
         }
     }

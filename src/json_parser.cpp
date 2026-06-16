@@ -1,5 +1,6 @@
 #include "json_parser.hpp"
 #include <SDL3/SDL.h>
+#include "logger.hpp"
 
 import std.compat;
 
@@ -115,7 +116,7 @@ bool JsonParser::loadFile(const std::string& file_path)
     std::ifstream file(file_path);
     if (!file.is_open())
     {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to load JSON file: %s", file_path.c_str());
+        LOG_ERROR("JsonParser", "Failed to load JSON file: {}", file_path);
         return false;
     }
     std::stringstream buffer;

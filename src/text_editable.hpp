@@ -45,7 +45,7 @@ protected:
     size_t m_dragStartPos = 0;
     
     // Cursor blink
-    Uint32 m_cursorBlinkTime = 0;
+    Uint64 m_cursorBlinkTime = 0;
     bool m_showCursor = false;
     
     // Callback

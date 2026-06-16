@@ -417,11 +417,11 @@ void FileDialog::draw(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer,
         titleBarColor.r, titleBarColor.g, titleBarColor.b, titleBarColor.a);
     SDL_Rect titleRect = {m_x, m_y, m_width, m_titleBarHeight};
-    ({ SDL_FRect _fr = {static_cast<float>(titleRect.x), static_cast<float>(titleRect.y), static_cast<float>(titleRect.w), static_cast<float>(titleRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+    { SDL_FRect _fr = {static_cast<float>(titleRect.x), static_cast<float>(titleRect.y), static_cast<float>(titleRect.w), static_cast<float>(titleRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
 
     // Separator
     SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);
-    SDL_RenderLine(renderer, m_x, m_y + m_titleBarHeight,
+    RenderLine(renderer, m_x, m_y + m_titleBarHeight,
         m_x + m_width, m_y + m_titleBarHeight);
 
     // Panel background and border

@@ -16,11 +16,11 @@ int main(int, char**) {
         GUIManager guiManager(renderer);
 
         auto panel = std::make_unique<Panel>(guiManager, 100, 100, 200, 40);
-        panel->setStyle(ElementState::Normal, {.backgroundColor = {{50, 50, 50, 255}}, .textColor = std::nullopt, .texture = std::nullopt, .borderColor = std::nullopt, .borderWidth = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
+        panel->setStyle(ElementState::Normal, {.backgroundColor = {{50, 50, 50, 255}}, .textColor = std::nullopt, .texture = std::nullopt, .borderColor = std::nullopt, .borderWidth = std::nullopt, .borderRadius = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
 
         auto checkbox = std::make_unique<Checkbox>(guiManager, 10, 10, 20, 20);
-        checkbox->setOnChange([](Checkbox* , bool isChecked) {
-            std::cout << "Checkbox state changed: " << (isChecked ? "Checked" : "Unchecked") << std::endl;
+        checkbox->setOnChange([](Checkbox*, bool isChecked) {
+            LOG_INFO("Checkbox", "Checkbox state changed: {}", isChecked ? "Checked" : "Unchecked");
         });
         
         auto label = std::make_unique<Label>(guiManager, 40, 10, "Check me!", 14);

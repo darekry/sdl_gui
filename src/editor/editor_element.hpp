@@ -111,7 +111,7 @@ private:
         if (value.empty()) return false;
         try {
             std::size_t pos = 0;
-            std::stoi(value, &pos);
+            static_cast<void>(std::stoi(value, &pos));
             return pos == value.length();
         } catch (...) {
             return false;

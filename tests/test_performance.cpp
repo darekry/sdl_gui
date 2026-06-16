@@ -9,19 +9,15 @@
 #include <chrono>
 #include <vector>
 #include <memory>
-#include <iomanip>
-#include <iostream>
+#include "../src/logger.hpp"
 
 using Clock = std::chrono::high_resolution_clock;
 using DurationMs = std::chrono::duration<double, std::milli>;
 using DurationUs = std::chrono::duration<double, std::micro>;
 
 static void printBenchmarkResult(const std::string& operation, int count, double totalMs, double avgUs) {
-    std::cout << "[BENCHMARK] " << operation
-              << " | count: " << count
-              << " | total: " << std::fixed << std::setprecision(3) << totalMs << " ms"
-              << " | avg: " << std::fixed << std::setprecision(3) << avgUs << " us"
-              << std::endl;
+    LOG_INFO("PerfTest", "[BENCHMARK] {} | count: {} | total: {:.3f} ms | avg: {:.3f} us",
+             operation, count, totalMs, avgUs);
 }
 
 TEST_CASE("Performance benchmarks", "[performance]") {
@@ -29,7 +25,7 @@ TEST_CASE("Performance benchmarks", "[performance]") {
     GUIManager& manager = helper.getManager();
 
     SECTION("Element Creation Benchmark") {
-        std::cout << "\n=== Element Creation Benchmark ===\n";
+        LOG_INFO("PerfTest", "\n=== Element Creation Benchmark ===");
 
         for (int count : {100, 500, 1000}) {
             auto start = Clock::now();
@@ -50,7 +46,7 @@ TEST_CASE("Performance benchmarks", "[performance]") {
     }
 
     SECTION("Element Deletion Benchmark") {
-        std::cout << "\n=== Element Deletion Benchmark ===\n";
+        LOG_INFO("PerfTest", "\n=== Element Deletion Benchmark ===");
 
         for (int count : {100, 500, 1000}) {
             std::vector<Button*> buttonPtrs;
@@ -80,7 +76,7 @@ TEST_CASE("Performance benchmarks", "[performance]") {
     }
 
     SECTION("Render Benchmark") {
-        std::cout << "\n=== Render Benchmark ===\n";
+        LOG_INFO("PerfTest", "\n=== Render Benchmark ===");
 
         for (int elemCount : {10, 50, 100}) {
             std::vector<Button*> buttonPtrs;
@@ -104,7 +100,7 @@ TEST_CASE("Performance benchmarks", "[performance]") {
             
             printBenchmarkResult("Render " + std::to_string(elemCount) + " elements for " + std::to_string(frames) + " frames", 
                                  frames * elemCount, totalMs, avgElemUs);
-            std::cout << "  -> Average frame time: " << std::fixed << std::setprecision(3) << avgFrameMs << " ms\n";
+            LOG_INFO("PerfTest", "  -> Average frame time: {:.3f} ms", avgFrameMs);
             
             for (Button* btn : buttonPtrs) {
                 btn->markForDeletion();
@@ -114,7 +110,7 @@ TEST_CASE("Performance benchmarks", "[performance]") {
     }
 
     SECTION("Style Setting Benchmark") {
-        std::cout << "\n=== Style Setting Benchmark ===\n";
+        LOG_INFO("PerfTest", "\n=== Style Setting Benchmark ===");
 
         auto button = std::make_unique<Button>(manager, 10, 10, 100, 40, "");
         Button* btn = button.get();
@@ -143,7 +139,7 @@ TEST_CASE("Performance benchmarks", "[performance]") {
     }
 
     SECTION("Label Text Change Benchmark") {
-        std::cout << "\n=== Label Text Change Benchmark ===\n";
+        LOG_INFO("PerfTest", "\n=== Label Text Change Benchmark ===");
 
         const int labelCount = 100;
         const int changesPerLabel = 100;
@@ -177,7 +173,7 @@ TEST_CASE("Performance benchmarks", "[performance]") {
     }
 
     SECTION("Scaling Benchmark") {
-        std::cout << "\n=== Scaling Benchmark ===\n";
+        LOG_INFO("PerfTest", "\n=== Scaling Benchmark ===");
 
         const int elemCount = 1000;
         const int setSizeCalls = 10;
@@ -211,7 +207,7 @@ TEST_CASE("Performance benchmarks", "[performance]") {
     }
 
     SECTION("Positioning Benchmark") {
-        std::cout << "\n=== Positioning Benchmark ===\n";
+        LOG_INFO("PerfTest", "\n=== Positioning Benchmark ===");
 
         const int elemCount = 1000;
         const int setPosCalls = 10;
@@ -245,7 +241,7 @@ TEST_CASE("Performance benchmarks", "[performance]") {
     }
 
     SECTION("Hierarchy Benchmark") {
-        std::cout << "\n=== Hierarchy Benchmark ===\n";
+        LOG_INFO("PerfTest", "\n=== Hierarchy Benchmark ===");
 
         auto panel = std::make_unique<Panel>(manager, 0, 0, 800, 600);
         Panel* panelPtr = panel.get();
@@ -284,7 +280,7 @@ TEST_CASE("Detailed render timing", "[performance][render]") {
     GUIManager& manager = helper.getManager();
 
     SECTION("Render cache invalidation timing") {
-        std::cout << "\n=== Render Cache Invalidation Timing ===\n";
+        LOG_INFO("PerfTest", "\n=== Render Cache Invalidation Timing ===");
 
         const int elemCount = 100;
         std::vector<Button*> buttonPtrs;
@@ -318,7 +314,7 @@ TEST_CASE("Detailed render timing", "[performance][render]") {
     }
 
     SECTION("Clean render (cached textures) timing") {
-        std::cout << "\n=== Clean Render (Cached Textures) Timing ===\n";
+        LOG_INFO("PerfTest", "\n=== Clean Render (Cached Textures) Timing ===");
 
         const int elemCount = 100;
         std::vector<Button*> buttonPtrs;
@@ -341,7 +337,7 @@ TEST_CASE("Detailed render timing", "[performance][render]") {
         double totalMs = DurationMs(end - start).count();
         double avgFrameMs = totalMs / frames;
         printBenchmarkResult("Cached render " + std::to_string(frames) + " frames", frames * elemCount, totalMs, avgFrameMs * 1000 / elemCount);
-        std::cout << "  -> Average frame time (cached): " << std::fixed << std::setprecision(3) << avgFrameMs << " ms\n";
+        LOG_INFO("PerfTest", "  -> Average frame time (cached): {:.3f} ms", avgFrameMs);
         
         for (Button* btn : buttonPtrs) {
             btn->markForDeletion();
@@ -355,7 +351,7 @@ TEST_CASE("Memory allocation patterns", "[performance][memory]") {
     GUIManager& manager = helper.getManager();
 
     SECTION("Batch creation vs incremental creation") {
-        std::cout << "\n=== Batch vs Incremental Creation ===\n";
+        LOG_INFO("PerfTest", "\n=== Batch vs Incremental Creation ===");
 
         const int count = 500;
         
@@ -379,11 +375,11 @@ TEST_CASE("Memory allocation patterns", "[performance][memory]") {
         printBenchmarkResult("Incremental creation (no reserve)", count, incrMs, incrMs * 1000 / count);
         
         double diffPercent = ((incrMs - batchMs) / batchMs) * 100.0;
-        std::cout << "  -> Difference: " << std::fixed << std::setprecision(1) << diffPercent << "%\n";
+        LOG_INFO("PerfTest", "  -> Difference: {:.1f}%", diffPercent);
     }
 
     SECTION("Panel child management overhead") {
-        std::cout << "\n=== Panel Child Management Overhead ===\n";
+        LOG_INFO("PerfTest", "\n=== Panel Child Management Overhead ===");
 
         auto panel = std::make_unique<Panel>(manager, 0, 0, 800, 600);
         Panel* panelPtr = panel.get();

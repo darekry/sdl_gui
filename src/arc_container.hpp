@@ -7,6 +7,7 @@ public:
                  float startAngleDeg = 0.0f, float endAngleDeg = 360.0f);
     
     bool contains(int x, int y) const override;
+    bool contains(float x, float y) const { return contains(static_cast<int>(x), static_cast<int>(y)); }
     
     void addChildAtAngle(std::unique_ptr<GUIElement> child, float angleDeg, 
                          bool rotateChild = true, int offset = 0);
@@ -17,7 +18,7 @@ public:
     const char* getComponentType() const override;
     
 protected:
-    void draw(SDL_Renderer* renderer) override {}
+    void draw(SDL_Renderer*) override {}
     
 private:
     SDL_Point m_center;

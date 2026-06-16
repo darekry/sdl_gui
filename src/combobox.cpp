@@ -10,8 +10,8 @@ ComboBox::ComboBox(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h),
       m_is_expanded(false),
       m_selected_index(-1),
-      m_needs_update(true),
-      m_dropdown_panel(nullptr) {
+      m_dropdown_panel(nullptr),
+      m_needs_update(true) {
     setClipChildren(false);
     markDirty();
 }
@@ -63,9 +63,9 @@ void ComboBox::draw(SDL_Renderer* renderer) {
                 SharedTexture textTexture = textureManager.createTextureFromText(m_options[static_cast<size_t>(m_selected_index)], font, *style.textColor);
                 if (textTexture) {
                     int text_w, text_h;
-                    ({ float _fw=0,_fh=0; SDL_GetTextureSize(textTexture.get(), &_fw, &_fh); text_w=static_cast<int>(_fw); text_h=static_cast<int>(_fh); });
+                    {  float _fw=0,_fh=0; SDL_GetTextureSize(textTexture.get(), &_fw, &_fh); text_w=static_cast<int>(_fw); text_h=static_cast<int>(_fh); }
                     SDL_Rect dstRect = { 5, (m_height - text_h) / 2, text_w, text_h };
-                    ({ SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, textTexture.get(), nullptr, &_dr); });
+                    { SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, textTexture.get(), nullptr, &_dr); }
                 }
             }
         }

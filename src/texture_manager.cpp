@@ -96,7 +96,7 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, std::
         return it->second;
     }
 
-    auto* font = TTF_OpenFont(fontPathStr.c_str(), fontSize);
+    auto* font = TTF_OpenFont(fontPathStr.c_str(), static_cast<float>(fontSize));
     if (!font) {
         LOG_DEBUG("TextureManager ERROR: Unable to load font %s! SDL_ttf Error: %s", fontPathStr.c_str(), SDL_GetError());
         return nullptr;

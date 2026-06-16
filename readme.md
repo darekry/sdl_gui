@@ -1,6 +1,6 @@
 # SDL GUI Library
 
-A lightweight, header-based GUI library built on SDL2 with C++23, designed for simplicity, safe memory management, and ease of use. Ideal for tools, prototypes, and lightweight desktop applications.
+A lightweight, header-based GUI library built on SDL3 with C++23, designed for simplicity, safe memory management, and ease of use. Ideal for tools, prototypes, and lightweight desktop applications.
 
 English is the authoritative language for this documentation.
 
@@ -10,9 +10,10 @@ SDL GUI provides a simple and extensible GUI framework centered around:
 - **GUIManager** - Central controller for rendering and event handling
 - **GUIElement** - Base class for all widgets with texture caching
 - **Resource Managers** - Automatic caching for textures and fonts
-- **Composite Components** - Ready-to-use dialogs (DialogBox, MessageBox)
+- **Composite Components** - Ready-to-use dialogs (DialogBox, MessageBox, FileDialog)
 - **Screen Management** - ScreenManager for games, WindowManager for multi-window apps
 - **Layout Parsers** - Define GUI from JSON or XML files
+- **WYSIWYG Editor** - Visual GUI editor for creating layouts interactively
 
 ## Quick Start
 
@@ -36,7 +37,7 @@ int main() {
     SDL_Event e;
     while (!quit) {
         while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) quit = true;
+            if (e.type == SDL_EVENT_QUIT) quit = true;
             guiManager.processEvent(e);
         }
         guiManager.update();
@@ -54,19 +55,20 @@ int main() {
 ## Installation/Dependencies
 
 ### Required Libraries
-- **SDL2** - Window, events, rendering
-- **SDL2_image** - Image loading (PNG, etc.)
-- **SDL2_ttf** - TrueType font rendering
-- **SDL2_gfx** - Geometric primitives (rounded corners)
+- **SDL3** - Window, events, rendering (GPU)
+- **SDL3_image** - Image loading (PNG, etc.) — on-demand, no IMG_Init required
+- **SDL3_ttf** - TrueType font rendering
 
 ### Compiler Requirements
-- C++23 compatible compiler (clang++ with libc++ recommended)
+- C++23 compatible compiler (clang++-22 with libc++ recommended)
 - CMake or nob.c build system
 
 ### Installing Dependencies (Debian/Ubuntu)
 ```bash
-sudo apt-get install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-gfx-dev clang libc++-dev
+sudo apt-get install clang-22 libc++-dev libsdl3-dev libsdl3-image-dev libsdl3-ttf-dev
 ```
+
+SDL3 packages may need to be installed from source or third-party repositories. Ensure `pkg-config sdl3 sdl3-image sdl3-ttf` resolves correctly.
 
 ## Building the Library
 
@@ -101,21 +103,21 @@ cc -o nob nob.c
 
 ### Static Linking
 ```bash
-clang++ -std=c++23 your_app.cpp \
+clang++-22 -std=c++23 your_app.cpp \
     -I/path/to/sdl_gui/dist \
     -L/path/to/sdl_gui/dist \
     -lsdl_gui \
-    -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_gfx \
+    -lSDL3 -lSDL3_image -lSDL3_ttf \
     -o your_app
 ```
 
 ### Dynamic Linking
 ```bash
-clang++ -std=c++23 your_app.cpp \
+clang++-22 -std=c++23 your_app.cpp \
     -I/path/to/sdl_gui/dist \
     -L/path/to/sdl_gui/dist \
     -lsdl_gui \
-    -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_gfx \
+    -lSDL3 -lSDL3_image -lSDL3_ttf \
     -o your_app
 
 # Ensure library path is set at runtime
@@ -279,6 +281,7 @@ auto area = std::make_unique<TextArea>(
 );
 area->setText("Line 1\nLine 2\nLine 3");
 area->setWordWrap(true);
+area->setLocked(true);  // Disable editing
 area->setOnTextChanged([](TextArea* ta) {
     std::cout << "Changed" << std::endl;
 });
@@ -367,6 +370,35 @@ list->setSelectedRow(1);
 list->removeItem(0);
 ```
 
+### ProgressBar - Progress Indicator
+```cpp
+auto bar = std::make_unique<ProgressBar>(manager, 100, 100, 200, 30, 0.0f, 1.0f, 0.5f);
+bar->setValue(0.75f);
+bar->setShowPercentage(true);
+
+float progress = bar->getValue();
+```
+
+### ScrollArea - Scrollable Container
+```cpp
+auto scroll = std::make_unique<ScrollArea>(manager, 50, 50, 300, 200);
+
+// Add content (larger than the visible area)
+auto content = std::make_unique<Panel>(manager, 0, 0, 500, 400);
+content->addChild(std::make_unique<Label>(manager, 10, 10, "Scrolled content", 20));
+scroll->setContent(std::move(content));
+```
+
+### ArcContainer - Arced Layout Container
+```cpp
+auto arc = std::make_unique<ArcContainer>(manager, 200, 200, 150, 0.0f, 360.0f);
+
+arc->addChild(std::make_unique<Button>(manager, 0, 0, 60, 30, "A"));
+arc->addChild(std::make_unique<Button>(manager, 0, 0, 60, 30, "B"));
+arc->addChild(std::make_unique<Button>(manager, 0, 0, 60, 30, "C"));
+// Children are arranged along the arc automatically
+```
+
 ### Canvas - Drawing Surface
 ```cpp
 auto canvas = std::make_unique<Canvas>(manager, 50, 50, 400, 300);
@@ -389,6 +421,28 @@ anim->setScaleMode(AnimatedImage::ScaleMode::None);    // Top-left, no scaling
 
 anim->setOnAnimationEnd([]() { std::cout << "Animation ended" << std::endl; });
 anim->setOnFrameChanged([](int frame) { std::cout << "Frame: " << frame << std::endl; });
+```
+
+### ShaderPanel - GPU Shader Widget
+```cpp
+auto shaderPanel = std::make_unique<ShaderPanel>(manager, 50, 50, 400, 300,
+    // Vertex shader
+    R"(#version 450
+       layout(location=0) in vec2 pos;
+       layout(location=1) in vec2 uv;
+       layout(location=0) out vec2 v_uv;
+       void main() {
+           gl_Position = vec4(pos, 0.0, 1.0);
+           v_uv = uv;
+       })",
+    // Fragment shader
+    R"(#version 450
+       layout(location=0) in vec2 v_uv;
+       layout(location=0) out vec4 fragColor;
+       void main() {
+           fragColor = vec4(v_uv, 0.5, 1.0);
+       })"
+);
 ```
 
 ### ContextMenu - Right-Click Menu
@@ -451,6 +505,19 @@ MessageBox::showCustom(manager, "Custom Title", "Custom message",
     []() { std::cout << "Closed" << std::endl; });
 ```
 
+### FileDialog - File Picker
+```cpp
+FileDialog::createOpen(manager, "Open File",
+    [](const std::string& path) {
+        std::cout << "Selected: " << path << std::endl;
+    });
+
+FileDialog::createSave(manager, "Save File", "default.txt",
+    [](const std::string& path) {
+        std::cout << "Save to: " << path << std::endl;
+    });
+```
+
 ## Screen Management
 
 ### ScreenManager - Single Window, Multiple Screens (Games)
@@ -505,6 +572,24 @@ while (!windowManager.shouldQuit()) {
     windowManager.renderAll();
     windowManager.cleanupAll();
 }
+```
+
+## WYSIWYG Editor
+
+The library includes a visual GUI editor for building layouts interactively:
+
+- **EditorWindow** - Main editor UI with widget palette and properties panel
+- **EditorState** - State management for undo/redo, selection, and clipboard
+- **PreviewWindow** - Live preview of the edited layout
+- **LayoutImporter** - Load existing JSON/XML layouts for editing
+- **LayoutExporter** - Save edited layouts to JSON or XML
+
+```cpp
+#include "editor/editor_window.hpp"
+
+EditorWindow editor(guiManager);
+// GUI editor with drag-and-drop widget placement, property editing,
+// and live preview — all built with the library's own widgets
 ```
 
 ## Layout Parsers
@@ -593,24 +678,32 @@ guiManager.setTheme(theme);
 |---------|-------------|
 | `example_animation.cpp` | AnimationManager usage with easing functions |
 | `example_animated_image.cpp` | AnimatedImage sprite animation |
+| `example_arc_container.cpp` | ArcContainer arced layout |
 | `example_button.cpp` | Button styling and callbacks |
 | `example_canvas.cpp` | Canvas drawing surface |
 | `example_checkbox.cpp` | Checkbox toggle control |
 | `example_combobox.cpp` | ComboBox dropdown selection |
 | `example_context_menu.cpp` | ContextMenu right-click menus |
 | `example_dialog.cpp` | DialogBox and MessageBox composite components |
+| `example_file_dialog.cpp` | FileDialog file picker |
+| `example_gpu_shader.cpp` | ShaderPanel GPU shader rendering |
+| `example_hover_animation.cpp` | Hover animation effects |
 | `example_json_parser.cpp` | JSON layout file parsing |
 | `example_list_view.cpp` | ListView simple list widget |
 | `example_mouse_cursor.cpp` | Cursor management |
 | `example_paint.cpp` | Full painting application with Canvas |
 | `example_panel.cpp` | Panel container with draggable feature |
 | `example_performance.cpp` | Performance benchmarking |
+| `example_progress_bar.cpp` | ProgressBar progress indicator |
 | `example_radio_button.cpp` | RadioButton and RadioGroup |
 | `example_resize.cpp` | Window resize handling with anchors |
-| `example_rounded_corners.cpp` | Rounded corners using SDL2_gfx |
+| `example_rounded_corners.cpp` | Rounded corners using SDL_RenderGeometry |
 | `example_screen_manager.cpp` | ScreenManager for game screens |
+| `example_scroll_area.cpp` | ScrollArea scrollable container |
+| `example_scrollview_prototype.cpp` | Scroll view prototype |
 | `example_slider.cpp` | Slider value control |
 | `example_sprite_animator.cpp` | Sprite animation system |
+| `example_standalone.cpp` | Standalone application template |
 | `example_string_grid.cpp` | StringGrid data table widget |
 | `example_tabs.cpp` | TabControl tabbed interface |
 | `example_text_area.cpp` | TextArea multi-line input |
@@ -621,6 +714,7 @@ guiManager.setTheme(theme);
 | `example_tooltip.cpp` | Tooltip on GUI elements |
 | `example_window.cpp` | Window class usage |
 | `example_window_manager.cpp` | WindowManager multi-window app |
+| `example_wysiwyg_editor.cpp` | WYSIWYG editor demo |
 | `example_xml_parser.cpp` | XML/SGML layout parsing |
 
 Run examples after building:
@@ -645,13 +739,14 @@ sdl_gui/
 ├── src/                    # Source implementation
 │   ├── *.hpp               # Widget headers
 │   ├── *.cpp               # Widget implementations
-│   ├── composite/          # DialogBox, MessageBox
+│   ├── composite/          # DialogBox, MessageBox, FileDialog
+│   ├── editor/             # WYSIWYG editor (EditorWindow, EditorState, PreviewWindow, import/export)
 │   ├── gui.hpp             # GUIElement base class
 │   ├── gui_manager.hpp     # GUIManager controller
-│   └── sdl_app.hpp         # SDL initialization helper
-├── examples/               # 31 usage examples
+│   └── sdl_app.hpp         # SDL3 initialization helper
+├── examples/               # 39 usage examples
 ├── tests/                  # Unit tests (Catch2)
-├── lib/                    # Third-party libraries
+├── lib/                    # Third-party libraries (tinyxml2, Catch2)
 ├── docs/                   # Documentation
 ├── nob.c                   # Build system
 ├── nob.h                   # Build library (v3.8.0)
@@ -664,6 +759,31 @@ sdl_gui/
 - **SDL Resources**: `SharedTexture`, `SharedFont` - `std::shared_ptr` with custom deleters
 - **Resource Cache**: TextureManager and FontManager cache loaded resources
 - **Render Cache**: Each element has texture cache invalidated by `markDirty()`
+
+## Key SDL3 Differences
+
+This library targets SDL3. Key API differences from SDL2:
+
+| SDL2 | SDL3 |
+|------|------|
+| `SDL_QUIT` | `SDL_EVENT_QUIT` |
+| `SDL_QueryTexture` | `SDL_GetTextureSize` (float\*) |
+| `SDL_RenderFillRect` (SDL_Rect\*) | `SDL_RenderFillRect` (SDL_FRect\*) |
+| `SDL_RenderCopy` | `SDL_RenderTexture` (SDL_FRect\*) |
+| `e.key.keysym.sym` | `e.key.key` (flat struct) |
+| `e.button.x/y` (int) | `e.button.x/y` (float) |
+| `SDL_WINDOWEVENT` | Individual `SDL_EVENT_WINDOW_*` events |
+| `SDL_CreateRenderer(-1, flags)` | `SDL_CreateRenderer(NULL)` |
+| `SDL_ShowCursor(0/1)` | `SDL_HideCursor()` / `SDL_ShowCursor()` |
+| `TTF_RenderUTF8_Blended` | `TTF_RenderText_Blended` (+length param) |
+| `TTF_SizeUTF8` | `TTF_GetStringSize` (+length param, returns bool) |
+| `TTF_GetError()` | `SDL_GetError()` (removed from SDL3_ttf) |
+| `IMG_Init` / `IMG_Quit` | Removed (on-demand loading) |
+| `SDL2_gfx` (roundedBoxRGBA) | `SDL_RenderGeometry` (built-in) |
+| `SDL_PRESSED` / `SDL_RELEASED` | Removed (implicit per event type) |
+| `SDL_TEXTINPUTEVENT_TEXT_SIZE` | Removed (text is const char\*) |
+| `SDL_RENDERER_PRESENTVSYNC` | Removed (default behavior) |
+| `SDL_Init()` returns `< 0` on error | `SDL_Init()` returns `bool` |
 
 ## License
 

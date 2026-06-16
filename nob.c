@@ -165,7 +165,15 @@ static bool collect_hpp_sources(Nob_File_Paths *paths) {
 }
 
 static bool collect_example_sources(Nob_File_Paths *paths) {
-    return collect_files(paths, EXAMPLES_DIR, ".cpp");
+    Nob_Dir_Entry entry = {0};
+    if (!nob_dir_entry_open(EXAMPLES_DIR, &entry)) return false;
+    while (nob_dir_entry_next(&entry)) {
+        if (strstr(entry.name, ".cpp") != NULL && strcmp(entry.name, "example_standalone.cpp") != 0) {
+            nob_da_append(paths, nob_temp_sprintf("%s/%s", EXAMPLES_DIR, entry.name));
+        }
+    }
+    nob_dir_entry_close(entry);
+    return !entry.error;
 }
 
 static bool collect_test_sources(Nob_File_Paths *paths) {
@@ -533,12 +541,14 @@ static const char * hpp_order[] = {
     "src/font_manager.hpp",
     "src/texture_manager.hpp",
     "src/theme.hpp",
+    "src/anchor.hpp",
     "src/gui.hpp",
     "src/label.hpp",
     "src/panel.hpp",
     "src/button.hpp",
     "src/checkbox.hpp",
     "src/slider.hpp",
+    "src/text_editable.hpp",
     "src/text_input.hpp",
     "src/canvas.hpp",
     "src/cursor.hpp",
@@ -596,12 +606,30 @@ static const char * includes_to_remove[] = {
     "#include \"../text_input.hpp\"",
     "#include \"dialog_box.hpp\"",
     "#include \"../lib/tinyxml2.h\"",
+    "#include \"anchor.hpp\"",
+    "#include \"text_editable.hpp\"",
+    "#include \"string_grid.hpp\"",
+    "#include \"screen.hpp\"",
+    "#include \"window.hpp\"",
+    "#include \"editor_element.hpp\"",
+    "#include \"editor_state.hpp\"",
+    "#include \"layout_exporter.hpp\"",
+    "#include \"../string_grid.hpp\"",
+    "#include \"../style.hpp\"",
+    "#include \"../checkbox.hpp\"",
+    "#include \"../combobox.hpp\"",
+    "#include \"../text_area.hpp\"",
+    "#include \"../slider.hpp\"",
+    "#include \"../list_view.hpp\"",
+    "#include \"../window_manager.hpp\"",
 };
 
 static bool line_should_remove(const char *line) {
     if (strncmp(line, "#pragma once", 12) == 0) return true;
     if (strncmp(line, "#include <", 10) == 0) return true;
     if (strncmp(line, "#include \"SDL2/", 15) == 0) return true;
+    if (strncmp(line, "import ", 7) == 0) return true;
+    if (strncmp(line, "module;", 7) == 0) return true;
     if (strlen(line) == 0) return true;
     
     for (size_t i = 0; i < NOB_ARRAY_LEN(includes_to_remove); i++) {
@@ -621,15 +649,11 @@ static bool build_combined_header(void) {
     
     Nob_String_Builder sb = {0};
     nob_sb_append_cstr(&sb, "// Auto-generated header. Do not edit.\n#pragma once\n\n");
-    nob_sb_append_cstr(&sb, "// C++ Standard Library\n");
-    nob_sb_append_cstr(&sb, "#include <cmath>\n#include <functional>\n#include <iostream>\n");
-    nob_sb_append_cstr(&sb, "#include <map>\n#include <memory>\n#include <numeric>\n");
-    nob_sb_append_cstr(&sb, "#include <optional>\n#include <string>\n#include <string_view>\n");
-    nob_sb_append_cstr(&sb, "#include <variant>\n#include <vector>\n\n");
+    nob_sb_append_cstr(&sb, "import std.compat;\n\n");
     nob_sb_append_cstr(&sb, "// External libraries\n");
-    nob_sb_append_cstr(&sb, "#include <SDL3/SDL.h>\n#include <SDL3/SDL_image.h>\n");
-    nob_sb_append_cstr(&sb, "#include <SDL3/SDL_ttf.h>\n#include <SDL3/SDL_pixels.h>\n");
-    nob_sb_append_cstr(&sb, "#include <SDL3/SDL_log.h>\n\n");
+    nob_sb_append_cstr(&sb, "#include <SDL3/SDL.h>\n#include <SDL3/SDL_gpu.h>\n");
+    nob_sb_append_cstr(&sb, "#include <SDL3_image/SDL_image.h>\n#include <SDL3_ttf/SDL_ttf.h>\n");
+    nob_sb_append_cstr(&sb, "#include <dirent.h>\n\n");
     nob_sb_append_cstr(&sb, "// Project libraries\n#include \"tinyxml2.h\"\n\n");
     
     for (size_t i = 0; i < NOB_ARRAY_LEN(hpp_order); i++) {
@@ -810,7 +834,34 @@ static bool build_release(void) {
     }
     
     if (!build_combined_header()) return false;
-    
+
+    // Smoke test: compile standalone example with combined header + static library
+    {
+        const char *standalone_src = EXAMPLES_DIR "/example_standalone.cpp";
+        const char *standalone_exe = OUTPUT_DIR "/example_standalone";
+        const char *standalone_inputs[] = {
+            standalone_src,
+            DIST_DIR "/sdl_gui.hpp",
+            DIST_DIR "/libsdl_gui.a",
+            std_pcm_path(true),
+            std_compat_pcm_path(true),
+        };
+        if (nob_needs_rebuild(standalone_exe, standalone_inputs, 5) > 0) {
+            nob_log(INFO, "Building standalone example (release sanity check)...");
+            Nob_Cmd cmd = {0};
+            nob_cmd_append(&cmd, CXX);
+            cmd_add_common(&cmd);
+            cmd_add_mode(&cmd, true);
+            nob_cmd_append(&cmd,
+                nob_temp_sprintf("-fmodule-file=std=%s", std_pcm_path(true)),
+                nob_temp_sprintf("-fmodule-file=std.compat=%s", std_compat_pcm_path(true)));
+            nob_cmd_append(&cmd, "-I" DIST_DIR, "-I" SRC_DIR, "-I" LIB_DIR);
+            nob_cmd_append(&cmd, "-o", standalone_exe, standalone_src, DIST_DIR "/libsdl_gui.a");
+            cmd_add_sdl3(&cmd);
+            if (!nob_cmd_run(&cmd)) return false;
+        }
+    }
+
     nob_log(INFO, "Release finished. Artifacts in %s/", DIST_DIR);
     return true;
 }

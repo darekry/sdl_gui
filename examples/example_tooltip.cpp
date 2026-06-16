@@ -23,7 +23,7 @@ int main(int, char**) {
         button->addChild(std::move(label));
         button->setTooltip("To jest podpowiedź dla przycisku.");
         button->setOnClickCallback(
-            []([[maybe_unused]] GUIElement* elem) { std::cout << "Przycisk kliknięty!" << std::endl; });
+            []([[maybe_unused]] GUIElement* elem) { LOG_INFO("Tooltip", "Przycisk kliknięty!"); });
         guiManager.addElement(std::move(button));
 
         // --- Checkbox z podpowiedzią ---

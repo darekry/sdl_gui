@@ -33,7 +33,7 @@ int main() {
         toggleBtn->setOnClickCallback([animRef, useCache](GUIElement*) {
             *useCache = !*useCache;
             if (animRef) animRef->setUseCache(*useCache);
-            std::cout << "cache" << (*useCache ? "ON" : "OFF") << "\n";
+            LOG_INFO("AnimatedImage", "cache{}", *useCache ? "ON" : "OFF");
         });
         gui.addElement(std::move(toggleBtn));
 

@@ -81,9 +81,9 @@ private:
     
     [[nodiscard]] int snapToGrid(int value) const { return m_state.snapToGrid(value); }
     
-    void handleCanvasClick(int mouseX, int mouseY);
-    void handleElementClick(int mouseX, int mouseY, size_t elementIndex);
-    void startDrag(int mouseX, int mouseY);
-    void updateDrag(int mouseX, int mouseY);
+    void handleCanvasClick(float mouseX, float mouseY);
+    void handleElementClick(float mouseX, float mouseY, size_t elementIndex);
+    void startDrag(float mouseX, float mouseY);
+    void updateDrag(float mouseX, float mouseY);
     void endDrag();
 };

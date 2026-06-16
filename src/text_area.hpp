@@ -50,7 +50,7 @@ private:
     int m_scroll_offset_y = 0;
     size_t m_cursorPos = 0;
     int m_text_offset_x = 0;
-    Uint32 m_cursorBlinkTime = 0;
+    Uint64 m_cursorBlinkTime = 0;
     bool m_showCursor = false;
     bool m_locked = false;
     size_t m_selectionStart = 0;

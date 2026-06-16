@@ -77,7 +77,7 @@ int main(int, char**) {
                     if (auto* pb = static_cast<ProgressBar*>(aProgressRef.get())) {
                         pb->markDirty();
                     }
-                    std::cout << "Loading complete!" << std::endl;
+                    LOG_INFO("ProgressBar", "Loading complete!");
                 }
             );
 

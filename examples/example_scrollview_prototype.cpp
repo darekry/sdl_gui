@@ -124,8 +124,10 @@ int main(int, char**) {
 
                 // Obsługa kółka myszy nad viewportem (opcjonalnie)
                 if (e.type == SDL_EVENT_MOUSE_WHEEL && viewport_p) {
-                    int mx, my;
-                    ({ float _mx,_my; SDL_GetMouseState(&_mx, &_my); mx = static_cast<int>(_mx); my = static_cast<int>(_my); });
+                    float fmx, fmy;
+                    SDL_GetMouseState(&fmx, &fmy);
+                    int mx = static_cast<int>(fmx);
+                    int my = static_cast<int>(fmy);
                     if (viewport_p->contains(mx, my)) {
                         // Scroll w górę: y>0, w dół: y<0
                         const int step = 80; // 80 px / klik jak w profilu "Minimalny pion"

@@ -7,6 +7,7 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include "logger.hpp"
 
 import std.compat;
 
@@ -26,12 +27,12 @@ public:
     SDLApp(const char* title, int width, int height, 
            bool resizable = false) {
         if (!SDL_Init(SDL_INIT_VIDEO)) {
-            std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+            LOG_ERROR("SDLApp", "SDL could not initialize! SDL_Error: {}", SDL_GetError());
             throw std::runtime_error("SDL_Init failed");
         }
 
         if (!TTF_Init()) {
-            std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << SDL_GetError() << std::endl;
+            LOG_ERROR("SDLApp", "SDL_ttf could not initialize! SDL_ttf Error: {}", SDL_GetError());
             SDL_Quit();
             throw std::runtime_error("TTF_Init failed");
         }
@@ -43,7 +44,7 @@ public:
 
         m_window = SDL_CreateWindow(title, width, height, windowFlags);
         if (!m_window) {
-            std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            LOG_ERROR("SDLApp", "Window could not be created! SDL_Error: {}", SDL_GetError());
             TTF_Quit();
             SDL_Quit();
             throw std::runtime_error("SDL_CreateWindow failed");
@@ -51,7 +52,7 @@ public:
 
         m_renderer = SDL_CreateRenderer(m_window, NULL);
         if (!m_renderer) {
-            std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            LOG_ERROR("SDLApp", "Renderer could not be created! SDL_Error: {}", SDL_GetError());
             SDL_DestroyWindow(m_window);
             TTF_Quit();
             SDL_Quit();
@@ -72,18 +73,18 @@ public:
            bool resizable, GPUBackend /*backend*/, bool gpuDebug = false) {
         Uint64 t0 = SDL_GetTicks();
         if (!SDL_Init(SDL_INIT_VIDEO)) {
-            std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+            LOG_ERROR("SDLApp", "SDL could not initialize! SDL_Error: {}", SDL_GetError());
             throw std::runtime_error("SDL_Init failed");
         }
-        std::cout << "[SDLApp] SDL_Init: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+        LOG_INFO("SDLApp", "SDL_Init: {}ms", SDL_GetTicks() - t0);
 
         t0 = SDL_GetTicks();
         if (!TTF_Init()) {
-            std::cerr << "SDL_ttf could not initialize! SDL_ttf Error: " << SDL_GetError() << std::endl;
+            LOG_ERROR("SDLApp", "SDL_ttf could not initialize! SDL_ttf Error: {}", SDL_GetError());
             SDL_Quit();
             throw std::runtime_error("TTF_Init failed");
         }
-        std::cout << "[SDLApp] TTF_Init: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+        LOG_INFO("SDLApp", "TTF_Init: {}ms", SDL_GetTicks() - t0);
 
         SDL_WindowFlags windowFlags = 0;
         if (resizable) {
@@ -92,15 +93,15 @@ public:
 
         t0 = SDL_GetTicks();
         m_window = SDL_CreateWindow(title, width, height, windowFlags);
-        std::cout << "[SDLApp] SDL_CreateWindow: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+        LOG_INFO("SDLApp", "SDL_CreateWindow: {}ms", SDL_GetTicks() - t0);
         if (!m_window) {
-            std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            LOG_ERROR("SDLApp", "Window could not be created! SDL_Error: {}", SDL_GetError());
             TTF_Quit();
             SDL_Quit();
             throw std::runtime_error("SDL_CreateWindow failed");
         }
 
-        std::cout << "[SDLApp] Window created" << std::endl;
+        LOG_INFO("SDLApp", "Window created");
 
         if (!getenv("VK_ICD_FILENAMES") && !getenv("VK_DRIVER_FILES")) {
             std::string icdPaths;
@@ -129,7 +130,7 @@ public:
 
             if (!icdPaths.empty()) {
                 setenv("VK_ICD_FILENAMES", icdPaths.c_str(), 1);
-                std::cout << "[SDLApp] VK_ICD_FILENAMES=" << icdPaths << std::endl;
+                 LOG_INFO("SDLApp", "VK_ICD_FILENAMES={}", icdPaths);
             }
         }
 
@@ -140,9 +141,9 @@ public:
         SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, gpuDebug);
         m_gpuDevice = SDL_CreateGPUDeviceWithProperties(props);
         SDL_DestroyProperties(props);
-        std::cout << "[SDLApp] SDL_CreateGPUDevice (vulkan): " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+        LOG_INFO("SDLApp", "SDL_CreateGPUDevice (vulkan): {}ms", SDL_GetTicks() - t0);
         if (!m_gpuDevice) {
-            std::cerr << "GPU device could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            LOG_ERROR("SDLApp", "GPU device could not be created! SDL_Error: {}", SDL_GetError());
             SDL_DestroyWindow(m_window);
             TTF_Quit();
             SDL_Quit();
@@ -151,9 +152,9 @@ public:
 
         t0 = SDL_GetTicks();
         m_renderer = SDL_CreateGPURenderer(m_gpuDevice, m_window);
-        std::cout << "[SDLApp] SDL_CreateGPURenderer: " << (SDL_GetTicks() - t0) << "ms" << std::endl;
+        LOG_INFO("SDLApp", "SDL_CreateGPURenderer: {}ms", SDL_GetTicks() - t0);
         if (!m_renderer) {
-            std::cerr << "GPU renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            LOG_ERROR("SDLApp", "GPU renderer could not be created! SDL_Error: {}", SDL_GetError());
             SDL_DestroyGPUDevice(m_gpuDevice);
             SDL_DestroyWindow(m_window);
             TTF_Quit();

@@ -81,9 +81,7 @@ std::vector<EditorElement> LayoutImporter::loadFromJSON(const std::string& fileP
     auto parseNumber = [&]() -> std::string {
         skipWhitespace();
         std::string result;
-        bool isFloat = false;
         while (pos < content.size() && (std::isdigit(static_cast<unsigned char>(content[pos])) || content[pos] == '-' || content[pos] == '+' || content[pos] == '.')) {
-            if (content[pos] == '.') isFloat = true;
             result += content[pos];
             pos++;
         }
@@ -99,38 +97,6 @@ std::vector<EditorElement> LayoutImporter::loadFromJSON(const std::string& fileP
         if (content.substr(pos, 4) == "true") { pos += 4; return "true"; }
         if (content.substr(pos, 5) == "false") { pos += 5; return "false"; }
         if (content.substr(pos, 4) == "null") { pos += 4; return ""; }
-        return "";
-    };
-    
-    auto findKey = [&](const std::string& key) -> std::string {
-        size_t searchPos = pos;
-        while (searchPos < content.size()) {
-            skipWhitespace();
-            size_t keyStart = content.find('"' + key + '"', searchPos);
-            if (keyStart == std::string::npos) return "";
-            
-            size_t colonPos = keyStart + key.size() + 2;
-            while (colonPos < content.size() && content[colonPos] != ':') colonPos++;
-            colonPos++;
-            
-            while (colonPos < content.size() && std::isspace(static_cast<unsigned char>(content[colonPos]))) colonPos++;
-            
-            if (content[colonPos] == '"') {
-                colonPos++;
-                std::string val;
-                while (colonPos < content.size() && content[colonPos] != '"') {
-                    val += content[colonPos++];
-                }
-                return val;
-            } else if (std::isdigit(static_cast<unsigned char>(content[colonPos])) || content[colonPos] == '-') {
-                std::string val;
-                while (colonPos < content.size() && (std::isdigit(static_cast<unsigned char>(content[colonPos])) || content[colonPos] == '-' || content[colonPos] == '.')) {
-                    val += content[colonPos++];
-                }
-                return val;
-            }
-            searchPos = colonPos;
-        }
         return "";
     };
     
@@ -238,15 +204,15 @@ std::vector<EditorElement> LayoutImporter::loadFromJSON(const std::string& fileP
             searchPos = valStart + 1;
         }
         
-        size_t childrenPos = objContent.find('"children"');
+        size_t childrenPos = objContent.find("\"children\"");
         if (childrenPos != std::string::npos) {
             size_t arrStart = objContent.find('[', childrenPos);
             if (arrStart != std::string::npos) {
                 size_t arrEnd = arrStart + 1;
-                int bracketCount = 1;
-                while (arrEnd < objContent.size() && bracketCount > 0) {
-                    if (objContent[arrEnd] == '[') bracketCount++;
-                    else if (objContent[arrEnd] == ']') bracketCount--;
+                size_t arrBracketCount = 1;
+                while (arrEnd < objContent.size() && arrBracketCount > 0) {
+                    if (objContent[arrEnd] == '[') arrBracketCount++;
+                    else if (objContent[arrEnd] == ']') arrBracketCount--;
                     arrEnd++;
                 }
                 

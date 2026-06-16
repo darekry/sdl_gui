@@ -22,7 +22,7 @@ int main() {
         auto button = std::make_unique<Button>(gui, 350, 50, 100, 40, "Animuj!");
         button->setOnClickCallback([&gui, panelRef](GUIElement*) {
             if (!panelRef) return;
-            std::cout << "Rozpoczynam animację..." << std::endl;
+            LOG_INFO("Animation", "Rozpoczynam animację...");
 
             const float start_pos_y = static_cast<float>(panelRef->getY());
             const float target_pos_y = 400.0f;
@@ -33,14 +33,14 @@ int main() {
                 target_pos_y
             ]() {
                 if (!panelRef) return;
-                std::cout << "Animacja do celu zakończona. Powrót..." << std::endl;
+                LOG_INFO("Animation", "Animacja do celu zakończona. Powrót...");
                 gui.getAnimationManager()->createAnimation(
                     &panelRef->m_y,
                     target_pos_y,
                     start_pos_y,
                     2000,
                     Easing::easeOutQuad,
-                    [](){ std::cout << "Animacja powrotna zakończona!" << std::endl; }
+                    [](){ LOG_INFO("Animation", "Animacja powrotna zakończona!"); }
                 );
             };
             

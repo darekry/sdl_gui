@@ -39,7 +39,7 @@ void Canvas::recreateTexture(SDL_Renderer* renderer, int w, int h) {
 
     SDL_Texture* newTex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
     if (!newTex) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Canvas: SDL_CreateTexture failed: %s", SDL_GetError());
+        LOG_ERROR("Canvas", "SDL_CreateTexture failed: {}", SDL_GetError());
         m_texW = m_texH = 0;
         return;
     }
@@ -96,7 +96,7 @@ void Canvas::putBrush(SDL_Renderer* renderer, int x, int y) {
     if (rw <= 0 || rh <= 0) return;
 
     SDL_Rect r{ rx, ry, rw, rh };
-    ({ SDL_FRect _fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)}; SDL_RenderFillRect(renderer, &_fr); });
+    { SDL_FRect _fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)}; SDL_RenderFillRect(renderer, &_fr); }
 }
 
 void Canvas::drawSegment(SDL_Renderer* renderer, SDL_Point a, SDL_Point b) {
@@ -147,7 +147,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
 
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
         if (contains(e.button.x, e.button.y)) {
-            SDL_Point local = windowToLocal(e.button.x, e.button.y);
+            SDL_Point local = windowToLocal(static_cast<int>(e.button.x), static_cast<int>(e.button.y));
             local.x = iclamp(local.x, 0, std::max(0, m_texW - 1));
             local.y = iclamp(local.y, 0, std::max(0, m_texH - 1));
             m_drawing = true;
@@ -165,7 +165,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
         }
     } else if (e.type == SDL_EVENT_MOUSE_MOTION) {
         if (m_drawing) {
-            SDL_Point cur = windowToLocal(e.motion.x, e.motion.y);
+            SDL_Point cur = windowToLocal(static_cast<int>(e.motion.x), static_cast<int>(e.motion.y));
             cur.x = iclamp(cur.x, 0, std::max(0, m_texW - 1));
             cur.y = iclamp(cur.y, 0, std::max(0, m_texH - 1));
 
@@ -199,5 +199,5 @@ void Canvas::drawDirect(SDL_Renderer* renderer) {
 
     SDL_Point abs = getAbsolutePosition();
     SDL_Rect dest{ abs.x, abs.y, m_width, m_height };
-    ({ SDL_FRect _dr = {static_cast<float>(dest.x), static_cast<float>(dest.y), static_cast<float>(dest.w), static_cast<float>(dest.h)}; SDL_RenderTexture(renderer, m_canvasTex.get(), nullptr, &_dr); });
+    { SDL_FRect _dr = {static_cast<float>(dest.x), static_cast<float>(dest.y), static_cast<float>(dest.w), static_cast<float>(dest.h)}; SDL_RenderTexture(renderer, m_canvasTex.get(), nullptr, &_dr); }
 }

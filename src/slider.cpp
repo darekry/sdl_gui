@@ -87,7 +87,7 @@ bool Slider::handleEvent(const SDL_Event& e) {
         SDL_Point mousePoint = {static_cast<int>(e.button.x), static_cast<int>(e.button.y)};
         if (SDL_PointInRect(&mousePoint, &trackArea)) {
             m_isDragging = true;
-            updateValueFromMouse(e.button.x, e.button.y);
+            updateValueFromMouse(static_cast<int>(e.button.x), static_cast<int>(e.button.y));
             return true;
         }
     } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
@@ -97,12 +97,12 @@ bool Slider::handleEvent(const SDL_Event& e) {
         }
     } else if (e.type == SDL_EVENT_MOUSE_MOTION) {
         if (m_isDragging) {
-            updateValueFromMouse(e.motion.x, e.motion.y);
+            updateValueFromMouse(static_cast<int>(e.motion.x), static_cast<int>(e.motion.y));
             return true;
         }
     } else if (e.type == SDL_EVENT_MOUSE_WHEEL && m_isHovered) {
         // Obsługa kółka myszy - zmiana wartości gdy slider jest hoverowany
-        int delta = e.wheel.y * m_wheelStep;
+        int delta = static_cast<int>(e.wheel.y) * m_wheelStep;
         if (delta != 0) {
             setValue(m_currentValue + delta);
             return true;
@@ -150,7 +150,7 @@ void Slider::draw(SDL_Renderer* renderer) {
     } else {
         trackRect = {getWidth() / 2 - trackThickness / 2, m_trackOffsetY, trackThickness, m_trackSize};
     }
-    ({ SDL_FRect _fr = {static_cast<float>(trackRect.x), static_cast<float>(trackRect.y), static_cast<float>(trackRect.w), static_cast<float>(trackRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+    { SDL_FRect _fr = {static_cast<float>(trackRect.x), static_cast<float>(trackRect.y), static_cast<float>(trackRect.w), static_cast<float>(trackRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
 
     SDL_Color thumbColor = style.borderColor.value_or(SDL_Color{100, 100, 100, 255});
     SDL_SetRenderDrawColor(renderer, thumbColor.r, thumbColor.g, thumbColor.b, thumbColor.a);
@@ -168,7 +168,7 @@ void Slider::draw(SDL_Renderer* renderer) {
         thumbRect = {.x=getWidth() / 2 - thumbSize / 2, .y=thumbY, .w=thumbSize, .h=thumbSize};
     }
     
-    ({ SDL_FRect _fr = {static_cast<float>(thumbRect.x), static_cast<float>(thumbRect.y), static_cast<float>(thumbRect.w), static_cast<float>(thumbRect.h)}; SDL_RenderFillRect(renderer, &_fr); });
+    { SDL_FRect _fr = {static_cast<float>(thumbRect.x), static_cast<float>(thumbRect.y), static_cast<float>(thumbRect.w), static_cast<float>(thumbRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
 }
 
 Button* Slider::getDecrementButton() {

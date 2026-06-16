@@ -5,22 +5,22 @@ import std.compat;
 
 WindowManager::WindowManager() {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
-        std::cerr << "WindowManager::WindowManager() - SDL_Init failed: " << SDL_GetError() << "\n";
+        LOG_ERROR("WindowManager", "SDL_Init failed: {}", SDL_GetError());
         throw std::runtime_error("SDL_Init failed: " + std::string(SDL_GetError()));
     }
     
     if (!TTF_Init()) {
-        std::cerr << "WindowManager::WindowManager() - TTF_Init failed: " << SDL_GetError() << "\n";
+        LOG_ERROR("WindowManager", "TTF_Init failed: {}", SDL_GetError());
         SDL_Quit();
         throw std::runtime_error("TTF_Init failed: " + std::string(SDL_GetError()));
     }
     
     m_sdlInitialized = true;
-    LOG_DEBUG("WindowManager::WindowManager() - SDL initialized successfully");
+    LOG_DEBUG("WindowManager", "SDL initialized successfully");
 }
 
 WindowManager::~WindowManager() {
-    LOG_DEBUG("WindowManager::~WindowManager() - destroying all windows (%zu)", m_windows.size());
+    LOG_DEBUG("WindowManager", "destroying all windows ({})", m_windows.size());
     
     m_windows.clear();
     
@@ -41,12 +41,11 @@ Window* WindowManager::createWindow(const std::string& title, int width, int hei
         Window* rawPtr = window.get();
         m_windows.push_back(std::move(window));
         
-        LOG_DEBUG("WindowManager::createWindow() - created '%s' (total windows: %zu)", 
-                  title.c_str(), m_windows.size());
+        LOG_DEBUG("WindowManager", "created '{}' (total windows: {})", title, m_windows.size());
         
         return rawPtr;
     } catch (const std::runtime_error& e) {
-        std::cerr << "WindowManager::createWindow() - failed: " << e.what() << "\n";
+        LOG_ERROR("WindowManager", "createWindow() failed: {}", e.what());
         return nullptr;
     }
 }
@@ -229,9 +228,9 @@ void WindowManager::removeMarkedWindows() {
             return window && window->isMarkedForClose();
         });
     
-    size_t removedCount = std::distance(it, m_windows.end());
+    size_t removedCount = static_cast<size_t>(std::distance(it, m_windows.end()));
     if (removedCount > 0) {
-        LOG_DEBUG("WindowManager::removeMarkedWindows() - removed %zu windows", removedCount);
+        LOG_DEBUG("WindowManager", "removed {} windows", removedCount);
     }
     
     m_windows.erase(it, m_windows.end());

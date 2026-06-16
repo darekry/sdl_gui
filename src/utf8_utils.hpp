@@ -7,7 +7,7 @@ inline size_t charToByteIndex(std::string_view text, size_t charIndex) {
     size_t charCount = 0;
     
     while (byteIdx < text.size() && charCount < charIndex) {
-        unsigned char c = text[byteIdx];
+        unsigned char c = static_cast<unsigned char>(text[byteIdx]);
         if ((c & 0x80) == 0) byteIdx += 1;
         else if ((c & 0xE0) == 0xC0) byteIdx += 2;
         else if ((c & 0xF0) == 0xE0) byteIdx += 3;
@@ -23,7 +23,7 @@ inline size_t charCount(std::string_view text) {
     size_t byteIdx = 0;
     
     while (byteIdx < text.size()) {
-        unsigned char c = text[byteIdx];
+        unsigned char c = static_cast<unsigned char>(text[byteIdx]);
         if ((c & 0x80) == 0) byteIdx += 1;
         else if ((c & 0xE0) == 0xC0) byteIdx += 2;
         else if ((c & 0xF0) == 0xE0) byteIdx += 3;
@@ -68,7 +68,7 @@ inline size_t byteIndexToCharIndex(std::string_view text, size_t byteIndex) {
     size_t bytePos = 0;
     
     while (bytePos < byteIndex && bytePos < text.size()) {
-        unsigned char c = text[bytePos];
+        unsigned char c = static_cast<unsigned char>(text[bytePos]);
         if ((c & 0x80) == 0) bytePos += 1;
         else if ((c & 0xE0) == 0xC0) bytePos += 2;
         else if ((c & 0xF0) == 0xE0) bytePos += 3;

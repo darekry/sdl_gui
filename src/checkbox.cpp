@@ -74,8 +74,8 @@ void Checkbox::draw(SDL_Renderer* renderer) {
             SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
 
             SDL_Rect checkRect = { 3, 3, m_width - 6, m_height - 6 };
-            SDL_RenderLine(renderer, checkRect.x, checkRect.y + checkRect.h / 2, checkRect.x + checkRect.w / 2, checkRect.y + checkRect.h);
-            SDL_RenderLine(renderer, checkRect.x + checkRect.w / 2, checkRect.y + checkRect.h, checkRect.x + checkRect.w, checkRect.y);
+            RenderLine(renderer, checkRect.x, checkRect.y + checkRect.h / 2, checkRect.x + checkRect.w / 2, checkRect.y + checkRect.h);
+            RenderLine(renderer, checkRect.x + checkRect.w / 2, checkRect.y + checkRect.h, checkRect.x + checkRect.w, checkRect.y);
         }
     }
 }

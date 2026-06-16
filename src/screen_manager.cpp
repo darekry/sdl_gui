@@ -9,7 +9,7 @@ ScreenManager::ScreenManager(GUIManager& manager)
 
 bool ScreenManager::addScreen(const std::string& name, std::unique_ptr<Screen> screen) {
     if (m_screens.contains(name)) {
-        std::cerr << "ScreenManager::addScreen() - screen '" << name << "' already exists\n";
+        LOG_ERROR("ScreenManager", "addScreen() - screen '{}' already exists", name);
         return false;
     }
     m_screens[name] = std::move(screen);
@@ -19,21 +19,21 @@ bool ScreenManager::addScreen(const std::string& name, std::unique_ptr<Screen> s
 bool ScreenManager::removeScreen(const std::string& name) {
     // Cannot remove current screen
     if (!m_screenStack.empty() && m_screenStack.back() == name) {
-        std::cerr << "ScreenManager::removeScreen() - cannot remove current screen '" << name << "'\n";
+        LOG_ERROR("ScreenManager", "removeScreen() - cannot remove current screen '{}'", name);
         return false;
     }
     
     // Check if screen is in stack (cannot remove screens in stack)
     for (const auto& stackName : m_screenStack) {
         if (stackName == name) {
-            std::cerr << "ScreenManager::removeScreen() - cannot remove screen '" << name << "' from stack\n";
+            LOG_ERROR("ScreenManager", "removeScreen() - cannot remove screen '{}' from stack", name);
             return false;
         }
     }
     
     auto it = m_screens.find(name);
     if (it == m_screens.end()) {
-        std::cerr << "ScreenManager::removeScreen() - screen '" << name << "' not found\n";
+        LOG_ERROR("ScreenManager", "removeScreen() - screen '{}' not found", name);
         return false;
     }
     
@@ -53,7 +53,7 @@ Screen* ScreenManager::getScreen(const std::string& name) const {
 bool ScreenManager::changeScreen(const std::string& name) {
     auto it = m_screens.find(name);
     if (it == m_screens.end()) {
-        std::cerr << "ScreenManager::changeScreen() - screen '" << name << "' not found\n";
+        LOG_ERROR("ScreenManager", "changeScreen() - screen '{}' not found", name);
         return false;
     }
     
@@ -86,13 +86,13 @@ Screen* ScreenManager::getCurrentScreen() const {
 bool ScreenManager::pushScreen(const std::string& name) {
     auto it = m_screens.find(name);
     if (it == m_screens.end()) {
-        std::cerr << "ScreenManager::pushScreen() - screen '" << name << "' not found\n";
+        LOG_ERROR("ScreenManager", "pushScreen() - screen '{}' not found", name);
         return false;
     }
     
     // Don't push if already at top
     if (!m_screenStack.empty() && m_screenStack.back() == name) {
-        std::cerr << "ScreenManager::pushScreen() - screen '" << name << "' already at top of stack\n";
+        LOG_ERROR("ScreenManager", "pushScreen() - screen '{}' already at top of stack", name);
         return false;
     }
     
@@ -104,7 +104,7 @@ bool ScreenManager::pushScreen(const std::string& name) {
 
 std::string ScreenManager::popScreen() {
     if (m_screenStack.empty()) {
-        std::cerr << "ScreenManager::popScreen() - stack is empty\n";
+        LOG_ERROR("ScreenManager", "popScreen() - stack is empty");
         return "";
     }
     
@@ -190,14 +190,14 @@ void ScreenManager::cleanup() {
 
 void ScreenManager::enterScreen(Screen* screen) {
     if (screen) {
-        LOG_DEBUG("ScreenManager::enterScreen() - entering '%s'", screen->getName().c_str());
+        LOG_DEBUG("ScreenManager", "entering '{}'", screen->getName());
         screen->onEnter(m_guiManager);
     }
 }
 
 void ScreenManager::exitScreen(Screen* screen) {
     if (screen) {
-        LOG_DEBUG("ScreenManager::exitScreen() - exiting '%s'", screen->getName().c_str());
+        LOG_DEBUG("ScreenManager", "exiting '{}'", screen->getName());
         screen->onExit(m_guiManager);
         // Cleanup after exiting screen
         m_guiManager.cleanup();
