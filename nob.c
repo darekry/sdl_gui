@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CXX "clang++-22"
-#define CC "clang-22"
+#define CXX "clang++-20"
+#define CC "clang-20"
 
 #define SRC_DIR "src"
 #define OUTPUT_DIR "output"
@@ -15,8 +15,8 @@
 #define MODULE_CACHE_DIR "modules_cache"
 #define EXAMPLES_DIR "examples"
 
-#define STD_MODULE_SRC "/usr/lib/llvm-23/share/libc++/v1/std.cppm"
-#define STD_COMPAT_MODULE_SRC "/usr/lib/llvm-23/share/libc++/v1/std.compat.cppm"
+#define STD_MODULE_SRC "/usr/lib/llvm-20/share/libc++/v1/std.cppm"
+#define STD_COMPAT_MODULE_SRC "/usr/lib/llvm-20/share/libc++/v1/std.compat.cppm"
 
 // ========== PREKOMPILOWANE FLAGI ==========
 
