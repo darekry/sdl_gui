@@ -2,7 +2,7 @@
 #include "../gui_manager.hpp"
 #include "../theme.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 namespace fs = std::filesystem;
 

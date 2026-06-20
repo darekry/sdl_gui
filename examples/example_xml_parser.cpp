@@ -2,7 +2,7 @@
 #include "gui_manager.hpp"
 #include "sgml_parser.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 int main(int argc, char * argv[])
 {

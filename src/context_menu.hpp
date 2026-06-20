@@ -4,7 +4,7 @@
 #include "gui.hpp"
 #include "panel.hpp"
 #include "button.hpp"
-import std.compat;
+#include "std.hpp"
 
 struct ContextMenuItem {
     std::string text;

@@ -3,7 +3,7 @@
 #include <SDL3/SDL_pixels.h>
 #include "logger.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 struct SDL_Texture;
 using SharedTexture = std::shared_ptr<SDL_Texture>;

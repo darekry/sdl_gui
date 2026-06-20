@@ -3,7 +3,7 @@
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
 #include "gui.hpp"
-import std.compat;
+#include "std.hpp"
 namespace {
     constexpr float kEpsilon = 1e-6f;
 }

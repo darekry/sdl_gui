@@ -4,7 +4,7 @@
 #include "texture_manager.hpp"
 #include <SDL3_ttf/SDL_ttf.h>
 
-import std.compat;
+#include "std.hpp"
 
 // Konstruktor
 StringGrid::StringGrid(GUIManager& manager, int x, int y, int width, int height,

@@ -4,7 +4,7 @@
 #include "../panel.hpp"
 #include "editor_state.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 class CanvasPanel;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-import std.compat;
+#include "std.hpp"
 
 namespace Easing {
     inline float linear(float t) { return t; }

@@ -1,7 +1,7 @@
 #include "screen_manager.hpp"
 #include "screen.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 ScreenManager::ScreenManager(GUIManager& manager)
     : m_guiManager(manager) {

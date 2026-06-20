@@ -6,7 +6,7 @@
 #include "animation_manager.hpp"
 #include <SDL3/SDL.h>
 
-import std.compat;
+#include "std.hpp"
 class AnimatedImage : public GUIElement {
 public:
     enum class ScaleMode {

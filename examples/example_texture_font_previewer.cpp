@@ -9,7 +9,7 @@
 #include "texture_manager.hpp"
 #include "font_manager.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 int main() {
     try {

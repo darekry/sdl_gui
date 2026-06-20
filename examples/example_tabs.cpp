@@ -6,7 +6,7 @@
 #include "label.hpp" // Dodano
 #include "sdl_app.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;

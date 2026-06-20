@@ -11,7 +11,7 @@
 #include "cursor.hpp"
 #include <SDL3/SDL_gpu.h>
 
-import std.compat;
+#include "std.hpp"
 
 class TimerManager;
 class AnimationManager;

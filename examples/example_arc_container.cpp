@@ -22,7 +22,7 @@
 #include "style.hpp"
 #include "sdl_app.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 int main(int, char**) {
     try {

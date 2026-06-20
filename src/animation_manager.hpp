@@ -4,7 +4,7 @@
 #include "logger.hpp"
 #include "easing.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 struct Animation {
     using CompleteCallback = std::function<void()>;

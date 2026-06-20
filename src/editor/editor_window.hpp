@@ -14,7 +14,7 @@
 #include "editor_state.hpp"
 #include "layout_exporter.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 class EditorWindow {
 public:

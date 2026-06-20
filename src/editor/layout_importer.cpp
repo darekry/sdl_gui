@@ -1,7 +1,7 @@
 #include "layout_importer.hpp"
 #include "../../lib/tinyxml2.h"
 
-import std.compat;
+#include "std.hpp"
 
 // Helper function for safe integer parsing from JSON values
 static int safeParseInt(const std::string& value, int defaultVal) {

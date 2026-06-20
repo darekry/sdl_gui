@@ -5,7 +5,7 @@
 #include "texture_manager.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
-import std.compat;
+#include "std.hpp"
 ComboBox::ComboBox(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h),
       m_is_expanded(false),

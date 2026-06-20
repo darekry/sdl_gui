@@ -5,7 +5,7 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include "font_manager.hpp" // Potrzebne do stworzenia domyślnej tekstury
 
-import std.compat;
+#include "std.hpp"
 
 struct StringHash {
     using is_transparent = void;

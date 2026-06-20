@@ -23,7 +23,7 @@
 #include "slider.hpp"
 #include "checkbox.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 class MenuScreen : public Screen {
 public:

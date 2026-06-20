@@ -10,7 +10,7 @@
  * Controls: ENTER = toggle shader, ESC = quit.
  */
 
-import std.compat;
+#include "std.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gpu.h>
 #include "sdl_app.hpp"

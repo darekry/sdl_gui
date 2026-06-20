@@ -7,7 +7,7 @@
 #include "animation_manager.hpp"
 #include "easing.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 const int SCREEN_WIDTH = 600;
 const int SCREEN_HEIGHT = 400;

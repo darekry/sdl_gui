@@ -1,7 +1,7 @@
 #pragma once
 
-import std.compat;
-#include <cstdio>
+#include "std.hpp"
+
 
 namespace sdlgui {
 
@@ -47,7 +47,7 @@ inline const char* _levelStr(LogLevel level) {
 template<typename... Args>
 void _log(LogLevel level, const char* tag, std::format_string<Args...> fmt, Args&&... args) {
     if (level < g_logLevel) return;
-    std::println(stderr, "[{}][{}] {}", _levelStr(level), tag, std::format(fmt, std::forward<Args>(args)...));
+    std::println(std::cerr, "[{}][{}] {}", _levelStr(level), tag, std::format(fmt, std::forward<Args>(args)...));
 }
 
 } // namespace sdlgui

@@ -20,7 +20,7 @@
 #include "text_input.hpp"
 #include <SDL3/SDL.h>
 
-import std.compat;
+#include "std.hpp"
 
 LayoutParser::LayoutParser(GUIManager& guiManager)
     : m_guiManager(guiManager)

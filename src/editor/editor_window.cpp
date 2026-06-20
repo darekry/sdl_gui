@@ -4,7 +4,7 @@
 #include "../theme.hpp"
 #include "../composite/message_box.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 static constexpr std::array<const char*, 14> WIDGET_TYPES = {
     "Button", "Label", "Checkbox", "RadioButton", "RadioGroup",

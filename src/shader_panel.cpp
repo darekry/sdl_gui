@@ -1,6 +1,6 @@
 #include "shader_panel.hpp"
 #include "gui_manager.hpp"
-import std.compat;
+#include "std.hpp"
 
 ShaderPanel::ShaderPanel(GUIManager& manager, int x, int y, int width, int height)
     : Panel(manager, x, y, width, height) {

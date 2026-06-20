@@ -2,7 +2,7 @@
 
 #include "window.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 /**
  * @brief Manages multiple SDL windows with their own renderers and GUIManagers

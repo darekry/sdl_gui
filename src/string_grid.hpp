@@ -7,7 +7,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
-import std.compat;
+#include "std.hpp"
 
 // Enum reprezentujący kierunek sortowania
 enum class SortDirection { None, Ascending, Descending };

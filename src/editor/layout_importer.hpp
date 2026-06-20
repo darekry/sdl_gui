@@ -2,7 +2,7 @@
 
 #include "editor_element.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 class LayoutImporter {
 public:

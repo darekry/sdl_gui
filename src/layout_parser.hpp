@@ -2,7 +2,7 @@
 
 #include <SDL3/SDL_pixels.h>
 
-import std.compat;
+#include "std.hpp"
 
 class GUIManager;
 class GUIElement;

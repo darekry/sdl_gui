@@ -649,7 +649,7 @@ static bool build_combined_header(void) {
     
     Nob_String_Builder sb = {0};
     nob_sb_append_cstr(&sb, "// Auto-generated header. Do not edit.\n#pragma once\n\n");
-    nob_sb_append_cstr(&sb, "import std.compat;\n\n");
+    nob_sb_append_cstr(&sb, "#include \"std.hpp\"\n\n");
     nob_sb_append_cstr(&sb, "// External libraries\n");
     nob_sb_append_cstr(&sb, "#include <SDL3/SDL.h>\n#include <SDL3/SDL_gpu.h>\n");
     nob_sb_append_cstr(&sb, "#include <SDL3_image/SDL_image.h>\n#include <SDL3_ttf/SDL_ttf.h>\n");

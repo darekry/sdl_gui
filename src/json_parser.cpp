@@ -2,7 +2,7 @@
 #include <SDL3/SDL.h>
 #include "logger.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 namespace
 {

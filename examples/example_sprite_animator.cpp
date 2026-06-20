@@ -7,7 +7,7 @@
 #include "slider.hpp"
 #include "label.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 int main() {
     try {

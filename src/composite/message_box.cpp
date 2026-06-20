@@ -1,6 +1,6 @@
 #include "message_box.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 int MessageBox::calculateWidth(std::string_view message, int minWidth, int maxWidth) {
     // Prosta heurystyka: ~10px per znak

@@ -1,7 +1,7 @@
 #include "window_manager.hpp"
 #include "window.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 WindowManager::WindowManager() {
     if (!SDL_Init(SDL_INIT_VIDEO)) {

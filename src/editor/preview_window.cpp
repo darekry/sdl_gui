@@ -13,7 +13,7 @@
 #include "../string_grid.hpp"
 #include "../list_view.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 // Helper function for safe integer parsing from properties
 static int previewParseInt(const std::string& value, int defaultVal) {

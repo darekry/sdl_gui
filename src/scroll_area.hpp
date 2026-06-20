@@ -3,7 +3,7 @@
 #include "panel.hpp"
 #include "slider.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 class ScrollArea : public Panel {
 public:

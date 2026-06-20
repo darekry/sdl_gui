@@ -2,7 +2,7 @@
 
 #include "gui_manager.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 /**
  * @brief Abstract base class for screens in ScreenManager

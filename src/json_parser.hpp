@@ -2,7 +2,7 @@
 
 #include "layout_parser.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 namespace json
 {

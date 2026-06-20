@@ -1,7 +1,7 @@
 #include "window.hpp"
 #include "gui.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 Window::Window(const std::string& title, int width, int height,
                const char* name, bool resizable)

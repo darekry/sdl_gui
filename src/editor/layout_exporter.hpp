@@ -2,7 +2,7 @@
 
 #include "editor_element.hpp"
 
-import std.compat;
+#include "std.hpp"
 class LayoutExporter {
 public:
     static bool saveToXML(const std::vector<EditorElement>& elements, const std::string& filePath);

@@ -6,7 +6,7 @@
 #include <SDL3/SDL_log.h>
 #include "label.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 // Helper function to create a 1x1 texture of a specific color
 SDL_Texture* createColorTexture(SDL_Renderer* renderer, SDL_Color color) {

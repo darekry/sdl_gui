@@ -2,7 +2,7 @@
 
 #include <SDL3/SDL.h>
 
-import std.compat;
+#include "std.hpp"
 
 
 class GUIElement;

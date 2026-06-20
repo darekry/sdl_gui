@@ -1,7 +1,7 @@
 #include "layout_exporter.hpp"
 #include "../../lib/tinyxml2.h"
 
-import std.compat;
+#include "std.hpp"
 
 bool LayoutExporter::saveToXML(const std::vector<EditorElement>& elements, const std::string& filePath) {
     tinyxml2::XMLDocument doc;

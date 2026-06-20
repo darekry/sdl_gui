@@ -5,7 +5,7 @@
 #include "label.hpp"
 #include "style.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 int main(int, char**) {
     try {

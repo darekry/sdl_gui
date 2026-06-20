@@ -7,7 +7,7 @@
 #include "../text_input.hpp"
 #include "../string_grid.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 /**
  * @brief FileDialog - composite file picker dialog

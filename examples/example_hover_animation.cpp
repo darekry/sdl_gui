@@ -6,7 +6,7 @@
 #include "animation_manager.hpp"
 #include "easing.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 class HoverAnimatedLift : public Panel {
 public:

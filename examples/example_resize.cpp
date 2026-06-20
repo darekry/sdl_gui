@@ -25,7 +25,7 @@
 #include "sdl_app.hpp"
 #include "anchor.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 int main(int, char**)
 {

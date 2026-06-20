@@ -2,7 +2,7 @@
 
 #include "string_grid.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 class ListView : public StringGrid {
 public:

@@ -7,7 +7,7 @@
 #include "../src/panel.hpp"
 #include "../src/label.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 // === Test Screens ===
 

@@ -3,7 +3,7 @@
 #include "screen.hpp"
 #include "gui_manager.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 /**
  * @brief Manages multiple screens and handles screen transitions

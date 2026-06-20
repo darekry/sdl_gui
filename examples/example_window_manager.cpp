@@ -24,7 +24,7 @@
 #include "text_area.hpp"
 #include "logger.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 void setupSettingsWindow(Window* window);
 

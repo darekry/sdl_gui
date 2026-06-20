@@ -2,7 +2,7 @@
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include <SDL3/SDL.h>
-import std.compat;
+#include "std.hpp"
 
 void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color) {
     if (radius <= 0.0f || rect.w < 2.0f * radius || rect.h < 2.0f * radius) {

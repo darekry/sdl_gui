@@ -3,7 +3,7 @@
 #include "button.hpp"
 #include "canvas.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 const int SCREEN_WIDTH = 900;
 const int SCREEN_HEIGHT = 700;

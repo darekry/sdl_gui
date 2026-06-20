@@ -3,7 +3,7 @@
 #include "slider.hpp"
 #include "sdl_app.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 
 const int SCREEN_WIDTH = 800;

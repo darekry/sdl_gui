@@ -4,7 +4,7 @@
 #include "../gui_manager.hpp"
 #include "dialog_box.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 /**
  * @file message_box.hpp

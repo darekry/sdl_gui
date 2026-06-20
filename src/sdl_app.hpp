@@ -9,7 +9,7 @@
 #include <dirent.h>
 #include "logger.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 struct GPUBackend {};
 inline constexpr GPUBackend GPU_VULKAN{};

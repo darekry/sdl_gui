@@ -3,7 +3,7 @@
 #include "sdl_deleters.hpp"
 #include <SDL3/SDL.h>
 
-import std.compat;
+#include "std.hpp"
 
 AnimatedImage::AnimatedImage(GUIManager& manager, int x, int y, int width, int height)
     : GUIElement(manager, x, y, width, height) {

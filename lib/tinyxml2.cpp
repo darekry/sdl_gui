@@ -24,7 +24,7 @@ distribution.
 #include "tinyxml2.h"
 #include <cstdarg>
 
-import std.compat;
+#include "std.hpp"
 
 // Handle fallthrough attribute for different compilers
 #ifndef __has_attribute

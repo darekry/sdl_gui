@@ -1,7 +1,7 @@
 #include "cursor.hpp"
 #include "gui_manager.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 namespace {
 constexpr float kDefaultFPS = 12.0f;

@@ -3,7 +3,7 @@
 #include "sdl_app.hpp"
 #include "label.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 
 
@@ -41,7 +41,6 @@ int main(int, char**) {
 
         // --- Przycisk 3: Pełna personalizacja stylu ---
         auto buttonStyled = std::make_unique<Button>(guiManager, 550, 50, 200, 50, "Styled Button");
-        SharedTexture buttonTexture = guiManager.getTextureManager().loadTexture("assets/button_bg.png");
 
         Style normal_style;
         normal_style.borderColor = {255, 255, 0, 255}; // Żółta ramka
@@ -56,6 +55,60 @@ int main(int, char**) {
             LOG_INFO("Button", "Styled Button clicked!");
         });
         guiManager.addElement(std::move(buttonStyled));
+
+
+        // --- Przycisk 4: Przycisk z teksturą graficzną ---
+        auto buttonTextured = std::make_unique<Button>(guiManager, 50, 150, 200, 50, "Textured Button");
+        SharedTexture buttonTexture = guiManager.getTextureManager().loadTexture("assets/button_bg.png");
+
+        Style tex_normal;
+        tex_normal.texture = buttonTexture;
+        tex_normal.textColor = {255, 255, 255, 255};
+        tex_normal.borderRadius = 8;
+        buttonTextured->setStyle(ElementState::Normal, tex_normal);
+
+        Style tex_hover;
+        tex_hover.texture = buttonTexture;
+        tex_hover.textColor = {255, 255, 100, 255};
+        tex_hover.borderRadius = 8;
+        buttonTextured->setStyle(ElementState::Hover, tex_hover);
+
+        Style tex_pressed;
+        tex_pressed.texture = buttonTexture;
+        tex_pressed.textColor = {150, 150, 150, 255};
+        tex_pressed.borderRadius = 8;
+        buttonTextured->setStyle(ElementState::Pressed, tex_pressed);
+
+        buttonTextured->setOnClickCallback([](GUIElement*) {
+            LOG_INFO("Button", "Textured Button clicked!");
+        });
+        guiManager.addElement(std::move(buttonTextured));
+
+
+        // --- Przycisk 5: Przycisk tylko graficzny (bez tekstu, z osobną teksturą) ---
+        auto buttonImageOnly = std::make_unique<Button>(guiManager, 300, 150, 128, 64, "");
+        SharedTexture imageTexture = guiManager.getTextureManager().loadTexture("assets/button1.png");
+
+        Style img_normal;
+        img_normal.texture = imageTexture;
+        buttonImageOnly->setStyle(ElementState::Normal, img_normal);
+
+        Style img_hover;
+        img_hover.texture = imageTexture;
+        img_hover.borderColor = {255, 255, 255, 180};
+        img_hover.borderWidth = 2;
+        buttonImageOnly->setStyle(ElementState::Hover, img_hover);
+
+        Style img_pressed;
+        img_pressed.texture = imageTexture;
+        img_pressed.borderColor = {255, 255, 255, 255};
+        img_pressed.borderWidth = 3;
+        buttonImageOnly->setStyle(ElementState::Pressed, img_pressed);
+
+        buttonImageOnly->setOnClickCallback([](GUIElement*) {
+            LOG_INFO("Button", "Image-only Button clicked!");
+        });
+        guiManager.addElement(std::move(buttonImageOnly));
 
         bool quit = false;
         SDL_Event e;

@@ -6,7 +6,7 @@
 #include "../src/panel.hpp"
 #include "../src/label.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 // WindowManager tests require SDL initialization, which WindowManager handles itself.
 // We test window creation, management, and cleanup.

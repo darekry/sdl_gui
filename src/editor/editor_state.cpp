@@ -1,6 +1,6 @@
 #include "editor_state.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 EditorState::EditorState() = default;
 

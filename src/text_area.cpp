@@ -3,7 +3,7 @@
 #include "texture_manager.hpp"
 #include "sdl_deleters.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 TextArea::TextArea(GUIManager& manager, int x, int y, int w, int h, std::string_view font_path, int font_size)
     : GUIElement(manager, x, y, w, h), m_font_path(font_path), m_font_size(font_size) {

@@ -2,7 +2,7 @@
 
 #include "style.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 struct ThemeTypeCompare {
     using is_transparent = void;

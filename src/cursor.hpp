@@ -2,7 +2,7 @@
 
 
 #include "gui.hpp"
-import std.compat;
+#include "std.hpp"
 
 enum class CursorState {
     Normal,

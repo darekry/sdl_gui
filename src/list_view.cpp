@@ -1,7 +1,7 @@
 #include "list_view.hpp"
 #include "gui_manager.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 ListView::ListView(GUIManager& manager, int x, int y, int width, int height)
     : StringGrid(manager, x, y, width, height, 0, 1) {
@@ -39,9 +39,7 @@ void ListView::addItem(const std::string& text) {
 
 void ListView::insertItem(size_t index, const std::string& text) {
     size_t count = getRowCount();
-    if (index > count) {
-        index = count;
-    }
+    index = std::min(index, count);
     
     setRowCount(count + 1);
     

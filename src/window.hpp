@@ -2,7 +2,7 @@
 
 #include "gui_manager.hpp"
 
-import std.compat;
+#include "std.hpp"
 
 /**
  * @brief Represents a single window with its own SDL_Window, SDL_Renderer, and GUIManager
