@@ -68,6 +68,9 @@ public:
     // Jeśli czcionka o danej ścieżce i rozmiarze została już załadowana, zwraca istniejący SharedFont.
     SharedFont loadFont(std::string_view path, int size);
 
+    // Metoda do ładowania czcionki z pamięci (dla embedded assets)
+    SharedFont loadFontFromMemory(const uint8_t* data, size_t size, int fontSize, std::string_view key);
+
     // Metoda do ładowania domyślnej czcionki
     void loadDefaultFont(std::string_view path, int size);
     

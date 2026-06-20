@@ -1,0 +1,8 @@
+# Embedded assets manifest
+# Format: <path> [font_size]
+# Lines starting with # are comments
+# Textures (no font size):
+assets/button1.png
+assets/button_bg.png
+# Fonts (with font size):
+assets/fonts/font.ttf 16

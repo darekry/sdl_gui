@@ -125,6 +125,38 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, std::
     return sharedTexture;
 }
 
+SharedTexture TextureManager::loadTextureFromMemory(const uint8_t* data, size_t size, std::string_view key) {
+    auto it = m_textureCache.find(key);
+    if (it != m_textureCache.end()) {
+        return it->second;
+    }
+
+    SDL_IOStream* io = SDL_IOFromConstMem(data, size);
+    if (!io) {
+        LOG_DEBUG("TextureManager: SDL_IOFromConstMem failed for key '%.*s': %s", static_cast<int>(key.length()), key.data(), SDL_GetError());
+        return nullptr;
+    }
+
+    SDL_Surface* loadedSurface = IMG_Load_IO(io, true);
+    if (!loadedSurface) {
+        LOG_DEBUG("TextureManager: IMG_Load_IO failed for key '%.*s': %s", static_cast<int>(key.length()), key.data(), SDL_GetError());
+        return nullptr;
+    }
+
+    auto* newTexture = SDL_CreateTextureFromSurface(m_renderer, loadedSurface);
+    SDL_DestroySurface(loadedSurface);
+
+    if (!newTexture) {
+        LOG_DEBUG("TextureManager: SDL_CreateTextureFromSurface failed for key '%.*s': %s", static_cast<int>(key.length()), key.data(), SDL_GetError());
+        return nullptr;
+    }
+
+    auto sharedNewTexture = SharedTexture(newTexture, SDLTextureDeleter());
+    auto [inserted_it, success] = m_textureCache.emplace(std::string(key), sharedNewTexture);
+
+    return inserted_it->second;
+}
+
 SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* texture) {
     auto it = m_textureCache.find(key);
     if (it != m_textureCache.end()) {

@@ -47,6 +47,31 @@ SharedFont FontManager::loadFont(std::string_view path, int size) {
     return inserted_it->second;
 }
 
+SharedFont FontManager::loadFontFromMemory(const uint8_t* data, size_t size, int fontSize, std::string_view key) {
+    auto key_sv = std::make_pair(key, fontSize);
+    auto it = m_fontCache.find(key_sv);
+    if (it != m_fontCache.end()) {
+        return it->second;
+    }
+
+    SDL_IOStream* io = SDL_IOFromConstMem(data, size);
+    if (!io) {
+        LOG_DEBUG("FontManager", "SDL_IOFromConstMem failed for key '%.*s': {}", static_cast<int>(key.length()), key.data(), SDL_GetError());
+        return nullptr;
+    }
+
+    auto* loadedFont = TTF_OpenFontIO(io, true, static_cast<float>(fontSize));
+    if (!loadedFont) {
+        LOG_DEBUG("FontManager", "TTF_OpenFontIO failed for key '%.*s': {}", static_cast<int>(key.length()), key.data(), SDL_GetError());
+        return nullptr;
+    }
+
+    auto sharedNewFont = SharedFont(loadedFont, TTFFontDeleter());
+    auto [inserted_it, success] = m_fontCache.emplace(FontKey(std::string(key), fontSize), sharedNewFont);
+
+    return inserted_it->second;
+}
+
 void FontManager::loadDefaultFont(std::string_view path, int size) {
     m_defaultFont = loadFont(path, size);
     if (!m_defaultFont) {
