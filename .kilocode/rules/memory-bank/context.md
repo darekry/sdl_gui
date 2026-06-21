@@ -19,7 +19,7 @@
 - **Header**: auto-generowany `output/embedded_assets.hpp` z `extern "C"` symbolami i tabelą `g_embeddedAssets[]`
 - **TextureManager**: nowa metoda `loadTextureFromMemory(data, size, key)` używająca `SDL_IOFromConstMem` + `IMG_Load_IO`
 - **FontManager**: nowa metoda `loadFontFromMemory(data, size, fontSize, key)` używająca `SDL_IOFromConstMem` + `TTF_OpenFontIO`
-- **Example**: `examples/example_embedded_assets.cpp` demonstruje rejestrację i użycie embedded assetów przez standardowe API
+- **Example**: `examples/29_embedded_assets.cpp` demonstruje rejestrację i użycie embedded assetów przez standardowe API
 - **Auto-rejestracja**: wpięte do `build_examples` i `build_tests` — każdy binarek linkuje embedded .o
 - **Rebuild detection**: działa — pomija gdy nic się nie zmieniło (0 built, 38 skipped)
 
@@ -31,7 +31,7 @@ Wszystkie 10 stages migracji zakończone. Projekt w pełni funkcjonalny na SDL3.
 
 | Metric | Value |
 |--------|-------|
-| Examples | 39 (all compile) |
+| Examples | 41 (all compile, numbered 00–40 by complexity) |
 | Test files | 31 total (29 test + 2 infra: test_helper, test_main) |
 | Widget types | 21 (+ 3 composite: DialogBox, MessageBox, FileDialog) |
 | Editor modules | 5 (EditorWindow, EditorState, PreviewWindow, LayoutImporter, LayoutExporter) |

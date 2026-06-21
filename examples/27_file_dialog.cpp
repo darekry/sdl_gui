@@ -1,5 +1,5 @@
 /**
- * @file example_file_dialog.cpp
+ * @file 27_file_dialog.cpp
  * @brief Demonstracja FileDialog - złożonego komponentu wyboru plików
  *
  * Pokazuje:

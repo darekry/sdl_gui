@@ -168,7 +168,7 @@ static bool collect_example_sources(Nob_File_Paths *paths) {
     Nob_Dir_Entry entry = {0};
     if (!nob_dir_entry_open(EXAMPLES_DIR, &entry)) return false;
     while (nob_dir_entry_next(&entry)) {
-        if (strstr(entry.name, ".cpp") != NULL && strcmp(entry.name, "example_standalone.cpp") != 0) {
+        if (strstr(entry.name, ".cpp") != NULL && strcmp(entry.name, "10_standalone.cpp") != 0) {
             nob_da_append(paths, nob_temp_sprintf("%s/%s", EXAMPLES_DIR, entry.name));
         }
     }
@@ -1050,8 +1050,8 @@ static bool build_release(void) {
 
     // Smoke test: compile standalone example with combined header + static library
     {
-        const char *standalone_src = EXAMPLES_DIR "/example_standalone.cpp";
-        const char *standalone_exe = OUTPUT_DIR "/example_standalone";
+        const char *standalone_src = EXAMPLES_DIR "/10_standalone.cpp";
+        const char *standalone_exe = OUTPUT_DIR "/10_standalone";
         const char *standalone_inputs[] = {
             standalone_src,
             DIST_DIR "/sdl_gui.hpp",

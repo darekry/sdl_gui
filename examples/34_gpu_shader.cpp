@@ -1,5 +1,5 @@
 /**
- * @file example_gpu_shader.cpp
+ * @file 34_gpu_shader.cpp
  * @brief GPU fragment shader on GUI element via ShaderPanel widget
  *
  * Demonstrates ShaderPanel — a Panel subclass that applies a GPU
@@ -18,7 +18,7 @@
 #include "shader_panel.hpp"
 #include "label.hpp"
 #include "style.hpp"
-#include "example_gpu_shader_spirv.hpp"
+#include "34_gpu_shader_spirv.hpp"
 
 int main(int, char**) {
     try {

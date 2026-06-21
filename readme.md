@@ -674,48 +674,62 @@ guiManager.setTheme(theme);
 
 ## Examples Index
 
-| Example | Description |
-|---------|-------------|
-| `example_animation.cpp` | AnimationManager usage with easing functions |
-| `example_animated_image.cpp` | AnimatedImage sprite animation |
-| `example_arc_container.cpp` | ArcContainer arced layout |
-| `example_button.cpp` | Button styling and callbacks |
-| `example_canvas.cpp` | Canvas drawing surface |
-| `example_checkbox.cpp` | Checkbox toggle control |
-| `example_combobox.cpp` | ComboBox dropdown selection |
-| `example_context_menu.cpp` | ContextMenu right-click menus |
-| `example_dialog.cpp` | DialogBox and MessageBox composite components |
-| `example_file_dialog.cpp` | FileDialog file picker |
-| `example_gpu_shader.cpp` | ShaderPanel GPU shader rendering |
-| `example_hover_animation.cpp` | Hover animation effects |
-| `example_json_parser.cpp` | JSON layout file parsing |
-| `example_list_view.cpp` | ListView simple list widget |
-| `example_mouse_cursor.cpp` | Cursor management |
-| `example_paint.cpp` | Full painting application with Canvas |
-| `example_panel.cpp` | Panel container with draggable feature |
-| `example_performance.cpp` | Performance benchmarking |
-| `example_progress_bar.cpp` | ProgressBar progress indicator |
-| `example_radio_button.cpp` | RadioButton and RadioGroup |
-| `example_resize.cpp` | Window resize handling with anchors |
-| `example_rounded_corners.cpp` | Rounded corners using SDL_RenderGeometry |
-| `example_screen_manager.cpp` | ScreenManager for game screens |
-| `example_scroll_area.cpp` | ScrollArea scrollable container |
-| `example_scrollview_prototype.cpp` | Scroll view prototype |
-| `example_slider.cpp` | Slider value control |
-| `example_sprite_animator.cpp` | Sprite animation system |
-| `example_standalone.cpp` | Standalone application template |
-| `example_string_grid.cpp` | StringGrid data table widget |
-| `example_tabs.cpp` | TabControl tabbed interface |
-| `example_text_area.cpp` | TextArea multi-line input |
-| `example_text_input.cpp` | TextInput single-line input |
-| `example_texture_font_previewer.cpp` | Texture and font preview tool |
-| `example_theme_playground.cpp` | Theme customization playground |
-| `example_themes.cpp` | Theme system usage |
-| `example_tooltip.cpp` | Tooltip on GUI elements |
-| `example_window.cpp` | Window class usage |
-| `example_window_manager.cpp` | WindowManager multi-window app |
-| `example_wysiwyg_editor.cpp` | WYSIWYG editor demo |
-| `example_xml_parser.cpp` | XML/SGML layout parsing |
+Examples are numbered by complexity — follow this order when learning the library.
+
+### Basics (00–10)
+| # | Example | Description |
+|---|---------|-------------|
+| 00 | `00_hello_world.cpp` | Minimal window with a label |
+| 01 | `01_panel.cpp` | Panel container with border styling |
+| 02 | `02_text_input.cpp` | TextInput single-line input |
+| 03 | `03_slider.cpp` | Slider value control with callback |
+| 04 | `04_checkbox.cpp` | Checkbox toggle control |
+| 05 | `05_radio_button.cpp` | RadioButton and RadioGroup |
+| 06 | `06_combobox.cpp` | ComboBox dropdown selection |
+| 07 | `07_paint.cpp` | Canvas freehand drawing |
+| 08 | `08_tooltip.cpp` | Tooltips on multiple widget types |
+| 09 | `09_text_area.cpp` | TextArea multi-line input, font loading, clipboard |
+| 10 | `10_standalone.cpp` | Standalone app using combined header + static library |
+
+### Containers & Menus (11–15)
+| 11 | `11_tabs.cpp` | TabControl tabbed interface |
+| 12 | `12_context_menu.cpp` | ContextMenu right-click menus |
+| 13 | `13_animation.cpp` | AnimationManager with easing functions |
+| 14 | `14_list_view.cpp` | ListView data list with selection |
+| 15 | `15_sprite_animator.cpp` | AnimatedImage with interactive playback controls |
+
+### Images & Progress (16–20)
+| 16 | `16_animated_image.cpp` | AnimatedImage low-level sprite sheet setup |
+| 17 | `17_progress_bar.cpp` | ProgressBar + animation-driven loading |
+| 18 | `18_window.cpp` | Composite draggable window widget |
+| 19 | `19_arc_container.cpp` | ArcContainer radial layout |
+| 20 | `20_rounded_corners.cpp` | BorderRadius on multiple widget types |
+
+### Styling & Layout Files (21–25)
+| 21 | `21_themes.cpp` | Theme system (light/dark) |
+| 22 | `22_json_parser.cpp` | Loading GUI layouts from JSON files |
+| 23 | `23_xml_parser.cpp` | Loading GUI layouts from XML/SGML files |
+| 24 | `24_button.cpp` | Button styling deep dive (5 variants) |
+| 25 | `25_scrollview_prototype.cpp` | Manual scroll view implementation |
+
+### Advanced Widgets (26–30)
+| 26 | `26_scroll_area.cpp` | ScrollArea scrollable container |
+| 27 | `27_file_dialog.cpp` | FileDialog open/save with path filtering |
+| 28 | `28_dialog.cpp` | DialogBox and MessageBox (8 variants) |
+| 29 | `29_embedded_assets.cpp` | Embedded binary assets via ld |
+| 30 | `30_mouse_cursor.cpp` | Custom cursor system with state management |
+
+### Full Applications (31–40)
+| 31 | `31_resize.cpp` | Anchor system: responsive layout with SDL resize |
+| 32 | `32_string_grid.cpp` | StringGrid data table with inline editing |
+| 33 | `33_hover_animation.cpp` | Custom Panel subclasses with hover animations |
+| 34 | `34_gpu_shader.cpp` | ShaderPanel GPU fragment shader on GUI |
+| 35 | `35_texture_font_previewer.cpp` | Texture and font preview tool |
+| 36 | `36_theme_playground.cpp` | Real-time theme editor with RGB sliders |
+| 37 | `37_performance.cpp` | Performance stress test with FPS counter |
+| 38 | `38_screen_manager.cpp` | ScreenManager: game screen lifecycle |
+| 39 | `39_window_manager.cpp` | WindowManager multi-window SDL application |
+| 40 | `40_wysiwyg_editor.cpp` | Full WYSIWYG GUI editor |
 
 Run examples after building:
 ```bash

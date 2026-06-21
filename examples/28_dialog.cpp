@@ -1,5 +1,5 @@
 /**
- * @file example_dialog.cpp
+ * @file 28_dialog.cpp
  * @brief Demonstracja DialogBox i MessageBox - złożonych komponentów GUI
  * 
  * Ten przykład pokazuje:

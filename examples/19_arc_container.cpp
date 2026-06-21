@@ -1,5 +1,5 @@
 /**
- * @file example_arc_container.cpp
+ * @file 19_arc_container.cpp
  * @brief Demonstrates ArcContainer for circular/radial layouts
  * 
  * This example shows how to use ArcContainer for game-style radial menus
