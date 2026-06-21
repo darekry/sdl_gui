@@ -68,6 +68,10 @@ void Canvas::clear() {
     SDL_SetRenderTarget(renderer, oldTarget);
 }
 
+void Canvas::setPenColor(SDL_Color color) {
+    m_penColor = color;
+}
+
 SDL_Point Canvas::windowToLocal(int wx, int wy) const {
     SDL_Point abs = getAbsolutePosition();
     return SDL_Point{ wx - abs.x, wy - abs.y };
@@ -106,8 +110,7 @@ void Canvas::drawSegment(SDL_Renderer* renderer, SDL_Point a, SDL_Point b) {
     SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
     SDL_SetRenderTarget(renderer, m_canvasTex.get());
 
-    // Kolor pędzla: czarny, pełna alfa
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, m_penColor.r, m_penColor.g, m_penColor.b, m_penColor.a);
 
     // Proste próbkowanie punktów na odcinku i stemplowanie pędzla
     int dx = b.x - a.x;
@@ -155,7 +158,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
             // Narysuj punkt startowy
             SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
             SDL_SetRenderTarget(renderer, m_canvasTex.get());
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_SetRenderDrawColor(renderer, m_penColor.r, m_penColor.g, m_penColor.b, m_penColor.a);
             putBrush(renderer, local.x, local.y);
             SDL_SetRenderTarget(renderer, oldTarget);
 

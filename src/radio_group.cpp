@@ -19,6 +19,7 @@ RadioButton* RadioGroup::addOption(std::string_view text, bool selected) {
     addChild(std::move(rb));
     addChild(std::move(label));
     
+    m_optionTexts.push_back(std::string(text));
     m_nextOptionY += m_optionSpacing;
     
     return rbPtr;
@@ -40,13 +41,27 @@ void RadioGroup::setOptionSizes(int buttonSize, int labelFontSize) {
 }
 
 void RadioGroup::onButtonSelected(RadioButton* selectedButton) {
+    int selectedIdx = -1;
+    int idx = 0;
     for (const auto& child : getChildren()) {
         if (auto* rb = dynamic_cast<RadioButton*>(child.get())) {
             if (rb != selectedButton && rb->isSelected()) {
                 rb->setSelected(false);
             }
+            if (rb == selectedButton) {
+                selectedIdx = idx;
+            }
+            ++idx;
         }
     }
+
+    if (m_onSelectionChange && selectedIdx >= 0 && selectedIdx < static_cast<int>(m_optionTexts.size())) {
+        m_onSelectionChange(selectedIdx, m_optionTexts[selectedIdx]);
+    }
+}
+
+void RadioGroup::setOnSelectionChange(SelectionChangeCallback callback) {
+    m_onSelectionChange = std::move(callback);
 }
 
 RadioButton* RadioGroup::getSelectedButton() const {

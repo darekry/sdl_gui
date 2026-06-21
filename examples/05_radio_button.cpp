@@ -1,7 +1,6 @@
 #include "gui_manager.hpp"
-#include "radio_button.hpp"
 #include "radio_group.hpp"
-#include "label.hpp"
+#include "theme.hpp"
 #include "sdl_app.hpp"
 
 #include "std.hpp"
@@ -15,19 +14,22 @@ int main(int, char**) {
         auto* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        // 1. Utwórz RadioGroup jako kontener Panel
-        auto radioGroup = std::make_unique<RadioGroup>(guiManager, 100, 100, 250, 200);
-        radioGroup->setStyle(ElementState::Normal, {.backgroundColor = {{40, 40, 40, 255}}, .textColor = std::nullopt, .texture = std::nullopt, .borderColor = std::nullopt, .borderWidth = std::nullopt, .borderRadius = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
-        radioGroup->setBorder(ElementState::Normal, {100, 100, 100, 255}, 2);
-        
-        radioGroup->addOption("Opcja 1 po polsku");
-        radioGroup->addOption("Opcja 2", true);
-        radioGroup->addOption("Opcja 3");
+        // Apply the default dark theme instead of inline styles
+        guiManager.setTheme(Theme::createDefaultTheme());
 
-        auto infoLabel = std::make_unique<Label>(guiManager, 20, 150, "Wybierz jedną opcję:", 14);
-        radioGroup->addChild(std::move(infoLabel));
-        
-        // Przekaż własność RadioGroup do GUIManager
+        // RadioGroup — a Panel that manages mutually exclusive RadioButtons
+        auto radioGroup = std::make_unique<RadioGroup>(guiManager, 100, 100, 250, 200);
+        radioGroup->setTooltip("Select one option");
+
+        radioGroup->addOption("Option 1");
+        radioGroup->addOption("Option 2", true);
+        radioGroup->addOption("Option 3");
+
+        // Log the selected option whenever it changes
+        radioGroup->setOnSelectionChange([](int index, const std::string& text) {
+            LOG_INFO("RadioButton", "Selected: {} (index {})", text, index);
+        });
+
         guiManager.addElement(std::move(radioGroup));
 
         bool quit = false;
@@ -39,6 +41,9 @@ int main(int, char**) {
                 }
                 guiManager.processEvent(e);
             }
+
+            guiManager.update();
+            guiManager.cleanup();
 
             SDL_SetRenderDrawColor(renderer, 44, 44, 44, 255);
             SDL_RenderClear(renderer);

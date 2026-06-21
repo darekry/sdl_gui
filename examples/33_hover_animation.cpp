@@ -5,9 +5,9 @@
 #include "label.hpp"
 #include "animation_manager.hpp"
 #include "easing.hpp"
-
+#include "theme.hpp"
 #include "std.hpp"
-
+// Panel that lifts upward on hover with an animated transition using AnimationManager
 class HoverAnimatedLift : public Panel {
 public:
     float m_anim_y_offset = 0.0f;
@@ -25,14 +25,11 @@ public:
 
     bool handleEvent(const SDL_Event& event) override {
         if (!m_visible) return false;
-
         for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
             if ((*it)->handleEvent(event)) return true;
         }
-
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
             bool currentlyHovered = contains(event.motion.x, event.motion.y);
-            
             if (currentlyHovered && !m_isHovered) {
                 m_isHovered = true;
                 setState(ElementState::Hover);
@@ -43,22 +40,16 @@ public:
                 startDropAnimation();
             }
         }
-
         GUIElement::handleEvent(event);
         return false;
     }
-
     void startLiftAnimation() {
-        if (m_current_anim_id != 0) {
+        if (m_current_anim_id != 0)
             m_manager.getAnimationManager()->removeAnimation(m_current_anim_id);
-        }
         m_manager.getAnimationManager()->createAnimation(
-            &m_anim_y_offset,
-            m_anim_y_offset,
-            static_cast<float>(m_lift_amount),
-            m_anim_duration,
-            Easing::easeOutQuad
-        );
+            &m_anim_y_offset, m_anim_y_offset,
+            static_cast<float>(m_lift_amount), m_anim_duration,
+            Easing::easeOutQuad);
         m_current_anim_id = m_manager.getAnimationManager()->addAnimation(16, [this]() {
             m_y = static_cast<int>(m_base_y - m_anim_y_offset);
             markDirty();
@@ -66,104 +57,20 @@ public:
     }
 
     void startDropAnimation() {
-        if (m_current_anim_id != 0) {
+        if (m_current_anim_id != 0)
             m_manager.getAnimationManager()->removeAnimation(m_current_anim_id);
-        }
         m_manager.getAnimationManager()->createAnimation(
-            &m_anim_y_offset,
-            m_anim_y_offset,
-            0.0f,
-            m_anim_duration,
+            &m_anim_y_offset, m_anim_y_offset, 0.0f, m_anim_duration,
             Easing::easeOutQuad,
             [this]() {
                 if (m_current_anim_id != 0) {
                     m_manager.getAnimationManager()->removeAnimation(m_current_anim_id);
                     m_current_anim_id = 0;
                 }
-            }
-        );
+            });
     }
 };
-
-class HoverAnimatedScale : public Panel {
-public:
-    float m_anim_scale = 1.0f;
-    float m_base_width = 0;
-    float m_base_height = 0;
-    float m_scale_factor = 1.15f;
-    uint32_t m_anim_duration = 200;
-    uint32_t m_current_anim_id = 0;
-
-    HoverAnimatedScale(GUIManager& manager, int x, int y, int width, int height)
-        : Panel(manager, x, y, width, height), m_base_width(static_cast<float>(width)), m_base_height(static_cast<float>(height)) {
-        setBackgroundColor(ElementState::Normal, {200, 100, 150, 255});
-        setBackgroundColor(ElementState::Hover, {220, 120, 170, 255});
-        setBorderRadius(ElementState::Normal, 8);
-    }
-
-    bool handleEvent(const SDL_Event& event) override {
-        if (!m_visible) return false;
-
-        for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-            if ((*it)->handleEvent(event)) return true;
-        }
-
-        if (event.type == SDL_EVENT_MOUSE_MOTION) {
-            bool currentlyHovered = contains(event.motion.x, event.motion.y);
-            
-            if (currentlyHovered && !m_isHovered) {
-                m_isHovered = true;
-                setState(ElementState::Hover);
-                startScaleUpAnimation();
-            } else if (!currentlyHovered && m_isHovered) {
-                m_isHovered = false;
-                setState(ElementState::Normal);
-                startScaleDownAnimation();
-            }
-        }
-
-        GUIElement::handleEvent(event);
-        return false;
-    }
-
-    void startScaleUpAnimation() {
-        if (m_current_anim_id != 0) {
-            m_manager.getAnimationManager()->removeAnimation(m_current_anim_id);
-        }
-        m_manager.getAnimationManager()->createAnimation(
-            &m_anim_scale,
-            m_anim_scale,
-            m_scale_factor,
-            m_anim_duration,
-            Easing::easeOutQuad
-        );
-        m_current_anim_id = m_manager.getAnimationManager()->addAnimation(16, [this]() {
-            m_width = static_cast<int>(m_base_width * m_anim_scale);
-            m_height = static_cast<int>(m_base_height * m_anim_scale);
-            markDirty();
-        });
-    }
-
-    void startScaleDownAnimation() {
-        if (m_current_anim_id != 0) {
-            m_manager.getAnimationManager()->removeAnimation(m_current_anim_id);
-        }
-        m_manager.getAnimationManager()->createAnimation(
-            &m_anim_scale,
-            m_anim_scale,
-            1.0f,
-            m_anim_duration,
-            Easing::easeOutQuad,
-            [this]() {
-                if (m_current_anim_id != 0) {
-                    m_manager.getAnimationManager()->removeAnimation(m_current_anim_id);
-                    m_current_anim_id = 0;
-                }
-            }
-        );
-    }
-};
-
+// Panel that lifts upward on hover instantly — no animation, for comparison
 class HoverStaticLift : public Panel {
 public:
     float m_base_y = 0;
@@ -178,14 +85,11 @@ public:
 
     bool handleEvent(const SDL_Event& event) override {
         if (!m_visible) return false;
-
         for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
             if ((*it)->handleEvent(event)) return true;
         }
-
         if (event.type == SDL_EVENT_MOUSE_MOTION) {
             bool currentlyHovered = contains(event.motion.x, event.motion.y);
-            
             if (currentlyHovered && !m_isHovered) {
                 m_isHovered = true;
                 setState(ElementState::Hover);
@@ -198,102 +102,41 @@ public:
                 markDirty();
             }
         }
-
         GUIElement::handleEvent(event);
         return false;
     }
 };
-
-class HoverStaticScale : public Panel {
-public:
-    float m_base_width = 0;
-    float m_base_height = 0;
-    float m_scale_factor = 1.15f;
-
-    HoverStaticScale(GUIManager& manager, int x, int y, int width, int height)
-        : Panel(manager, x, y, width, height), m_base_width(static_cast<float>(width)), m_base_height(static_cast<float>(height)) {
-        setBackgroundColor(ElementState::Normal, {200, 100, 150, 255});
-        setBackgroundColor(ElementState::Hover, {220, 120, 170, 255});
-        setBorderRadius(ElementState::Normal, 8);
-    }
-
-    bool handleEvent(const SDL_Event& event) override {
-        if (!m_visible) return false;
-
-        for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-            if ((*it)->handleEvent(event)) return true;
-        }
-
-        if (event.type == SDL_EVENT_MOUSE_MOTION) {
-            bool currentlyHovered = contains(event.motion.x, event.motion.y);
-            
-            if (currentlyHovered && !m_isHovered) {
-                m_isHovered = true;
-                setState(ElementState::Hover);
-                m_width = static_cast<int>(m_base_width * m_scale_factor);
-                m_height = static_cast<int>(m_base_height * m_scale_factor);
-                markDirty();
-            } else if (!currentlyHovered && m_isHovered) {
-                m_isHovered = false;
-                setState(ElementState::Normal);
-                m_width = static_cast<int>(m_base_width);
-                m_height = static_cast<int>(m_base_height);
-                markDirty();
-            }
-        }
-
-        GUIElement::handleEvent(event);
-        return false;
-    }
-};
-
 int main() {
     try {
-        SDLApp app("Hover Animation Example", 900, 600);
+        SDLApp app("Hover Animation Example", 600, 400);
         GUIManager gui(app.getRenderer());
+        gui.setTheme(Theme::createDefaultTheme());
+        auto title = std::make_unique<Label>(gui, 200, 20, "Hover Animation Demo");
+        gui.addElement(std::move(title));
 
-        auto title_label = std::make_unique<Label>(gui, 350, 20, "Hover Animation Demo");
-        gui.addElement(std::move(title_label));
+        // Animated lift — uses AnimationManager for smooth transition
+        auto animLabel = std::make_unique<Label>(gui, 50, 80, "Animated Lift (smooth):");
+        gui.addElement(std::move(animLabel));
 
-        auto anim_lift_label = std::make_unique<Label>(gui, 50, 100, "Animated Lift:");
-        gui.addElement(std::move(anim_lift_label));
+        auto animPanel = std::make_unique<HoverAnimatedLift>(gui, 50, 120, 200, 100);
+        auto* animPanelPtr = gui.addElement(std::move(animPanel));
+        auto animInner = std::make_unique<Label>(gui, 50, 35, "Hover me!");
+        animInner->setTextColor(ElementState::Normal, {255, 255, 255, 255});
+        animPanelPtr->addChild(std::move(animInner));
 
-        auto anim_lift = std::make_unique<HoverAnimatedLift>(gui, 50, 140, 150, 100);
-        auto* anim_lift_ptr = gui.addElement(std::move(anim_lift));
-        auto anim_lift_inner = std::make_unique<Label>(gui, 30, 35, "Hover me!");
-        anim_lift_inner->setTextColor(ElementState::Normal, {255, 255, 255, 255});
-        anim_lift_ptr->addChild(std::move(anim_lift_inner));
+        // Static lift — instant position change, no AnimationManager
+        auto staticLabel = std::make_unique<Label>(gui, 320, 80, "Static Lift (instant):");
+        gui.addElement(std::move(staticLabel));
 
-        auto anim_scale_label = std::make_unique<Label>(gui, 250, 100, "Animated Scale:");
-        gui.addElement(std::move(anim_scale_label));
+        auto staticPanel = std::make_unique<HoverStaticLift>(gui, 320, 120, 200, 100);
+        auto* staticPanelPtr = gui.addElement(std::move(staticPanel));
+        auto staticInner = std::make_unique<Label>(gui, 50, 35, "Hover me!");
+        staticInner->setTextColor(ElementState::Normal, {255, 255, 255, 255});
+        staticPanelPtr->addChild(std::move(staticInner));
 
-        auto anim_scale = std::make_unique<HoverAnimatedScale>(gui, 250, 140, 150, 100);
-        auto* anim_scale_ptr = gui.addElement(std::move(anim_scale));
-        auto anim_scale_inner = std::make_unique<Label>(gui, 30, 35, "Hover me!");
-        anim_scale_inner->setTextColor(ElementState::Normal, {255, 255, 255, 255});
-        anim_scale_ptr->addChild(std::move(anim_scale_inner));
-
-        auto static_lift_label = std::make_unique<Label>(gui, 500, 100, "Static Lift:");
-        gui.addElement(std::move(static_lift_label));
-
-        auto static_lift = std::make_unique<HoverStaticLift>(gui, 500, 140, 150, 100);
-        auto* static_lift_ptr = gui.addElement(std::move(static_lift));
-        auto static_lift_inner = std::make_unique<Label>(gui, 30, 35, "Hover me!");
-        static_lift_inner->setTextColor(ElementState::Normal, {255, 255, 255, 255});
-        static_lift_ptr->addChild(std::move(static_lift_inner));
-
-        auto static_scale_label = std::make_unique<Label>(gui, 700, 100, "Static Scale:");
-        gui.addElement(std::move(static_scale_label));
-
-        auto static_scale = std::make_unique<HoverStaticScale>(gui, 700, 140, 150, 100);
-        auto* static_scale_ptr = gui.addElement(std::move(static_scale));
-        auto static_scale_inner = std::make_unique<Label>(gui, 30, 35, "Hover me!");
-        static_scale_inner->setTextColor(ElementState::Normal, {255, 255, 255, 255});
-        static_scale_ptr->addChild(std::move(static_scale_inner));
-
-        auto info_label = std::make_unique<Label>(gui, 50, 300, 
+        auto info = std::make_unique<Label>(gui, 50, 270,
             "Animated: AnimationManager + TimerManager for smooth transitions");
-        gui.addElement(std::move(info_label));
+        gui.addElement(std::move(info));
 
         bool quit = false;
         SDL_Event e;
@@ -302,10 +145,8 @@ int main() {
                 if (e.type == SDL_EVENT_QUIT) quit = true;
                 gui.processEvent(e);
             }
-
             gui.update();
             gui.cleanup();
-
             SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);
             SDL_RenderClear(app.getRenderer());
             gui.render();

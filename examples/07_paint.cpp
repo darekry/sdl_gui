@@ -1,7 +1,9 @@
-#include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "button.hpp"
 #include "canvas.hpp"
+#include "panel.hpp"
+#include "theme.hpp"
+#include "sdl_app.hpp"
 
 #include "std.hpp"
 
@@ -14,17 +16,34 @@ int main(int, char**) {
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        // Canvas
+        guiManager.setTheme(Theme::createDefaultTheme());
+
+        // Toolbar panel at the top for paint controls
+        auto toolbar = std::make_unique<Panel>(guiManager, 10, 10, 880, 50);
+
+        // Drawing canvas
         auto canvas = std::make_unique<Canvas>(guiManager, 20, 80, 640, 480);
         auto canvasRef = guiManager.makeRef(canvas.get());
-        guiManager.addElement(std::move(canvas));
+        canvas->setTooltip("Draw with mouse");
 
-        // Clear button
-        auto clearBtn = std::make_unique<Button>(guiManager, 20, 20, 100, 40, "Clear");
+        // Clear button — resets the canvas to white
+        auto clearBtn = std::make_unique<Button>(guiManager, 10, 5, 100, 40, "Clear");
+        clearBtn->setTooltip("Clear the canvas");
         clearBtn->setOnClickCallback([canvasRef](GUIElement*) {
             if (canvasRef) canvasRef->clear();
         });
-        guiManager.addElement(std::move(clearBtn));
+
+        // Red button — switches pen color to red
+        auto redBtn = std::make_unique<Button>(guiManager, 120, 5, 80, 40, "Red");
+        redBtn->setTooltip("Change pen color to red");
+        redBtn->setOnClickCallback([canvasRef](GUIElement*) {
+            if (canvasRef) canvasRef->setPenColor({255, 0, 0, 255});
+        });
+
+        toolbar->addChild(std::move(clearBtn));
+        toolbar->addChild(std::move(redBtn));
+        guiManager.addElement(std::move(toolbar));
+        guiManager.addElement(std::move(canvas));
 
         bool quit = false;
         SDL_Event e;
@@ -36,12 +55,13 @@ int main(int, char**) {
                 guiManager.processEvent(e);
             }
 
+            guiManager.update();
+            guiManager.cleanup();
+
             SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
             SDL_RenderClear(renderer);
 
-            guiManager.update();
             guiManager.render();
-            guiManager.cleanup();
 
             SDL_RenderPresent(renderer);
             SDL_Delay(16);

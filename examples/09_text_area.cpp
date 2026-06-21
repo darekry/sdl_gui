@@ -1,73 +1,65 @@
-#include <SDL3/SDL_clipboard.h>
-#include <SDL3/SDL_stdinc.h>
 #include "gui_manager.hpp"
 #include "text_area.hpp"
+#include "label.hpp"
+#include "panel.hpp"
+#include "theme.hpp"
 #include "sdl_app.hpp"
-
 #include "std.hpp"
 
-int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
+
+int main(int, char**) {
     try {
-        SDLApp app("TextArea Example", 800, 600);
-        GUIManager guiManager(app.getRenderer());
+        SDLApp app("TextArea Example", SCREEN_WIDTH, SCREEN_HEIGHT);
+        SDL_Renderer* renderer = app.getRenderer();
+        GUIManager guiManager(renderer);
+        guiManager.setTheme(Theme::createDefaultTheme());
 
-        // Ustawienie domyślnej czcionki dla FontManagera, aby inne elementy GUI też mogły z niej korzystać
-        try {
-            guiManager.getFontManager().loadDefaultFont("assets/fonts/font.ttf", 16);
-        } catch (const std::runtime_error& e) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Cannot load default font: %s. Using fallback.", e.what());
-            // W przypadku braku domyślnej czcionki, można by tu załadować inną lub obsłużyć błąd.
-        }
+        // Panel with background, border and rounded corners
+        auto panel = std::make_unique<Panel>(guiManager, 50, 50, 700, 500);
+        Style panelStyle;
+        panelStyle.backgroundColor = {40, 42, 54, 255};
+        panelStyle.borderColor = {98, 114, 164, 255};
+        panelStyle.borderWidth = 2;
+        panelStyle.borderRadius = 10;
+        panel->setStyle(ElementState::Normal, panelStyle);
 
-        auto textArea_ptr = std::make_unique<TextArea>(guiManager, 50, 50, 700, 500, "assets/fonts/font.ttf", 24);
-        
-        // Przekazujemy własność do GUIManager i od razu pobieramy surowy wskaźnik.
-        // Jest to bezpieczne, ponieważ cykl życia textArea jest zarządzany przez guiManager
-        // i wskaźnik będzie ważny tak długo, jak długo istnieje guiManager.
-        TextArea* textArea = static_cast<TextArea*>(guiManager.addElement(std::move(textArea_ptr)));
-        
-        textArea->setText("");
-        textArea->setTextColor(ElementState::Normal, {20, 20, 20, 255});
-        
+        // Title label
+        auto title = std::make_unique<Label>(guiManager, 20, 15, "TextArea Example", 22);
+        Style titleStyle;
+        titleStyle.textColor = {255, 255, 255, 255};
+        title->setStyle(ElementState::Normal, titleStyle);
+        panel->addChild(std::move(title));
+
+        // Multi-line text area with default content and tooltip
+        auto textArea = std::make_unique<TextArea>(guiManager, 20, 50, 660, 430, "assets/fonts/font.ttf", 18);
+        textArea->setText("This is a multi-line text editing area.\n"
+                          "You can type, edit, select, and scroll through text.\n"
+                          "Word wrap is enabled by default.\n\n"
+                          "Try typing here to see how text input works.");
+        textArea->setTooltip("Multi-line text editing area");
+        panel->addChild(std::move(textArea));
+        guiManager.addElement(std::move(panel));
+
         bool quit = false;
         SDL_Event e;
         while (!quit) {
-
-            char* clipboard_text = SDL_GetClipboardText();
-            if (clipboard_text) {
-                const std::string clipboard_content(clipboard_text);
-                if (textArea->getText() != clipboard_content) {
-                    textArea->setText(clipboard_content);
-                }
-                SDL_free(clipboard_text);
-            }
-
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_EVENT_QUIT) {
-                    quit = true;
-                }
+                if (e.type == SDL_EVENT_QUIT) quit = true;
                 guiManager.processEvent(e);
             }
 
-            // Aktualizacja logiki (jeśli jest)
-
-            // Renderowanie
-            SDL_SetRenderDrawColor(app.getRenderer(), 220, 220, 220, 255);
-            SDL_RenderClear(app.getRenderer());
-
-            guiManager.render();
+            guiManager.update();
             guiManager.cleanup();
 
-            SDL_RenderPresent(app.getRenderer());
-
-
-
-
-
+            SDL_SetRenderDrawColor(renderer, 40, 42, 54, 255);
+            SDL_RenderClear(renderer);
+            guiManager.render();
+            SDL_RenderPresent(renderer);
         }
-
     } catch (const std::runtime_error& e) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Error: %s", e.what());
+        std::cerr << "An error occurred: " << e.what() << std::endl;
         return 1;
     }
     return 0;

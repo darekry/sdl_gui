@@ -1,6 +1,8 @@
-#include <SDL3/SDL_log.h>
 #include "gui_manager.hpp"
 #include "combobox.hpp"
+#include "panel.hpp"
+#include "label.hpp"
+#include "theme.hpp"
 #include "sdl_app.hpp"
 
 #include "std.hpp"
@@ -14,19 +16,32 @@ int main(int, char**) {
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        // Utwórz ComboBox
-        auto comboBox = std::make_unique<ComboBox>(guiManager, 100, 100, 200, 30);
+        guiManager.setTheme(Theme::createDefaultTheme());
+
+        // Panel container with border and rounded corners
+        auto panel = std::make_unique<Panel>(guiManager, 80, 60, 300, 180);
+        panel->setBorder(ElementState::Normal, {100, 100, 100, 255}, 1);
+        panel->setBorderRadius(ElementState::Normal, 8);
+
+        // Title label above the ComboBox
+        auto title = std::make_unique<Label>(guiManager, 20, 15, "Select an option:", 18);
+        panel->addChild(std::move(title));
+
+        // ComboBox inside the panel
+        auto comboBox = std::make_unique<ComboBox>(guiManager, 20, 50, 220, 30);
         comboBox->addItem("Option 1");
         comboBox->addItem("Option 2");
         comboBox->addItem("Option 3");
         comboBox->addItem("A longer option 4");
         comboBox->setSelectedIndex(0);
+        comboBox->setTooltip("Select an option from the list");
 
         comboBox->on_selection_changed = [](int index, const std::string& item) {
-            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "Selected item: %s at index: %d", item.c_str(), index);
+            LOG_INFO("ComboBox", "Selected: {} (index {})", item, index);
         };
 
-        guiManager.addElement(std::move(comboBox));
+        panel->addChild(std::move(comboBox));
+        guiManager.addElement(std::move(panel));
 
         bool quit = false;
         SDL_Event e;
@@ -41,13 +56,13 @@ int main(int, char**) {
             guiManager.update();
             guiManager.cleanup();
 
-            SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);
+            SDL_SetRenderDrawColor(renderer, 230, 230, 240, 255);
             SDL_RenderClear(renderer);
             guiManager.render();
             SDL_RenderPresent(renderer);
         }
     } catch (const std::runtime_error& e) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "An error occurred: %s", e.what());
+        std::cerr << "An error occurred: " << e.what() << std::endl;
         return 1;
     }
 

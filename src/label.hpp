@@ -8,6 +8,7 @@ public:
     Label(GUIManager& manager, int x, int y, std::string_view text, int font_size = -1);
 
     void setText(std::string_view text);
+    const std::string& getText() const { return m_text; }
 
 public:
     void draw(SDL_Renderer* renderer) override;

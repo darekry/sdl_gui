@@ -17,6 +17,9 @@ public:
     void onButtonSelected(RadioButton* selectedButton);
     RadioButton* getSelectedButton() const;
 
+    using SelectionChangeCallback = std::function<void(int index, const std::string& text)>;
+    void setOnSelectionChange(SelectionChangeCallback callback);
+
 private:
     int m_nextOptionY = 20;
     int m_optionSpacing = 40;
@@ -24,4 +27,6 @@ private:
     int m_labelX = 45;
     int m_buttonSize = 20;
     int m_labelFontSize = 16;
+    SelectionChangeCallback m_onSelectionChange;
+    std::vector<std::string> m_optionTexts;
 };

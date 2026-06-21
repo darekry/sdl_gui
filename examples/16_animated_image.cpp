@@ -3,62 +3,81 @@
 #include "animated_image.hpp"
 #include "panel.hpp"
 #include "button.hpp"
+#include "label.hpp"
+#include "theme.hpp"
 
 #include "std.hpp"
 
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
+
 int main() {
     try {
-        SDLApp app("Przykład - AnimatedImage", 800, 600);
-        GUIManager gui(app.getRenderer());
+        SDLApp app("AnimatedImage Example", SCREEN_WIDTH, SCREEN_HEIGHT);
+        SDL_Renderer* renderer = app.getRenderer();
+        GUIManager guiManager(renderer);
+        guiManager.setTheme(Theme::createDefaultTheme());
+        // Styled panel to contain all widgets
+        auto panel = std::make_unique<Panel>(guiManager, 120, 60, 560, 440);
+        panel->setBackgroundColor(ElementState::Normal, {40, 42, 54, 255});
+        panel->setBorder(ElementState::Normal, {98, 114, 164, 255}, 2);
+        panel->setBorderRadius(ElementState::Normal, 10);
 
-        // Przykład użycia AnimatedImage (sprite-sheet)
-        // Plik przykładowy: assets/anim.png (9 klatek ułożonych poziomo)
-        auto pan = std::make_unique<Panel>(gui, 100, 100, 256, 128);
+        // Title label
+        auto title = std::make_unique<Label>(guiManager, 20, 20, "Animated Sprite Sheet", 24);
+        title->setTextColor(ElementState::Normal, {255, 255, 255, 255});
+        panel->addChild(std::move(title));
 
-        // Stwórz AnimatedImage jako unique_ptr, zachowaj surowy wskaźnik do sterowania z przycisku
-        auto anim_uptr = std::make_unique<AnimatedImage>(gui, 0, 0, 256, 128);
-        auto animRef = gui.makeRef(anim_uptr.get());
-        anim_uptr->setSpriteSheet("assets/anim.png", 9, 1);
-        anim_uptr->setFPS(12.0f);
-        anim_uptr->setLoop(true);
-        anim_uptr->setUseCache(false); // domyślnie direct render w tym przykładzie
-        anim_uptr->play();
+        // AnimatedImage loads a sprite sheet with 9 frames in a single row
+        auto anim = std::make_unique<AnimatedImage>(guiManager, 152, 60, 256, 128);
+        auto animRef = guiManager.makeRef(anim.get());
+        anim->setSpriteSheet("assets/anim.png", 9, 1);
+        anim->setFPS(12.0f);
+        anim->setLoop(true);
+        anim->setTooltip("Animated sprite sheet");
+        anim->play();
 
-        pan->addChild(std::move(anim_uptr));
-        gui.addElement(std::move(pan));
-
-        // Mały przycisk, który przełącza tryb cache/direct render dla animacji
-        auto toggleBtn = std::make_unique<Button>(gui, 380, 110, 140, 32, "Toggle Cache");
-        auto useCache = std::make_shared<bool>(false);
-        toggleBtn->setOnClickCallback([animRef, useCache](GUIElement*) {
-            *useCache = !*useCache;
-            if (animRef) animRef->setUseCache(*useCache);
-            LOG_INFO("AnimatedImage", "cache{}", *useCache ? "ON" : "OFF");
+        // Frame counter label, updated on every frame change
+        auto frameLbl = std::make_unique<Label>(guiManager, 20, 210, "Frame: 1 / 9", 16);
+        Label* framePtr = frameLbl.get();
+        frameLbl->setTextColor(ElementState::Normal, {180, 180, 200, 255});
+        anim->setOnFrameChanged([framePtr](int frame) {
+            framePtr->setText("Frame: " + std::to_string(frame + 1) + " / 9");
         });
-        gui.addElement(std::move(toggleBtn));
+        panel->addChild(std::move(frameLbl));
 
-        // Główna pętla aplikacji
+        // Play/Pause toggle button
+        auto toggleBtn = std::make_unique<Button>(guiManager, 180, 270, 200, 44, "Toggle Play/Pause");
+        toggleBtn->setTooltip("Pause or resume the animation");
+        toggleBtn->setOnClickCallback([animRef](GUIElement*) {
+            if (animRef->isPlaying()) {
+                animRef->pause();
+                LOG_INFO("AnimatedImage", "Animation paused");
+            } else {
+                animRef->play();
+                LOG_INFO("AnimatedImage", "Animation resumed");
+            }
+        });
+        panel->addChild(std::move(toggleBtn));
+        panel->addChild(std::move(anim));
+        guiManager.addElement(std::move(panel));
+
         bool quit = false;
         SDL_Event e;
         while (!quit) {
             while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_EVENT_QUIT) {
-                    quit = true;
-                }
-                gui.processEvent(e);
+                if (e.type == SDL_EVENT_QUIT) quit = true;
+                guiManager.processEvent(e);
             }
-
-            gui.update();
-            gui.cleanup();
-
-            SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);
-            SDL_RenderClear(app.getRenderer());
-            gui.render();
-            SDL_RenderPresent(app.getRenderer());
+            guiManager.update();
+            guiManager.cleanup();
+            SDL_SetRenderDrawColor(renderer, 30, 30, 46, 255);
+            SDL_RenderClear(renderer);
+            guiManager.render();
+            SDL_RenderPresent(renderer);
         }
-
-    } catch (const std::exception& e) {
-        std::cerr << "Wyjątek: " << e.what() << std::endl;
+    } catch (const std::runtime_error& e) {
+        std::cerr << "An error occurred: " << e.what() << std::endl;
         return 1;
     }
     return 0;

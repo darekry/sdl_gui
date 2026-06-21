@@ -128,7 +128,6 @@ public:
 protected:
     void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
  
-protected:
     uint32_t startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback);
     void stopTimer(uint32_t timerId);
     

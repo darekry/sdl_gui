@@ -8,6 +8,7 @@ public:
     ~Canvas();
 
     void clear();
+    void setPenColor(SDL_Color color);
 
     bool handleEvent(const SDL_Event& e) override;
     const char* getComponentType() const override;
@@ -30,6 +31,8 @@ private:
     SDL_Point windowToLocal(int wx, int wy) const;
     void drawSegment(SDL_Renderer* renderer, SDL_Point a, SDL_Point b);
     void putBrush(SDL_Renderer* renderer, int x, int y);
+
+    SDL_Color m_penColor = {0, 0, 0, 255};
 
     static constexpr int BRUSH_SIZE = 4;
 };

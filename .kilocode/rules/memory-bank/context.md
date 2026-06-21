@@ -1,38 +1,26 @@
-# Aktualny stan projektu (2026-06-20)
+# Aktualny stan projektu (2026-06-21)
 
-## Status: Rounded corner texture clipping fix ✅
+## Status: Example simplification + Memory bank active
 
 ## Ostatnie zmiany
 
-### Rounded corner texture clipping (2026-06-20)
-- **Problem**: Tekstura (`style.texture`) renderowana przez `drawBackgroundAndBorder` ignorowała zaokrąglenie rogów - `SDL_RenderTexture` rysował pełny prostokąt wystający poza obramowanie rounded rect
-- **Fix**: Nowa funkcja `drawRoundedTexturedRect` w `src/gui.cpp:46-98` rysuje teksturę przyciętą do kształtu zaokrąglonego prostokąta używając `SDL_RenderGeometry` z teksturą i znormalizowanymi koordynatami UV
-- **Pliki zmienione**:
-  - `src/gui.hpp:173` - dodana deklaracja `drawRoundedTexturedRect`
-  - `src/gui.cpp:46-98` - implementacja funkcji
-  - `src/gui.cpp:623-626` - `drawBackgroundAndBorder` używa nowej funkcji zamiast `SDL_RenderTexture`
-- **Build**: 39/39 examples, 29/29 tests kompiluje się (1 test fail: combobox - pre-existing heap-use-after-free)
+### Simplified examples (2026-06-21)
+- **examples/15_widgets_combo.cpp**: New replacement for old sprite_animator. Demonstrates multiple widgets (Button, Checkbox, Slider, ComboBox) with tooltips, ContextMenu, Theme::createDefaultTheme(), and Anchor::center() in a cohesive mini-application. 118 lines.
+- **examples/24_button.cpp**: 139 → 89 lines. Reduced 5 variants to 3 (default themed, colored green, textured with border-radius). Added tooltips and Theme::createDefaultTheme(). Removed image-only and styled-border variants.
+- **examples/33_hover_animation.cpp**: 319 → 160 lines. Reduced 4 classes to 2 (HoverAnimatedLift + HoverStaticLift). Removed HoverAnimatedScale and HoverStaticScale. Added Theme::createDefaultTheme(). Kept labels for animated/static comparison and AnimationManager info.
 
-### Embedded Assets (2026-06-20)
-- **Manifest**: `assets.embed` z listą plików do osadzenia (ścieżka + opcjonalny font size)
-- **Build**: `nob.c::build_embedded_assets()` używa `ld -r -b binary` do tworzenia .o z binariami
-- **Header**: auto-generowany `output/embedded_assets.hpp` z `extern "C"` symbolami i tabelą `g_embeddedAssets[]`
-- **TextureManager**: nowa metoda `loadTextureFromMemory(data, size, key)` używająca `SDL_IOFromConstMem` + `IMG_Load_IO`
-- **FontManager**: nowa metoda `loadFontFromMemory(data, size, fontSize, key)` używająca `SDL_IOFromConstMem` + `TTF_OpenFontIO`
-- **Example**: `examples/29_embedded_assets.cpp` demonstruje rejestrację i użycie embedded assetów przez standardowe API
-- **Auto-rejestracja**: wpięte do `build_examples` i `build_tests` — każdy binarek linkuje embedded .o
-- **Rebuild detection**: działa — pomija gdy nic się nie zmieniło (0 built, 38 skipped)
+### Rounded corner texture clipping fix (2026-06-20)
+- **Problem**: Texture rendered by drawBackgroundAndBorder ignored rounded corners
+- **Fix**: drawRoundedTexturedRect in src/gui.cpp uses SDL_RenderGeometry with normalized UV coordinates
+- **Build**: 39/39 examples, 29/29 tests compile (1 pre-existing test fail: combobox heap-use-after-free)
 
 ### SDL2 → SDL3 Migration (2026-06-13) ✅ Complete
-
-Wszystkie 10 stages migracji zakończone. Projekt w pełni funkcjonalny na SDL3.
 
 ## Kluczowe stats
 
 | Metric | Value |
 |--------|-------|
 | Examples | 41 (all compile, numbered 00–40 by complexity) |
-| Test files | 31 total (29 test + 2 infra: test_helper, test_main) |
-| Widget types | 21 (+ 3 composite: DialogBox, MessageBox, FileDialog) |
-| Editor modules | 5 (EditorWindow, EditorState, PreviewWindow, LayoutImporter, LayoutExporter) |
-| Parser-supported widgets | 18 (JSON + XML)
+| Test files | 31 total (29 test + 2 infra) |
+| Widget types | 21 (+ 3 composite) |
+| Editor modules | 5 |
