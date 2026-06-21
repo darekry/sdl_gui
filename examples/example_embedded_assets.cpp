@@ -16,10 +16,10 @@ static void registerEmbeddedAssets(GUIManager& guiManager) {
 
     for (const auto & a : g_embeddedAssets) {
          if (a.fontSize < 0) {
-            LOG_INFO("Embedded", "Registering texture: %s (%zu bytes)", a.name, a.size);
+            LOG_INFO("Embedded", "Registering texture: {} ({} bytes)", a.name, a.size);
             tm.loadTextureFromMemory(a.data, a.size, a.name);
         } else {
-            LOG_INFO("Embedded", "Registering font: %s size=%d (%zu bytes)", a.name, a.fontSize, a.size);
+            LOG_INFO("Embedded", "Registering font: {} size={} ({} bytes)", a.name, a.fontSize, a.size);
             fm.loadFontFromMemory(a.data, a.size, a.fontSize, a.name);
         }
     }

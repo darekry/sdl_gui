@@ -33,7 +33,7 @@ cc -o nob nob.c
 ```
 
 ### Główne cele:
--   `nob` / `nob examples`: Kompiluje wszystkie przykłady z katalogu [`examples/`](examples/:1) do katalogu `output/`.
+-   `nob` / `nob examples`: Kompiluje wszystkie przykłady z katalogu [`examples/`](examples/:1) do katalogu `output/`. Automatycznie osadza assety z `assets.embed` do każdego binarka.
 -   `nob test`: Kompiluje i uruchamia wszystkie testy jednostkowe z katalogu [`tests/`](tests/:1).
 -   `nob release`: Buduje biblioteki statyczne/dynamiczne i połączony header w katalogu `dist/`.
 -   `nob clean`: Usuwa skompilowane pliki (`output/`, `dist/`, `modules_cache/`).
@@ -58,6 +58,11 @@ cc -o nob nob.c
 -   **GPU Renderer**: SDL_gpu używany przez ShaderPanel i elementy wymagające shaderów. Wymaga `SDL_CreateGPURenderer` (nie `SDL_CreateRenderer`).
 -   **Cache'owanie zasobów**: `TextureManager` i `FontManager` przechowują załadowane zasoby w mapach, aby uniknąć wielokrotnego ładowania tych samych plików.
 -   **Cache'owanie renderowania**: Każdy `GUIElement` domyślnie renderuje swoją zawartość do osobnej tekstury (`m_cachedTexture`), która jest odświeżana tylko w razie potrzeby (`m_isDirty = true`). To kluczowa optymalizacja, która minimalizuje liczbę operacji rysowania.
+-   **Embedded Assets**: System osadzania plików binarnych (PNG, TTF) bezpośrednio w ELF:
+    -   `ld -r -b binary` tworzy plik `.o` z symbolami `_binary_<nazwa>_start` / `_end` / `_size`
+    -   `SDL_IOFromConstMem` → `IMG_Load_IO` / `TTF_OpenFontIO` do ładowania z pamięci
+    -   Manifest `assets.embed` definiuje listę plików do osadzenia
+    -   Auto-generowany header `output/embedded_assets.hpp` z tablicą `g_embeddedAssets[]`
 
 ## Narzędzia deweloperskie
 

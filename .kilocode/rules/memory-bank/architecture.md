@@ -38,6 +38,37 @@ EditorWindow (main editor UI), EditorState (state management), PreviewWindow (li
 
 TextureManager (SharedTexture cache), FontManager (SharedFont cache), TimerManager, AnimationManager
 
+### Memory-based loading (Embedded Assets)
+
+TextureManager and FontManager support loading directly from memory buffers:
+
+| Method | SDL3 API used |
+|--------|--------------|
+| `TextureManager::loadTextureFromMemory(data, size, key)` | `SDL_IOFromConstMem` → `IMG_Load_IO` → `SDL_CreateTextureFromSurface` |
+| `FontManager::loadFontFromMemory(data, size, fontSize, key)` | `SDL_IOFromConstMem` → `TTF_OpenFontIO` |
+
+Both methods cache the result under `key`, making them transparently interchangeable with file-based `loadTexture(path)` / `loadFont(path, size)`.
+
+## Embedded Assets System
+
+Assets can be linked directly into the binary at link time, eliminating filesystem dependencies.
+
+| Component | Role | File |
+|-----------|------|------|
+| **assets.embed** | Manifest listing files to embed (`<path> [fontSize]`) | Project root |
+| **nob.c:build_embedded_assets()** | Build step: `ld -r -b binary` → `.o` files + generated header | nob.c |
+| **output/embedded_assets.hpp** | Auto-generated: `extern "C"` symbols + `g_embeddedAssets[]` table | Output dir |
+| **output/embedded_*.o** | Per-asset linkable object files (data in `.rodata`) | Output dir |
+
+**Flow:**
+1. Developer lists assets in `assets.embed` (one path per line, optional font size)
+2. `./nob examples` runs `build_embedded_assets()` which invokes `ld -r -b binary` for each asset
+3. Each asset becomes an `.o` file with symbols `_binary_<sanitized_path>_start` / `_end`
+4. All `.o` files are linked into every example/test binary
+5. Generated header `output/embedded_assets.hpp` declares extern symbols and provides `g_embeddedAssets[]` struct array
+6. Application code iterates `g_embeddedAssets[]` and calls `loadTextureFromMemory` / `loadFontFromMemory`
+7. From that point on, `loadTexture("assets/button1.png")` returns the cached embedded texture — no disk I/O
+
 ## Parsers
 
 JsonParser, SGMLParser (define GUI from JSON/XML), LayoutParser (interface)

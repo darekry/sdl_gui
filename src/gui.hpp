@@ -171,3 +171,4 @@ protected:
 
 void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color);
 void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color, float thickness);
+void drawRoundedTexturedRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_Texture* texture);

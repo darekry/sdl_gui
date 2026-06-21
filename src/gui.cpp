@@ -43,6 +43,60 @@ void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius,
     SDL_RenderGeometry(renderer, NULL, verts.data(), static_cast<int>(verts.size()), NULL, 0);
 }
 
+void drawRoundedTexturedRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_Texture* texture) {
+    if (radius <= 0.0f || rect.w < 2.0f * radius || rect.h < 2.0f * radius) {
+        { SDL_FRect _dr = {static_cast<float>(rect.x), static_cast<float>(rect.y), static_cast<float>(rect.w), static_cast<float>(rect.h)}; SDL_RenderTexture(renderer, texture, nullptr, &_dr); }
+        return;
+    }
+
+    float left = rect.x, top = rect.y;
+    float right = rect.x + rect.w, bottom = rect.y + rect.h;
+    float r = radius;
+
+    auto texCoord = [&](float px, float py) -> SDL_FPoint {
+        return SDL_FPoint{(px - left) / rect.w, (py - top) / rect.h};
+    };
+
+    auto addTri = [&](std::vector<SDL_Vertex>& verts, float x0, float y0, float x1, float y1, float x2, float y2) {
+        verts.push_back({SDL_FPoint{x0, y0}, SDL_FColor{1,1,1,1}, texCoord(x0, y0)});
+        verts.push_back({SDL_FPoint{x1, y1}, SDL_FColor{1,1,1,1}, texCoord(x1, y1)});
+        verts.push_back({SDL_FPoint{x2, y2}, SDL_FColor{1,1,1,1}, texCoord(x2, y2)});
+    };
+
+    auto addQuad = [&](std::vector<SDL_Vertex>& verts, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
+        addTri(verts, x0, y0, x1, y1, x2, y2);
+        addTri(verts, x0, y0, x2, y2, x3, y3);
+    };
+
+    std::vector<SDL_Vertex> verts;
+
+    addQuad(verts, left + r, top, right - r, top, right - r, top + r, left + r, top + r);
+    addQuad(verts, left + r, bottom - r, right - r, bottom - r, right - r, bottom, left + r, bottom);
+    addQuad(verts, left, top + r, left + r, top + r, left + r, bottom - r, left, bottom - r);
+    addQuad(verts, right - r, top + r, right, top + r, right, bottom - r, right - r, bottom - r);
+    addQuad(verts, left + r, top + r, right - r, top + r, right - r, bottom - r, left + r, bottom - r);
+
+    const int segments = 8;
+    float cx[4] = {left + r, right - r, right - r, left + r};
+    float cy[4] = {top + r, top + r, bottom - r, bottom - r};
+    float ba[4] = {3.1415927f, 4.712389f, 0, 1.5707963f};
+
+    for (int corner = 0; corner < 4; ++corner) {
+        for (int i = 0; i < segments; ++i) {
+            float a0 = ba[corner] + static_cast<float>(i) * 1.5707963f / static_cast<float>(segments);
+            float a1 = ba[corner] + static_cast<float>(i + 1) * 1.5707963f / static_cast<float>(segments);
+            float px0 = cx[corner] + cosf(a0) * r;
+            float py0 = cy[corner] + sinf(a0) * r;
+            float px1 = cx[corner] + cosf(a1) * r;
+            float py1 = cy[corner] + sinf(a1) * r;
+            addTri(verts, cx[corner], cy[corner], px0, py0, px1, py1);
+        }
+    }
+
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+    SDL_RenderGeometry(renderer, texture, verts.data(), static_cast<int>(verts.size()), nullptr, 0);
+}
+
 void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color, float thickness) {
     if (radius <= 0.0f || rect.w < 2.0f * radius || rect.h < 2.0f * radius) {
         SDL_SetRenderDrawColorFloat(renderer, color.r, color.g, color.b, color.a);
@@ -568,7 +622,7 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
 
     if (style.texture.has_value()) {
         SDL_FRect texRect = {0, 0, static_cast<float>(m_width), static_cast<float>(m_height)};
-        { SDL_FRect _dr = {static_cast<float>(texRect.x), static_cast<float>(texRect.y), static_cast<float>(texRect.w), static_cast<float>(texRect.h)}; SDL_RenderTexture(renderer, style.texture.value().get(), nullptr, &_dr); }
+        drawRoundedTexturedRect(renderer, texRect, fradius, style.texture.value().get());
     }
 
     if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {

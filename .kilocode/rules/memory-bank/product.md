@@ -36,7 +36,7 @@ Przyjazne mechanizmy stylowania:
 - **Prosty model dodawania widgetów**: utwórz instancję elementu dziedziczącego po `GUIElement`, dodaj do `GUIManager` przez `addElement`
 - **Minimalne zarządzanie zasobami**: menedżery automatycznie cache'ują zasoby i zwracają współdzielone wskaźniki (`SharedTexture`, `SharedFont`)
 - **Responsywny layout**: system anchorów (Anchor) umożliwia pozycjonowanie procentowe, stretch i centrowanie
-- **Przykłady gotowego użycia**: katalog [`examples/`](examples/) zawiera 38 przykładów demonstrujących poszczególne widgety i funkcjonalności
+- **Przykłady gotowego użycia**: katalog [`examples/`](examples/) zawiera 39 przykładów demonstrujących poszczególne widgety i funkcjonalności, w tym `example_embedded_assets` pokazujący osadzanie assetów bezpośrednio w binarkach
 
 ## Ograniczenia i założenia
 
@@ -44,3 +44,4 @@ Przyjazne mechanizmy stylowania:
 - Renderowanie GPU: wsparcie dla SDL_gpu, shaderów (ShaderPanel)
 - Projekt celuje w prostotę i czytelność, nie w pełną funkcjonalność produkcyjnego GUI frameworka
 - Wymaga C++23 i kompilatora z obsługą modułów (clang++-22 z libc++)
+- **Embedded assets**: Możliwość osadzenia grafik i fontów bezpośrednio w binarkach (linker-level, `ld -r -b binary`), dostępne przez menedżery zasobów tak jak z plików
