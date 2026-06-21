@@ -4,6 +4,7 @@
 #include "texture_manager.hpp"
 #include "gui.hpp"
 #include "std.hpp"
+#include "constants.hpp"
 namespace {
     constexpr float kEpsilon = 1e-6f;
 }
@@ -103,18 +104,10 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
                 ? (fillRect.w - 1) / 2
                 : (fillRect.h - 1) / 2;
             int effectiveRadius = std::min(borderRadius, maxRadius);
-            SDL_FRect ffillRect = {
-                static_cast<float>(fillRect.x), static_cast<float>(fillRect.y),
-                static_cast<float>(fillRect.w), static_cast<float>(fillRect.h)
-            };
-            SDL_FColor ffillColor = {
-                fillColor.r / 255.0f, fillColor.g / 255.0f,
-                fillColor.b / 255.0f, fillColor.a / 255.0f
-            };
-            drawRoundedFilledRect(renderer, ffillRect, static_cast<float>(effectiveRadius), ffillColor);
+            drawRoundedFilledRect(renderer, SDLRectToFRect(fillRect), static_cast<float>(effectiveRadius), ColorToFColor(fillColor));
         } else {
             SDL_SetRenderDrawColor(renderer, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
-            { SDL_FRect _fr = {static_cast<float>(fillRect.x), static_cast<float>(fillRect.y), static_cast<float>(fillRect.w), static_cast<float>(fillRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
+            RenderFillRect(renderer, fillRect);
         }
     }
 
@@ -129,7 +122,7 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
 
         auto& fontManager = m_manager.getFontManager();
         int fontSize = style.fontSize.value_or(16);
-        auto fontPath = style.fontName.value_or("assets/fonts/font.ttf");
+        auto fontPath = style.fontName.value_or(constants::kDefaultFontPath);
         auto font = fontManager.loadFont(fontPath, fontSize);
 
         if (font) {
@@ -138,15 +131,14 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
             auto textTex = textureManager.createTextureFromText(buffer, font, textColor);
 
             if (textTex) {
-                int tw = 0, th = 0;
-                {  float _fw=0,_fh=0; SDL_GetTextureSize(textTex.get(), &_fw, &_fh); tw=static_cast<int>(_fw); th=static_cast<int>(_fh); }
+                int tw = TextureWidth(textTex.get()); int th = TextureHeight(textTex.get());
                 SDL_Rect dstRect = {
                     (m_width - tw) / 2,
                     (m_height - th) / 2,
                     tw,
                     th
                 };
-                { SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, textTex.get(), nullptr, &_dr); }
+                RenderTexture(renderer, textTex.get(), dstRect);
             }
         }
     }

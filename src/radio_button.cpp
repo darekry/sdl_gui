@@ -68,20 +68,20 @@ void RadioButton::draw(SDL_Renderer* renderer) {
         const auto& c = style.backgroundColor.value();
         SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
         SDL_Rect bgRect = {0, 0, m_width, m_height};
-        { SDL_FRect _fr = {static_cast<float>(bgRect.x), static_cast<float>(bgRect.y), static_cast<float>(bgRect.w), static_cast<float>(bgRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
+        RenderFillRect(renderer, bgRect);
     }
 
     if (style.borderColor) {
         const auto& c = style.borderColor.value();
         SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
         SDL_Rect borderRect = {0, 0, m_width, m_height};
-        { SDL_FRect _fr = {static_cast<float>(borderRect.x), static_cast<float>(borderRect.y), static_cast<float>(borderRect.w), static_cast<float>(borderRect.h)}; SDL_RenderRect(renderer, &_fr); }
+        RenderRect(renderer, borderRect);
     }
 
     if (m_isSelected) {
         if (style.texture) {
             SDL_Rect indicatorRect = {0, 0, m_width, m_height};
-            { SDL_FRect _dr = {static_cast<float>(indicatorRect.x), static_cast<float>(indicatorRect.y), static_cast<float>(indicatorRect.w), static_cast<float>(indicatorRect.h)}; SDL_RenderTexture(renderer, style.texture->get(), nullptr, &_dr); }
+            RenderTexture(renderer, style.texture->get(), indicatorRect);
         } else if (style.textColor) {
             const auto& c = style.textColor.value();
             SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);

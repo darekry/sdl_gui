@@ -1,6 +1,7 @@
 #include "label.hpp"
 #include "gui_manager.hpp"
 #include "gui.hpp"
+#include "constants.hpp"
 
 
 void Label::recalculateSize() {
@@ -11,7 +12,7 @@ void Label::recalculateSize() {
     const auto& resolvedStyle = getComposedStyle(m_state);
     int font_size = m_font_size > 0 ? m_font_size : (resolvedStyle.fontSize.value_or(m_manager.getTheme().getDefaultStyle().fontSize.value_or(16)));
     auto& fontManager = m_manager.getFontManager();
-    auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
+    auto font = fontManager.loadFont(resolvedStyle.fontName.value_or(constants::kDefaultFontPath), font_size);
     if (font) {
         int textWidth = 0, textHeight = 0;
         if (!TTF_GetStringSize(font.get(), m_text.c_str(), m_text.length(), &textWidth, &textHeight)) {
@@ -61,7 +62,7 @@ void Label::draw(SDL_Renderer* renderer) {
 
     if (needsRecreate) {
         auto& fontManager = m_manager.getFontManager();
-        auto font = fontManager.loadFont(resolvedStyle.fontName.value_or("assets/fonts/font.ttf"), font_size);
+        auto font = fontManager.loadFont(resolvedStyle.fontName.value_or(constants::kDefaultFontPath), font_size);
 
         if (!font) {
             LOG_DEBUG("no font");
@@ -87,5 +88,5 @@ void Label::draw(SDL_Renderer* renderer) {
     }
 
     SDL_Rect dstRect = {0, 0, m_width, m_height};
-    { SDL_FRect _dr = {static_cast<float>(dstRect.x), static_cast<float>(dstRect.y), static_cast<float>(dstRect.w), static_cast<float>(dstRect.h)}; SDL_RenderTexture(renderer, m_cachedTextTexture.get(), nullptr, &_dr); }
+    RenderTexture(renderer, m_cachedTextTexture.get(), dstRect);
 }

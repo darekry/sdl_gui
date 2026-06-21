@@ -1,4 +1,5 @@
 #include "theme.hpp"
+#include "constants.hpp"
 
 void Theme::setStyle(std::string_view type, ElementState state, Style style) {
     m_typeStyles[std::string(type)][state] = std::move(style);
@@ -60,7 +61,7 @@ Theme Theme::createDefaultTheme() {
     defaultStyle.borderColor = border_dark;
     defaultStyle.borderWidth = 0;
     defaultStyle.fontSize = 16;
-    defaultStyle.fontName = "assets/fonts/font.ttf";
+    defaultStyle.fontName = constants::kDefaultFontPath;
     theme.setDefaultStyle(defaultStyle);
 
     // === Button styles ===

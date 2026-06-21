@@ -1,4 +1,5 @@
 #include "preview_window.hpp"
+#include "../constants.hpp"
 #include "../button.hpp"
 #include "../label.hpp"
 #include "../checkbox.hpp"
@@ -154,7 +155,7 @@ std::unique_ptr<GUIElement> PreviewWindow::createWidget(const EditorElement& ele
     }
     else if (elem.type == "TextArea") {
         std::string text = elem.getProperty("text", "");
-        std::string fontPath = elem.getProperty("fontPath", "assets/fonts/font.ttf");
+        std::string fontPath = elem.getProperty("fontPath", constants::kDefaultFontPath);
         int fontSize = previewParseInt(elem.getProperty("fontSize", "16"), 16);
         auto area = std::make_unique<TextArea>(m_manager, 0, 0, elem.width, elem.height, fontPath, fontSize);
         area->setText(text);

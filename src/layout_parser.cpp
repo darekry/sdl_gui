@@ -20,6 +20,7 @@
 #include "text_input.hpp"
 #include <SDL3/SDL.h>
 
+#include "constants.hpp"
 #include "std.hpp"
 
 LayoutParser::LayoutParser(GUIManager& guiManager)
@@ -135,7 +136,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else if (type == "TextArea")
     {
-        auto ta = std::make_unique<TextArea>(m_guiManager, 0, 0, 200, 150, getString(node, "fontPath", "assets/fonts/font.ttf"), getInt(node, "fontSize", 16));
+        auto ta = std::make_unique<TextArea>(m_guiManager, 0, 0, 200, 150, getString(node, "fontPath", constants::kDefaultFontPath), getInt(node, "fontSize", 16));
         if (hasNode(node, "text")) ta->setText(std::string_view(getString(node, "text")));
         ta->setWordWrap(getBool(node, "wordWrap", true));
         ta->setLocked(getBool(node, "locked", false));

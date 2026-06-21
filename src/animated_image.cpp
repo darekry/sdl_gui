@@ -45,7 +45,7 @@ void AnimatedImage::recalcFrameGeometry() {
     }
 
     int texW = 0, texH = 0;
-    {  float _fw=0,_fh=0; SDL_GetTextureSize(m_texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); }
+    texW = TextureWidth(m_texture.get()); texH = TextureHeight(m_texture.get());
 
     // columns = ceil(totalFrames / rows)
     m_cols = (m_totalFrames + m_rows - 1) / m_rows;
@@ -80,13 +80,7 @@ void AnimatedImage::updateSrcRect() {
     m_srcRect.h = m_frameH;
 }
 
-void AnimatedImage::draw(SDL_Renderer* renderer) {
-    ensureTextureLoaded();
-    if (!m_texture || m_totalFrames <= 0 || m_frameW <= 0 || m_frameH <= 0) {
-        return;
-    }
-
-    // If animation is driven by AnimationManager, convert m_animFrame to an integer frame
+void AnimatedImage::advanceFrameIfNeeded() {
     int computedFrame = static_cast<int>(std::round(m_animFrame));
     computedFrame = std::clamp(computedFrame, 0, std::max(0, m_totalFrames - 1));
     if (computedFrame != m_currentFrame) {
@@ -94,6 +88,15 @@ void AnimatedImage::draw(SDL_Renderer* renderer) {
         updateSrcRect();
         if (m_onFrameChanged) m_onFrameChanged(m_currentFrame);
     }
+}
+
+void AnimatedImage::draw(SDL_Renderer* renderer) {
+    ensureTextureLoaded();
+    if (!m_texture || m_totalFrames <= 0 || m_frameW <= 0 || m_frameH <= 0) {
+        return;
+    }
+
+    advanceFrameIfNeeded();
 
     // Prepare destination rect according to scale mode
     SDL_Rect dst{0,0, m_width, m_height};
@@ -133,7 +136,7 @@ void AnimatedImage::draw(SDL_Renderer* renderer) {
     }
 
     // Render current frame from sprite sheet
-    { SDL_FRect _sr = {static_cast<float>(m_srcRect.x), static_cast<float>(m_srcRect.y), static_cast<float>(m_srcRect.w), static_cast<float>(m_srcRect.h)}; SDL_FRect _dr = {static_cast<float>(dst.x), static_cast<float>(dst.y), static_cast<float>(dst.w), static_cast<float>(dst.h)}; SDL_RenderTexture(renderer, m_texture.get(), &_sr, &_dr); }
+    RenderTexture(renderer, m_texture.get(), &m_srcRect, &dst);
 }
 
 bool AnimatedImage::wantsDirectRender() const {
@@ -147,13 +150,7 @@ void AnimatedImage::drawDirect(SDL_Renderer* renderer) {
         return;
     }
 
-    int computedFrame = static_cast<int>(std::round(m_animFrame));
-    computedFrame = std::clamp(computedFrame, 0, std::max(0, m_totalFrames - 1));
-    if (computedFrame != m_currentFrame) {
-        m_currentFrame = computedFrame;
-        updateSrcRect();
-        if (m_onFrameChanged) m_onFrameChanged(m_currentFrame);
-    }
+    advanceFrameIfNeeded();
 
     auto absPos = getAbsolutePosition();
     SDL_Rect dst{absPos.x, absPos.y, m_width, m_height};
@@ -193,7 +190,7 @@ void AnimatedImage::drawDirect(SDL_Renderer* renderer) {
         }
     }
 
-    { SDL_FRect _sr = {static_cast<float>(m_srcRect.x), static_cast<float>(m_srcRect.y), static_cast<float>(m_srcRect.w), static_cast<float>(m_srcRect.h)}; SDL_FRect _dr = {static_cast<float>(dst.x), static_cast<float>(dst.y), static_cast<float>(dst.w), static_cast<float>(dst.h)}; SDL_RenderTexture(renderer, m_texture.get(), &_sr, &_dr); }
+    RenderTexture(renderer, m_texture.get(), &m_srcRect, &dst);
 }
 
 void AnimatedImage::setFrame(int frameIndex) {

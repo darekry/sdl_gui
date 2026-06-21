@@ -1,6 +1,7 @@
 #include "dialog_box.hpp"
 #include "../gui_manager.hpp"
 #include "../theme.hpp"
+#include "constants.hpp"
 
 #include "std.hpp"
 
@@ -272,18 +273,8 @@ void DialogBox::layoutButtons() {
 }
 
 void DialogBox::draw(SDL_Renderer* renderer) {
-    // Rysuj title bar jeśli istnieje
     if (m_hasTitleBar) {
-        SDL_Color titleBarColor = {200, 200, 200, 255};
-        SDL_SetRenderDrawColor(renderer, 
-            titleBarColor.r, titleBarColor.g, titleBarColor.b, titleBarColor.a);
-        SDL_Rect titleRect = {m_x, m_y, m_width, m_titleBarHeight};
-        { SDL_FRect _fr = {static_cast<float>(titleRect.x), static_cast<float>(titleRect.y), static_cast<float>(titleRect.w), static_cast<float>(titleRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
-        
-        // Separator linia
-        SDL_SetRenderDrawColor(renderer, 150, 150, 150, 255);
-        RenderLine(renderer, m_x, m_y + m_titleBarHeight, 
-            m_x + m_width, m_y + m_titleBarHeight);
+        drawTitleBar(renderer, m_x, m_y, m_width, m_titleBarHeight);
     }
     
     // Rysuj panel (tło i border)

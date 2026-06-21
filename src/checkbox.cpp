@@ -71,7 +71,7 @@ void Checkbox::draw(SDL_Renderer* renderer) {
         const auto& style = getComposedStyle(m_state);
         if (style.textColor) {
             const auto& c = style.textColor.value();
-            SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+            SetDrawColor(renderer, c);
 
             SDL_Rect checkRect = { 3, 3, m_width - 6, m_height - 6 };
             RenderLine(renderer, checkRect.x, checkRect.y + checkRect.h / 2, checkRect.x + checkRect.w / 2, checkRect.y + checkRect.h);

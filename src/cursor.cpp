@@ -155,7 +155,7 @@ void Cursor::renderCursor(SDL_Renderer* renderer, const CursorData& data, int mo
     dst.x = mouseX - static_cast<int>(std::round(static_cast<float>(data.hotspotX) * m_scale)) + m_offsetX;
     dst.y = mouseY - static_cast<int>(std::round(static_cast<float>(data.hotspotY) * m_scale)) + m_offsetY;
 
-    { SDL_FRect _sr = {static_cast<float>(src.x), static_cast<float>(src.y), static_cast<float>(src.w), static_cast<float>(src.h)}; SDL_FRect _dr = {static_cast<float>(dst.x), static_cast<float>(dst.y), static_cast<float>(dst.w), static_cast<float>(dst.h)}; SDL_RenderTexture(renderer, data.texture.get(), &_sr, &_dr); }
+    RenderTexture(renderer, data.texture.get(), &src, &dst);
 }
 
 SDL_Rect Cursor::getSrcRect(const CursorData& data) const {

@@ -10,6 +10,7 @@
 #include "animation_manager.hpp"
 #include "style.hpp"
 #include "anchor.hpp"
+#include "constants.hpp"
 
 #include "logger.hpp"
 
@@ -172,3 +173,10 @@ protected:
 void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color);
 void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color, float thickness);
 void drawRoundedTexturedRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_Texture* texture);
+
+inline void drawTitleBar(SDL_Renderer* renderer, int x, int y, int w, int h) {
+    SetDrawColor(renderer, constants::kTitleBarColor);
+    RenderFillRect(renderer, SDL_Rect{x, y, w, h});
+    SetDrawColor(renderer, constants::kTitleBarLineColor);
+    RenderLine(renderer, x, y + h, x + w, y + h);
+}

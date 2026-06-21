@@ -1,6 +1,7 @@
 #include "layout_exporter.hpp"
 #include "../../lib/tinyxml2.h"
 
+#include "../constants.hpp"
 #include "std.hpp"
 
 bool LayoutExporter::saveToXML(const std::vector<EditorElement>& elements, const std::string& filePath) {
@@ -13,7 +14,7 @@ bool LayoutExporter::saveToXML(const std::vector<EditorElement>& elements, const
     layout->InsertFirstChild(resources);
     
     tinyxml2::XMLElement* font = doc.NewElement("Font");
-    font->SetAttribute("path", "assets/fonts/font.ttf");
+    font->SetAttribute("path", constants::kDefaultFontPath);
     font->SetAttribute("size", "16");
     resources->InsertFirstChild(font);
     
@@ -34,7 +35,7 @@ bool LayoutExporter::saveToJSON(const std::vector<EditorElement>& elements, cons
     
     file << "{\n";
     file << "  \"resources\": {\n";
-    file << "    \"fonts\": [{\"path\": \"assets/fonts/font.ttf\", \"size\": 16}]\n";
+    file << "    \"fonts\": [{\"path\": \"" << constants::kDefaultFontPath << "\", \"size\": 16}]\n";
     file << "  },\n";
     
     auto rootIndices = getRootIndices(elements);

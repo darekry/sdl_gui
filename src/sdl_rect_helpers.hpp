@@ -64,3 +64,24 @@ inline void RenderPoint(SDL_Renderer* renderer, float x, float y) {
 }
 
 inline float I2F(int v) { return static_cast<float>(v); }
+
+inline SDL_FColor ColorToFColor(SDL_Color c) {
+    constexpr float s = 1.0f / 255.0f;
+    return {c.r * s, c.g * s, c.b * s, c.a * s};
+}
+
+inline void SetDrawColor(SDL_Renderer* renderer, SDL_Color c) {
+    SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+}
+
+inline int TextureWidth(SDL_Texture* texture) {
+    float w = 0, h = 0;
+    SDL_GetTextureSize(texture, &w, &h);
+    return static_cast<int>(w);
+}
+
+inline int TextureHeight(SDL_Texture* texture) {
+    float w = 0, h = 0;
+    SDL_GetTextureSize(texture, &w, &h);
+    return static_cast<int>(h);
+}

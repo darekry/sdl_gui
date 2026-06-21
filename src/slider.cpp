@@ -150,7 +150,7 @@ void Slider::draw(SDL_Renderer* renderer) {
     } else {
         trackRect = {getWidth() / 2 - trackThickness / 2, m_trackOffsetY, trackThickness, m_trackSize};
     }
-    { SDL_FRect _fr = {static_cast<float>(trackRect.x), static_cast<float>(trackRect.y), static_cast<float>(trackRect.w), static_cast<float>(trackRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
+    RenderFillRect(renderer, trackRect);
 
     SDL_Color thumbColor = style.borderColor.value_or(SDL_Color{100, 100, 100, 255});
     SDL_SetRenderDrawColor(renderer, thumbColor.r, thumbColor.g, thumbColor.b, thumbColor.a);
@@ -168,7 +168,7 @@ void Slider::draw(SDL_Renderer* renderer) {
         thumbRect = {.x=getWidth() / 2 - thumbSize / 2, .y=thumbY, .w=thumbSize, .h=thumbSize};
     }
     
-    { SDL_FRect _fr = {static_cast<float>(thumbRect.x), static_cast<float>(thumbRect.y), static_cast<float>(thumbRect.w), static_cast<float>(thumbRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
+    RenderFillRect(renderer, thumbRect);
 }
 
 Button* Slider::getDecrementButton() {

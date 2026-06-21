@@ -2,6 +2,7 @@
 #include "font_manager.hpp"
 #include "texture_manager.hpp"
 #include "sdl_deleters.hpp"
+#include "constants.hpp"
 
 #include "std.hpp"
 
@@ -116,7 +117,7 @@ void TextArea::draw(SDL_Renderer* renderer) {
             SDL_Rect destRect = {2 + m_text_offset_x, yOffset + 2, texW, texH};
 
             if (destRect.y + destRect.h > 0 && destRect.y < m_height) {
-                 { SDL_FRect _dr = {static_cast<float>(destRect.x), static_cast<float>(destRect.y), static_cast<float>(destRect.w), static_cast<float>(destRect.h)}; SDL_RenderTexture(renderer, texture.get(), nullptr, &_dr); }
+                 RenderTexture(renderer, texture.get(), destRect);
             }
         }
         yOffset += TTF_GetFontHeight(font.get());
@@ -718,9 +719,8 @@ void TextArea::renderOverlay(SDL_Renderer* renderer) {
                 line_height
             };
             
-            // Semi-transparent blue selection highlight
-            SDL_SetRenderDrawColor(renderer, 100, 150, 255, 180);
-            { SDL_FRect _fr = {static_cast<float>(selection_rect.x), static_cast<float>(selection_rect.y), static_cast<float>(selection_rect.w), static_cast<float>(selection_rect.h)}; SDL_RenderFillRect(renderer, &_fr); }
+            SetDrawColor(renderer, constants::kSelectionColor);
+            RenderFillRect(renderer, selection_rect);
         }
     }
     
@@ -751,9 +751,9 @@ void TextArea::renderOverlay(SDL_Renderer* renderer) {
     auto cursorRect = SDL_Rect{ abs_pos.x + 2 + x + m_text_offset_x, abs_pos.y + 2 + y, 2, line_height };
     
     const auto style = getComposedStyle(m_state);
-    SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    { SDL_FRect _fr = {static_cast<float>(cursorRect.x), static_cast<float>(cursorRect.y), static_cast<float>(cursorRect.w), static_cast<float>(cursorRect.h)}; SDL_RenderFillRect(renderer, &_fr); }
+    SDL_Color color = style.textColor.value_or(constants::kDefaultTextColor);
+    SetDrawColor(renderer, color);
+    RenderFillRect(renderer, cursorRect);
     
     // Reset clip rect
     SDL_SetRenderClipRect(renderer, nullptr);
@@ -809,7 +809,7 @@ void TextArea::refreshTextures() {
     if (!font) return;
 
     const auto style = getComposedStyle(m_state);
-    SDL_Color color = style.textColor.value_or(SDL_Color{0,0,0,255});
+    SDL_Color color = style.textColor.value_or(constants::kDefaultTextColor);
 
     for (const auto& line : m_lines) {
         if (line.empty()) {

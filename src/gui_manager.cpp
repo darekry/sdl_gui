@@ -5,6 +5,7 @@
 #include "panel.hpp"
 #include "label.hpp"
 
+#include "constants.hpp"
 #include "std.hpp"
 
 static constexpr int DEFAULT_FONT_SIZE = 24;
@@ -18,7 +19,7 @@ GUIManager::GUIManager(SDL_Renderer* renderer)
     animation_manager = std::make_unique<AnimationManager>();
 
     Uint64 t0 = SDL_GetTicks();
-    m_fontManager.loadDefaultFont("assets/fonts/font.ttf", DEFAULT_FONT_SIZE);
+    m_fontManager.loadDefaultFont(constants::kDefaultFontPath, DEFAULT_FONT_SIZE);
     LOG_INFO("GUIManager", "loadDefaultFont: {}ms", SDL_GetTicks() - t0);
 
     t0 = SDL_GetTicks();
@@ -216,7 +217,7 @@ void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
 
     int textWidth = 0;
     int textHeight = 0;
-    m_fontManager.getTextSize(text, "assets/fonts/font.ttf", fontSize, &textWidth, &textHeight);
+    m_fontManager.getTextSize(text, constants::kDefaultFontPath, fontSize, &textWidth, &textHeight);
     
     auto targetPos = target->getAbsolutePosition();
     int posX = targetPos.x;

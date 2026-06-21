@@ -96,7 +96,7 @@ void Canvas::putBrush(SDL_Renderer* renderer, int x, int y) {
     if (rw <= 0 || rh <= 0) return;
 
     SDL_Rect r{ rx, ry, rw, rh };
-    { SDL_FRect _fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)}; SDL_RenderFillRect(renderer, &_fr); }
+    RenderFillRect(renderer, r);
 }
 
 void Canvas::drawSegment(SDL_Renderer* renderer, SDL_Point a, SDL_Point b) {
@@ -199,5 +199,5 @@ void Canvas::drawDirect(SDL_Renderer* renderer) {
 
     SDL_Point abs = getAbsolutePosition();
     SDL_Rect dest{ abs.x, abs.y, m_width, m_height };
-    { SDL_FRect _dr = {static_cast<float>(dest.x), static_cast<float>(dest.y), static_cast<float>(dest.w), static_cast<float>(dest.h)}; SDL_RenderTexture(renderer, m_canvasTex.get(), nullptr, &_dr); }
+    RenderTexture(renderer, m_canvasTex.get(), dest);
 }

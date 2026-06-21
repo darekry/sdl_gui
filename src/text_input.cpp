@@ -5,6 +5,7 @@
 #include "font_manager.hpp"
 #include "theme.hpp"
 #include "utf8_utils.hpp"
+#include "constants.hpp"
 
 
 TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
@@ -43,7 +44,7 @@ bool TextInput::isLocked() const {
 }
 
 void TextInput::updateTextOffset() {
-    auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
+    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
     if (!font) return;
 
     int text_width = 0;
@@ -84,7 +85,7 @@ void TextInput::refreshTextTexture() {
     
     if (m_text.empty()) return;
     
-    auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
+    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
     if (!font) return;
     
     const auto& style = getComposedStyle(m_state);
@@ -116,14 +117,14 @@ void TextInput::draw(SDL_Renderer* renderer) {
     drawBackgroundAndBorder(renderer);
     
     if (!m_text.empty() && m_textTexture) {
-        int textWidth = 0, textHeight = 0;
-        {  float _fw=0,_fh=0; SDL_GetTextureSize(m_textTexture.get(), &_fw, &_fh); textWidth=static_cast<int>(_fw); textHeight=static_cast<int>(_fh); }
+        int textWidth = TextureWidth(m_textTexture.get());
+        int textHeight = TextureHeight(m_textTexture.get());
         
         SDL_Rect clip_rect = {5, 0, getWidth() - 10, getHeight()};
         SDL_SetRenderClipRect(renderer, &clip_rect);
         
         SDL_Rect renderQuad = {5 + m_text_offset_x, (getHeight() - textHeight) / 2, textWidth, textHeight};
-        { SDL_FRect _dr = {static_cast<float>(renderQuad.x), static_cast<float>(renderQuad.y), static_cast<float>(renderQuad.w), static_cast<float>(renderQuad.h)}; SDL_RenderTexture(renderer, m_textTexture.get(), nullptr, &_dr); }
+        RenderTexture(renderer, m_textTexture.get(), renderQuad);
         
         SDL_SetRenderClipRect(renderer, nullptr);
     }
@@ -135,7 +136,7 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
     const auto& style = getComposedStyle(m_state);
     if (!style.textColor) return;
     
-    auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
+    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
     if (!font) return;
     
     int line_height = TTF_GetFontHeight(font.get());
@@ -175,8 +176,8 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
             line_height
         };
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-        SDL_SetRenderDrawColor(renderer, 100, 150, 255, 180);
-        { SDL_FRect _fr = {static_cast<float>(selection_rect.x), static_cast<float>(selection_rect.y), static_cast<float>(selection_rect.w), static_cast<float>(selection_rect.h)}; SDL_RenderFillRect(renderer, &_fr); }
+        SetDrawColor(renderer, constants::kSelectionColor);
+        RenderFillRect(renderer, selection_rect);
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
     }
     
@@ -205,8 +206,8 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
     };
     
     auto color = *style.textColor;
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    { SDL_FRect _fr = {static_cast<float>(cursor_rect.x), static_cast<float>(cursor_rect.y), static_cast<float>(cursor_rect.w), static_cast<float>(cursor_rect.h)}; SDL_RenderFillRect(renderer, &_fr); }
+    SetDrawColor(renderer, color);
+    RenderFillRect(renderer, cursor_rect);
     
     SDL_SetRenderClipRect(renderer, nullptr);
 }
@@ -220,7 +221,7 @@ bool TextInput::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && contains(e.button.x, e.button.y)) {
         m_manager.setKeyboardFocus(this);
         
-        auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
+        auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
         if (font) {
             auto abs_pos = getAbsolutePosition();
             int click_x = static_cast<int>(e.button.x) - abs_pos.x - 5;
@@ -278,7 +279,7 @@ size_t click_pos = 0;
 
     // Mouse motion - extend selection
     if (e.type == SDL_EVENT_MOUSE_MOTION && m_isDragging && hasKeyboardFocus()) {
-        auto font = m_manager.getFontManager().loadFont("assets/fonts/font.ttf", 16);
+        auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
         if (font) {
             auto abs_pos = getAbsolutePosition();
             int mouse_x = static_cast<int>(e.motion.x) - abs_pos.x - 5;
