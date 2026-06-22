@@ -8,6 +8,7 @@
 
 struct Animation {
     using CompleteCallback = std::function<void()>;
+    using FrameCallback = std::function<void()>;
     std::variant<int*, float*> target_property;
     float start_value = 0.0f;
     float end_value = 0.0f;
@@ -15,6 +16,7 @@ struct Animation {
     uint32_t duration_ms = 0;
     std::function<float(float)> easing_function = Easing::linear;
     CompleteCallback on_complete_callback = nullptr;
+    FrameCallback on_frame_callback = nullptr;
     bool is_finished = false;
 };
 
@@ -68,7 +70,8 @@ public:
         float end_value,
         uint32_t duration,
         std::function<float(float)> easing = Easing::linear,
-        Animation::CompleteCallback on_complete = nullptr
+        Animation::CompleteCallback on_complete = nullptr,
+        Animation::FrameCallback on_frame = nullptr
     ) {
         if (!target_property) {
             LOG_ERROR("AnimationManager", "target_property cannot be null.");
@@ -84,6 +87,7 @@ public:
                 .duration_ms = duration,
                 .easing_function = easing,
                 .on_complete_callback = on_complete,
+                .on_frame_callback = on_frame,
                 .is_finished = false
             }
         );
@@ -106,6 +110,9 @@ public:
                 std::visit([current_value](auto* ptr) {
                     *ptr = static_cast<std::remove_pointer_t<decltype(ptr)>>(current_value);
                 }, anim.target_property);
+                if (anim.on_frame_callback) {
+                    anim.on_frame_callback();
+                }
                 if (anim.is_finished && anim.on_complete_callback) {
                     completed_callbacks.push_back(anim.on_complete_callback);
                 }

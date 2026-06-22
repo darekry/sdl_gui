@@ -66,9 +66,15 @@ int main(int, char**) {
                 pb->getValuePtr(), 0.0f, pb->getMax(), 5000,
                 Easing::easeInOutQuad,
                 [aProgressRef]() {
-                    if (auto* pb = static_cast<ProgressBar*>(aProgressRef.get()))
+                    if (auto* pb = static_cast<ProgressBar*>(aProgressRef.get())) {
                         pb->markDirty();
-                    LOG_INFO("ProgressBar", "Loading complete!");
+                        LOG_INFO("ProgressBar", "Loading complete!");
+                    }
+                },
+                [aProgressRef]() {
+                    if (auto* pb = static_cast<ProgressBar*>(aProgressRef.get())) {
+                        pb->markDirty();
+                    }
                 }
             );
         });
@@ -82,12 +88,12 @@ int main(int, char**) {
                 guiManager.processEvent(e);
             }
             guiManager.update();
-            guiManager.cleanup();
-
+            
             SDL_SetRenderDrawColor(renderer, 212, 208, 200, 255);
             SDL_RenderClear(renderer);
             guiManager.render();
             SDL_RenderPresent(renderer);
+            guiManager.cleanup();
         }
     } catch (const std::runtime_error& e) {
         std::cerr << "An error occurred: " << e.what() << std::endl;
