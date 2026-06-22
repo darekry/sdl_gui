@@ -371,181 +371,53 @@ static bool build_unity_object(bool release, bool for_tests) {
 
 // ========== EMBEDDED ASSETS ==========
 
-// Convert a file path to a valid C identifier for linker symbols.
-// Replaces non-alphanumeric chars with '_'.
-static void path_to_ident(const char *path, char *out, size_t out_size) {
-    size_t j = 0;
-    for (const char *p = path; *p && j < out_size - 1; p++) {
-        char c = *p;
-        out[j++] = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ? c : '_';
-    }
-    out[j] = '\0';
-}
+// Asset definitions: path + optional font size (-1 = texture, >= 0 = font)
+static Nob_Embed_Asset g_embedded_assets[] = {
+    {"assets/button1.png", -1},
+    {"assets/button_bg.png", -1},
+    {"assets/fonts/font.ttf", 16},
+};
 
-// Build embedded assets from assets.embed manifest.
-// Creates .o files via ld -r -b binary and generates output/embedded_assets.hpp.
+// Build embedded assets using nob.h embed utilities.
+// Creates .o files via ld -r -b binary and generates src/embedded_assets.hpp.
 // Populates embedded_objects with paths to the generated .o files for linking.
 static bool build_embedded_assets(Nob_File_Paths *embedded_objects, bool release) {
     (void)release;
     nob_mkdir_if_not_exists(OUTPUT_DIR);
-    
-    // Read manifest
-    Nob_String_Builder manifest = {0};
-    if (!nob_read_entire_file("assets.embed", &manifest)) {
-        return true; // No manifest = nothing to embed
-    }
-    
-    Nob_String_View content = nob_sb_to_sv(manifest);
-    
-    // Parse asset entries: each line is "<path>" or "<path> <fontSize>"
-    // We store: asset_path, font_size (-1 = not a font)
-    Nob_File_Paths asset_paths = {0};
-    int *font_sizes = NULL; // dynamic array, -1 means texture
-    size_t font_sizes_count = 0, font_sizes_capacity = 0;
-    
-    {
-        Nob_String_View line;
-        while (content.count > 0) {
-            line = nob_sv_trim(nob_sv_chop_by_delim(&content, '\n'));
-            if (line.count == 0 || line.data[0] == '#') continue;
-            
-            Nob_String_View token = nob_sv_trim(nob_sv_chop_by_delim(&line, ' '));
-            if (token.count == 0) continue;
-            
-            char *path = strdup(nob_temp_sv_to_cstr(token));
-            nob_da_append(&asset_paths, path);
-            
-            // Check for font size
-            Nob_String_View size_sv = nob_sv_trim(line);
-            int font_size = -1; // -1 = texture, >= 0 = font
-            if (size_sv.count > 0) {
-                const char *size_cstr = nob_temp_sv_to_cstr(size_sv);
-                font_size = atoi(size_cstr);
-            }
-            
-            // Manual da_append for int array (since nob_da_append is for pointer-containing structs)
-            if (font_sizes_count >= font_sizes_capacity) {
-                font_sizes_capacity = font_sizes_capacity == 0 ? 8 : font_sizes_capacity * 2;
-                font_sizes = realloc(font_sizes, font_sizes_capacity * sizeof(int));
-            }
-            font_sizes[font_sizes_count++] = font_size;
-        }
-    }
-    
-    if (asset_paths.count == 0) {
-        free(font_sizes);
-        nob_sb_free(manifest);
-        return true;
-    }
-    
-    // Build dependency list: assets.embed + all asset files
+
+    size_t count = NOB_ARRAY_LEN(g_embedded_assets);
+    if (count == 0) return true;
+
+    const char *header_path = SRC_DIR "/embedded_assets.hpp";
+
+    // Build dependency list for header: all asset files
     Nob_File_Paths all_inputs = {0};
-    nob_da_append(&all_inputs, "assets.embed");
-    for (size_t i = 0; i < asset_paths.count; i++) {
-        nob_da_append(&all_inputs, asset_paths.items[i]);
+    for (size_t i = 0; i < count; i++) {
+        nob_da_append(&all_inputs, g_embedded_assets[i].path);
     }
-    
-    const char *header_path = OUTPUT_DIR "/embedded_assets.hpp";
-    bool header_needs_rebuild = nob_needs_rebuild(header_path, all_inputs.items, all_inputs.count) > 0;
-    if (header_needs_rebuild < 0) { 
-        for (size_t i = 0; i < asset_paths.count; i++) free((void*)asset_paths.items[i]);
-        nob_da_free(asset_paths);
-        free(font_sizes); nob_sb_free(manifest); return false; 
-    }
-    
+    int hr = nob_needs_rebuild(header_path, all_inputs.items, all_inputs.count);
+    nob_da_free(all_inputs);
+    if (hr < 0) return false;
+    bool header_needs_rebuild = !nob_file_exists(header_path) || hr > 0;
+
     // Step 1: Generate .o files for each asset using ld -r -b binary
-    bool all_objects_ok = true;
-    for (size_t i = 0; i < asset_paths.count; i++) {
-        const char *path = asset_paths.items[i];
-        
+    for (size_t i = 0; i < count; i++) {
+        const char *path = g_embedded_assets[i].path;
+
         char ident[512];
-        path_to_ident(path, ident, sizeof(ident));
+        nob_embed_path_to_ident(path, ident, sizeof(ident));
         const char *obj_path = nob_temp_sprintf("%s/embedded_%s.o", OUTPUT_DIR, ident);
         nob_da_append(embedded_objects, obj_path);
-        
-        // Check if rebuild needed for this specific .o
-        const char *obj_inputs[] = { path };
-        int needs = nob_needs_rebuild(obj_path, obj_inputs, 1);
-        if (needs < 0) { all_objects_ok = false; continue; }
-        if (needs == 0) continue;
-        
-        if (!nob_file_exists(path)) {
-            nob_log(NOB_ERROR, "Embedded asset not found: %s", path);
-            all_objects_ok = false;
-            continue;
-        }
-        
-        nob_log(NOB_INFO, "Embedding asset: %s -> %s", path, obj_path);
-        Nob_Cmd cmd = {0};
-        nob_cmd_append(&cmd, "ld", "-r", "-b", "binary", "-o", obj_path, path);
-        if (!nob_cmd_run(&cmd)) {
-            all_objects_ok = false;
-        }
+
+        if (!nob_embed_file_to_object(path, obj_path)) return false;
     }
-    
-    if (!all_objects_ok) {
-        for (size_t i = 0; i < asset_paths.count; i++) free((void*)asset_paths.items[i]);
-        nob_da_free(asset_paths);
-        free(font_sizes);
-        nob_sb_free(manifest);
-        return false;
-    }
-    
+
     // Step 2: Generate header if needed
     if (header_needs_rebuild) {
         nob_log(NOB_INFO, "Generating embedded assets header: %s", header_path);
-        
-        Nob_String_Builder header = {0};
-        nob_sb_append_cstr(&header, "// Auto-generated by nob.c from assets.embed - DO NOT EDIT\n");
-        nob_sb_append_cstr(&header, "#pragma once\n");
-        nob_sb_append_cstr(&header, "#include <cstddef>\n");
-        nob_sb_append_cstr(&header, "#include <cstdint>\n\n");
-        
-        // Generate extern declarations for each asset
-        nob_sb_append_cstr(&header, "// Extern declarations for embedded binary data\n");
-        nob_sb_append_cstr(&header, "// Generated by ld -r -b binary\n");
-        nob_sb_append_cstr(&header, "extern \"C\" {\n");
-        for (size_t i = 0; i < asset_paths.count; i++) {
-            char ident[512];
-            path_to_ident(asset_paths.items[i], ident, sizeof(ident));
-            nob_sb_appendf(&header, "extern const uint8_t _binary_%s_start[];\n", ident);
-            nob_sb_appendf(&header, "extern const uint8_t _binary_%s_end[];\n", ident);
-        }
-        nob_sb_append_cstr(&header, "}\n\n");
-        
-        // Generate asset table and auto-registration function
-        nob_sb_append_cstr(&header, "struct EmbeddedAsset {\n");
-        nob_sb_append_cstr(&header, "    const char* name;\n");
-        nob_sb_append_cstr(&header, "    const uint8_t* data;\n");
-        nob_sb_append_cstr(&header, "    size_t size;\n");
-        nob_sb_append_cstr(&header, "    int fontSize;  // -1 = texture, >= 0 = font\n");
-        nob_sb_append_cstr(&header, "};\n\n");
-        
-        nob_sb_append_cstr(&header, "inline const EmbeddedAsset g_embeddedAssets[] = {\n");
-        for (size_t i = 0; i < asset_paths.count; i++) {
-            char ident[512];
-            path_to_ident(asset_paths.items[i], ident, sizeof(ident));
-            nob_sb_appendf(&header, "    {\"%s\", _binary_%s_start, (size_t)(_binary_%s_end - _binary_%s_start), %d},\n",
-                          asset_paths.items[i], ident, ident, ident, font_sizes[i]);
-        }
-        nob_sb_append_cstr(&header, "};\n");
-        nob_sb_appendf(&header, "inline const size_t g_embeddedAssetCount = %zu;\n", asset_paths.count);
-        
-        nob_sb_append_null(&header);
-        
-        if (!nob_write_entire_file(header_path, header.items, header.count - 1)) {
-            nob_sb_free(header);
-            free(font_sizes);
-            nob_sb_free(manifest);
-            return false;
-        }
-        nob_sb_free(header);
+        if (!nob_embed_generate_header(g_embedded_assets, count, true, header_path)) return false;
     }
-    
-    for (size_t i = 0; i < asset_paths.count; i++) free((void*)asset_paths.items[i]);
-    nob_da_free(asset_paths);
-    free(font_sizes);
-    nob_sb_free(manifest);
+
     return true;
 }
 
@@ -605,7 +477,7 @@ static bool build_gpu_shaders(Nob_File_Paths *shader_objects, bool release) {
         const char *spv_path = nob_temp_sprintf("%s/shader_%s.spv", OUTPUT_DIR, g_gpu_shaders[i].name);
 
         char ident[512];
-        path_to_ident(spv_path, ident, sizeof(ident));
+        nob_embed_path_to_ident(spv_path, ident, sizeof(ident));
         const char *obj_path = nob_temp_sprintf("%s/embedded_%s.o", OUTPUT_DIR, ident);
         nob_da_append(shader_objects, obj_path);
 
@@ -644,7 +516,7 @@ static bool build_gpu_shaders(Nob_File_Paths *shader_objects, bool release) {
         for (size_t i = 0; i < count; i++) {
             const char *spv_path = nob_temp_sprintf("%s/shader_%s.spv", OUTPUT_DIR, g_gpu_shaders[i].name);
             char ident[512];
-            path_to_ident(spv_path, ident, sizeof(ident));
+            nob_embed_path_to_ident(spv_path, ident, sizeof(ident));
             nob_sb_appendf(&header, "extern const uint8_t _binary_%s_start[];\n", ident);
             nob_sb_appendf(&header, "extern const uint8_t _binary_%s_end[];\n", ident);
         }
@@ -652,7 +524,7 @@ static bool build_gpu_shaders(Nob_File_Paths *shader_objects, bool release) {
         for (size_t i = 0; i < count; i++) {
             const char *spv_path = nob_temp_sprintf("%s/shader_%s.spv", OUTPUT_DIR, g_gpu_shaders[i].name);
             char ident[512];
-            path_to_ident(spv_path, ident, sizeof(ident));
+            nob_embed_path_to_ident(spv_path, ident, sizeof(ident));
             nob_sb_appendf(&header, "inline const uint8_t* %s = _binary_%s_start;\n",
                           g_gpu_shaders[i].name, ident);
             nob_sb_appendf(&header, "inline const size_t %s_size = (size_t)(_binary_%s_end - _binary_%s_start);\n",

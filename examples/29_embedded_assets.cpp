@@ -3,7 +3,7 @@
 #include "button.hpp"
 #include "label.hpp"
 
-#include "../output/embedded_assets.hpp"
+#include "embedded_assets.hpp"
 
 #include "std.hpp"
 
