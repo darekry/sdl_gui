@@ -168,7 +168,8 @@ static bool collect_example_sources(Nob_File_Paths *paths) {
     Nob_Dir_Entry entry = {0};
     if (!nob_dir_entry_open(EXAMPLES_DIR, &entry)) return false;
     while (nob_dir_entry_next(&entry)) {
-        if (strstr(entry.name, ".cpp") != NULL && strcmp(entry.name, "10_standalone.cpp") != 0) {
+        if (strstr(entry.name, ".cpp") != NULL
+            && strcmp(entry.name, "10_standalone.cpp") != 0) {
             nob_da_append(paths, nob_temp_sprintf("%s/%s", EXAMPLES_DIR, entry.name));
         }
     }

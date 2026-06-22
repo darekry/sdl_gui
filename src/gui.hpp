@@ -65,6 +65,7 @@ public:
     [[nodiscard]] int getOriginalHeight() const { return m_originalHeight; }
     SDL_Point getAbsolutePosition() const;
     SDL_Point getRelativePosition() const { return {m_x, m_y}; }
+    void invalidateAbsPosCache();
     
     virtual bool contains(int x, int y) const;
     bool contains(float x, float y) const;
@@ -76,6 +77,8 @@ public:
     void setRotationCenter(int cx, int cy);
     SDL_Point getRotationCenter() const { return m_rotationCenter; }
     virtual bool handleEvent(const SDL_Event& e);
+    void processHoverTooltip(bool currentlyHovered);
+    void processButtonEvent(const SDL_Event& e);
     void render(SDL_Renderer* renderer);
     void renderToCache();
     [[nodiscard]] SDL_Texture* getCachedTexture() const { return m_cachedTexture.get(); }
@@ -154,6 +157,8 @@ protected:
     bool m_isHovered = false;
     bool m_isMarkedForDeletion = false;
     GUIElement* m_parent;
+    mutable SDL_Point m_cachedAbsPos = {0, 0};
+    mutable bool m_absPosValid = false;
     bool m_isDirty = true;
         std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_cachedTexture{nullptr, SDL_DestroyTexture};
         std::array<std::optional<Style>, 4> m_localStyles;

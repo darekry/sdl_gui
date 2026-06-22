@@ -21,18 +21,7 @@ void TextEditable::setText(std::string_view newText) {
     }
 }
 
-void TextEditable::setText(std::string&& newText) {
-    if (m_text != newText) {
-        m_text = std::move(newText);
-        m_cursorPos = std::min(m_cursorPos, utf8::charCount(m_text));
-        updateTextOffset();
-        refreshTextTexture();
-        markNeedsUpdate();
-        if (m_onTextChanged) {
-            m_onTextChanged(this);
-        }
-    }
-}
+
 
 const std::string& TextEditable::getText() const {
     return m_text;

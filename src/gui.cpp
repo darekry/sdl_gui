@@ -184,6 +184,7 @@ GUIElement::~GUIElement() {
 void GUIElement::setPosition(int x, int y) {
     m_x = x;
     m_y = y;
+    invalidateAbsPosCache();
     markDirty();
 }
 
@@ -195,6 +196,7 @@ void GUIElement::setSize(int width, int height) {
 
 void GUIElement::setParent(GUIElement* parent) {
     m_parent = parent;
+    invalidateAbsPosCache();
 }
 
 void GUIElement::getSize(int& width, int& height) const {
@@ -207,13 +209,25 @@ void GUIElement::setClipChildren(bool clip) {
 }
 
 SDL_Point GUIElement::getAbsolutePosition() const {
+    if (m_absPosValid) {
+        return m_cachedAbsPos;
+    }
     auto pos = SDL_Point{m_x, m_y};
     if (m_parent) {
         auto parentPos = m_parent->getAbsolutePosition();
         pos.x += parentPos.x;
         pos.y += parentPos.y;
     }
+    m_cachedAbsPos = pos;
+    m_absPosValid = true;
     return pos;
+}
+
+void GUIElement::invalidateAbsPosCache() {
+    m_absPosValid = false;
+    for (auto& child : m_children) {
+        child->invalidateAbsPosCache();
+    }
 }
 
 bool GUIElement::contains(int x, int y) const {
@@ -245,6 +259,7 @@ void GUIElement::addChild(std::unique_ptr<GUIElement> child) {
     if (child && child->m_parent != this) {
         m_manager.registerElement(child.get());
         child->m_parent = this;
+        child->invalidateAbsPosCache();
         m_children.push_back(std::move(child));
         markDirty();
     }
@@ -284,26 +299,15 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
     }
 
     if (e.type == SDL_EVENT_MOUSE_MOTION) {
-        bool currentlyHovered = contains(e.motion.x, e.motion.y);
-
-        if (currentlyHovered && !m_isHovered) {
-            m_isHovered = true;
-            if (!tooltip.empty()) {
-                tooltipTimerId = startTimer(constants::kTooltipDelayMs, true, [](GUIElement* self) {
-                    if (self) { self->m_manager.showTooltip(self, self->tooltip); }
-                });
-            }
-        } else if (!currentlyHovered && m_isHovered) {
-            m_isHovered = false;
-            if (tooltipTimerId != 0) {
-                stopTimer(tooltipTimerId);
-                tooltipTimerId = 0;
-            }
-            m_manager.hideTooltip();
-        }
+        processHoverTooltip(contains(e.motion.x, e.motion.y));
     }
 
-    // For mouse button events, check actual position at event time
+    processButtonEvent(e);
+ 
+    return false;
+}
+
+void GUIElement::processButtonEvent(const SDL_Event& e) {
     bool mouseInside = m_isHovered || (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && contains(e.button.x, e.button.y)) ||
                        (e.type == SDL_EVENT_MOUSE_BUTTON_UP && contains(e.button.x, e.button.y));
     
@@ -312,7 +316,6 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
             setState(ElementState::Pressed);
         } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
             if (m_state == ElementState::Pressed) {
-                // Only set Hover if mouse is actually inside at release time
                 if (contains(e.button.x, e.button.y)) {
                     setState(ElementState::Hover);
                 } else {
@@ -323,17 +326,30 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
             setState(ElementState::Hover);
         }
     } else {
-        // Mouse outside - set Normal (unless still pressed for drag scenarios)
         if (m_state != ElementState::Pressed) {
             setState(ElementState::Normal);
         } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
-            // Released outside while pressed - set Normal
             setState(ElementState::Normal);
         }
     }
+}
 
- 
-    return false;
+void GUIElement::processHoverTooltip(bool currentlyHovered) {
+    if (currentlyHovered && !m_isHovered) {
+        m_isHovered = true;
+        if (!tooltip.empty()) {
+            tooltipTimerId = startTimer(constants::kTooltipDelayMs, true, [](GUIElement* self) {
+                if (self) { self->m_manager.showTooltip(self, self->tooltip); }
+            });
+        }
+    } else if (!currentlyHovered && m_isHovered) {
+        m_isHovered = false;
+        if (tooltipTimerId != 0) {
+            stopTimer(tooltipTimerId);
+            tooltipTimerId = 0;
+        }
+        m_manager.hideTooltip();
+    }
 }
 
 void GUIElement::render(SDL_Renderer* renderer) {

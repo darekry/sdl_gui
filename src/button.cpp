@@ -28,6 +28,12 @@ bool Button::handleEvent(const SDL_Event& e) {
         return false;
     }
 
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+        if ((*it)->handleEvent(e)) {
+            return true;
+        }
+    }
+
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
         setState(ElementState::Pressed);
         m_manager.captureMouse(this);
@@ -52,16 +58,13 @@ bool Button::handleEvent(const SDL_Event& e) {
 
     if (e.type == SDL_EVENT_MOUSE_MOTION) {
         if (m_state != ElementState::Pressed) {
-            if (contains(e.motion.x, e.motion.y)) {
-                setState(ElementState::Hover);
-            } else {
-                setState(ElementState::Normal);
-            }
+            bool inside = contains(e.motion.x, e.motion.y);
+            setState(inside ? ElementState::Hover : ElementState::Normal);
+            processHoverTooltip(inside);
         }
     }
 
-    // Call parent to handle tooltip timer logic
-    GUIElement::handleEvent(e);
+    processButtonEvent(e);
     
     return false;
 }

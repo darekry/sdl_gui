@@ -44,7 +44,6 @@ bool Panel::handleEvent(const SDL_Event& event) {
     }
     
     // Obsługa przeciągania - sprawdzana PRZED hover, aby uniknąć lagów
-    // Podczas drag używamy event.motion.x/y zamiast SDL_GetMouseState()
     if (m_is_dragging && event.type == SDL_EVENT_MOUSE_MOTION) {
         int parentX = m_parent ? m_parent->getAbsolutePosition().x : 0;
         int parentY = m_parent ? m_parent->getAbsolutePosition().y : 0;
@@ -60,8 +59,8 @@ bool Panel::handleEvent(const SDL_Event& event) {
 
     // Hover check - tylko gdy NIE przeciągamy
     if (!m_is_dragging && event.type == SDL_EVENT_MOUSE_MOTION) {
-        int mouseX, mouseY;
-        {  float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); }
+        int mouseX = static_cast<int>(event.motion.x);
+        int mouseY = static_cast<int>(event.motion.y);
         bool currentlyHovered = contains(mouseX, mouseY);
 
         if (currentlyHovered && !m_isHovered) {
@@ -71,10 +70,10 @@ bool Panel::handleEvent(const SDL_Event& event) {
             m_isHovered = false;
             setState(ElementState::Normal);
         }
+        processHoverTooltip(currentlyHovered);
     }
-
-    // Call parent to handle tooltip timer logic
-    GUIElement::handleEvent(event);
+    
+    processButtonEvent(event);
     
     return false;
 }

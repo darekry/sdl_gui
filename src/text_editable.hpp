@@ -20,7 +20,6 @@ public:
     
     // Text access
     virtual void setText(std::string_view text);
-    virtual void setText(std::string&& text);
     const std::string& getText() const;
     
     // Callbacks

@@ -646,8 +646,10 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         }
     }
 
-    // Call parent to handle tooltip timer logic
-    GUIElement::handleEvent(e);
+    if (e.type == SDL_EVENT_MOUSE_MOTION && m_enabled && m_visible) {
+        processHoverTooltip(contains(e.motion.x, e.motion.y));
+    }
+    processButtonEvent(e);
     
     return eventHandled;
 }

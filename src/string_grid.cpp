@@ -447,8 +447,8 @@ bool StringGrid::handleMouseWheel(const SDL_Event& e) {
         scrollAmount = -scrollAmount;
     }
     
-    int mouseX, mouseY;
-    {  float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); }
+    int mouseX = static_cast<int>(e.wheel.mouse_x);
+    int mouseY = static_cast<int>(e.wheel.mouse_y);
     auto absPos = getAbsolutePosition();
     
     if (mouseX < absPos.x || mouseX >= absPos.x + m_width ||
