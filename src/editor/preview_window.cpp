@@ -340,7 +340,7 @@ void CanvasPanel::drawSelectionHighlight(SDL_Renderer* renderer, size_t index) {
     const int borderWidth = 3;
     
     SDL_Color highlightColor = {0, 120, 215, 255};
-    SDL_SetRenderDrawColor(renderer, highlightColor.r, highlightColor.g, highlightColor.b, highlightColor.a);
+    SetDrawColor(renderer, highlightColor);
     
     int x = abs.x - borderWidth;
     int y = abs.y - borderWidth;
@@ -349,8 +349,7 @@ void CanvasPanel::drawSelectionHighlight(SDL_Renderer* renderer, size_t index) {
     
     for (int i = 0; i < borderWidth; ++i) {
         SDL_Rect r = {x + i, y + i, w - 2*i, h - 2*i};
-        SDL_FRect fr = {static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.w), static_cast<float>(r.h)};
-        SDL_RenderRect(renderer, &fr);
+        RenderRect(renderer, r);
     }
 }
 

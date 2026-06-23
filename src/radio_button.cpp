@@ -66,14 +66,14 @@ void RadioButton::draw(SDL_Renderer* renderer) {
     
     if (style.backgroundColor) {
         const auto& c = style.backgroundColor.value();
-        SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+        SetDrawColor(renderer, c);
         SDL_Rect bgRect = {0, 0, m_width, m_height};
         RenderFillRect(renderer, bgRect);
     }
 
     if (style.borderColor) {
         const auto& c = style.borderColor.value();
-        SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+        SetDrawColor(renderer, c);
         SDL_Rect borderRect = {0, 0, m_width, m_height};
         RenderRect(renderer, borderRect);
     }
@@ -84,7 +84,7 @@ void RadioButton::draw(SDL_Renderer* renderer) {
             RenderTexture(renderer, style.texture->get(), indicatorRect);
         } else if (style.textColor) {
             const auto& c = style.textColor.value();
-            SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+            SetDrawColor(renderer, c);
             drawFilledCircle(renderer, m_width / 2, m_height / 2, m_height / 4);
         }
     }

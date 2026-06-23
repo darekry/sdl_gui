@@ -1,8 +1,15 @@
-# Aktualny stan projektu (2026-06-21)
+# Aktualny stan projektu (2026-06-23)
 
-## Status: Hover performance optimized
+## Status: Code optimization pass completed
 
 ## Ostatnie zmiany
+
+### Codebase optimization pass (2026-06-23)
+- **Phase 3**: Zastąpiono 4 manualne `static_cast<float>` na członach `SDL_Rect` helperem `SDLRectToFRect()` w `gui.cpp`, `preview_window.cpp`. Dodatkowo `preview_window.cpp` używa teraz `RenderRect()` zamiast `SDL_RenderRect()`.
+- **Phase 4**: Wyekstrahowano `computeScaledDstRect(offsetX, offsetY)` w `animated_image.cpp` — eliminuje ~50 linii zduplikowanej logiki skalowania między `draw()` i `drawDirect()`.
+- **Phase 7**: Zastąpiono 4 wystąpienia `SDL_GetTextureSize` + `static_cast<int>` helperami `TextureWidth()`/`TextureHeight()` w `text_area.cpp`, `cursor.cpp`, `combobox.cpp`. (`gui.cpp:430` i `texture_manager.cpp:264` pominięte — mają error checking).
+- **Phase 10**: Zastąpiono ~21 wywołań `SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a)` helperem `SetDrawColor(renderer, c)` w: `canvas.cpp`, `slider.cpp`, `radio_button.cpp`, `progress_bar.cpp`, `combobox.cpp`, `window.cpp`, `string_grid.cpp`, `preview_window.cpp`.
+- **Efekt**: 39/39 examples, 28/29 tests pass (1 pre-existing combobox heap-use-after-free). ~30+ linii usuniętych, znacząco mniej powtórzeń.
 
 ### Hover performance optimization (2026-06-21)
 - **Problem**: przy dużej ilości zagnieżdżonych komponentów, przeliczanie pozycji i hit-testing podczas ruchu myszy powodowało klatki po kilkaset ms

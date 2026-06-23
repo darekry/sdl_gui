@@ -90,6 +90,43 @@ void AnimatedImage::advanceFrameIfNeeded() {
     }
 }
 
+SDL_Rect AnimatedImage::computeScaledDstRect(int offsetX, int offsetY) const {
+    SDL_Rect dst{offsetX, offsetY, m_width, m_height};
+
+    if (m_scaleMode == ScaleMode::None) {
+        dst.w = m_frameW;
+        dst.h = m_frameH;
+    } else if (m_scaleMode == ScaleMode::Center) {
+        dst.w = m_frameW;
+        dst.h = m_frameH;
+        if (dst.w > m_width || dst.h > m_height) {
+            dst.w = std::min(dst.w, m_width);
+            dst.h = std::min(dst.h, m_height);
+        }
+        dst.x = offsetX + (m_width - dst.w) / 2;
+        dst.y = offsetY + (m_height - dst.h) / 2;
+    } else { // Fit
+        if (m_preserveAspect) {
+            float srcRatio = (m_frameW > 0) ? (static_cast<float>(m_frameW) / static_cast<float>(m_frameH)) : 1.0f;
+            float dstRatio = (m_height > 0) ? (static_cast<float>(m_width) / static_cast<float>(m_height)) : srcRatio;
+            if (srcRatio > dstRatio) {
+                dst.w = m_width;
+                dst.h = static_cast<int>(std::round(static_cast<float>(m_width) / srcRatio));
+                dst.y = offsetY + (m_height - dst.h) / 2;
+            } else {
+                dst.h = m_height;
+                dst.w = static_cast<int>(std::round(static_cast<float>(m_height) * srcRatio));
+                dst.x = offsetX + (m_width - dst.w) / 2;
+            }
+        } else {
+            dst.w = m_width;
+            dst.h = m_height;
+        }
+    }
+
+    return dst;
+}
+
 void AnimatedImage::draw(SDL_Renderer* renderer) {
     ensureTextureLoaded();
     if (!m_texture || m_totalFrames <= 0 || m_frameW <= 0 || m_frameH <= 0) {
@@ -98,44 +135,7 @@ void AnimatedImage::draw(SDL_Renderer* renderer) {
 
     advanceFrameIfNeeded();
 
-    // Prepare destination rect according to scale mode
-    SDL_Rect dst{0,0, m_width, m_height};
-
-    if (m_scaleMode == ScaleMode::None) {
-        dst.w = m_frameW;
-        dst.h = m_frameH;
-    } else if (m_scaleMode == ScaleMode::Center) {
-        dst.w = m_frameW;
-        dst.h = m_frameH;
-        if (dst.w > m_width || dst.h > m_height) {
-            // if greater than widget, clamp
-            dst.w = std::min(dst.w, m_width);
-            dst.h = std::min(dst.h, m_height);
-        }
-        dst.x = (m_width - dst.w) / 2;
-        dst.y = (m_height - dst.h) / 2;
-    } else { // Fit
-        // preserve aspect optionally
-        if (m_preserveAspect) {
-            float srcRatio = (m_frameW > 0) ? (static_cast<float>(m_frameW) / static_cast<float>(m_frameH)) : 1.0f;
-            float dstRatio = (m_height > 0) ? (static_cast<float>(m_width) / static_cast<float>(m_height)) : srcRatio;
-            if (srcRatio > dstRatio) {
-                // limited by width
-                dst.w = m_width;
-                dst.h = static_cast<int>(std::round(static_cast<float>(m_width) / srcRatio));
-                dst.y = (m_height - dst.h) / 2;
-            } else {
-                dst.h = m_height;
-                dst.w = static_cast<int>(std::round(static_cast<float>(m_height) * srcRatio));
-                dst.x = (m_width - dst.w) / 2;
-            }
-        } else {
-            dst.w = m_width;
-            dst.h = m_height;
-        }
-    }
-
-    // Render current frame from sprite sheet
+    SDL_Rect dst = computeScaledDstRect(0, 0);
     RenderTexture(renderer, m_texture.get(), &m_srcRect, &dst);
 }
 
@@ -144,7 +144,6 @@ bool AnimatedImage::wantsDirectRender() const {
 }
 
 void AnimatedImage::drawDirect(SDL_Renderer* renderer) {
-    // Direct drawing into the main renderer (coordinates are absolute)
     ensureTextureLoaded();
     if (!m_texture || m_totalFrames <= 0 || m_frameW <= 0 || m_frameH <= 0) {
         return;
@@ -153,43 +152,7 @@ void AnimatedImage::drawDirect(SDL_Renderer* renderer) {
     advanceFrameIfNeeded();
 
     auto absPos = getAbsolutePosition();
-    SDL_Rect dst{absPos.x, absPos.y, m_width, m_height};
-
-    if (m_scaleMode == ScaleMode::None) {
-        dst.w = m_frameW;
-        dst.h = m_frameH;
-    } else if (m_scaleMode == ScaleMode::Center) {
-        dst.w = m_frameW;
-        dst.h = m_frameH;
-        if (dst.w > m_width || dst.h > m_height) {
-            dst.w = std::min(dst.w, m_width);
-            dst.h = std::min(dst.h, m_height);
-        }
-        dst.x = absPos.x + (m_width - dst.w) / 2;
-        dst.y = absPos.y + (m_height - dst.h) / 2;
-    } else { // Fit
-        if (m_preserveAspect) {
-            float srcRatio = (m_frameW > 0) ? (static_cast<float>(m_frameW) / static_cast<float>(m_frameH)) : 1.0f;
-            float dstRatio = (m_height > 0) ? (static_cast<float>(m_width) / static_cast<float>(m_height)) : srcRatio;
-            if (srcRatio > dstRatio) {
-                dst.w = m_width;
-                dst.h = static_cast<int>(std::round(static_cast<float>(m_width) / srcRatio));
-                dst.x = absPos.x;
-                dst.y = absPos.y + (m_height - dst.h) / 2;
-            } else {
-                dst.h = m_height;
-                dst.w = static_cast<int>(std::round(static_cast<float>(m_height) * srcRatio));
-                dst.x = absPos.x + (m_width - dst.w) / 2;
-                dst.y = absPos.y;
-            }
-        } else {
-            dst.w = m_width;
-            dst.h = m_height;
-            dst.x = absPos.x;
-            dst.y = absPos.y;
-        }
-    }
-
+    SDL_Rect dst = computeScaledDstRect(absPos.x, absPos.y);
     RenderTexture(renderer, m_texture.get(), &m_srcRect, &dst);
 }
 

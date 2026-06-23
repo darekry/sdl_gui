@@ -64,6 +64,7 @@ private:
     void recalcFrameGeometry(); // oblicza m_frameW/m_frameH/m_cols na podstawie tekstury i ustawień
     void updateSrcRect(); // oblicza SDL_Rect src dla aktualnej klatki
     void advanceFrameIfNeeded();
+    SDL_Rect computeScaledDstRect(int offsetX, int offsetY) const;
     void stopFrameAnimation();
 
     // Zasoby / konfiguracja

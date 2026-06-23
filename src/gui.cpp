@@ -383,7 +383,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
 
         if (m_cachedTexture) {
             if (m_rotation != 0.0) {
-                SDL_FRect dst_rect = {static_cast<float>(abs_pos.x), static_cast<float>(abs_pos.y), static_cast<float>(m_width), static_cast<float>(m_height)};
+                SDL_FRect dst_rect = SDLRectToFRect(abs_pos.x, abs_pos.y, m_width, m_height);
                 SDL_FPoint center = m_rotationCenter.x >= 0 
                     ? SDL_FPoint{static_cast<float>(m_rotationCenter.x), static_cast<float>(m_rotationCenter.y)} 
                     : SDL_FPoint{static_cast<float>(m_width) / 2.0f, static_cast<float>(m_height) / 2.0f};
@@ -636,7 +636,7 @@ void GUIElement::setBorderRadius(ElementState state, int radius) {
 void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
     const Style& style = getComposedStyle(m_state);
     int radius = style.borderRadius.value_or(0);
-    SDL_FRect frect = {0, 0, static_cast<float>(m_width), static_cast<float>(m_height)};
+    SDL_FRect frect = SDLRectToFRect(0, 0, m_width, m_height);
     float fradius = static_cast<float>(radius);
 
     if (style.backgroundColor) {
@@ -644,7 +644,7 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
     }
 
     if (style.texture.has_value()) {
-        SDL_FRect texRect = {0, 0, static_cast<float>(m_width), static_cast<float>(m_height)};
+        SDL_FRect texRect = SDLRectToFRect(0, 0, m_width, m_height);
         drawRoundedTexturedRect(renderer, texRect, fradius, style.texture.value().get());
     }
 

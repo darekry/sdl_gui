@@ -65,9 +65,8 @@ void Cursor::setAnimatedCursor(CursorState state, const std::string& path, int t
     });
 
     if (data.texture) {
-        int texW = 0;
-        int texH = 0;
-        {  float _fw=0,_fh=0; SDL_GetTextureSize(data.texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); }
+        int texW = TextureWidth(data.texture.get());
+        int texH = TextureHeight(data.texture.get());
         data.cols = (data.totalFrames + data.rows - 1) / data.rows;
         if (data.cols <= 0) data.cols = 1;
         data.frameW = (data.cols > 0) ? texW / data.cols : texW;
@@ -160,9 +159,8 @@ void Cursor::renderCursor(SDL_Renderer* renderer, const CursorData& data, int mo
 
 SDL_Rect Cursor::getSrcRect(const CursorData& data) const {
     if (!data.isAnimated || data.totalFrames <= 1 || data.cols <= 0 || data.rows <= 0) {
-        int texW = 0;
-        int texH = 0;
-        {  float _fw=0,_fh=0; SDL_GetTextureSize(data.texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); }
+        int texW = TextureWidth(data.texture.get());
+        int texH = TextureHeight(data.texture.get());
         return SDL_Rect{0, 0, texW, texH};
     }
 

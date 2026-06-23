@@ -63,8 +63,7 @@ void ComboBox::draw(SDL_Renderer* renderer) {
                 auto& textureManager = m_manager.getTextureManager();
                 SharedTexture textTexture = textureManager.createTextureFromText(m_options[static_cast<size_t>(m_selected_index)], font, *style.textColor);
                 if (textTexture) {
-                    int text_w, text_h;
-                    {  float _fw=0,_fh=0; SDL_GetTextureSize(textTexture.get(), &_fw, &_fh); text_w=static_cast<int>(_fw); text_h=static_cast<int>(_fh); }
+                    int text_w = TextureWidth(textTexture.get()); int text_h = TextureHeight(textTexture.get());
                     SDL_Rect dstRect = { 5, (m_height - text_h) / 2, text_w, text_h };
                     RenderTexture(renderer, textTexture.get(), dstRect);
                 }
@@ -72,7 +71,7 @@ void ComboBox::draw(SDL_Renderer* renderer) {
         }
     }
     SDL_Color arrow_color = style.textColor.value_or(SDL_Color{0, 0, 0, 255});
-    SDL_SetRenderDrawColor(renderer, arrow_color.r, arrow_color.g, arrow_color.b, arrow_color.a);
+    SetDrawColor(renderer, arrow_color);
     
     const int arrow_size = 6;
     const int arrow_margin = 10;

@@ -983,8 +983,7 @@ SDL_Rect StringGrid::getRowHeaderRect(size_t row) const {
 void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,
                          int screenX, int screenY, int width, int height,
                          SDL_Color cellBackgroundColor, SDL_Color textColor) {
-    SDL_SetRenderDrawColor(renderer, cellBackgroundColor.r, cellBackgroundColor.g,
-                           cellBackgroundColor.b, cellBackgroundColor.a);
+    SetDrawColor(renderer, cellBackgroundColor);
     SDL_Rect cellRect = {screenX, screenY, width, height};
     RenderFillRect(renderer, cellRect);
     
@@ -1032,8 +1031,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
         }
     }
     
-    SDL_SetRenderDrawColor(renderer, headerBackgroundColor.r, headerBackgroundColor.g,
-                           headerBackgroundColor.b, headerBackgroundColor.a);
+    SetDrawColor(renderer, headerBackgroundColor);
     int headerBgX = offsetX + getCellAreaX();
     SDL_Rect headerBgRect = {headerBgX, offsetY, getVisibleCellAreaWidth(), m_headerHeight};
     RenderFillRect(renderer, headerBgRect);
@@ -1081,8 +1079,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
         x += colWidth;
     }
     
-    SDL_SetRenderDrawColor(renderer, gridLineColor.r, gridLineColor.g,
-                           gridLineColor.b, gridLineColor.a);
+    SetDrawColor(renderer, gridLineColor);
     int lineStartX = offsetX + getCellAreaX();
     int lineEndX = offsetX + m_width - (m_vSlider ? m_sliderWidth : 0);
     RenderLine(renderer, lineStartX, offsetY + m_headerHeight - 1,
@@ -1092,8 +1089,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
 void StringGrid::drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
                                 SDL_Color headerBackgroundColor, SDL_Color headerTextColor,
                                 SDL_Color gridLineColor) {
-    SDL_SetRenderDrawColor(renderer, headerBackgroundColor.r, headerBackgroundColor.g,
-                           headerBackgroundColor.b, headerBackgroundColor.a);
+    SetDrawColor(renderer, headerBackgroundColor);
     int headerBgY = offsetY + getCellAreaY();
     SDL_Rect headerBgRect = {offsetX, headerBgY, m_rowHeaderWidth, getVisibleCellAreaHeight()};
     RenderFillRect(renderer, headerBgRect);
@@ -1129,8 +1125,7 @@ void StringGrid::drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY
         y += m_rowHeight;
     }
     
-    SDL_SetRenderDrawColor(renderer, gridLineColor.r, gridLineColor.g,
-                           gridLineColor.b, gridLineColor.a);
+    SetDrawColor(renderer, gridLineColor);
     int lineStartY = offsetY + getCellAreaY();
     int lineEndY = offsetY + m_height - (m_hSlider ? m_sliderWidth : 0);
     RenderLine(renderer, offsetX + m_rowHeaderWidth - 1, lineStartY,
@@ -1160,8 +1155,7 @@ void StringGrid::drawSelection(SDL_Renderer* renderer, int offsetX, int offsetY)
     int selHeight = static_cast<int>(range.end.row - range.start.row + 1) * m_rowHeight;
     
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, m_selectionColor.r, m_selectionColor.g,
-                           m_selectionColor.b, m_selectionColor.a);
+    SetDrawColor(renderer, m_selectionColor);
     SDL_Rect selRect = {offsetX + startX, offsetY + startY, selWidth, selHeight};
     RenderFillRect(renderer, selRect);
     
@@ -1169,8 +1163,7 @@ void StringGrid::drawSelection(SDL_Renderer* renderer, int offsetX, int offsetY)
         SDL_Rect activeCellRect = getCellRect(m_selectedCell->row, m_selectedCell->col);
         SDL_Rect absCellRect = {offsetX + activeCellRect.x, offsetY + activeCellRect.y, 
                                 activeCellRect.w, activeCellRect.h};
-        SDL_SetRenderDrawColor(renderer, m_selectedCellBorderColor.r, m_selectedCellBorderColor.g,
-                               m_selectedCellBorderColor.b, m_selectedCellBorderColor.a);
+        SetDrawColor(renderer, m_selectedCellBorderColor);
         RenderRect(renderer, absCellRect);
     }
     
@@ -1183,8 +1176,7 @@ void StringGrid::drawGridLines(SDL_Renderer* renderer, int offsetX, int offsetY,
     int cellAreaWidth = getVisibleCellAreaWidth();
     int cellAreaHeight = getVisibleCellAreaHeight();
     
-    SDL_SetRenderDrawColor(renderer, gridLineColor.r, gridLineColor.g,
-                           gridLineColor.b, gridLineColor.a);
+    SetDrawColor(renderer, gridLineColor);
     
     // Vertical lines
     int x = cellAreaX - m_hScrollOffset;

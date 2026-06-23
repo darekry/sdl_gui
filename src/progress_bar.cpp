@@ -106,7 +106,7 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
             int effectiveRadius = std::min(borderRadius, maxRadius);
             drawRoundedFilledRect(renderer, SDLRectToFRect(fillRect), static_cast<float>(effectiveRadius), ColorToFColor(fillColor));
         } else {
-            SDL_SetRenderDrawColor(renderer, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+            SetDrawColor(renderer, fillColor);
             RenderFillRect(renderer, fillRect);
         }
     }

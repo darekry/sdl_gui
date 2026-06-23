@@ -112,8 +112,7 @@ void TextArea::draw(SDL_Renderer* renderer) {
     int yOffset = m_scroll_offset_y;
     for (const auto& texture : m_line_textures) {
         if (texture) {
-            int texW, texH;
-            {  float _fw=0,_fh=0; SDL_GetTextureSize(texture.get(), &_fw, &_fh); texW=static_cast<int>(_fw); texH=static_cast<int>(_fh); }
+            int texW = TextureWidth(texture.get()); int texH = TextureHeight(texture.get());
             SDL_Rect destRect = {2 + m_text_offset_x, yOffset + 2, texW, texH};
 
             if (destRect.y + destRect.h > 0 && destRect.y < m_height) {

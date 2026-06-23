@@ -110,7 +110,7 @@ void Canvas::drawSegment(SDL_Renderer* renderer, SDL_Point a, SDL_Point b) {
     SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
     SDL_SetRenderTarget(renderer, m_canvasTex.get());
 
-    SDL_SetRenderDrawColor(renderer, m_penColor.r, m_penColor.g, m_penColor.b, m_penColor.a);
+    SetDrawColor(renderer, m_penColor);
 
     // Proste próbkowanie punktów na odcinku i stemplowanie pędzla
     int dx = b.x - a.x;
@@ -158,7 +158,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
             // Narysuj punkt startowy
             SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
             SDL_SetRenderTarget(renderer, m_canvasTex.get());
-            SDL_SetRenderDrawColor(renderer, m_penColor.r, m_penColor.g, m_penColor.b, m_penColor.a);
+            SetDrawColor(renderer, m_penColor);
             putBrush(renderer, local.x, local.y);
             SDL_SetRenderTarget(renderer, oldTarget);
 

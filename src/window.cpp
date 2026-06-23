@@ -123,7 +123,7 @@ void Window::render() {
     // Clear with theme background color or default white
     auto& theme = m_guiManager->getTheme();
     SDL_Color bgColor = theme.getDefaultStyle().backgroundColor.value_or(SDL_Color{255, 255, 255, 255});
-    SDL_SetRenderDrawColor(m_renderer, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+    SetDrawColor(m_renderer, bgColor);
     SDL_RenderClear(m_renderer);
     
     m_guiManager->render();

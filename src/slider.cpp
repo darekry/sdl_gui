@@ -141,7 +141,7 @@ void Slider::draw(SDL_Renderer* renderer) {
     } else {
         trackColor = {.r=200, .g=200, .b=200, .a=255};
     }
-    SDL_SetRenderDrawColor(renderer, trackColor.r, trackColor.g, trackColor.b, trackColor.a);
+    SetDrawColor(renderer, trackColor);
     
     SDL_Rect trackRect;
     const int trackThickness = 4;
@@ -153,7 +153,7 @@ void Slider::draw(SDL_Renderer* renderer) {
     RenderFillRect(renderer, trackRect);
 
     SDL_Color thumbColor = style.borderColor.value_or(SDL_Color{100, 100, 100, 255});
-    SDL_SetRenderDrawColor(renderer, thumbColor.r, thumbColor.g, thumbColor.b, thumbColor.a);
+    SetDrawColor(renderer, thumbColor);
 
     SDL_Rect thumbRect;
     int thumbSize = (m_orientation == Orientation::Horizontal) ? std::min(getHeight(), 20) : std::min(getWidth(), 20);
