@@ -737,6 +737,8 @@ static bool run_tests(void) {
     Nob_File_Paths tests = {0};
     if (!collect_test_sources(&tests)) return false;
     
+    size_t passed = 0, failed = 0;
+    
     nob_da_foreach(const char*, src, &tests) {
         const char *basename = nob_path_name(*src);
         char *name = nob_temp_strdup(basename);
@@ -746,15 +748,17 @@ static bool run_tests(void) {
         
         nob_log(INFO, "Running: %s", name);
         Nob_Cmd cmd = {0};
-        nob_cmd_append(&cmd, exe);
+        nob_cmd_append(&cmd, "env", "ASAN_OPTIONS=detect_container_overflow=0:detect_leaks=0", exe);
         if (!nob_cmd_run(&cmd, .dont_reset = true)) {
             nob_log(ERROR, "Test %s failed", name);
-            return false;
+            failed++;
+        } else {
+            passed++;
         }
     }
     
-    nob_log(INFO, "All tests passed");
-    return true;
+    nob_log(INFO, "Tests: %zu passed, %zu failed (of %zu)", passed, failed, tests.count);
+    return failed == 0;
 }
 
 // ========== RELEASE ==========

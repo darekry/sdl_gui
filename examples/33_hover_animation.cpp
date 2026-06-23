@@ -146,11 +146,11 @@ int main() {
                 gui.processEvent(e);
             }
             gui.update();
-            gui.cleanup();
             SDL_SetRenderDrawColor(app.getRenderer(), 240, 240, 240, 255);
             SDL_RenderClear(app.getRenderer());
             gui.render();
             SDL_RenderPresent(app.getRenderer());
+            gui.cleanup();
         }
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;

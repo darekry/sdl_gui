@@ -19,8 +19,10 @@ ComboBox::ComboBox(GUIManager& manager, int x, int y, int w, int h)
 
 ComboBox::~ComboBox() {
     if (m_is_expanded && m_dropdown_panel) {
-        m_dropdown_panel->setVisible(false);
-        m_dropdown_panel->markForDeletion();
+        if (m_manager.isElementAlive(m_dropdown_panel)) {
+            m_dropdown_panel->setVisible(false);
+            m_dropdown_panel->markForDeletion();
+        }
         m_dropdown_panel = nullptr;
     }
 }

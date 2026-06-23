@@ -973,7 +973,8 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
 
         for (char c : "ABCDE") {
             if (c == '\0') continue;
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
 
@@ -1024,7 +1025,8 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
 
         for (char c : "Hello") {
             if (c == '\0') continue;
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
 
@@ -1048,7 +1050,8 @@ TEST_CASE("TextArea - Clipboard Operations", "[text_area]") {
 
         for (char c : "Test") {
             if (c == '\0') continue;
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
 
@@ -1498,7 +1501,8 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("Hello World")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1523,7 +1527,8 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("Hello World")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1548,7 +1553,8 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("ABCDE")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1577,7 +1583,8 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("ABCDE")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1604,7 +1611,8 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("ABC")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1630,7 +1638,8 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("Test")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1654,7 +1663,8 @@ TEST_CASE("TextArea - Shift+Arrow Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("Test")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1794,7 +1804,8 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("ABC")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1817,7 +1828,8 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("Old Text")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1840,7 +1852,8 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("Hello World")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1863,7 +1876,8 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("Hello World")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         
@@ -1886,7 +1900,8 @@ TEST_CASE("TextArea - Typing Replaces Selection", "[text_area]") {
         area->render(manager.getRenderer());
         
         for (char c : std::string("ABC")) {
-            event = helper.createTextInputEvent(std::string(1, c).c_str());
+            std::string charStr(1, c);
+            event = helper.createTextInputEvent(charStr.c_str());
             area->handleEvent(event);
         }
         

@@ -94,12 +94,12 @@ TEST_CASE("TextureManager functionality", "[texture_manager]") {
 
     SECTION("queryTexture uses cached texture") {
         int w1, h1;
-        texManager.queryTexture("assets/button2.png", w1, h1);
+        texManager.queryTexture("assets/button1.png", w1, h1);
         
-        REQUIRE(texManager.hasTexture("assets/button2.png"));
+        REQUIRE(texManager.hasTexture("assets/button1.png"));
         
         int w2, h2;
-        texManager.queryTexture("assets/button2.png", w2, h2);
+        texManager.queryTexture("assets/button1.png", w2, h2);
         
         REQUIRE(w1 == w2);
         REQUIRE(h1 == h2);
