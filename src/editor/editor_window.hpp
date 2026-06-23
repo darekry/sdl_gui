@@ -79,7 +79,7 @@ private:
     Panel* m_mainPanel = nullptr;
 
     Panel* m_palettePanel = nullptr;
-    std::map<std::string, Button*> m_paletteButtons;
+    std::unordered_map<std::string, Button*> m_paletteButtons;
     std::string m_selectedPaletteType;
 
     Panel* m_propertiesPanel = nullptr;
@@ -92,10 +92,10 @@ private:
     TextInput* m_fontSizeInput = nullptr;
     TextInput* m_borderWidthInput = nullptr;
     TextInput* m_borderRadiusInput = nullptr;
-    std::map<std::string, TextInput*> m_propertyInputs;
-    std::map<std::string, Checkbox*> m_propertyCheckboxes;
-    std::map<std::string, TextArea*> m_propertyTextAreas;
-    std::map<std::string, ComboBox*> m_propertyCombos;
+    std::unordered_map<std::string, TextInput*> m_propertyInputs;
+    std::unordered_map<std::string, Checkbox*> m_propertyCheckboxes;
+    std::unordered_map<std::string, TextArea*> m_propertyTextAreas;
+    std::unordered_map<std::string, ComboBox*> m_propertyCombos;
     ComboBox* m_styleStateCombo = nullptr;
     std::array<Slider*, 4> m_bgColorSliders = {nullptr, nullptr, nullptr, nullptr};
     std::array<Slider*, 4> m_textColorSliders = {nullptr, nullptr, nullptr, nullptr};

@@ -690,6 +690,8 @@ void StringGrid::drawDirect(SDL_Renderer* renderer) {
     auto absPos = getAbsolutePosition();
     int offsetX = absPos.x;
     int offsetY = absPos.y;
+
+    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, DEFAULT_FONT_SIZE);
     
     drawBackgroundAndBorder(renderer);
     
@@ -702,17 +704,17 @@ void StringGrid::drawDirect(SDL_Renderer* renderer) {
     SDL_SetRenderClipRect(renderer, &cellClipRect);
     
     VisibleRange range = calculateVisibleRange();
-    drawCells(renderer, offsetX, offsetY, cellBackgroundColor, textColor, range);
+    drawCells(renderer, offsetX, offsetY, cellBackgroundColor, textColor, range, font.get());
     drawSelection(renderer, offsetX, offsetY);
     
     SDL_SetRenderClipRect(renderer, nullptr);
     
     if (m_showColumnHeaders) {
-        drawColumnHeaders(renderer, offsetX, offsetY, headerBackgroundColor, headerTextColor, gridLineColor);
+        drawColumnHeaders(renderer, offsetX, offsetY, headerBackgroundColor, headerTextColor, gridLineColor, font.get());
     }
     
     if (m_showRowHeaders) {
-        drawRowHeaders(renderer, offsetX, offsetY, headerBackgroundColor, headerTextColor, gridLineColor);
+        drawRowHeaders(renderer, offsetX, offsetY, headerBackgroundColor, headerTextColor, gridLineColor, font.get());
     }
     
     drawGridLines(renderer, offsetX, offsetY, gridLineColor);
@@ -721,7 +723,7 @@ void StringGrid::drawDirect(SDL_Renderer* renderer) {
 // Drawing helper methods
 void StringGrid::drawCells(SDL_Renderer* renderer, int offsetX, int offsetY,
                            SDL_Color cellBackgroundColor, SDL_Color textColor,
-                           const VisibleRange& range) {
+                           const VisibleRange& range, TTF_Font* font) {
     int cellAreaY = getCellAreaY();
     int rowY = cellAreaY - m_vScrollOffset + (range.startRow * m_rowHeight);
     
@@ -732,7 +734,7 @@ void StringGrid::drawCells(SDL_Renderer* renderer, int offsetX, int offsetY,
             int colWidth = static_cast<int>(m_columnWidths[static_cast<size_t>(col)]);
             drawCell(renderer, static_cast<size_t>(row), static_cast<size_t>(col),
                     offsetX + colX, offsetY + rowY, colWidth, m_rowHeight,
-                    cellBackgroundColor, textColor);
+                    cellBackgroundColor, textColor, font);
             colX += colWidth;
         }
         rowY += m_rowHeight;
@@ -982,16 +984,15 @@ SDL_Rect StringGrid::getRowHeaderRect(size_t row) const {
 
 void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,
                          int screenX, int screenY, int width, int height,
-                         SDL_Color cellBackgroundColor, SDL_Color textColor) {
+                         SDL_Color cellBackgroundColor, SDL_Color textColor, TTF_Font* font) {
     SetDrawColor(renderer, cellBackgroundColor);
     SDL_Rect cellRect = {screenX, screenY, width, height};
     RenderFillRect(renderer, cellRect);
     
     if (row < m_data.size() && col < m_data[row].size() && !m_data[row][col].empty()) {
-        auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, DEFAULT_FONT_SIZE);
         if (!font) return;
         
-        auto texture = createLocalTextTexture(m_data[row][col], font.get(), textColor);
+        auto texture = createLocalTextTexture(m_data[row][col], font, textColor);
         if (!texture) return;
         
         int textWidth, textHeight;
@@ -1012,7 +1013,7 @@ void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,
 
 void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
                                    SDL_Color headerBackgroundColor, SDL_Color headerTextColor,
-                                   SDL_Color gridLineColor) {
+                                   SDL_Color gridLineColor, TTF_Font* font) {
     // Podświetlenie aktywnej kolumny sortowania
     if (m_sortDirection != SortDirection::None && m_sortColumn < m_columnWidths.size()) {
         int activeX = getCellAreaX() - m_hScrollOffset;
@@ -1036,8 +1037,6 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
     SDL_Rect headerBgRect = {headerBgX, offsetY, getVisibleCellAreaWidth(), m_headerHeight};
     RenderFillRect(renderer, headerBgRect);
     
-    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, DEFAULT_FONT_SIZE);
-    
     int x = getCellAreaX() - m_hScrollOffset;
     for (size_t col = 0; col < m_columnWidths.size(); ++col) {
         int colWidth = m_columnWidths[col];
@@ -1053,7 +1052,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
                     headerText += (m_sortDirection == SortDirection::Ascending) ? " \u2191" : " \u2193";
                 }
                 
-                auto texture = createLocalTextTexture(headerText, font.get(), headerTextColor);
+                auto texture = createLocalTextTexture(headerText, font, headerTextColor);
                 if (texture) {
                     int textWidth, textHeight;
                     { textWidth = TextureWidth(texture.get()); textHeight = TextureHeight(texture.get()); }
@@ -1088,13 +1087,11 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
 
 void StringGrid::drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
                                 SDL_Color headerBackgroundColor, SDL_Color headerTextColor,
-                                SDL_Color gridLineColor) {
+                                SDL_Color gridLineColor, TTF_Font* font) {
     SetDrawColor(renderer, headerBackgroundColor);
     int headerBgY = offsetY + getCellAreaY();
     SDL_Rect headerBgRect = {offsetX, headerBgY, m_rowHeaderWidth, getVisibleCellAreaHeight()};
     RenderFillRect(renderer, headerBgRect);
-    
-    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, DEFAULT_FONT_SIZE);
     
     int y = getCellAreaY() - m_vScrollOffset;
     for (size_t row = 0; row < m_data.size(); ++row) {
@@ -1104,7 +1101,7 @@ void StringGrid::drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY
             
             if (font) {
                 std::string rowLabel = std::to_string(row + 1);
-                auto texture = createLocalTextTexture(rowLabel, font.get(), headerTextColor);
+                auto texture = createLocalTextTexture(rowLabel, font, headerTextColor);
                 if (texture) {
                     int textWidth, textHeight;
                     { textWidth = TextureWidth(texture.get()); textHeight = TextureHeight(texture.get()); }

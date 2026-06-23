@@ -806,6 +806,7 @@ void TextArea::recalculateLines() {
 
 void TextArea::refreshTextures() {
     m_line_textures.clear();
+    m_line_textures.reserve(m_lines.size());
     auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
     if (!font) return;
 

@@ -1,10 +1,20 @@
 # Aktualny stan projektu (2026-06-23)
 
-## Status: Code optimization pass completed
+## Status: Container optimization pass completed
 
 ## Ostatnie zmiany
 
-### Codebase optimization pass (2026-06-23)
+### Container & data structure optimization (2026-06-23)
+- **Phase A (Theme)**: `map<string, map<ElementState, Style>>` → `unordered_map<string, array<optional<Style>, 4>>` — O(1) zamiast O(log n) przy każdym `getComposedStyle()`. Usunięto `ThemeTypeCompare`.
+- **Phase B (StringGrid cache)**: `map<string, SharedTexture>` + `map<size_t, CompareFunc>` → `unordered_map` — spójne z TextureManager.
+- **Phase C**: ~~GUIManager addElement~~ — REVERTED (konstruktor GUIElement już rejestruje w m_liveElements, false-positive).
+- **Phase D (ListView)**: Usunięto zbędne `std::string()` kopie przy `insertItem`/`removeItem`.
+- **Phase E (TextArea)**: Dodano `m_line_textures.reserve(m_lines.size())`.
+- **Phase F (StringGrid)**: `loadFont()` wyciągnięty z pętli `drawCells()`/`drawColumnHeaders()`/`drawRowHeaders()` — font ładowany raz w `drawDirect()` i przekazywany jako `TTF_Font*`.
+- **Phase G (gui.cpp)**: Dodano `verts.reserve(192)` w `drawRoundedRectBorder`.
+- **Phase I**: `Cursor::m_cursors` map→array, `EditorElement::properties` map→unordered_map, `EditorWindow` 5× map→unordered_map, `PreviewWindow::m_widgetMap` map→unordered_map, `timer_manager` reserve.
+- **Phase J (EditorState)**: Dodano `m_idToIndex` (unordered_map) i `m_parentToChildren` (unordered_map z lazy rebuild) — O(1) findElementById i getElementsByParent.
+- **Efekt**: 39/39 examples, 28/29 tests pass (1 pre-existing combobox bug).
 - **Phase 3**: Zastąpiono 4 manualne `static_cast<float>` na członach `SDL_Rect` helperem `SDLRectToFRect()` w `gui.cpp`, `preview_window.cpp`. Dodatkowo `preview_window.cpp` używa teraz `RenderRect()` zamiast `SDL_RenderRect()`.
 - **Phase 4**: Wyekstrahowano `computeScaledDstRect(offsetX, offsetY)` w `animated_image.cpp` — eliminuje ~50 linii zduplikowanej logiki skalowania między `draw()` i `drawDirect()`.
 - **Phase 7**: Zastąpiono 4 wystąpienia `SDL_GetTextureSize` + `static_cast<int>` helperami `TextureWidth()`/`TextureHeight()` w `text_area.cpp`, `cursor.cpp`, `combobox.cpp`. (`gui.cpp:430` i `texture_manager.cpp:264` pominięte — mają error checking).

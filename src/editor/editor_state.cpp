@@ -4,6 +4,22 @@
 
 EditorState::EditorState() = default;
 
+void EditorState::rebuildIndexMaps() {
+    m_idToIndex.clear();
+    for (size_t i = 0; i < m_elements.size(); ++i) {
+        m_idToIndex[m_elements[i].id] = i;
+    }
+    m_parentCacheDirty = true;
+}
+
+void EditorState::rebuildParentCache() const {
+    m_parentToChildren.clear();
+    for (size_t i = 0; i < m_elements.size(); ++i) {
+        m_parentToChildren[m_elements[i].parentId].push_back(i);
+    }
+    m_parentCacheDirty = false;
+}
+
 int EditorState::snapToGrid(int value) const {
     if (m_gridSize <= 0) return value;
     return ((value + m_gridSize / 2) / m_gridSize) * m_gridSize;
@@ -50,6 +66,8 @@ size_t EditorState::addElement(const std::string& type, int x, int y, const std:
     
     m_elements.push_back(std::move(element));
     size_t newIndex = m_elements.size() - 1;
+    m_idToIndex[id] = newIndex;
+    m_parentCacheDirty = true;
     selectElement(newIndex);
     
     return newIndex;
@@ -58,8 +76,20 @@ size_t EditorState::addElement(const std::string& type, int x, int y, const std:
 void EditorState::updateElement(size_t index, const EditorElement& changes) {
     if (index >= m_elements.size()) return;
     
-    if (!changes.id.empty()) m_elements[index].id = changes.id;
-    if (!changes.type.empty()) m_elements[index].type = changes.type;
+    auto& elem = m_elements[index];
+
+    if (!changes.id.empty() && changes.id != elem.id) {
+        m_idToIndex.erase(elem.id);
+        elem.id = changes.id;
+        m_idToIndex[elem.id] = index;
+    }
+
+    if (!changes.parentId.empty() && changes.parentId != elem.parentId) {
+        elem.parentId = changes.parentId;
+        m_parentCacheDirty = true;
+    }
+
+    if (!changes.type.empty()) elem.type = changes.type;
     // Position should be updated via updateElementPosition() for proper grid snapping
     // This method only updates non-zero dimensions
     if (changes.width > 0) m_elements[index].width = changes.width;
@@ -101,7 +131,8 @@ void EditorState::deleteElement(size_t index) {
     
     std::string deletedId = m_elements[index].id;
     m_elements.erase(m_elements.begin() + static_cast<std::ptrdiff_t>(index));
-    
+    rebuildIndexMaps();
+
     for (auto& element : m_elements) {
         if (element.parentId == deletedId) {
             element.parentId = "";
@@ -125,6 +156,8 @@ size_t EditorState::duplicateElement(size_t index) {
     
     m_elements.push_back(std::move(copy));
     size_t newIndex = m_elements.size() - 1;
+    m_idToIndex[copy.id] = newIndex;
+    m_parentCacheDirty = true;
     selectElement(newIndex);
     
     return newIndex;
@@ -161,13 +194,14 @@ EditorElement* EditorState::getSelectedElement() {
 }
 
 std::vector<size_t> EditorState::getElementsByParent(const std::string& parentId) const {
-    std::vector<size_t> indices;
-    for (size_t i = 0; i < m_elements.size(); ++i) {
-        if (m_elements[i].parentId == parentId) {
-            indices.push_back(i);
-        }
+    if (m_parentCacheDirty) {
+        rebuildParentCache();
     }
-    return indices;
+    auto it = m_parentToChildren.find(parentId);
+    if (it != m_parentToChildren.end()) {
+        return it->second;
+    }
+    return {};
 }
 
 std::vector<size_t> EditorState::getRootElements() const {
@@ -175,10 +209,9 @@ std::vector<size_t> EditorState::getRootElements() const {
 }
 
 std::optional<size_t> EditorState::findElementById(const std::string& id) const {
-    for (size_t i = 0; i < m_elements.size(); ++i) {
-        if (m_elements[i].id == id) {
-            return i;
-        }
+    auto it = m_idToIndex.find(id);
+    if (it != m_idToIndex.end()) {
+        return it->second;
     }
     return std::nullopt;
 }
@@ -198,5 +231,8 @@ std::optional<size_t> EditorState::findElementAtPosition(int x, int y) const {
 void EditorState::clear() {
     m_elements.clear();
     m_idCounters.clear();
+    m_idToIndex.clear();
+    m_parentToChildren.clear();
+    m_parentCacheDirty = true;
     clearSelection();
 }

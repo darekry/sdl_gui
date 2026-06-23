@@ -44,7 +44,7 @@ void ListView::insertItem(size_t index, const std::string& text) {
     setRowCount(count + 1);
     
     for (size_t row = count; row > index; --row) {
-        setCellText(row, 0, std::string(getCellText(row - 1, 0)));
+        setCellText(row, 0, getCellText(row - 1, 0));
     }
     
     setCellText(index, 0, text);
@@ -57,7 +57,7 @@ void ListView::removeItem(size_t index) {
     }
     
     for (size_t row = index; row < count - 1; ++row) {
-        setCellText(row, 0, std::string(getCellText(row + 1, 0)));
+        setCellText(row, 0, getCellText(row + 1, 0));
     }
     
     setRowCount(count - 1);

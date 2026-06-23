@@ -168,11 +168,13 @@ private:
     [[nodiscard]] SDL_Rect getHeaderRect(size_t col) const;
     [[nodiscard]] SDL_Rect getRowHeaderRect(size_t row) const;
     void drawCell(SDL_Renderer* renderer, size_t row, size_t col, int screenX, int screenY, int width, int height,
-                  SDL_Color cellBackgroundColor, SDL_Color textColor);
+                  SDL_Color cellBackgroundColor, SDL_Color textColor, TTF_Font* font);
     void drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
-                           SDL_Color headerBackgroundColor, SDL_Color headerTextColor, SDL_Color gridLineColor);
+                           SDL_Color headerBackgroundColor, SDL_Color headerTextColor, SDL_Color gridLineColor,
+                           TTF_Font* font);
     void drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
-                        SDL_Color headerBackgroundColor, SDL_Color headerTextColor, SDL_Color gridLineColor);
+                        SDL_Color headerBackgroundColor, SDL_Color headerTextColor, SDL_Color gridLineColor,
+                        TTF_Font* font);
     void drawSelection(SDL_Renderer* renderer, int offsetX, int offsetY);
     void drawGridLines(SDL_Renderer* renderer, int offsetX, int offsetY, SDL_Color gridLineColor);
     void ensureCellVisible(size_t row, size_t col);
@@ -187,7 +189,7 @@ private:
     // Nowe metody pomocnicze do rysowania
     void drawCells(SDL_Renderer* renderer, int offsetX, int offsetY, 
                    SDL_Color cellBackgroundColor, SDL_Color textColor,
-                   const VisibleRange& range);
+                   const VisibleRange& range, TTF_Font* font);
     void renderText(SDL_Renderer* renderer, std::string_view text, int x, int y, 
                     SDL_Color color, bool centerX = false, bool centerY = false);
     
@@ -255,13 +257,13 @@ private:
     size_t m_sortColumn = SIZE_MAX;
     
     // Niestandardowe funkcje porównujące dla kolumn
-    std::map<size_t, CompareFunc> m_customComparators;
+    std::unordered_map<size_t, CompareFunc> m_customComparators;
     
     // Czcionka
     static constexpr int DEFAULT_FONT_SIZE = 14;
     
     // Lokalny cache tekstur komórek (nie w TextureManager)
-    std::map<std::string, SharedTexture> m_localTextureCache;
+    std::unordered_map<std::string, SharedTexture, StringHash, std::equal_to<>> m_localTextureCache;
     SharedTexture createLocalTextTexture(std::string_view text, TTF_Font* font, SDL_Color color);
     void clearLocalTextureCache();
 };

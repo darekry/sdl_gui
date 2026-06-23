@@ -34,7 +34,6 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     if (element) {
         auto* raw_ptr = element.get();
         
-        // Check if element is already in vector (duplicate detection)
         for (const auto& e : m_elements) {
             if (e.get() == raw_ptr) {
                 LOG_ERROR("GUIManager", "addElement() - element already exists in m_elements! ptr={}", static_cast<const void*>(raw_ptr));

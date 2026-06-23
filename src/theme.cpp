@@ -2,27 +2,29 @@
 #include "constants.hpp"
 
 void Theme::setStyle(std::string_view type, ElementState state, Style style) {
-    m_typeStyles[std::string(type)][state] = std::move(style);
+    auto& arr = m_typeStyles[std::string(type)];
+    arr[stateIdx(state)] = std::move(style);
 }
 
 Style Theme::getStyle(std::string_view type, ElementState state) const {
-    auto typeIt = m_typeStyles.find(type);
-    if (typeIt != m_typeStyles.end()) {
-        auto stateIt = typeIt->second.find(state);
-        if (stateIt != typeIt->second.end()) {
-            Style result = stateIt->second;
+    auto it = m_typeStyles.find(type);
+    if (it != m_typeStyles.end()) {
+        const auto& styles = it->second;
+        size_t idx = stateIdx(state);
+        if (styles[idx].has_value()) {
+            Style result = *styles[idx];
             result.mergeWith(m_defaultStyle);
             return result;
         }
-        
-        auto normalIt = typeIt->second.find(ElementState::Normal);
-        if (normalIt != typeIt->second.end()) {
-            Style result = normalIt->second;
+
+        size_t normalIdx = stateIdx(ElementState::Normal);
+        if (styles[normalIdx].has_value()) {
+            Style result = *styles[normalIdx];
             result.mergeWith(m_defaultStyle);
             return result;
         }
     }
-    
+
     return m_defaultStyle;
 }
 

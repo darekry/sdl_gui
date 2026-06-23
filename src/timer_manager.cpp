@@ -28,6 +28,7 @@ void TimerManager::update() {
     // Collect timers that need to execute, to avoid iterator invalidation
     // if callbacks modify the timers vector
     std::vector<size_t> timers_to_execute;
+    timers_to_execute.reserve(timers.size());
     for (size_t i = 0; i < timers.size(); ++i) {
         if (currentTime >= timers[i].executionTime) {
             timers_to_execute.push_back(i);

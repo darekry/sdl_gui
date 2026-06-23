@@ -148,6 +148,7 @@ void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius,
         computeCornerCenters(cx, cy, x, y, x + w, y + h, ro);
 
         std::vector<SDL_Vertex> verts;
+        verts.reserve(static_cast<size_t>(4 * kCornerSegments * 6));
         for (int corner = 0; corner < 4; ++corner) {
             for (int i = 0; i < kCornerSegments; ++i) {
                 float a0 = kBa[corner] + static_cast<float>(i) * kPiHalf / static_cast<float>(kCornerSegments);

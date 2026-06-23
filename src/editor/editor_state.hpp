@@ -55,5 +55,12 @@ private:
     std::string m_selectedWidgetType;
     size_t m_selectedElementIndex = static_cast<size_t>(-1);
     int m_gridSize = 20;
-    std::map<std::string, int> m_idCounters;
+    std::unordered_map<std::string, int> m_idCounters;
+
+    std::unordered_map<std::string, size_t> m_idToIndex;
+    mutable std::unordered_map<std::string, std::vector<size_t>> m_parentToChildren;
+    mutable bool m_parentCacheDirty = true;
+
+    void rebuildIndexMaps();
+    void rebuildParentCache() const;
 };

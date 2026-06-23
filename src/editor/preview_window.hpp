@@ -33,7 +33,7 @@ private:
     EditorState& m_state;
     CanvasPanel* m_canvas = nullptr;
     
-    std::map<size_t, GUIElement*> m_widgetMap;
+    std::unordered_map<size_t, GUIElement*> m_widgetMap;
     
     bool m_showGrid = true;
     

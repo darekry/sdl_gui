@@ -1,24 +1,9 @@
 #pragma once
 
 #include "style.hpp"
+#include "texture_manager.hpp" // StringHash
 
 #include "std.hpp"
-
-struct ThemeTypeCompare {
-    using is_transparent = void;
-    
-    bool operator()(const std::string& lhs, const std::string& rhs) const {
-        return lhs < rhs;
-    }
-    
-    bool operator()(std::string_view lhs, const std::string& rhs) const {
-        return lhs < rhs;
-    }
-    
-    bool operator()(const std::string& lhs, std::string_view rhs) const {
-        return lhs < rhs;
-    }
-};
 
 class Theme {
 public:
@@ -36,6 +21,7 @@ public:
     static Theme createDefaultTheme();
 
 private:
-    std::map<std::string, std::map<ElementState, Style>, ThemeTypeCompare> m_typeStyles;
+    static constexpr size_t stateIdx(ElementState s) { return static_cast<size_t>(s); }
+    std::unordered_map<std::string, std::array<std::optional<Style>, 4>, StringHash, std::equal_to<>> m_typeStyles;
     Style m_defaultStyle;
 };

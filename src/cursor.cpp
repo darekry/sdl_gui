@@ -13,18 +13,19 @@ Cursor::Cursor(GUIManager& manager)
 }
 
 Cursor::~Cursor() {
-    // Cancel all active animations to prevent dangling pointer callbacks
-    for (auto& [state, data] : m_cursors) {
-        if (data.animation_id != 0) {
-            m_manager.getAnimationManager()->removeAnimation(data.animation_id);
-            data.animation_id = 0;
+    for (auto& opt : m_cursors) {
+        if (opt && opt->animation_id != 0) {
+            m_manager.getAnimationManager()->removeAnimation(opt->animation_id);
+            opt->animation_id = 0;
         }
     }
     SDL_ShowCursor();
 }
 
 void Cursor::setCursorTexture(CursorState state, const std::string& path, int hotspotX, int hotspotY) {
-    CursorData& data = m_cursors[state];
+    auto& opt = m_cursors[static_cast<size_t>(state)];
+    if (!opt) opt.emplace();
+    CursorData& data = *opt;
     data.texture = m_manager.getTextureManager().loadTexture(path);
     data.hotspotX = hotspotX;
     data.hotspotY = hotspotY;
@@ -39,7 +40,9 @@ void Cursor::setAnimatedCursor(CursorState state, const std::string& path, int t
         return;
     }
 
-    CursorData& data = m_cursors[state];
+    auto& opt = m_cursors[static_cast<size_t>(state)];
+    if (!opt) opt.emplace();
+    CursorData& data = *opt;
     data.texture = m_manager.getTextureManager().loadTexture(path);
     data.hotspotX = hotspotX;
     data.hotspotY = hotspotY;
@@ -54,13 +57,13 @@ void Cursor::setAnimatedCursor(CursorState state, const std::string& path, int t
     }
 
     data.animation_id = m_manager.getAnimationManager()->addAnimation(static_cast<uint32_t>(data.frameDuration * 1000), [this, state]() {
-        auto it = m_cursors.find(state);
-        if (it != m_cursors.end()) {
-            CursorData& data = it->second;
-            if (!data.loop && data.currentFrame >= data.totalFrames - 1) {
+        auto& opt = m_cursors[static_cast<size_t>(state)];
+        if (opt) {
+            CursorData& d = *opt;
+            if (!d.loop && d.currentFrame >= d.totalFrames - 1) {
                 return;
             }
-            data.currentFrame = (data.currentFrame + 1) % data.totalFrames;
+            d.currentFrame = (d.currentFrame + 1) % d.totalFrames;
         }
     });
 
@@ -132,13 +135,12 @@ void Cursor::renderOverlay(SDL_Renderer* renderer) {
     int mouseY = 0;
     {  float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); }
 
-    auto it = m_cursors.find(m_currentState);
-    if (it == m_cursors.end()) {
+    auto& opt = m_cursors[static_cast<size_t>(m_currentState)];
+    if (!opt) {
         return;
     }
 
-    CursorData& data = it->second;
-    renderCursor(renderer, data, mouseX, mouseY);
+    renderCursor(renderer, *opt, mouseX, mouseY);
 }
 
 void Cursor::renderCursor(SDL_Renderer* renderer, const CursorData& data, int mouseX, int mouseY) {

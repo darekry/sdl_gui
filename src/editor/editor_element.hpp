@@ -12,7 +12,7 @@ struct EditorElement {
     int width = 0;
     int height = 0;
     std::string parentId;
-    std::map<std::string, std::string> properties;
+    std::unordered_map<std::string, std::string> properties;
     std::map<ElementState, Style> styles;
 
     EditorElement() = default;

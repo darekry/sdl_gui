@@ -67,7 +67,8 @@ private:
     void renderCursor(SDL_Renderer* renderer, const CursorData& data, int mouseX, int mouseY);
     SDL_Rect getSrcRect(const CursorData& data) const;
 
-    std::map<CursorState, CursorData> m_cursors;
+    static constexpr size_t kNumCursorStates = 9;
+    std::array<std::optional<CursorData>, kNumCursorStates> m_cursors;
     CursorState m_currentState = CursorState::Normal;
     int m_offsetX = 0;
     int m_offsetY = 0;
