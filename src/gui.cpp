@@ -652,6 +652,11 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
     if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
         drawRoundedRectBorder(renderer, frect, fradius, ColorToFColor(*style.borderColor), static_cast<float>(*style.borderWidth));
     }
+
+    if (hasKeyboardFocus()) {
+        constexpr float kFocusThickness = 1.0f;
+        drawRoundedRectBorder(renderer, frect, fradius, ColorToFColor(constants::kFocusOutlineColor), kFocusThickness);
+    }
 }
 
 size_t GUIElement::countDescendants() const {
@@ -672,6 +677,14 @@ void GUIElement::setCanGetKeyboardFocus(bool canFocus) {
 
 bool GUIElement::hasKeyboardFocus() const {
     return m_manager.getKeyboardFocus() == this;
+}
+
+void GUIElement::onFocusGained() {
+    markDirty();
+}
+
+void GUIElement::onFocusLost() {
+    markDirty();
 }
 
 GUIElement* GUIElement::findElementAt(int x, int y) {

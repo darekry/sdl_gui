@@ -3,6 +3,7 @@
 
 Checkbox::Checkbox(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h), m_isChecked(false) {
+    setCanGetKeyboardFocus(true);
 }
 
 bool Checkbox::isChecked() const {
@@ -31,6 +32,7 @@ bool Checkbox::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
         setState(ElementState::Pressed);
         m_manager.captureMouse(this);
+        m_manager.setKeyboardFocus(this);
         return true;
     }
 
@@ -50,6 +52,20 @@ bool Checkbox::handleEvent(const SDL_Event& e) {
             bool inside = contains(e.motion.x, e.motion.y);
             setState(inside ? ElementState::Hover : ElementState::Normal);
             processHoverTooltip(inside);
+        }
+    }
+
+    if (hasKeyboardFocus()) {
+        if (e.type == SDL_EVENT_KEY_DOWN && !e.key.repeat && e.key.key == SDLK_SPACE) {
+            setState(ElementState::Pressed);
+            return true;
+        }
+        if (e.type == SDL_EVENT_KEY_UP && e.key.key == SDLK_SPACE) {
+            if (m_state == ElementState::Pressed) {
+                setState(ElementState::Hover);
+                setChecked(!m_isChecked);
+            }
+            return true;
         }
     }
 

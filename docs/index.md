@@ -21,8 +21,9 @@ This is the documentation for the SDL2-based GUI library written in C++23.
 
 ## API Reference
 
-- [Button](api/Button.md) - Interactive button widget
-- [GUIManager](api/GUIManager.md) - Central controller for GUI elements
+- [Button](api/Button.md) - Interactive button with keyboard support (Enter/Space)
+- [Checkbox](api/Checkbox.md) - Toggle checkbox with keyboard support (Space)
+- [GUIManager](api/GUIManager.md) - Central controller with Tab navigation
 - [Panel](api/Panel.md) - Container widget for other elements
 
 ## Technical Documentation

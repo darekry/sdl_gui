@@ -4,6 +4,14 @@
 
 `GUIManager` jest centralnym kontrolerem biblioteki SDL GUI. Odpowiada za inicjalizację i zarządzanie cyklem życia kluczowych menedżerów (FontManager, TextureManager, TimerManager, AnimationManager), przechowywanie i renderowanie elementów GUI najwyższego poziomu, obsługę zdarzeń SDL, zarządzanie globalnym motywem oraz mechanizmami fokusu i przechwytywania myszy.
 
+### Nawigacja klawiaturą
+
+`GUIManager` automatycznie obsługuje nawigację klawiaturą pomiędzy elementami:
+- **Tab** — przełącza fokus na następny element focusowalny (Button, Checkbox, TextInput itp.) w kolejności DFS po drzewie widgetów
+- **Shift+Tab** — przełącza fokus na poprzedni element focusowalny (z zawijaniem)
+- Element z fokusem otrzymuje wszystkie zdarzenia klawiatury (KEY_DOWN, KEY_UP, TEXT_INPUT)
+- Brak elementu z fokusem — zdarzenia klawiatury są ignorowane
+
 ## Publiczne metody
 
 *   ### `explicit GUIManager(SDL_Renderer* renderer)`
@@ -143,9 +151,9 @@
         ```
 
 *   ### `void setKeyboardFocus(GUIElement* element)`
-    *   **Opis**: Ustawia fokus klawiatury na określony element GUI. Zdarzenia klawiatury będą wysyłane tylko do tego elementu.
+    *   **Opis**: Ustawia fokus klawiatury na określony element GUI. Zdarzenia klawiatury będą wysyłane tylko do tego elementu. Wywołuje `onFocusLost()` na poprzednim elemencie i `onFocusGained()` na nowym.
     *   **Parametry**:
-        *   `element`: Wskaźnik do elementu, który ma otrzymać fokus klawiatury.
+        *   `element`: Wskaźnik do elementu, który ma otrzymać fokus klawiatury. `nullptr` usuwa fokus.
     *   **Przykład użycia**:
         ```cpp
         guiManager.setKeyboardFocus(myTextInput);
@@ -154,3 +162,13 @@
 *   ### `[[nodiscard]] GUIElement* getKeyboardFocus() const`
     *   **Opis**: Zwraca wskaźnik do elementu, który aktualnie posiada fokus klawiatury.
     *   **Zwraca**: Wskaźnik `GUIElement*` do elementu z focusem lub `nullptr`, jeśli żaden element nie ma fokusu.
+
+*   ### `void focusNextElement(bool forward)`
+    *   **Opis**: Przełącza fokus klawiatury na następny (lub poprzedni) element focusowalny. Elementy są przeszukiwane w kolejności DFS po drzewie widgetów. Zawija na koniec/początek listy.
+    *   **Parametry**:
+        *   `forward`: `true` — następny element; `false` — poprzedni element.
+    *   **Przykład użycia**:
+        ```cpp
+        guiManager.focusNextElement(true);   // następny
+        guiManager.focusNextElement(false);  // poprzedni
+        ```

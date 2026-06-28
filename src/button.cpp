@@ -6,6 +6,7 @@
 
 Button::Button(GUIManager& manager, int x, int y, int width, int height, std::string_view label)
     : GUIElement(manager, x, y, width, height) {
+    setCanGetKeyboardFocus(true);
     if (!label.empty()) {
         auto label_elem = std::make_unique<Label>(manager, 0, 0, label);
         int label_width, label_height;
@@ -37,6 +38,7 @@ bool Button::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
         setState(ElementState::Pressed);
         m_manager.captureMouse(this);
+        m_manager.setKeyboardFocus(this);
         return true;
     }
 
@@ -61,6 +63,22 @@ bool Button::handleEvent(const SDL_Event& e) {
             bool inside = contains(e.motion.x, e.motion.y);
             setState(inside ? ElementState::Hover : ElementState::Normal);
             processHoverTooltip(inside);
+        }
+    }
+
+    if (hasKeyboardFocus()) {
+        if (e.type == SDL_EVENT_KEY_DOWN && !e.key.repeat && (e.key.key == SDLK_RETURN || e.key.key == SDLK_SPACE)) {
+            setState(ElementState::Pressed);
+            return true;
+        }
+        if (e.type == SDL_EVENT_KEY_UP && (e.key.key == SDLK_RETURN || e.key.key == SDLK_SPACE)) {
+            if (m_state == ElementState::Pressed) {
+                setState(ElementState::Hover);
+                if (m_onClick) {
+                    m_onClick(this);
+                }
+            }
+            return true;
         }
     }
 

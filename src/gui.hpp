@@ -119,8 +119,8 @@ public:
     GUIElement* findElementAt(int x, int y);
 
     // Focus and Capture API
-    virtual void onFocusGained() {}
-    virtual void onFocusLost() {}
+    virtual void onFocusGained();
+    virtual void onFocusLost();
     virtual void onMouseCaptureGained() {}
     virtual void onMouseCaptureLost() {}
 

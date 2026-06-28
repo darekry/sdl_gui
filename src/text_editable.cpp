@@ -32,12 +32,14 @@ void TextEditable::setOnTextChanged(const std::function<void(TextEditable*)>& ca
 }
 
 void TextEditable::onFocusGained() {
+    GUIElement::onFocusGained();
     SDL_StartTextInput(SDL_GetRenderWindow(m_manager.getRenderer()));
     m_showCursor = true;
     m_cursorBlinkTime = SDL_GetTicks();
 }
 
 void TextEditable::onFocusLost() {
+    GUIElement::onFocusLost();
     SDL_StopTextInput(SDL_GetRenderWindow(m_manager.getRenderer()));
     m_showCursor = false;
 }

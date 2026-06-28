@@ -87,6 +87,7 @@ public:
     void releaseMouse();
     void setKeyboardFocus(GUIElement* element);
     [[nodiscard]] GUIElement* getKeyboardFocus() const;
+    void focusNextElement(bool forward);
 
     void setCursor(std::unique_ptr<Cursor> new_cursor);
     
@@ -118,6 +119,8 @@ private:
     std::unique_ptr<AnimationManager> animation_manager;
 
     Theme m_theme;
+    
+    void collectFocusableElements(std::vector<GUIElement*>& out) const;
     
     // === Resize handling ===
     int m_windowWidth = 0;

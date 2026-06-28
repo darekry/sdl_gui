@@ -58,6 +58,10 @@ bool GUIManager::processEvent(const SDL_Event& event) {
     }
     // 2. Zdarzenia klawiatury
     else if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP || event.type == SDL_EVENT_TEXT_INPUT) {
+        if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_TAB) {
+            focusNextElement(!(event.key.mod & SDL_KMOD_SHIFT));
+            return true;
+        }
         if (m_keyboardFocusElement) {
             // Jeśli element ma fokus klawiatury, wysyłaj zdarzenia tylko do niego
             return m_keyboardFocusElement->handleEvent(event);
@@ -377,4 +381,39 @@ void GUIManager::getWindowSize(int& width, int& height) const {
 void GUIManager::setWindowSize(int width, int height) {
     m_windowWidth = width;
     m_windowHeight = height;
+}
+
+void GUIManager::collectFocusableElements(std::vector<GUIElement*>& out) const {
+    std::function<void(GUIElement*)> collect = [&](GUIElement* element) {
+        if (!element || !element->isVisible()) return;
+        if (element->canGetKeyboardFocus()) {
+            out.push_back(element);
+        }
+        for (const auto& child : element->getChildren()) {
+            collect(child.get());
+        }
+    };
+    for (const auto& element : m_elements) {
+        collect(element.get());
+    }
+}
+
+void GUIManager::focusNextElement(bool forward) {
+    std::vector<GUIElement*> focusable;
+    collectFocusableElements(focusable);
+    if (focusable.empty()) return;
+
+    auto it = std::find(focusable.begin(), focusable.end(), m_keyboardFocusElement);
+    size_t index;
+    if (it == focusable.end()) {
+        index = forward ? 0 : focusable.size() - 1;
+    } else {
+        size_t pos = static_cast<size_t>(std::distance(focusable.begin(), it));
+        if (forward) {
+            index = (pos + 1) % focusable.size();
+        } else {
+            index = (pos == 0) ? focusable.size() - 1 : pos - 1;
+        }
+    }
+    setKeyboardFocus(focusable[index]);
 }
