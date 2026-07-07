@@ -622,7 +622,7 @@ static bool build_examples(bool release) {
 
 // ========== TESTS ==========
 
-static bool build_tests(bool release) {
+static bool build_tests(bool release, const char *filter) {
     nob_mkdir_if_not_exists(OUTPUT_DIR);
     init_globals();
     
@@ -677,13 +677,19 @@ static bool build_tests(bool release) {
     
     const char *unity_obj = OUTPUT_DIR "/all_test.o";
     Nob_Procs procs = {0};
-    size_t built = 0, skipped = 0;
+    size_t built = 0, skipped = 0, filtered = 0;
     
     nob_da_foreach(const char*, src, &tests) {
         const char *basename = nob_path_name(*src);
         char *name = nob_temp_strdup(basename);
         char *dot = strrchr(name, '.');
         if (dot) *dot = '\0';
+        
+        if (filter && !strstr(name, filter)) {
+            filtered++;
+            continue;
+        }
+        
         const char *exe = nob_temp_sprintf("%s/%s", OUTPUT_DIR, name);
         
         // Build input list: source + unity_obj + catch_obj + helper_obj + embedded .o files + shader .o files
@@ -729,21 +735,31 @@ static bool build_tests(bool release) {
     
     if (!nob_procs_wait(procs)) return false;
     
-    nob_log(INFO, "Tests: %zu built, %zu skipped", built, skipped);
+    if (filtered > 0) {
+        nob_log(INFO, "Tests: %zu built, %zu skipped, %zu filtered", built, skipped, filtered);
+    } else {
+        nob_log(INFO, "Tests: %zu built, %zu skipped", built, skipped);
+    }
     return true;
 }
 
-static bool run_tests(void) {
+static bool run_tests(const char *filter) {
     Nob_File_Paths tests = {0};
     if (!collect_test_sources(&tests)) return false;
     
-    size_t passed = 0, failed = 0;
+    size_t passed = 0, failed = 0, skipped = 0;
     
     nob_da_foreach(const char*, src, &tests) {
         const char *basename = nob_path_name(*src);
         char *name = nob_temp_strdup(basename);
         char *dot = strrchr(name, '.');
         if (dot) *dot = '\0';
+        
+        if (filter && !strstr(name, filter)) {
+            skipped++;
+            continue;
+        }
+        
         const char *exe = nob_temp_sprintf("%s/%s", OUTPUT_DIR, name);
         
         nob_log(INFO, "Running: %s", name);
@@ -757,7 +773,11 @@ static bool run_tests(void) {
         }
     }
     
-    nob_log(INFO, "Tests: %zu passed, %zu failed (of %zu)", passed, failed, tests.count);
+    if (skipped > 0) {
+        nob_log(INFO, "Tests: %zu passed, %zu failed, %zu skipped (of %zu)", passed, failed, skipped, tests.count);
+    } else {
+        nob_log(INFO, "Tests: %zu passed, %zu failed (of %zu)", passed, failed, tests.count);
+    }
     return failed == 0;
 }
 
@@ -1204,11 +1224,14 @@ int main(int argc, char **argv) {
     
     const char *target = "examples";
     bool release = false;
+    const char *test_filter = NULL;
     
     if (argc > 1) {
         const char *arg = argv[1];
-        if (strcmp(arg, "test") == 0) target = "test";
-        else if (strcmp(arg, "release") == 0) { target = "release"; release = true; }
+        if (strcmp(arg, "test") == 0) {
+            target = "test";
+            if (argc > 2) test_filter = argv[2];
+        } else if (strcmp(arg, "release") == 0) { target = "release"; release = true; }
         else if (strcmp(arg, "clean") == 0) target = "clean";
         else if (strcmp(arg, "non_unity") == 0) target = "non_unity";
         else if (strcmp(arg, "examples") == 0) target = "examples";
@@ -1224,7 +1247,7 @@ int main(int argc, char **argv) {
     
     bool ok = false;
     if (strcmp(target, "examples") == 0) ok = build_examples(release);
-    else if (strcmp(target, "test") == 0) { ok = build_tests(release); if (ok) ok = run_tests(); }
+    else if (strcmp(target, "test") == 0) { ok = build_tests(release, test_filter); if (ok) ok = run_tests(test_filter); }
     else if (strcmp(target, "release") == 0) ok = build_release();
     else if (strcmp(target, "clean") == 0) { clean(); ok = true; }
     else if (strcmp(target, "non_unity") == 0) ok = build_non_unity(release);
