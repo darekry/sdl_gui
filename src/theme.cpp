@@ -97,6 +97,11 @@ Theme Theme::createDefaultTheme() {
     sliderStyle.borderWidth = 1;
     theme.setStyle("Slider", ElementState::Normal, sliderStyle);
 
+    // === RangeSlider style (inherits from Panel) ===
+    Style rangeSliderStyle;
+    rangeSliderStyle.borderWidth = 1;
+    theme.setStyle("RangeSlider", ElementState::Normal, rangeSliderStyle);
+
     // === TextInput styles ===
     Style textInputNormal;
     textInputNormal.backgroundColor = {255, 255, 255, 255};  // Białe tło

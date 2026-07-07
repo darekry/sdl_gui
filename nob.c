@@ -782,6 +782,7 @@ static const char * hpp_order[] = {
     "src/button.hpp",
     "src/checkbox.hpp",
     "src/slider.hpp",
+    "src/range_slider.hpp",
     "src/text_editable.hpp",
     "src/text_input.hpp",
     "src/canvas.hpp",
@@ -817,6 +818,7 @@ static const char * includes_to_remove[] = {
     "#include \"button.hpp\"",
     "#include \"checkbox.hpp\"",
     "#include \"slider.hpp\"",
+    "#include \"range_slider.hpp\"",
     "#include \"text_input.hpp\"",
     "#include \"canvas.hpp\"",
     "#include \"cursor.hpp\"",
@@ -854,6 +856,7 @@ static const char * includes_to_remove[] = {
     "#include \"../combobox.hpp\"",
     "#include \"../text_area.hpp\"",
     "#include \"../slider.hpp\"",
+    "#include \"../range_slider.hpp\"",
     "#include \"../list_view.hpp\"",
     "#include \"../window_manager.hpp\"",
 };

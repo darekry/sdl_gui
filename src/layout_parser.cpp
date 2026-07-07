@@ -12,6 +12,7 @@
 #include "progress_bar.hpp"
 #include "radio_button.hpp"
 #include "radio_group.hpp"
+#include "range_slider.hpp"
 #include "scroll_area.hpp"
 #include "slider.hpp"
 #include "string_grid.hpp"
@@ -113,6 +114,13 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
         auto slider = std::make_unique<Slider>(m_guiManager, 0, 0, 100, 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "value", 0), orientation);
         slider->setWheelStep(getInt(node, "wheelStep", 1));
         element = std::move(slider);
+    }
+    else if (type == "RangeSlider")
+    {
+        Orientation orientation = getString(node, "orientation", "Horizontal") == "Vertical" ? Orientation::Vertical : Orientation::Horizontal;
+        auto rangeSlider = std::make_unique<RangeSlider>(m_guiManager, 0, 0, 100, 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "lower", 0), getInt(node, "upper", 100), orientation);
+        rangeSlider->setWheelStep(getInt(node, "wheelStep", 1));
+        element = std::move(rangeSlider);
     }
     else if (type == "StringGrid")
     {
