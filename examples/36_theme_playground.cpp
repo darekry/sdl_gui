@@ -1,6 +1,7 @@
 #include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "theme.hpp"
+#include "theme_presets.hpp"
 #include "panel.hpp"
 #include "button.hpp"
 #include "checkbox.hpp"
@@ -10,67 +11,14 @@
 #include "radio_group.hpp"
 #include "std.hpp"
 
-Theme createLightTheme() {
-    Theme theme;
-    Style defaultStyle;
-    defaultStyle.backgroundColor = {240, 240, 240, 255};
-    defaultStyle.textColor = {20, 20, 20, 255};
-    defaultStyle.borderColor = {180, 180, 180, 255};
-    defaultStyle.borderWidth = 1;
-    theme.setDefaultStyle(defaultStyle);
-    SDL_Color accent = {0, 120, 215, 255};
-    SDL_Color textOnAccent = {255, 255, 255, 255};
-
-    Style buttonStyle;
-    buttonStyle.backgroundColor = accent;
-    buttonStyle.textColor = textOnAccent;
-    buttonStyle.borderColor = accent;
-    theme.setStyle("Button", buttonStyle);
-
-    Style checkboxStyle;
-    checkboxStyle.textColor = accent;
-    theme.setStyle("Checkbox", checkboxStyle);
-
-    Style panelStyle;
-    panelStyle.backgroundColor = {220, 220, 220, 255};
-    theme.setStyle("Panel", panelStyle);
-    theme.setStyle("Window", panelStyle);
-    return theme;
-}
-
-Theme createDarkTheme() {
-    Theme theme;
-    Style defaultStyle;
-    defaultStyle.backgroundColor = {50, 50, 50, 255};
-    defaultStyle.textColor = {220, 220, 220, 255};
-    defaultStyle.borderColor = {90, 90, 90, 255};
-    defaultStyle.borderWidth = 1;
-    theme.setDefaultStyle(defaultStyle);
-    SDL_Color accent = {20, 140, 235, 255};
-    Style buttonStyle;
-    buttonStyle.backgroundColor = accent;
-    buttonStyle.borderColor = accent;
-    theme.setStyle("Button", buttonStyle);
-
-    Style checkboxStyle;
-    checkboxStyle.textColor = accent;
-    theme.setStyle("Checkbox", checkboxStyle);
-
-    Style panelStyle;
-    panelStyle.backgroundColor = {35, 35, 35, 255};
-    theme.setStyle("Panel", panelStyle);
-    theme.setStyle("Window", panelStyle);
-    return theme;
-}
-
 int main(int, char*[]) {
     try {
         SDLApp app("Theme Playground", 800, 500);
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager gui(renderer);
 
-        Theme light = createLightTheme();
-        Theme dark = createDarkTheme();
+        Theme light = ThemePresets::createLightTheme();
+        Theme dark = ThemePresets::createDarkTheme();
         gui.setTheme(light);
 
         auto mainPanel = std::make_unique<Panel>(gui, 20, 20, 760, 460);

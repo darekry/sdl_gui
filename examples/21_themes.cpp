@@ -1,5 +1,6 @@
 #include "gui_manager.hpp"
 #include "theme.hpp"
+#include "theme_presets.hpp"
 #include "button.hpp"
 #include "checkbox.hpp"
 #include "slider.hpp"
@@ -11,76 +12,14 @@
 
 #include "std.hpp"
 
-// Definicja jasnego motywu
-Theme createLightTheme() {
-    Theme theme;
-    
-    Style default_style;
-    default_style.backgroundColor = {240, 240, 240, 255};
-    default_style.textColor = {20, 20, 20, 255};
-    default_style.borderColor = {180, 180, 180, 255};
-    default_style.borderWidth = 1;
-    theme.setDefaultStyle(default_style);
-
-    SDL_Color accent = {0, 120, 215, 255};
-    SDL_Color text_on_accent = {255, 255, 255, 255};
-
-    Style button_style;
-    button_style.backgroundColor = accent;
-    button_style.textColor = text_on_accent;
-    button_style.borderColor = accent;
-    theme.setStyle("Button", button_style);
-
-    Style checkbox_style;
-    checkbox_style.textColor = accent; // Kolor "fajki" w stanie Pressed
-    theme.setStyle("Checkbox", checkbox_style);
-
-    Style panel_style;
-    panel_style.backgroundColor = {220, 220, 220, 255};
-    theme.setStyle("Panel", panel_style);
-    theme.setStyle("Window", panel_style); // Window to alias dla Panel w tym kontekście
-
-    return theme;
-}
-
-// Definicja ciemnego motywu
-Theme createDarkTheme() {
-    Theme theme;
-
-    Style default_style;
-    default_style.backgroundColor = {50, 50, 50, 255};
-    default_style.textColor = {220, 220, 220, 255};
-    default_style.borderColor = {90, 90, 90, 255};
-    default_style.borderWidth = 1;
-    theme.setDefaultStyle(default_style);
-
-    SDL_Color accent = {20, 140, 235, 255};
-
-    Style button_style;
-    button_style.backgroundColor = accent;
-    button_style.borderColor = accent;
-    theme.setStyle("Button", button_style);
-
-    Style checkbox_style;
-    checkbox_style.textColor = accent;
-    theme.setStyle("Checkbox", checkbox_style);
-
-    Style panel_style;
-    panel_style.backgroundColor = {35, 35, 35, 255};
-    theme.setStyle("Panel", panel_style);
-    theme.setStyle("Window", panel_style);
-
-    return theme;
-}
-
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     try {
         SDLApp app("Theme Switching Example", 800, 600);
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager manager(renderer);
 
-        Theme light_theme = createLightTheme();
-        Theme dark_theme = createDarkTheme();
+        Theme light_theme = ThemePresets::createLightTheme();
+        Theme dark_theme = ThemePresets::createDarkTheme();
         manager.setTheme(light_theme);
 
         auto main_panel = std::make_unique<Panel>(manager, 50, 50, 700, 500);

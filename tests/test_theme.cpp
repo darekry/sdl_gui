@@ -167,7 +167,7 @@ TEST_CASE("Theme functionality", "[theme]") {
         
         Style normalBtn = theme.getStyle("Button", ElementState::Normal);
         REQUIRE(normalBtn.borderRadius.has_value());
-        REQUIRE(*normalBtn.borderRadius == 4);
+        REQUIRE(*normalBtn.borderRadius == 0);
         
         Style hoverBtn = theme.getStyle("Button", ElementState::Hover);
         REQUIRE(hoverBtn.backgroundColor.has_value());

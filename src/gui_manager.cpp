@@ -13,6 +13,16 @@ static constexpr int TOOLTIP_FONT_SIZE = 14;
 static constexpr int TOOLTIP_PADDING = 5;
 static const SDL_Color TOOLTIP_BG_COLOR = {.r=255, .g=255, .b=225, .a=255};
 
+static bool isDescendantOf(GUIElement* descendant, GUIElement* ancestor) {
+    if (!descendant || !ancestor) return false;
+    GUIElement* current = descendant->getParent();
+    while (current) {
+        if (current == ancestor) return true;
+        current = current->getParent();
+    }
+    return false;
+}
+
 GUIManager::GUIManager(SDL_Renderer* renderer)
     : tooltipElement(nullptr), m_renderer(renderer), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {
     timerManager = std::make_unique<TimerManager>();
@@ -129,8 +139,12 @@ void GUIManager::render() {
     }
 
     // Render overlay for keyboard focus element (e.g., TextInput cursor/selection)
+    // Only render if element is not hidden behind a modal overlay
     if (m_keyboardFocusElement && !m_keyboardFocusElement->isMarkedForDeletion()) {
-        m_keyboardFocusElement->renderOverlay(m_renderer);
+        auto* overlay = getActiveOverlay();
+        if (!overlay || isDescendantOf(m_keyboardFocusElement, overlay)) {
+            m_keyboardFocusElement->renderOverlay(m_renderer);
+        }
     }
 
     if (cursor) {
@@ -393,9 +407,26 @@ void GUIManager::collectFocusableElements(std::vector<GUIElement*>& out) const {
             collect(child.get());
         }
     };
-    for (const auto& element : m_elements) {
-        collect(element.get());
+
+    auto activeOverlay = getActiveOverlay();
+    if (activeOverlay) {
+        collect(activeOverlay);
+    } else {
+        for (const auto& element : m_elements) {
+            if (!element->isOverlay()) {
+                collect(element.get());
+            }
+        }
     }
+}
+
+GUIElement* GUIManager::getActiveOverlay() const {
+    for (const auto& element : m_elements) {
+        if (element && element->isOverlay() && element->isVisible() && !element->isMarkedForDeletion()) {
+            return element.get();
+        }
+    }
+    return nullptr;
 }
 
 void GUIManager::focusNextElement(bool forward) {

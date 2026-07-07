@@ -121,6 +121,7 @@ private:
     Theme m_theme;
     
     void collectFocusableElements(std::vector<GUIElement*>& out) const;
+    GUIElement* getActiveOverlay() const;
     
     // === Resize handling ===
     int m_windowWidth = 0;

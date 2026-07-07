@@ -65,6 +65,11 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
         int thumbSize = (m_orientation == Orientation::Horizontal) ? std::min(getHeight(), 20) : std::min(getWidth(), 20);
 
         if (m_activeThumb != ActiveThumb::None) {
+            if (!contains(static_cast<int>(e.motion.x), static_cast<int>(e.motion.y))) {
+                m_activeThumb = ActiveThumb::None;
+                m_hoveredThumb = ActiveThumb::None;
+                return false;
+            }
             updateValueFromMouse(static_cast<int>(e.motion.x), static_cast<int>(e.motion.y));
             return true;
         }
@@ -116,7 +121,7 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
                 m_activeThumb = ActiveThumb::Upper;
                 m_hoveredThumb = ActiveThumb::Upper;
                 return true;
-            } else if (mousePoint.x >= absPos.x && mousePoint.x < absPos.x + getWidth()) {
+            } else if (contains(mousePoint.x, mousePoint.y)) {
                 float ratio = std::clamp(static_cast<float>(mousePoint.x - absPos.x) / static_cast<float>(getWidth()), 0.0f, 1.0f);
                 int clickValue = m_minValue + static_cast<int>(ratio * static_cast<float>(m_maxValue - m_minValue));
                 if (std::abs(clickValue - m_lowerValue) <= std::abs(clickValue - m_upperValue)) {
@@ -146,7 +151,7 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
                 m_activeThumb = ActiveThumb::Upper;
                 m_hoveredThumb = ActiveThumb::Upper;
                 return true;
-            } else if (mousePoint.y >= absPos.y && mousePoint.y < absPos.y + getHeight()) {
+            } else if (contains(mousePoint.x, mousePoint.y)) {
                 float ratio = std::clamp(static_cast<float>(mousePoint.y - absPos.y) / static_cast<float>(getHeight()), 0.0f, 1.0f);
                 int clickValue = m_minValue + static_cast<int>(ratio * static_cast<float>(m_maxValue - m_minValue));
                 if (std::abs(clickValue - m_lowerValue) <= std::abs(clickValue - m_upperValue)) {

@@ -325,6 +325,25 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
+### Theme presets system (2026-07-07)
+- `ThemePresets` namespace w `src/theme_presets.hpp` — 4 predefiniowane motywy:
+  - `createWin9xTheme()` — klasyczny Windows 95/98: szare tło `{192,192,192}`, ostre krawędzie, białe inputy
+  - `createLightTheme()` — jasny, nowoczesny z niebieskim akcentem
+  - `createDarkTheme()` — ciemny (dark mode)
+  - `createHighContrastTheme()` — czarne tło, żółte akcenty, duże fonty
+- `Theme::createDefaultTheme()` deleguje do `ThemePresets::createWin9xTheme()`
+- Pokrycie wszystkich typów widgetów (Button/Panel/TextInput/TextArea/Label/Slider/ProgressBar/StringGrid/ListView/ComboBox/TabControl/ContextMenu/ScrollArea/Canvas/AnimatedImage) + stany Normal/Hover/Pressed/Disabled
+- Examples 21 i 36 zaktualizowane do używania `ThemePresets`
+- Efekt: 40/40 examples, 30/30 tests (theme test zaktualizowany dla Win9x borderRadius=0)
+- Zmienione: `src/theme_presets.hpp` (nowy), `src/theme.cpp`, `examples/21_themes.cpp`, `examples/36_theme_playground.cpp`, `tests/test_theme.cpp`
+
+### Focus element rendering behind overlays fix (2026-07-07)
+- Pass 3 `GUIManager::render()` (focus element overlay) wywołuje `m_keyboardFocusElement->renderOverlay()` tylko gdy nie ma aktywnego overlayu lub element z focusem jest w nim zagnieżdżony — inaczej element spoza dialogu był rysowany na wierzchu
+- `collectFocusableElements()` teraz zbiera elementy tylko z aktywnego overlayu, gdy taki istnieje — Tab nie skacze do elementów schowanych za dialogiem
+- Dodane `getActiveOverlay()` i `isDescendantOf()` jako helpery
+- Efekt: 40/40 examples, wszystkie testy przechodzą (oprócz pre-existing ASan w test_text_area)
+- Zmienione: `src/gui_manager.cpp`, `src/gui_manager.hpp`
+
 ### Keyboard focus system (2026-06-28)
 - Focus visual: niebieska obwódka (`kFocusOutlineColor`) rysowana w `drawBackgroundAndBorder()`
 - Button: `setCanGetKeyboardFocus(true)`, Enter/Space → aktywacja ze stanem Pressed
