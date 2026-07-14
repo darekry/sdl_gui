@@ -10,6 +10,8 @@ public:
     void setText(std::string_view text);
     const std::string& getText() const { return m_text; }
 
+    const char* getComponentType() const override { return "Label"; }
+
 public:
     void draw(SDL_Renderer* renderer) override;
 

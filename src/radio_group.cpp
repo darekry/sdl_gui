@@ -74,3 +74,7 @@ RadioButton* RadioGroup::getSelectedButton() const {
     }
     return nullptr;
 }
+
+const char* RadioGroup::getComponentType() const {
+    return "RadioGroup";
+}

@@ -17,7 +17,7 @@ public:
     void removeItem(size_t index);
     void clearItems();
     [[nodiscard]] size_t getItemCount() const;
-    [[nodiscard]] std::string getItem(size_t index) const;
+    [[nodiscard]] std::string_view getItem(size_t index) const;
     void setItem(size_t index, const std::string& text);
 
     void setSelectedRow(size_t row);

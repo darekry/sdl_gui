@@ -125,6 +125,31 @@ void ComboBox::addItem(const char* item) {
     addItem(std::string(item));
 }
 
+void ComboBox::clearItems() {
+    m_options.clear();
+    m_selected_index = -1;
+    if (m_is_expanded) {
+        toggleDropdown();
+    }
+    m_needs_update = true;
+    markDirty();
+}
+
+const char* ComboBox::getComponentType() const {
+    return "ComboBox";
+}
+
+size_t ComboBox::getItemCount() const {
+    return m_options.size();
+}
+
+std::string ComboBox::getItem(size_t index) const {
+    if (index < m_options.size()) {
+        return m_options[index];
+    }
+    return "";
+}
+
 std::string ComboBox::getSelectedItem() const {
     if (m_selected_index >= 0 && static_cast<size_t>(m_selected_index) < m_options.size()) {
         return m_options[static_cast<size_t>(m_selected_index)];

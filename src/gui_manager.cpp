@@ -58,6 +58,18 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     return nullptr;
 }
 
+std::unique_ptr<GUIElement> GUIManager::detachElement(GUIElement* element) {
+    if (!element) return nullptr;
+    for (auto it = m_elements.begin(); it != m_elements.end(); ++it) {
+        if (it->get() == element) {
+            auto detached = std::move(*it);
+            m_elements.erase(it);
+            return detached;
+        }
+    }
+    return nullptr;
+}
+
 bool GUIManager::processEvent(const SDL_Event& event) {
     // 1. Zdarzenia myszy
     if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {

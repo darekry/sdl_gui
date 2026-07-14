@@ -111,9 +111,10 @@ public:
     bool isMarkedForDeletion() const;
     void cleanup();
 
-    void addChild(std::unique_ptr<GUIElement> child);
+    GUIElement* addChild(std::unique_ptr<GUIElement> child);
     void clearChildren();
     [[nodiscard]] GUIElement* getParent() const { return m_parent; }
+    [[nodiscard]] GUIManager& getManager() const { return m_manager; }
     [[nodiscard]] const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
     size_t countDescendants() const;
     GUIElement* findElementAt(int x, int y);

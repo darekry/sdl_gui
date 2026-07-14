@@ -29,6 +29,8 @@ public:
     void setWheelStep(int step) { m_wheelStep = step > 0 ? step : 1; }
     int getWheelStep() const { return m_wheelStep; }
 
+    [[nodiscard]] Orientation getOrientation() const { return m_orientation; }
+
     Button* getDecrementButton();
     Button* getIncrementButton();
 

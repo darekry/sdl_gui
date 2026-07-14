@@ -15,12 +15,17 @@ public:
     void addItem(std::string_view item);
     void addItem(std::string&& item);
     void addItem(const char* item);
+    void clearItems();
+    [[nodiscard]] size_t getItemCount() const;
+    [[nodiscard]] std::string getItem(size_t index) const;
     std::string getSelectedItem() const;
     int getSelectedIndex() const;
     void setSelectedIndex(int index);
 
     bool isExpanded() const { return m_is_expanded; }
     std::function<void(int, const std::string&)> on_selection_changed;
+
+    const char* getComponentType() const override;
 
 protected:
     void draw(SDL_Renderer* renderer) override;

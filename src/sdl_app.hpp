@@ -10,6 +10,7 @@
 #include "logger.hpp"
 
 #include "std.hpp"
+#include "gui_manager.hpp"
 
 struct GPUBackend {};
 inline constexpr GPUBackend GPU_VULKAN{};
@@ -180,6 +181,41 @@ public:
      */
     void getWindowSize(int& width, int& height) const {
         SDL_GetWindowSize(m_window, &width, &height);
+    }
+
+    /**
+     * @brief Run the main event loop with GUIManager.
+     *
+     * Handles the full lifecycle: PollEvent → processEvent → update → cleanup →
+     * clear (with given color) → render → present.
+     *
+     * @param guiManager The GUIManager to use
+     * @param clearColor Background clear color (default: dark gray 40,42,54)
+     * @param onEvent Optional callback for additional event handling (e.g. resize, custom keys).
+     *                Called after guiManager.processEvent().
+     */
+    template<typename F = std::nullptr_t>
+    void run(GUIManager& guiManager, SDL_Color clearColor = {40, 42, 54, 255}, F onEvent = nullptr) {
+        bool quit = false;
+        SDL_Event e;
+        while (!quit) {
+            while (SDL_PollEvent(&e)) {
+                if (e.type == SDL_EVENT_QUIT) {
+                    quit = true;
+                    break;
+                }
+                guiManager.processEvent(e);
+                if constexpr (!std::is_same_v<F, std::nullptr_t>) {
+                    onEvent(e);
+                }
+            }
+            guiManager.update();
+            guiManager.cleanup();
+            SDL_SetRenderDrawColor(m_renderer, clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+            SDL_RenderClear(m_renderer);
+            guiManager.render();
+            SDL_RenderPresent(m_renderer);
+        }
     }
 
 private:

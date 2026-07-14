@@ -1092,6 +1092,19 @@ static bool build_release(void) {
     
     if (!build_combined_header()) return false;
 
+    // Copy C API header to dist/
+    {
+        const char *c_header_src  = SRC_DIR "/sdl_gui.h";
+        const char *c_header_dst  = DIST_DIR "/sdl_gui.h";
+        const char *c_header_deps[] = {c_header_src};
+        if (nob_needs_rebuild(c_header_dst, c_header_deps, 1) > 0) {
+            nob_log(INFO, "Copying C API header: %s -> %s", c_header_src, c_header_dst);
+            Nob_Cmd cmd = {0};
+            nob_cmd_append(&cmd, "cp", c_header_src, c_header_dst);
+            if (!nob_cmd_run(&cmd)) return false;
+        }
+    }
+
     // Smoke test: compile standalone example with combined header + static library
     {
         const char *standalone_src = EXAMPLES_DIR "/10_standalone.cpp";
@@ -1116,6 +1129,89 @@ static bool build_release(void) {
             nob_cmd_append(&cmd, "-o", standalone_exe, standalone_src, DIST_DIR "/libsdl_gui.a");
             cmd_add_sdl3(&cmd);
             if (!nob_cmd_run(&cmd)) return false;
+        }
+    }
+
+    // C API smoke test: compile a pure C file with gcc against dist/sdl_gui.h + libsdl_gui.a
+    {
+        const char *c_test_src  = OUTPUT_DIR "/release/c_smoke_test.c";
+        const char *c_test_exe  = OUTPUT_DIR "/release/c_smoke_test";
+        const char *c_header    = DIST_DIR "/sdl_gui.h";
+        const char *c_lib       = DIST_DIR "/libsdl_gui.so";
+        const char *c_inputs[]  = {c_test_src, c_header, c_lib};
+        const char *c_source =
+            "#include <sdl_gui.h>\n"
+            "int main(void) {\n"
+            "    sdlgui_t g = sdlgui_create(\"test\", 640, 480, 0);\n"
+            "    if (g) sdlgui_destroy(g);\n"
+            "    return 0;\n"
+            "}\n";
+        if (!nob_write_entire_file(c_test_src, c_source, strlen(c_source))) return false;
+        if (nob_needs_rebuild(c_test_exe, c_inputs, 3) > 0) {
+            nob_log(INFO, "C API smoke test: compiling with clang (pure C)...");
+            /* Compile C source separately, then link with g++ for C++ runtime */
+            const char *c_obj = nob_temp_sprintf("%s.o", c_test_exe);
+            Nob_Cmd cc_cmd = {0};
+            nob_cmd_append(&cc_cmd, CC, "-std=c11", "-pedantic-errors",
+                "-I" DIST_DIR,
+                "-c", c_test_src, "-o", c_obj);
+            nob_cmd_extend(&cc_cmd, &g_sdl3_cflags);
+            if (!nob_cmd_run(&cc_cmd)) return false;
+
+            Nob_Cmd link_cmd = {0};
+            nob_cmd_append(&link_cmd, CXX);
+            cmd_add_common(&link_cmd);
+            nob_cmd_append(&link_cmd,
+                "-o", c_test_exe, c_obj, c_lib);
+            nob_cmd_extend(&link_cmd, &g_sdl3_cflags);
+            nob_cmd_extend(&link_cmd, &g_sdl3_libs);
+            if (!nob_cmd_run(&link_cmd)) return false;
+        }
+    }
+
+    // Build C examples (pure C source compiled with gcc, linked with g++)
+    {
+        const char *c_examples_dir = EXAMPLES_DIR "/c";
+        Nob_Dir_Entry entry = {0};
+        if (nob_dir_entry_open(c_examples_dir, &entry)) {
+            while (nob_dir_entry_next(&entry)) {
+                if (!strstr(entry.name, ".c")) continue;
+                const char *src = nob_temp_sprintf("%s/%s", c_examples_dir, entry.name);
+                char *name = nob_temp_strdup(entry.name);
+                char *dot = strrchr(name, '.');
+                if (dot) *dot = '\0';
+                const char *exe = nob_temp_sprintf("%s/c_%s", OUTPUT_DIR, name);
+
+                const char *c_header = DIST_DIR "/sdl_gui.h";
+                const char *c_lib    = DIST_DIR "/libsdl_gui.so";
+                const char *inputs[] = {src, c_header, c_lib};
+                if (nob_needs_rebuild(exe, inputs, 3) <= 0) continue;
+
+                nob_log(INFO, "Building C example: %s", name);
+                const char *c_obj = nob_temp_sprintf("%s/%s_c.o", OUTPUT_DIR, name);
+                Nob_Cmd cc_cmd = {0};
+                nob_cmd_append(&cc_cmd, CC, "-std=c11", "-pedantic-errors",
+                    "-I" DIST_DIR,
+                    "-c", src, "-o", c_obj);
+                nob_cmd_extend(&cc_cmd, &g_sdl3_cflags);
+                if (!nob_cmd_run(&cc_cmd)) {
+                    nob_dir_entry_close(entry);
+                    return false;
+                }
+                Nob_Cmd link_cmd = {0};
+                nob_cmd_append(&link_cmd, CXX);
+                cmd_add_common(&link_cmd);
+                nob_cmd_append(&link_cmd,
+                    "-o", exe, c_obj, c_lib);
+                nob_cmd_extend(&link_cmd, &g_sdl3_cflags);
+                nob_cmd_extend(&link_cmd, &g_sdl3_libs);
+                if (!nob_cmd_run(&link_cmd)) {
+                    nob_dir_entry_close(entry);
+                    return false;
+                }
+            }
+            nob_dir_entry_close(entry);
+            /* Note: entry.error stays false after close if all was well */
         }
     }
 

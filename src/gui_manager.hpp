@@ -35,6 +35,30 @@ public:
     ~GUIManager();
 
     GUIElement* addElement(std::unique_ptr<GUIElement> element);
+
+    template<typename T, typename... Args>
+    T* create(Args&&... args) {
+        auto widget = std::make_unique<T>(*this, std::forward<Args>(args)...);
+        T* raw = widget.get();
+        addElement(std::move(widget));
+        return raw;
+    }
+
+    template<typename T, typename... Args>
+    T* create(GUIElement* parent, Args&&... args) {
+        auto widget = std::make_unique<T>(*this, std::forward<Args>(args)...);
+        T* raw = widget.get();
+        parent->addChild(std::move(widget));
+        return raw;
+    }
+
+    /*
+     * Detach a top-level element without deleting it.
+     * Returns the unique_ptr, or nullptr if the element is not a top-level element.
+     * The element remains registered in m_liveElements (still valid).
+     */
+    std::unique_ptr<GUIElement> detachElement(GUIElement* element);
+
     bool processEvent(const SDL_Event& e);
     void update();
     void render();

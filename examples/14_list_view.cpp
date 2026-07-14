@@ -27,12 +27,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         }
 
         listView->setOnRowClick([statusLabelRef](ListView* lv, size_t row) {
-            std::string item = lv->getItem(row);
+            std::string item(lv->getItem(row));
             if (statusLabelRef) statusLabelRef->setText("Selected: " + item + " (row " + std::to_string(row + 1) + ")");
         });
 
         listView->setOnRowDoubleClick([statusLabelRef](ListView* lv, size_t row) {
-            std::string item = lv->getItem(row);
+            std::string item(lv->getItem(row));
             if (statusLabelRef) statusLabelRef->setText("Activated: " + item);
         });
 
@@ -52,7 +52,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
             if (!listViewRef || !statusLabelRef) return;
             auto selected = listViewRef->getSelectedRow();
             if (selected.has_value()) {
-                std::string item = listViewRef->getItem(selected.value());
+                std::string item(listViewRef->getItem(selected.value()));
                 listViewRef->removeItem(selected.value());
                 statusLabelRef->setText("Removed: " + item);
             } else {

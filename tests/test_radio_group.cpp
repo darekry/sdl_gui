@@ -501,9 +501,9 @@ TEST_CASE("RadioGroup - Component Type", "[radio_group]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("getComponentType returns Panel (RadioGroup inherits Panel)") {
+    SECTION("getComponentType returns RadioGroup") {
         RadioGroup group(manager, 0, 0, 100, 50);
-        REQUIRE(std::string(group.getComponentType()) == "Panel");
+        REQUIRE(std::string(group.getComponentType()) == "RadioGroup");
     }
 
     SECTION("RadioGroup is a Panel subclass") {

@@ -69,6 +69,11 @@ void TabControl::setActiveTab(Button* tabButton) {
     markDirty();
 }
 
+void TabControl::setActiveTab(int index) {
+    if (index < 0 || static_cast<size_t>(index) >= m_tabButtons.size()) return;
+    setActiveTab(m_tabButtons[static_cast<size_t>(index)]);
+}
+
 void TabControl::reorderTabs() {
     auto current_x = 0;
     for (auto* button : m_tabButtons) {

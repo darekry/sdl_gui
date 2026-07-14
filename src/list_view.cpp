@@ -80,8 +80,8 @@ size_t ListView::getItemCount() const {
     return getRowCount();
 }
 
-std::string ListView::getItem(size_t index) const {
-    return std::string(getCellText(index, 0));
+std::string_view ListView::getItem(size_t index) const {
+    return getCellText(index, 0);
 }
 
 void ListView::setItem(size_t index, const std::string& text) {

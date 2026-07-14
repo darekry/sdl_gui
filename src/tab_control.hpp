@@ -14,6 +14,9 @@ public:
     // Ustawia aktywną zakładkę na podstawie wskaźnika na jej przycisk
     void setActiveTab(Button* tabButton);
 
+    // Ustawia aktywną zakładkę po indeksie (0-based)
+    void setActiveTab(int index);
+
     const char* getComponentType() const override;
 
 protected:

@@ -256,14 +256,17 @@ void GUIElement::setRotationCenter(int cx, int cy) {
     markDirty();
 }
 
-void GUIElement::addChild(std::unique_ptr<GUIElement> child) {
+GUIElement* GUIElement::addChild(std::unique_ptr<GUIElement> child) {
     if (child && child->m_parent != this) {
-        m_manager.registerElement(child.get());
-        child->m_parent = this;
-        child->invalidateAbsPosCache();
+        GUIElement* raw = child.get();
+        m_manager.registerElement(raw);
+        raw->m_parent = this;
+        raw->invalidateAbsPosCache();
         m_children.push_back(std::move(child));
         markDirty();
+        return raw;
     }
+    return nullptr;
 }
 
 void GUIElement::clearChildren() {
