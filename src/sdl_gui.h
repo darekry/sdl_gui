@@ -134,7 +134,7 @@ void     sdlgui_destroy(sdlgui_t gui);
    ═══════════════════════════════════════════════════════════════ */
 
 SDL_Renderer*  sdlgui_get_renderer(sdlgui_t gui);
-void           sdlgui_process_event(sdlgui_t gui, const SDL_Event* e);
+bool           sdlgui_process_event(sdlgui_t gui, const SDL_Event* e);
 void           sdlgui_update(sdlgui_t gui);
 void           sdlgui_cleanup(sdlgui_t gui);
 void           sdlgui_render(sdlgui_t gui);

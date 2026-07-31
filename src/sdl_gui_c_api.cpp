@@ -107,9 +107,9 @@ SDL_Renderer* sdlgui_get_renderer(sdlgui_t gui) {
     return ctx->getRenderer();
 }
 
-void sdlgui_process_event(sdlgui_t gui, const SDL_Event* e) {
+bool sdlgui_process_event(sdlgui_t gui, const SDL_Event* e) {
     auto* ctx = unwrap_ctx(gui);
-    ctx->getGUIManager().processEvent(*e);
+   return ctx->getGUIManager().processEvent(*e);
 }
 
 void sdlgui_update(sdlgui_t gui) {
