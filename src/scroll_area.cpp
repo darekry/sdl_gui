@@ -177,10 +177,6 @@ bool ScrollArea::handleEvent(const SDL_Event& e) {
     return Panel::handleEvent(e);
 }
 
-void ScrollArea::draw(SDL_Renderer* renderer) {
-    Panel::draw(renderer);
-}
-
 void ScrollArea::onParentResize(int parentWidth, int parentHeight) {
     Panel::onParentResize(parentWidth, parentHeight);
     updateLayout();

@@ -1,7 +1,5 @@
 #include "dialog_box.hpp"
 #include "../gui_manager.hpp"
-#include "../theme.hpp"
-#include "constants.hpp"
 
 #include "std.hpp"
 
@@ -18,12 +16,9 @@ std::unique_ptr<DialogBox> DialogBox::createConfirm(
     int width,
     int height
 ) {
-    // Centrowanie dialogu na ekranie (zakładamy 800x600)
-    // TODO: Pobrać rzeczywiste wymiary ekranu z manager
-    int screenW = 800;
-    int screenH = 600;
-    int x = (screenW - width) / 2;
-    int y = (screenH - height) / 2;
+    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenH = 600;
+    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
     auto dialog = std::unique_ptr<DialogBox>(new DialogBox(
         manager, x, y, width, height,
@@ -51,10 +46,9 @@ std::unique_ptr<DialogBox> DialogBox::createAlert(
     int width,
     int height
 ) {
-    int screenW = 800;
-    int screenH = 600;
-    int x = (screenW - width) / 2;
-    int y = (screenH - height) / 2;
+    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenH = 600;
+    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
     auto dialog = std::unique_ptr<DialogBox>(new DialogBox(
         manager, x, y, width, height,
@@ -75,10 +69,9 @@ std::unique_ptr<DialogBox> DialogBox::createCustom(
     int width,
     int height
 ) {
-    int screenW = 800;
-    int screenH = 600;
-    int x = (screenW - width) / 2;
-    int y = (screenH - height) / 2;
+    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenH = 600;
+    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
     return std::unique_ptr<DialogBox>(new DialogBox(
         manager, x, y, width, height,
@@ -97,10 +90,9 @@ std::unique_ptr<DialogBox> DialogBox::createWithTitle(
     int width,
     int height
 ) {
-    int screenW = 800;
-    int screenH = 600;
-    int x = (screenW - width) / 2;
-    int y = (screenH - height) / 2;
+    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenH = 600;
+    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
     auto dialog = std::unique_ptr<DialogBox>(new DialogBox(
         manager, x, y, width, height,

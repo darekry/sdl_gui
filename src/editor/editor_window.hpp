@@ -28,7 +28,6 @@ public:
     Window* getWindow() { return m_window; }
     GUIManager& getGUIManager();
 
-    void rebuild();
     void updateElementsList();
     void updatePropertiesPanel();
     void selectPaletteButton(const std::string& widgetType);
@@ -46,8 +45,6 @@ private:
     void createBottomButtons();
 
     void addWidgetTypeButton(const std::string& type, int row, int col);
-    void addPropertyField(const std::string& label, const std::string& key, int y);
-    void addColorSliders(const std::string& label, const std::string& colorKey, int y);
     void addStyleStateSelector(int y);
 
     void handleWidgetTypeSelected(const std::string& type);
@@ -69,7 +66,6 @@ private:
     void updateBorderFromInputs();
     void updateStyleFromInputs();
     void populateStyleFields();
-    void updateCheckboxesFromElement();
 
     WindowManager& m_windowManager;
     EditorState& m_editorState;
@@ -80,7 +76,6 @@ private:
 
     Panel* m_palettePanel = nullptr;
     std::unordered_map<std::string, Button*> m_paletteButtons;
-    std::string m_selectedPaletteType;
 
     Panel* m_propertiesPanel = nullptr;
     TextInput* m_idInput = nullptr;
@@ -94,8 +89,6 @@ private:
     TextInput* m_borderRadiusInput = nullptr;
     std::unordered_map<std::string, TextInput*> m_propertyInputs;
     std::unordered_map<std::string, Checkbox*> m_propertyCheckboxes;
-    std::unordered_map<std::string, TextArea*> m_propertyTextAreas;
-    std::unordered_map<std::string, ComboBox*> m_propertyCombos;
     ComboBox* m_styleStateCombo = nullptr;
     std::array<Slider*, 4> m_bgColorSliders = {nullptr, nullptr, nullptr, nullptr};
     std::array<Slider*, 4> m_textColorSliders = {nullptr, nullptr, nullptr, nullptr};
@@ -109,10 +102,6 @@ private:
     Button* m_addAsChildButton = nullptr;
     bool m_addAsChildMode = false;
 
-    void createDynamicPropertyFields();
-    void clearDynamicPropertyFields();
-    void addWidgetSpecificProperties(const std::string& widgetType, int startY);
-    
     static constexpr int WINDOW_WIDTH = 400;
     static constexpr int WINDOW_HEIGHT = 900;
     static constexpr int PALETTE_HEIGHT = 120;

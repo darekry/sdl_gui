@@ -396,9 +396,8 @@ TEST_CASE("C API - Button", "[c_api][button]") {
 
         sdlgui_process_event(gui, &motion);
 
-        /* Note: The C++ Button's onMouseOver callback is stored but
-           not invoked by the current C++ implementation.
-           This tests that setting the callback does not crash. */
+        /* The callback fires when the mouse enters the button. */
+        REQUIRE(hoverCalls == 1);
     }
 
     SECTION("set_label updates existing label") {

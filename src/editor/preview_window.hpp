@@ -18,7 +18,6 @@ public:
     void setOnSelectionChanged(std::function<void(size_t)> callback) { m_onSelectionChanged = callback; }
     void setOnElementMoved(std::function<void(size_t, int, int)> callback) { m_onElementMoved = callback; }
     
-    void refreshAllElements();
     void refreshElement(size_t index);
     void removeElementWidget(size_t index);
     void clearAllWidgets();
@@ -61,7 +60,6 @@ public:
     void renderOverlay(SDL_Renderer* renderer) override;
 
 protected:
-    void draw(SDL_Renderer* renderer) override;
     bool wantsDirectRender() const override { return true; }
     void drawDirect(SDL_Renderer* renderer) override;
 

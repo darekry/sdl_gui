@@ -1,6 +1,5 @@
 #include "animated_image.hpp"
 #include "gui_manager.hpp"
-#include "sdl_deleters.hpp"
 #include <SDL3/SDL.h>
 
 #include "std.hpp"

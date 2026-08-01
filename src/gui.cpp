@@ -391,19 +391,15 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 SDL_FPoint center = m_rotationCenter.x >= 0 
                     ? SDL_FPoint{static_cast<float>(m_rotationCenter.x), static_cast<float>(m_rotationCenter.y)} 
                     : SDL_FPoint{static_cast<float>(m_width) / 2.0f, static_cast<float>(m_height) / 2.0f};
-                if (m_gpuState) SDL_SetGPURenderState(renderer, m_gpuState);
                 SDL_RenderTextureRotated(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
                                  m_rotation, &center, SDL_FLIP_NONE);
-                if (m_gpuState) SDL_SetGPURenderState(renderer, nullptr);
             } else {
                 SDL_Rect src_rect;
                 src_rect.x = clipped_rect.x - abs_pos.x;
                 src_rect.y = clipped_rect.y - abs_pos.y;
                 src_rect.w = clipped_rect.w;
                 src_rect.h = clipped_rect.h;
-                if (m_gpuState) SDL_SetGPURenderState(renderer, m_gpuState);
                 RenderTexture(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
-                if (m_gpuState) SDL_SetGPURenderState(renderer, nullptr);
             }
         }
     }
@@ -450,32 +446,32 @@ void GUIElement::renderToCache() {
     }
 
     SDL_Renderer* renderer = m_manager.getRenderer();
-    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, m_cachedTexture.get());
+    {
+        ScopedRenderTarget targetScope(renderer, m_cachedTexture.get());
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_RenderClear(renderer);
 
-    draw(renderer);
+        draw(renderer);
 
-    if (m_rotation != 0.0) {
-        SDL_SetRenderTarget(renderer, nullptr);
-        for (auto& child : m_children) {
-            if (child && child->isVisible() && child->m_isDirty) {
-                child->renderToCache();
+        if (m_rotation != 0.0) {
+            SDL_SetRenderTarget(renderer, nullptr);
+            for (auto& child : m_children) {
+                if (child && child->isVisible() && child->m_isDirty) {
+                    child->renderToCache();
+                }
             }
-        }
-        
-        SDL_SetRenderTarget(renderer, m_cachedTexture.get());
-        for (auto& child : m_children) {
-            if (child && child->isVisible() && child->m_cachedTexture) {
-                SDL_Rect childDst = {child->m_x, child->m_y, child->m_width, child->m_height};
-                RenderTexture(renderer, child->m_cachedTexture.get(), childDst);
+
+            SDL_SetRenderTarget(renderer, m_cachedTexture.get());
+            for (auto& child : m_children) {
+                if (child && child->isVisible() && child->m_cachedTexture) {
+                    SDL_Rect childDst = {child->m_x, child->m_y, child->m_width, child->m_height};
+                    RenderTexture(renderer, child->m_cachedTexture.get(), childDst);
+                }
             }
         }
     }
 
-    SDL_SetRenderTarget(renderer, oldTarget);
     m_isDirty = false;
 }
 
@@ -552,17 +548,10 @@ void GUIElement::setState(ElementState newState) {
         return;
     }
 
-  //  LOG_DEBUG("setState for %s from %d to %d", getComponentType(), static_cast<int>(m_state), static_cast<int>(newState));
-
-        const auto oldStyle = getComposedStyle(m_state);
-        const auto newStyle = getComposedStyle(newState);
-
-    logStyle(oldStyle, "oldStyle");
-    logStyle(newStyle, "newStyle");
-
+    const auto oldState = m_state;
     m_state = newState;
 
-    if (oldStyle != newStyle) {
+    if (getComposedStyle(oldState) != getComposedStyle(m_state)) {
         LOG_DEBUG("Styles are different, marking dirty.");
         markDirty();
     }

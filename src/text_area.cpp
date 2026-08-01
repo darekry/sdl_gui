@@ -1,7 +1,7 @@
 #include "text_area.hpp"
-#include "font_manager.hpp"
+#include "text_editable.hpp"
 #include "texture_manager.hpp"
-#include "sdl_deleters.hpp"
+#include "utf8_utils.hpp"
 #include "constants.hpp"
 
 #include "std.hpp"
@@ -150,45 +150,8 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             row = std::min(row, m_lines.size() - 1);
             
             const auto& line = m_lines[row];
-            size_t pos_in_line = 0;
-            
-            if (click_x <= 0) {
-                pos_in_line = 0;
-            } else if (line.empty()) {
-                pos_in_line = 0;
-            } else {
-                size_t left = 0;
-                size_t right = line.length();
-                std::string workingBuffer;
-                workingBuffer.reserve(line.size());
-                while (left < right) {
-                    size_t mid = left + (right - left) / 2;
-                    workingBuffer.assign(line.data(), mid);
-                    int text_width = 0;
-                    TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &text_width, nullptr);
-                    if (text_width < click_x) {
-                        left = mid + 1;
-                    } else {
-                        right = mid;
-                    }
-                }
-                
-                int width_at_left = 0;
-                int width_at_prev = 0;
-                workingBuffer.assign(line.data(), left);
-                TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &width_at_left, nullptr);
-                if (left > 0) {
-                    workingBuffer.assign(line.data(), left - 1);
-                    TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &width_at_prev, nullptr);
-                }
-                
-                if (left > 0 && abs(click_x - width_at_prev) < abs(click_x - width_at_left)) {
-                    pos_in_line = left - 1;
-                } else {
-                    pos_in_line = left;
-                }
-            }
-            
+            size_t pos_in_line = utf8::charToByteIndex(line, TextEditable::charIndexAtX(line, font.get(), click_x));
+
             size_t abs_pos_in_text = 0;
             for (size_t i = 0; i < row; ++i) {
                 abs_pos_in_text += m_lines[i].length() + 1;
@@ -229,45 +192,8 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             row = std::min(row, m_lines.size() - 1);
             
             const auto& line = m_lines[row];
-            size_t pos_in_line = 0;
-            
-            if (mouse_x <= 0) {
-                pos_in_line = 0;
-            } else if (line.empty()) {
-                pos_in_line = 0;
-            } else {
-                size_t left = 0;
-                size_t right = line.length();
-                std::string workingBuffer;
-                workingBuffer.reserve(line.size());
-                while (left < right) {
-                    size_t mid = left + (right - left) / 2;
-                    workingBuffer.assign(line.data(), mid);
-                    int text_width = 0;
-                    TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &text_width, nullptr);
-                    if (text_width < mouse_x) {
-                        left = mid + 1;
-                    } else {
-                        right = mid;
-                    }
-                }
-                
-                int width_at_left = 0;
-                int width_at_prev = 0;
-                workingBuffer.assign(line.data(), left);
-                TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &width_at_left, nullptr);
-                if (left > 0) {
-                    workingBuffer.assign(line.data(), left - 1);
-                    TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &width_at_prev, nullptr);
-                }
-                
-                if (left > 0 && abs(mouse_x - width_at_prev) < abs(mouse_x - width_at_left)) {
-                    pos_in_line = left - 1;
-                } else {
-                    pos_in_line = left;
-                }
-            }
-            
+            size_t pos_in_line = utf8::charToByteIndex(line, TextEditable::charIndexAtX(line, font.get(), mouse_x));
+
             size_t abs_pos_in_text = 0;
             for (size_t i = 0; i < row; ++i) {
                 abs_pos_in_text += m_lines[i].length() + 1;
@@ -817,22 +743,7 @@ void TextArea::refreshTextures() {
         if (line.empty()) {
             m_line_textures.push_back(nullptr);
         } else {
-            SDL_Surface* surface = TTF_RenderText_Blended(font.get(), line.c_str(), line.length(), color);
-            if (!surface) {
-                LOG_DEBUG("TextArea: TTF_RenderText_Blended failed: %s", SDL_GetError());
-                m_line_textures.push_back(nullptr);
-                continue;
-            }
-            SDL_Texture* texture = SDL_CreateTextureFromSurface(m_manager.getRenderer(), surface);
-            SDL_DestroySurface(surface);
-            
-            if (!texture) {
-                LOG_DEBUG("TextArea: SDL_CreateTextureFromSurface failed: %s", SDL_GetError());
-                m_line_textures.push_back(nullptr);
-                continue;
-            }
-            SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-            m_line_textures.push_back(SharedTexture(texture, SDLTextureDeleter()));
+            m_line_textures.push_back(m_manager.getTextureManager().createTextureFromText(line, font, color));
         }
     }
 }

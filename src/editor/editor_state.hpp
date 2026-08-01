@@ -16,17 +16,14 @@ public:
     
     [[nodiscard]] size_t getSelectedElementIndex() const { return m_selectedElementIndex; }
     [[nodiscard]] bool hasSelectedElement() const { return m_selectedElementIndex < m_elements.size(); }
-    [[nodiscard]] const EditorElement* getSelectedElement() const;
     [[nodiscard]] EditorElement* getSelectedElement();
     
     [[nodiscard]] int getGridSize() const { return m_gridSize; }
-    void setGridSize(int size) { m_gridSize = size; }
     
     [[nodiscard]] int snapToGrid(int value) const;
     
     size_t addElement(const std::string& type, int x, int y, const std::string& parentId = "");
     
-    void updateElement(size_t index, const EditorElement& changes);
     void updateElementProperty(size_t index, const std::string& key, const std::string& value);
     void updateElementPosition(size_t index, int x, int y);
     void updateElementSize(size_t index, int width, int height);

@@ -1,7 +1,5 @@
 #include "progress_bar.hpp"
 #include "gui_manager.hpp"
-#include "font_manager.hpp"
-#include "texture_manager.hpp"
 #include "gui.hpp"
 #include "std.hpp"
 #include "constants.hpp"

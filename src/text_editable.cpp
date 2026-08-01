@@ -80,6 +80,56 @@ void TextEditable::resetCursorBlink() {
     m_cursorBlinkTime = SDL_GetTicks();
 }
 
+void TextEditable::deleteSelection() {
+    if (!hasSelection()) return;
+    size_t startChar = std::min(m_selectionStart, m_selectionEnd);
+    size_t endChar = std::max(m_selectionStart, m_selectionEnd);
+    size_t startByte = utf8::charToByteIndex(m_text, startChar);
+    size_t endByte = utf8::charToByteIndex(m_text, endChar);
+    m_text.erase(startByte, endByte - startByte);
+    m_cursorPos = startChar;
+    clearSelection();
+}
+
+size_t TextEditable::charIndexAtX(std::string_view text, TTF_Font* font, int x) {
+    if (x <= 0 || text.empty()) {
+        return 0;
+    }
+
+    // Reusable buffer to avoid allocations in binary search
+    std::string workingBuffer;
+    workingBuffer.reserve(text.size());
+
+    size_t totalChars = utf8::charCount(text);
+    size_t left = 0;
+    size_t right = totalChars;
+    while (left < right) {
+        size_t mid = left + (right - left) / 2;
+        workingBuffer = utf8::substrChars(text, 0, mid);
+        int text_width = 0;
+        TTF_GetStringSize(font, workingBuffer.c_str(), workingBuffer.length(), &text_width, nullptr);
+        if (text_width < x) {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
+    }
+
+    int width_at_left = 0;
+    int width_at_right = 0;
+    workingBuffer = utf8::substrChars(text, 0, left);
+    TTF_GetStringSize(font, workingBuffer.c_str(), workingBuffer.length(), &width_at_left, nullptr);
+    if (left > 0) {
+        workingBuffer = utf8::substrChars(text, 0, left - 1);
+        TTF_GetStringSize(font, workingBuffer.c_str(), workingBuffer.length(), &width_at_right, nullptr);
+    }
+
+    if (left > 0 && std::abs(x - width_at_right) < std::abs(x - width_at_left)) {
+        return left - 1;
+    }
+    return left;
+}
+
 bool TextEditable::handleClipboardCopy() {
     if (hasSelection()) {
         SDL_SetClipboardText(getSelection().c_str());
@@ -92,15 +142,7 @@ bool TextEditable::handleClipboardPaste() {
     if (SDL_HasClipboardText()) {
         char* clipboard = SDL_GetClipboardText();
         if (clipboard) {
-            if (hasSelection()) {
-                size_t startChar = std::min(m_selectionStart, m_selectionEnd);
-                size_t endChar = std::max(m_selectionStart, m_selectionEnd);
-                size_t startByte = utf8::charToByteIndex(m_text, startChar);
-                size_t endByte = utf8::charToByteIndex(m_text, endChar);
-                m_text.erase(startByte, endByte - startByte);
-                m_cursorPos = startChar;
-                clearSelection();
-            }
+            deleteSelection();
             size_t cursorByte = utf8::charToByteIndex(m_text, m_cursorPos);
             m_text.insert(cursorByte, clipboard);
             m_cursorPos += utf8::charCount(clipboard);
@@ -118,13 +160,7 @@ bool TextEditable::handleClipboardPaste() {
 bool TextEditable::handleClipboardCut() {
     if (hasSelection()) {
         SDL_SetClipboardText(getSelection().c_str());
-        size_t startChar = std::min(m_selectionStart, m_selectionEnd);
-        size_t endChar = std::max(m_selectionStart, m_selectionEnd);
-        size_t startByte = utf8::charToByteIndex(m_text, startChar);
-        size_t endByte = utf8::charToByteIndex(m_text, endChar);
-        m_text.erase(startByte, endByte - startByte);
-        m_cursorPos = startChar;
-        clearSelection();
+        deleteSelection();
         updateTextOffset();
         refreshTextTexture();
         markNeedsUpdate();
@@ -136,13 +172,7 @@ bool TextEditable::handleClipboardCut() {
 
 bool TextEditable::handleDeleteWithSelection() {
     if (hasSelection()) {
-        size_t startChar = std::min(m_selectionStart, m_selectionEnd);
-        size_t endChar = std::max(m_selectionStart, m_selectionEnd);
-        size_t startByte = utf8::charToByteIndex(m_text, startChar);
-        size_t endByte = utf8::charToByteIndex(m_text, endChar);
-        m_text.erase(startByte, endByte - startByte);
-        m_cursorPos = startChar;
-        clearSelection();
+        deleteSelection();
     } else if (m_cursorPos < utf8::charCount(m_text)) {
         size_t cursorByte = utf8::charToByteIndex(m_text, m_cursorPos);
         size_t charLen = utf8::charByteLength(static_cast<unsigned char>(m_text[cursorByte]));
@@ -159,13 +189,7 @@ bool TextEditable::handleDeleteWithSelection() {
 
 bool TextEditable::handleBackspaceWithSelection() {
     if (hasSelection()) {
-        size_t startChar = std::min(m_selectionStart, m_selectionEnd);
-        size_t endChar = std::max(m_selectionStart, m_selectionEnd);
-        size_t startByte = utf8::charToByteIndex(m_text, startChar);
-        size_t endByte = utf8::charToByteIndex(m_text, endChar);
-        m_text.erase(startByte, endByte - startByte);
-        m_cursorPos = startChar;
-        clearSelection();
+        deleteSelection();
     } else if (m_cursorPos > 0) {
         size_t prevCharPos = m_cursorPos - 1;
         size_t prevBytePos = utf8::charToByteIndex(m_text, prevCharPos);
@@ -183,15 +207,7 @@ bool TextEditable::handleBackspaceWithSelection() {
 }
 
 void TextEditable::handleTextInputWithSelection(const char* text) {
-    if (hasSelection()) {
-        size_t startChar = std::min(m_selectionStart, m_selectionEnd);
-        size_t endChar = std::max(m_selectionStart, m_selectionEnd);
-        size_t startByte = utf8::charToByteIndex(m_text, startChar);
-        size_t endByte = utf8::charToByteIndex(m_text, endChar);
-        m_text.erase(startByte, endByte - startByte);
-        m_cursorPos = startChar;
-        clearSelection();
-    }
+    deleteSelection();
     size_t cursorByte = utf8::charToByteIndex(m_text, m_cursorPos);
     m_text.insert(cursorByte, text);
     m_cursorPos += utf8::charCount(text);

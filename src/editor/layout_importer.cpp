@@ -1,18 +1,38 @@
 #include "layout_importer.hpp"
+#include "editor_utils.hpp"
 #include "../../lib/tinyxml2.h"
 
 #include "std.hpp"
 
-// Helper function for safe integer parsing from JSON values
-static int safeParseInt(const std::string& value, int defaultVal) {
-    if (value.empty()) return defaultVal;
-    try {
-        return std::stoi(value);
-    } catch (...) {
-        return defaultVal;
-    }
-}
+// Wyciąga wartość "key": value z fragmentu JSON (obsługuje uciekane cudzysłowy w stringach)
+static std::string extractKeyVal(const std::string& objContent, const std::string& key) {
+    size_t keyPos = objContent.find('"' + key + '"');
+    if (keyPos == std::string::npos) return "";
+    size_t colonPos = objContent.find(':', keyPos);
+    if (colonPos == std::string::npos) return "";
+    size_t valStart = colonPos + 1;
+    while (valStart < objContent.size() && std::isspace(static_cast<unsigned char>(objContent[valStart]))) valStart++;
 
+    if (objContent[valStart] == '"') {
+        valStart++;
+        std::string val;
+        while (valStart < objContent.size() && objContent[valStart] != '"') {
+            if (objContent[valStart] == '\\' && valStart + 1 < objContent.size()) {
+                valStart++;
+                val += objContent[valStart++];
+            } else {
+                val += objContent[valStart++];
+            }
+        }
+        return val;
+    }
+
+    std::string val;
+    while (valStart < objContent.size() && !std::isspace(static_cast<unsigned char>(objContent[valStart])) && objContent[valStart] != ',' && objContent[valStart] != '}') {
+        val += objContent[valStart++];
+    }
+    return val;
+}
 std::vector<EditorElement> LayoutImporter::loadFromXML(const std::string& filePath) {
     std::vector<EditorElement> elements;
     
@@ -118,41 +138,12 @@ std::vector<EditorElement> LayoutImporter::loadFromJSON(const std::string& fileP
         
         std::string objContent = content.substr(objStart, objEnd - objStart);
         
-        auto extractKeyVal = [&](const std::string& key) -> std::string {
-            size_t keyPos = objContent.find('"' + key + '"');
-            if (keyPos == std::string::npos) return "";
-            size_t colonPos = objContent.find(':', keyPos);
-            if (colonPos == std::string::npos) return "";
-            size_t valStart = colonPos + 1;
-            while (valStart < objContent.size() && std::isspace(static_cast<unsigned char>(objContent[valStart]))) valStart++;
-            
-            if (objContent[valStart] == '"') {
-                valStart++;
-                std::string val;
-                while (valStart < objContent.size() && objContent[valStart] != '"') {
-                    if (objContent[valStart] == '\\' && valStart + 1 < objContent.size()) {
-                        valStart++;
-                        val += objContent[valStart++];
-                    } else {
-                        val += objContent[valStart++];
-                    }
-                }
-                return val;
-            } else {
-                std::string val;
-                while (valStart < objContent.size() && !std::isspace(static_cast<unsigned char>(objContent[valStart])) && objContent[valStart] != ',' && objContent[valStart] != '}') {
-                    val += objContent[valStart++];
-                }
-                return val;
-            }
-        };
-        
-        elem.type = extractKeyVal("type");
-        elem.id = extractKeyVal("id");
-        elem.x = safeParseInt(extractKeyVal("x"), 0);
-        elem.y = safeParseInt(extractKeyVal("y"), 0);
-        elem.width = safeParseInt(extractKeyVal("width"), 100);
-        elem.height = safeParseInt(extractKeyVal("height"), 50);
+        elem.type = extractKeyVal(objContent, "type");
+        elem.id = extractKeyVal(objContent, "id");
+        elem.x = safeParseInt(extractKeyVal(objContent, "x"), 0);
+        elem.y = safeParseInt(extractKeyVal(objContent, "y"), 0);
+        elem.width = safeParseInt(extractKeyVal(objContent, "width"), 100);
+        elem.height = safeParseInt(extractKeyVal(objContent, "height"), 50);
         
         static const std::set<std::string> standardKeys = {"type", "id", "x", "y", "width", "height", "children", "styles"};
         static const std::set<std::string> numericKeys = {"fontSize", "borderWidth", "borderRadius", "min", "max", "value",
@@ -235,36 +226,12 @@ std::vector<EditorElement> LayoutImporter::loadFromJSON(const std::string& fileP
                         
                         std::string childObjContent = objContent.substr(childObjStart, childObjEnd - childObjStart);
                         
-                        auto childExtractKeyVal = [&](const std::string& key) -> std::string {
-                            size_t keyPos = childObjContent.find('"' + key + '"');
-                            if (keyPos == std::string::npos) return "";
-                            size_t colonPos = childObjContent.find(':', keyPos);
-                            if (colonPos == std::string::npos) return "";
-                            size_t valStart = colonPos + 1;
-                            while (valStart < childObjContent.size() && std::isspace(static_cast<unsigned char>(childObjContent[valStart]))) valStart++;
-                            
-                            if (childObjContent[valStart] == '"') {
-                                valStart++;
-                                std::string val;
-                                while (valStart < childObjContent.size() && childObjContent[valStart] != '"') {
-                                    val += childObjContent[valStart++];
-                                }
-                                return val;
-                            } else {
-                                std::string val;
-                                while (valStart < childObjContent.size() && !std::isspace(static_cast<unsigned char>(childObjContent[valStart])) && childObjContent[valStart] != ',' && childObjContent[valStart] != '}') {
-                                    val += childObjContent[valStart++];
-                                }
-                                return val;
-                            }
-                        };
-                        
-                        childElem.type = childExtractKeyVal("type");
-                        childElem.id = childExtractKeyVal("id");
-                        childElem.x = safeParseInt(childExtractKeyVal("x"), 0);
-                        childElem.y = safeParseInt(childExtractKeyVal("y"), 0);
-                        childElem.width = safeParseInt(childExtractKeyVal("width"), 100);
-                        childElem.height = safeParseInt(childExtractKeyVal("height"), 50);
+                        childElem.type = extractKeyVal(childObjContent, "type");
+                        childElem.id = extractKeyVal(childObjContent, "id");
+                        childElem.x = safeParseInt(extractKeyVal(childObjContent, "x"), 0);
+                        childElem.y = safeParseInt(extractKeyVal(childObjContent, "y"), 0);
+                        childElem.width = safeParseInt(extractKeyVal(childObjContent, "width"), 100);
+                        childElem.height = safeParseInt(extractKeyVal(childObjContent, "height"), 50);
                         
                         elements.push_back(childElem);
                         

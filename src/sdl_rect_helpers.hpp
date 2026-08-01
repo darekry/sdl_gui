@@ -85,3 +85,41 @@ inline int TextureHeight(SDL_Texture* texture) {
     SDL_GetTextureSize(texture, &w, &h);
     return static_cast<int>(h);
 }
+
+// RAII: przełącza render target na teksturę i przywraca target/viewport/clip w destruktorze.
+// Uwaga: SDL_GetRenderClipRect zwraca true nawet gdy clip jest wyłączony (flaga sukcesu) —
+// stan clipa trzeba czytać przez SDL_RenderClipEnabled, inaczej przywrócenie clip=0,0,0x0
+// przycina całą resztę renderowania do niczego.
+class ScopedRenderTarget {
+public:
+    ScopedRenderTarget(SDL_Renderer* renderer, SDL_Texture* texture)
+        : m_renderer(renderer), m_oldTarget(SDL_GetRenderTarget(renderer)) {
+        SDL_GetRenderViewport(renderer, &m_oldViewport);
+        m_hadClip = SDL_RenderClipEnabled(renderer);
+        if (m_hadClip) {
+            SDL_GetRenderClipRect(renderer, &m_oldClip);
+        }
+        SDL_SetRenderTarget(renderer, texture);
+    }
+
+    ~ScopedRenderTarget() {
+        SDL_SetRenderTarget(m_renderer, m_oldTarget);
+        SDL_SetRenderViewport(m_renderer, &m_oldViewport);
+        SDL_SetRenderClipRect(m_renderer, m_hadClip ? &m_oldClip : nullptr);
+    }
+
+    ScopedRenderTarget(const ScopedRenderTarget&) = delete;
+    ScopedRenderTarget& operator=(const ScopedRenderTarget&) = delete;
+
+private:
+    SDL_Renderer* m_renderer;
+    SDL_Texture* m_oldTarget;
+    SDL_Rect m_oldViewport;
+    SDL_Rect m_oldClip;
+    bool m_hadClip = false;
+};
+
+// Wyśrodkowanie prostokąta w kontenerze (wspólna logika dialogów i menu)
+inline SDL_Point CenterRect(int containerW, int containerH, int w, int h) {
+    return {(containerW - w) / 2, (containerH - h) / 2};
+}

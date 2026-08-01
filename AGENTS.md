@@ -43,7 +43,7 @@ src/           — implementacja (C++23, moduły)
 src/composite/ — gotowe dialogi
 src/editor/    — edytor wizualny GUI
 examples/      — 39 przykładów (numbered 00–40)
-tests/         — 29 plików testowych (Catch2)
+tests/         — 32 plików testowych (Catch2)
 docs/          — dokumentacja (EN/PL)
 lib/           — Catch2 amalgamated, tinyxml2
 ```
@@ -271,7 +271,7 @@ Zasoby muszą być dostępne przez `pkg-config sdl3 sdl3-image sdl3-ttf`. `PKG_C
 - **C API (1)**: test_sdl_gui_c_api (40 przypadków, Phase 0+1+2, 316 asercji)
 - **C API (1)**: test_sdl_gui_c_api (45 przypadków, Phase 0+1+2+timers, 331 asercji)
 - **Brakujące testy**: ArcContainer, ProgressBar, ScrollArea, ShaderPanel, TextEditable, Style, parsery
-- **Znane bugi**: Combobox — heap-use-after-free (pre-existing); Button::onMouseOver callback zdefiniowany ale nigdy nie wywoływany; Label nie ma override `getComponentType()` → naprawione w (2026-07-14)
+- **Znane bugi**: Combobox — heap-use-after-free (pre-existing); Label nie ma override `getComponentType()` → naprawione w (2026-07-14)
 
 Testy integracyjne: 44 przykładów w `examples/` do manualnej weryfikacji wizualnej (w tym 9 przykłady C i 1 demo C/C++).
 
@@ -330,6 +330,13 @@ Uruchom: `./nob test`
 -->
 
 Starsza historia zmian (przed 2026-07-31): [CHANGELOG.md](CHANGELOG.md).
+
+### Refactor pass — dead code removal + dedup + simplification (2026-08-01)
+- **Martwy kod usunięty** (skan 3 subagentów + weryfikacja `-Wall -Wextra -Wunused*`): `GUIElement::setParent`/`getCachedTexture`/`setGPUState`/`getGPUState`/`m_gpuState`/`m_style_dirty` (usunięte też 4 martwe gałęzie `SDL_SetGPURenderState` w `render()`), `StringGrid::renderText`/`getHeaderRect`/`getRowHeaderRect`, `logStyle()` ze `style.hpp` (usunięte wywołania z `setState` — znika warning o nieużywanych parametrach), stałe `kDefaultFillColor`/`kDefaultFontSize`, deklaracje/definicje w editorze (`EditorWindow::rebuild`/`updateCheckboxesFromElement`/`addPropertyField`/`addColorSliders`/dynamic-fields/members `m_propertyTextAreas`/`m_propertyCombos`/`m_selectedPaletteType`, `PreviewWindow::refreshAllElements`, `EditorState::updateElement`/`setGridSize`/const `getSelectedElement`, `LayoutImporter::parseJSONElement`/`parseStyleFromJSON`), `GUIElement::draw` pure-virtual → domyślna implementacja `drawBackgroundAndBorder` (usunięte 5 trywialnych override'ów: Button, Panel, ScrollArea, TabControl, CanvasPanel), martwe pliki `tests/test_main.cpp` (main i tak jest w catch_amalgamated), `fake.std.hpp` (0 B), `nob.old`, przypadkowo zacommitowany `.mp4` (2.7 MB), ~15 nieużywanych `#include`.
+- **Deduplikacja**: `TextEditable::deleteSelection()` (5 identycznych bloków paste/cut/delete/backspace/input → 1); `TextEditable::charIndexAtX()` (4 kopie binarnego wyszukiwania klik→znak w TextInput/TextArea → 1, teraz char-based dla TextArea z konwersją `charToByteIndex` — kursor nie ląduje w środku znaku UTF-8); `ScopedRenderTarget` RAII w `sdl_rect_helpers.hpp` (4 kopie save/restore target+viewport+clip w gui.cpp/canvas.cpp/shader_panel.cpp — przy okazji naprawia wyciek viewport/clip po `SDL_SetRenderTarget` w `renderToCache`); `CenterRect()` helper (6 kopii centrowania dialogów); tekst renderowany przez `TextureManager::createTextureFromText` (TextInput/TextArea — zyskują cache); `extractKeyVal` (2 lambdy JSON w layout_importer — druga bez escape-handlingu, teraz wspólna i poprawna); `safeParseInt` → wspólne `src/editor/editor_utils.hpp`.
+- **Naprawiony martwy callback**: `Button::m_onMouseOver` był write-only (znany bug z AGENTS.md) — teraz wywoływany przy wejściu kursora (test C API wzmocniony: `hoverCalls == 1`); zaktualizowana nota w `docs/release/widgets/Button.md`.
+- **Krytyczny bug naprawiony (renderowanie)**: `ScopedRenderTarget` (dedup z tego pasa) czytał stan clipa przez return `SDL_GetRenderClipRect` — a to jest flaga SUKCESU (zawsze `true`), nie stanu. Przy braku clipa destruktor przywracał clip=WŁĄCZONY z rect `0,0,0x0` → cały kadr przycięty do niczego → połowa widgetów (te z cache'em) niewidoczna, zero zaokrąglonych rogów. Fix: `SDL_RenderClipEnabled()` do odczytu stanu (`src/sdl_rect_helpers.hpp`). Przy okazji naprawia pre-existing bug w `shader_panel.cpp` (ten sam wzorzec). Nowy test regresji: `tests/test_render_pixel.cpp` — czyta piksele po `render()` (Panel/Button opakowe, tło przezroczyste).
+- Efekt: 32/32 testów, 47/47 examples, `non_unity` (każdy TU osobno) OK, release + smoke testy OK. Netto: −3040 linii (+781/−3821). Zmienione: ~40 plików w `src/`, `tests/test_render_pixel.cpp` (nowy), `tests/test_sdl_gui_c_api.cpp`, `.gitignore` (compile_commands.json, src/embedded_assets.hpp), `docs/release/widgets/Button.md`, `AGENTS.md` (ten wpis)
 
 ### End-user docs in release — dist/docs/ + self-contained sdl_gui.hpp (2026-08-01)
 - **Problem**: `./nob release` dawało niekompletne dist/ — połączony `sdl_gui.hpp` nie zawierał 14 publicznych klas (StringGrid, ListView, ProgressBar, ScrollArea, ArcContainer, ShaderPanel, Screen/Manager, Window/Manager, GUIContext, ThemePresets, FileDialog), a inline'owane odwołania (`std.hpp`, `logger.hpp`, `constants.hpp`, `sdl_rect_helpers.hpp`, `tinyxml2.h`) nie istniały w dist/ — użytkownik bez src/ nie skompilowałby niczego.

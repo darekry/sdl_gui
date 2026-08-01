@@ -1,8 +1,6 @@
 #include "file_dialog.hpp"
 #include "../gui_manager.hpp"
-#include "../theme.hpp"
 #include "../gui.hpp"
-#include "constants.hpp"
 
 #include "std.hpp"
 
@@ -21,10 +19,9 @@ FileDialog* FileDialog::createOpen(
 ) {
     int width = 640;
     int height = 450;
-    int screenW = 800;
-    int screenH = 600;
-    int x = (screenW - width) / 2;
-    int y = (screenH - height) / 2;
+    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenH = 600;
+    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
     auto dialog = std::unique_ptr<FileDialog>(new FileDialog(
         manager, x, y, width, height,
@@ -56,10 +53,9 @@ FileDialog* FileDialog::createSave(
 ) {
     int width = 640;
     int height = 450;
-    int screenW = 800;
-    int screenH = 600;
-    int x = (screenW - width) / 2;
-    int y = (screenH - height) / 2;
+    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenH = 600;
+    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
     auto dialog = std::unique_ptr<FileDialog>(new FileDialog(
         manager, x, y, width, height,

@@ -14,17 +14,8 @@
 #include "../string_grid.hpp"
 #include "../list_view.hpp"
 
+#include "editor_utils.hpp"
 #include "std.hpp"
-
-// Helper function for safe integer parsing from properties
-static int previewParseInt(const std::string& value, int defaultVal) {
-    if (value.empty()) return defaultVal;
-    try {
-        return std::stoi(value);
-    } catch (...) {
-        return defaultVal;
-    }
-}
 
 // Helper function for safe float parsing from properties
 static float previewParseFloat(const std::string& value, float defaultVal) {
@@ -45,15 +36,6 @@ PreviewWindow::PreviewWindow(GUIManager& manager, EditorState& state, int width,
 
 PreviewWindow::~PreviewWindow() {
     clearAllWidgets();
-}
-
-void PreviewWindow::refreshAllElements() {
-    clearAllWidgets();
-    
-    const auto& elements = m_state.getElements();
-    for (size_t i = 0; i < elements.size(); ++i) {
-        createWidgetForElement(i);
-    }
 }
 
 void PreviewWindow::refreshElement(size_t index) {
@@ -121,7 +103,7 @@ std::unique_ptr<GUIElement> PreviewWindow::createWidget(const EditorElement& ele
     }
     else if (elem.type == "Label") {
         std::string text = elem.getProperty("text", "Label");
-        int fontSize = previewParseInt(elem.getProperty("fontSize", "-1"), -1);
+        int fontSize = safeParseInt(elem.getProperty("fontSize", "-1"), -1);
         return std::make_unique<Label>(m_manager, 0, 0, text, fontSize);
     }
     else if (elem.type == "Checkbox") {
@@ -137,9 +119,9 @@ std::unique_ptr<GUIElement> PreviewWindow::createWidget(const EditorElement& ele
         return radio;
     }
     else if (elem.type == "Slider") {
-        int min = previewParseInt(elem.getProperty("min", "0"), 0);
-        int max = previewParseInt(elem.getProperty("max", "100"), 100);
-        int value = previewParseInt(elem.getProperty("value", "50"), 50);
+        int min = safeParseInt(elem.getProperty("min", "0"), 0);
+        int max = safeParseInt(elem.getProperty("max", "100"), 100);
+        int value = safeParseInt(elem.getProperty("value", "50"), 50);
         Orientation orient = elem.getProperty("orientation", "horizontal") == "vertical" 
             ? Orientation::Vertical : Orientation::Horizontal;
         auto slider = std::make_unique<Slider>(m_manager, 0, 0, elem.width, elem.height, min, max, value, orient);
@@ -156,7 +138,7 @@ std::unique_ptr<GUIElement> PreviewWindow::createWidget(const EditorElement& ele
     else if (elem.type == "TextArea") {
         std::string text = elem.getProperty("text", "");
         std::string fontPath = elem.getProperty("fontPath", constants::kDefaultFontPath);
-        int fontSize = previewParseInt(elem.getProperty("fontSize", "16"), 16);
+        int fontSize = safeParseInt(elem.getProperty("fontSize", "16"), 16);
         auto area = std::make_unique<TextArea>(m_manager, 0, 0, elem.width, elem.height, fontPath, fontSize);
         area->setText(text);
         return area;
@@ -181,7 +163,7 @@ std::unique_ptr<GUIElement> PreviewWindow::createWidget(const EditorElement& ele
         return panel;
     }
     else if (elem.type == "TabControl") {
-        int tabHeight = previewParseInt(elem.getProperty("tabHeight", "30"), 30);
+        int tabHeight = safeParseInt(elem.getProperty("tabHeight", "30"), 30);
         auto tabs = std::make_unique<TabControl>(m_manager, 0, 0, elem.width, elem.height, tabHeight);
         std::string tabsStr = elem.getProperty("tabs", "");
         if (!tabsStr.empty()) {
@@ -198,10 +180,10 @@ std::unique_ptr<GUIElement> PreviewWindow::createWidget(const EditorElement& ele
     else if (elem.type == "AnimatedImage") {
         auto anim = std::make_unique<AnimatedImage>(m_manager, 0, 0, elem.width, elem.height);
         std::string path = elem.getProperty("path", "");
-        int frames = previewParseInt(elem.getProperty("frames", "1"), 1);
-        int rows = previewParseInt(elem.getProperty("rows", "1"), 1);
-        int frameW = previewParseInt(elem.getProperty("frameW", "0"), 0);
-        int frameH = previewParseInt(elem.getProperty("frameH", "0"), 0);
+        int frames = safeParseInt(elem.getProperty("frames", "1"), 1);
+        int rows = safeParseInt(elem.getProperty("rows", "1"), 1);
+        int frameW = safeParseInt(elem.getProperty("frameW", "0"), 0);
+        int frameH = safeParseInt(elem.getProperty("frameH", "0"), 0);
         float fps = previewParseFloat(elem.getProperty("fps", "12"), 12.0f);
         bool loop = elem.getProperty("loop", "true") == "true";
         bool autoplay = elem.getProperty("autoplay", "true") == "true";
@@ -218,8 +200,8 @@ std::unique_ptr<GUIElement> PreviewWindow::createWidget(const EditorElement& ele
         return std::make_unique<Canvas>(m_manager, 0, 0, elem.width, elem.height);
     }
     else if (elem.type == "StringGrid") {
-        int rowCount = previewParseInt(elem.getProperty("rowCount", "5"), 5);
-        int colCount = previewParseInt(elem.getProperty("colCount", "5"), 5);
+        int rowCount = safeParseInt(elem.getProperty("rowCount", "5"), 5);
+        int colCount = safeParseInt(elem.getProperty("colCount", "5"), 5);
         bool showRowHeaders = elem.getProperty("showRowHeaders", "true") == "true";
         bool showColHeaders = elem.getProperty("showColumnHeaders", "true") == "true";
         bool editable = elem.getProperty("editable", "false") == "true";
@@ -242,7 +224,7 @@ std::unique_ptr<GUIElement> PreviewWindow::createWidget(const EditorElement& ele
                 }
             }
         }
-        int selectedIndex = previewParseInt(elem.getProperty("selectedIndex", "-1"), -1);
+        int selectedIndex = safeParseInt(elem.getProperty("selectedIndex", "-1"), -1);
         if (selectedIndex >= 0) {
             list->setSelectedRow(static_cast<size_t>(selectedIndex));
         }
@@ -286,10 +268,6 @@ CanvasPanel::CanvasPanel(GUIManager& manager, int x, int y, int width, int heigh
 
 const char* CanvasPanel::getComponentType() const {
     return "CanvasPanel";
-}
-
-void CanvasPanel::draw(SDL_Renderer* renderer) {
-    drawBackgroundAndBorder(renderer);
 }
 
 void CanvasPanel::drawDirect(SDL_Renderer* renderer) {

@@ -61,7 +61,13 @@ bool Button::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_EVENT_MOUSE_MOTION) {
         if (m_state != ElementState::Pressed) {
             bool inside = contains(e.motion.x, e.motion.y);
-            setState(inside ? ElementState::Hover : ElementState::Normal);
+            ElementState nextState = inside ? ElementState::Hover : ElementState::Normal;
+            if (nextState != m_state) {
+                setState(nextState);
+                if (inside && m_onMouseOver) {
+                    m_onMouseOver(this);
+                }
+            }
             processHoverTooltip(inside);
         }
     }
@@ -89,8 +95,4 @@ bool Button::handleEvent(const SDL_Event& e) {
 
 const char* Button::getComponentType() const {
     return "Button";
-}
-
-void Button::draw(SDL_Renderer* renderer) {
-    drawBackgroundAndBorder(renderer);
 }

@@ -22,7 +22,6 @@ public:
     void setScrollOffset(int x, int y);
 
     bool handleEvent(const SDL_Event& e) override;
-    void draw(SDL_Renderer* renderer) override;
     const char* getComponentType() const override { return "ScrollArea"; }
     void onParentResize(int parentWidth, int parentHeight) override;
 

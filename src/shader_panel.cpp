@@ -89,19 +89,10 @@ void ShaderPanel::drawDirect(SDL_Renderer* renderer) {
     auto abs_pos = getAbsolutePosition();
 
     {
-        SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-        SDL_Rect oldViewport;
-        SDL_GetRenderViewport(renderer, &oldViewport);
-        SDL_Rect oldClip;
-        bool hadClip = SDL_GetRenderClipRect(renderer, &oldClip);
-        SDL_SetRenderTarget(renderer, m_tempTexture.get());
+        ScopedRenderTarget targetScope(renderer, m_tempTexture.get());
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
         Panel::draw(renderer);
-        SDL_SetRenderTarget(renderer, oldTarget);
-        // SDL_SetRenderTarget resetuje viewport/clip — przywróć, by nie przeciekały
-        SDL_SetRenderViewport(renderer, &oldViewport);
-        SDL_SetRenderClipRect(renderer, hadClip ? &oldClip : nullptr);
     }
 
     SDL_Vertex verts[4];

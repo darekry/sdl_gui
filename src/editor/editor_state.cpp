@@ -73,37 +73,6 @@ size_t EditorState::addElement(const std::string& type, int x, int y, const std:
     return newIndex;
 }
 
-void EditorState::updateElement(size_t index, const EditorElement& changes) {
-    if (index >= m_elements.size()) return;
-    
-    auto& elem = m_elements[index];
-
-    if (!changes.id.empty() && changes.id != elem.id) {
-        m_idToIndex.erase(elem.id);
-        elem.id = changes.id;
-        m_idToIndex[elem.id] = index;
-    }
-
-    if (!changes.parentId.empty() && changes.parentId != elem.parentId) {
-        elem.parentId = changes.parentId;
-        m_parentCacheDirty = true;
-    }
-
-    if (!changes.type.empty()) elem.type = changes.type;
-    // Position should be updated via updateElementPosition() for proper grid snapping
-    // This method only updates non-zero dimensions
-    if (changes.width > 0) m_elements[index].width = changes.width;
-    if (changes.height > 0) m_elements[index].height = changes.height;
-    
-    for (const auto& [key, value] : changes.properties) {
-        m_elements[index].setProperty(key, value);
-    }
-    
-    for (const auto& [state, style] : changes.styles) {
-        m_elements[index].setStyle(state, style);
-    }
-}
-
 void EditorState::updateElementProperty(size_t index, const std::string& key, const std::string& value) {
     if (index >= m_elements.size()) return;
     m_elements[index].setProperty(key, value);
@@ -177,13 +146,6 @@ void EditorState::selectElement(size_t index) {
 
 void EditorState::clearSelection() {
     m_selectedElementIndex = static_cast<size_t>(-1);
-}
-
-const EditorElement* EditorState::getSelectedElement() const {
-    if (m_selectedElementIndex < m_elements.size()) {
-        return &m_elements[m_selectedElementIndex];
-    }
-    return nullptr;
 }
 
 EditorElement* EditorState::getSelectedElement() {

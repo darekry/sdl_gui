@@ -28,7 +28,10 @@ public:
     // Focus handling
     void onFocusGained() override;
     void onFocusLost() override;
-    
+
+    // Binary search: char index at pixel x within text (shared by TextInput/TextArea)
+    static size_t charIndexAtX(std::string_view text, TTF_Font* font, int x);
+
 protected:
     // Text content
     std::string m_text;
@@ -65,6 +68,9 @@ protected:
     
     // Typing with selection replacement
     void handleTextInputWithSelection(const char* text);
+    
+    // Remove the selected range and place the cursor at its start
+    void deleteSelection();
     
     // Virtual methods for subclass-specific behavior
     virtual void updateTextOffset() = 0;

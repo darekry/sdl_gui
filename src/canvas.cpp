@@ -49,11 +49,11 @@ void Canvas::recreateTexture(SDL_Renderer* renderer, int w, int h) {
     m_texH = h;
 
     // Wyczyść na biało
-    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, m_canvasTex.get());
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderTarget(renderer, oldTarget);
+    {
+        ScopedRenderTarget targetScope(renderer, m_canvasTex.get());
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+    }
 }
 
 void Canvas::clear() {
@@ -61,11 +61,11 @@ void Canvas::clear() {
     ensureTexture(renderer);
     if (!renderer || !m_canvasTex) return;
 
-    SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, m_canvasTex.get());
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderTarget(renderer, oldTarget);
+    {
+        ScopedRenderTarget targetScope(renderer, m_canvasTex.get());
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+    }
 }
 
 void Canvas::setPenColor(SDL_Color color) {

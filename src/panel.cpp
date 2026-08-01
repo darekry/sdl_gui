@@ -1,9 +1,6 @@
 #include "panel.hpp"
 #include <SDL3/SDL_rect.h>
 #include "gui_manager.hpp"
-#include "style.hpp"
-#include "texture_manager.hpp"
-#include "theme.hpp"
 
 // Implementacja klasy Panel
 Panel::Panel(GUIManager& manager, int x, int y, int width, int height)
@@ -80,10 +77,6 @@ bool Panel::handleEvent(const SDL_Event& event) {
 
 const char* Panel::getComponentType() const {
     return "Panel";
-}
-
-void Panel::draw(SDL_Renderer* renderer) {
-    drawBackgroundAndBorder(renderer);
 }
 
 void Panel::onMouseCaptureLost() {

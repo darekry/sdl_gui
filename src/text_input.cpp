@@ -1,9 +1,6 @@
 #include "text_input.hpp"
 #include <SDL3/SDL_blendmode.h>
-#include "style.hpp"
 #include "gui_manager.hpp"
-#include "font_manager.hpp"
-#include "theme.hpp"
 #include "utf8_utils.hpp"
 #include "constants.hpp"
 
@@ -82,31 +79,16 @@ void TextInput::updateTextOffset() {
 
 void TextInput::refreshTextTexture() {
     m_textTexture.reset();
-    
+
     if (m_text.empty()) return;
-    
+
     auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
     if (!font) return;
-    
+
     const auto& style = getComposedStyle(m_state);
     if (!style.textColor) return;
-    
-    SDL_Surface* surface = TTF_RenderText_Blended(font.get(), m_text.c_str(), m_text.length(), *style.textColor);
-    if (!surface) {
-        LOG_DEBUG("TextInput: TTF_RenderText_Blended failed: %s", SDL_GetError());
-        return;
-    }
-    
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(m_manager.getRenderer(), surface);
-    SDL_DestroySurface(surface);
-    
-    if (!texture) {
-        LOG_DEBUG("TextInput: SDL_CreateTextureFromSurface failed: %s", SDL_GetError());
-        return;
-    }
-    
-    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-    m_textTexture = SharedTexture(texture, SDLTextureDeleter());
+
+    m_textTexture = m_manager.getTextureManager().createTextureFromText(m_text, font, *style.textColor);
 }
 
 void TextInput::markNeedsUpdate() {
@@ -225,46 +207,9 @@ bool TextInput::handleEvent(const SDL_Event& e) {
         if (font) {
             auto abs_pos = getAbsolutePosition();
             int click_x = static_cast<int>(e.button.x) - abs_pos.x - 5;
-            
-size_t click_pos = 0;
-            if (click_x <= 0 || m_text.empty()) {
-                click_pos = 0;
-            } else {
-                // Reusable buffer to avoid allocations in binary search
-                std::string workingBuffer;
-                workingBuffer.reserve(m_text.size());
-                
-                size_t totalChars = utf8::charCount(m_text);
-                size_t left = 0;
-                size_t right = totalChars;
-                while (left < right) {
-                    size_t mid = left + (right - left) / 2;
-                    workingBuffer = utf8::substrChars(m_text, 0, mid);
-                    int text_width = 0;
-                    TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &text_width, nullptr);
-                    if (text_width < click_x) {
-                        left = mid + 1;
-                    } else {
-                        right = mid;
-                    }
-                }
-                
-                int width_at_left = 0;
-                int width_at_right = 0;
-                workingBuffer = utf8::substrChars(m_text, 0, left);
-                TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &width_at_left, nullptr);
-                if (left > 0) {
-                    workingBuffer = utf8::substrChars(m_text, 0, left - 1);
-                    TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &width_at_right, nullptr);
-                }
-                
-                if (left > 0 && abs(click_x - width_at_right) < abs(click_x - width_at_left)) {
-                    click_pos = left - 1;
-                } else {
-                    click_pos = left;
-                }
-            }
-            
+
+            size_t click_pos = charIndexAtX(m_text, font.get(), click_x);
+
             m_isDragging = true;
             m_dragStartPos = click_pos;
             m_cursorPos = click_pos;
@@ -283,46 +228,9 @@ size_t click_pos = 0;
         if (font) {
             auto abs_pos = getAbsolutePosition();
             int mouse_x = static_cast<int>(e.motion.x) - abs_pos.x - 5;
-            
-size_t mouse_pos = 0;
-            if (mouse_x <= 0 || m_text.empty()) {
-                mouse_pos = 0;
-            } else {
-                // Reusable buffer to avoid allocations in binary search
-                std::string workingBuffer;
-                workingBuffer.reserve(m_text.size());
-                
-                size_t totalChars = utf8::charCount(m_text);
-                size_t left = 0;
-                size_t right = totalChars;
-                while (left < right) {
-                    size_t mid = left + (right - left) / 2;
-                    workingBuffer = utf8::substrChars(m_text, 0, mid);
-                    int text_width = 0;
-                    TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &text_width, nullptr);
-                    if (text_width < mouse_x) {
-                        left = mid + 1;
-                    } else {
-                        right = mid;
-                    }
-                }
-                
-                int width_at_left = 0;
-                int width_at_right = 0;
-                workingBuffer = utf8::substrChars(m_text, 0, left);
-                TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &width_at_left, nullptr);
-                if (left > 0) {
-                    workingBuffer = utf8::substrChars(m_text, 0, left - 1);
-                    TTF_GetStringSize(font.get(), workingBuffer.c_str(), workingBuffer.length(), &width_at_right, nullptr);
-                }
-                
-                if (left > 0 && abs(mouse_x - width_at_right) < abs(mouse_x - width_at_left)) {
-                    mouse_pos = left - 1;
-                } else {
-                    mouse_pos = left;
-                }
-            }
-            
+
+            size_t mouse_pos = charIndexAtX(m_text, font.get(), mouse_x);
+
             m_cursorPos = mouse_pos;
             setSelection(m_dragStartPos, mouse_pos);
             updateTextOffset();

@@ -1,7 +1,5 @@
 #include "tab_control.hpp"
-#include <SDL3_ttf/SDL_ttf.h>
 #include "gui_manager.hpp"
-#include "font_manager.hpp"
 
 
 
@@ -80,10 +78,6 @@ void TabControl::reorderTabs() {
         button->setPosition(current_x, 0);
         current_x += button->getWidth() + 5;
     }
-}
-
-void TabControl::draw(SDL_Renderer* renderer) {
-    Panel::draw(renderer);
 }
 
 const char* TabControl::getComponentType() const {

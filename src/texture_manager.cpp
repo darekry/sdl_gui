@@ -1,7 +1,7 @@
 #include "texture_manager.hpp"
 #include "sdl_deleters.hpp"
 #include <SDL3/SDL.h>
-#include "gui.hpp"
+#include "logger.hpp"
 
 
 

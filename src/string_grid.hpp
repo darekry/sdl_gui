@@ -165,8 +165,6 @@ private:
     [[nodiscard]] int getVisibleCellAreaHeight() const;
     [[nodiscard]] CellCoord getCellAtPosition(int x, int y) const;
     [[nodiscard]] SDL_Rect getCellRect(size_t row, size_t col) const;
-    [[nodiscard]] SDL_Rect getHeaderRect(size_t col) const;
-    [[nodiscard]] SDL_Rect getRowHeaderRect(size_t row) const;
     void drawCell(SDL_Renderer* renderer, size_t row, size_t col, int screenX, int screenY, int width, int height,
                   SDL_Color cellBackgroundColor, SDL_Color textColor, TTF_Font* font);
     void drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
@@ -190,8 +188,6 @@ private:
     void drawCells(SDL_Renderer* renderer, int offsetX, int offsetY, 
                    SDL_Color cellBackgroundColor, SDL_Color textColor,
                    const VisibleRange& range, TTF_Font* font);
-    void renderText(SDL_Renderer* renderer, std::string_view text, int x, int y, 
-                    SDL_Color color, bool centerX = false, bool centerY = false);
     
     // Nowe metody pomocnicze do obsługi zdarzeń
     bool handleMouseButtonDown(const SDL_Event& e);

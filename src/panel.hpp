@@ -11,7 +11,6 @@ public:
     const char* getComponentType() const override;
 
 protected:
-    void draw(SDL_Renderer* renderer) override;
     void onMouseCaptureLost() override;
 
     bool m_is_draggable = false;

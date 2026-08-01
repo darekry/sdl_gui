@@ -6,7 +6,6 @@
 #include "font_manager.hpp"
 #include "sdl_rect_helpers.hpp"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_gpu.h>
 #include "animation_manager.hpp"
 #include "style.hpp"
 #include "anchor.hpp"
@@ -81,10 +80,6 @@ public:
     void processButtonEvent(const SDL_Event& e);
     void render(SDL_Renderer* renderer);
     void renderToCache();
-    [[nodiscard]] SDL_Texture* getCachedTexture() const { return m_cachedTexture.get(); }
-    
-    void setGPUState(SDL_GPURenderState* state) { m_gpuState = state; }
-    [[nodiscard]] SDL_GPURenderState* getGPUState() const { return m_gpuState; }
     
     virtual bool isOverlay() const { return false; }
     virtual void renderOverlay(SDL_Renderer* renderer);
@@ -144,7 +139,7 @@ protected:
     int m_originalWidth = 0;            // Original width before anchor modifications
     int m_originalHeight = 0;           // Original height before anchor modifications
     
-    virtual void draw(SDL_Renderer* renderer) = 0;
+    virtual void draw(SDL_Renderer* renderer) { drawBackgroundAndBorder(renderer); }
 
     // Rozszerzenie: możliwość rysowania bezpośrednio (bez buforowania).
     // Domyślnie elementy nie korzystają z drawDirect — zwracają false w wantsDirectRender().
@@ -167,9 +162,7 @@ protected:
             return static_cast<size_t>(state);
         }
         ElementState m_state = ElementState::Normal;
-    bool m_style_dirty = true;
     std::vector<std::unique_ptr<GUIElement>> m_children;
-    SDL_GPURenderState* m_gpuState = nullptr;
     
     double m_rotation = 0.0;
     SDL_Point m_rotationCenter = {-1, -1};

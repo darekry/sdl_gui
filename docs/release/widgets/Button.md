@@ -109,7 +109,7 @@ int main(int, char**) {
 
 ## Uwagi
 
-- `setOnMouseOverCallback` jest zdefiniowany w API, ale w tej wersji nie jest wywoływany — do wizualnej reakcji na hover używaj stylów stanu `ElementState::Hover` (`setBackgroundColor(ElementState::Hover, ...)` itp.).
+- `setOnMouseOverCallback` jest wywoływany przy wejściu myszy na przycisk (przejście stanu do `Hover`); do wizualnej reakcji na hover używaj stylów stanu `ElementState::Hover` (`setBackgroundColor(ElementState::Hover, ...)` itp.).
 - Callback kliknięcia dostaje `GUIElement*` — rzutowanie `static_cast<Button*>(e)` jest bezpieczne w kontekście tego callbacka.
 - `manager.create<T>(...)` zwraca surowy wskaźnik ważny, dopóki element żyje w `GUIManager`; do użycia w callbackach po przeniesieniu ownership zawsze twórz `ElementRef` przed `std::move`.
 - Bez wywołania `manager.cleanup()` w pętli elementy z `markForDeletion()` nigdy nie zostaną usunięte.

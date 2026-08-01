@@ -1,7 +1,6 @@
 #include "editor_window.hpp"
 #include "layout_importer.hpp"
 #include "../gui_manager.hpp"
-#include "../theme.hpp"
 #include "../composite/message_box.hpp"
 
 #include "std.hpp"
@@ -46,11 +45,6 @@ EditorWindow::~EditorWindow() {
 
 GUIManager& EditorWindow::getGUIManager() {
     return m_window->getGUIManager();
-}
-
-void EditorWindow::rebuild() {
-    updateElementsList();
-    updatePropertiesPanel();
 }
 
 void EditorWindow::createPalettePanel() {
@@ -450,7 +444,6 @@ void EditorWindow::createBottomButtons() {
 }
 
 void EditorWindow::handleWidgetTypeSelected(const std::string& type) {
-    m_selectedPaletteType = type;
     m_editorState.setSelectedWidgetType(type);
     selectPaletteButton(type);
     if (onSelectedWidgetTypeChanged) {
@@ -764,9 +757,6 @@ void EditorWindow::updateStyleFromInputs() {
     
     m_editorState.updateElementStyle(m_editorState.getSelectedElementIndex(), m_currentStyleState, style);
     if (onElementUpdated) onElementUpdated(m_editorState.getSelectedElementIndex());
-}
-
-void EditorWindow::updateCheckboxesFromElement() {
 }
 
 void EditorWindow::updatePositionFromInputs() {

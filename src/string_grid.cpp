@@ -1,7 +1,5 @@
 #include "string_grid.hpp"
 #include "gui_manager.hpp"
-#include "font_manager.hpp"
-#include "texture_manager.hpp"
 #include <SDL3_ttf/SDL_ttf.h>
 #include "constants.hpp"
 
@@ -741,26 +739,6 @@ void StringGrid::drawCells(SDL_Renderer* renderer, int offsetX, int offsetY,
     }
 }
 
-void StringGrid::renderText(SDL_Renderer* renderer, std::string_view text, int x, int y,
-                            SDL_Color color, bool centerX, bool centerY) {
-    if (text.empty()) return;
-    
-    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, DEFAULT_FONT_SIZE);
-    if (!font) return;
-    
-    auto texture = createLocalTextTexture(text, font.get(), color);
-    if (!texture) return;
-    
-    int textWidth, textHeight;
-    { textWidth = TextureWidth(texture.get()); textHeight = TextureHeight(texture.get()); }
-    
-    int drawX = centerX ? x - textWidth / 2 : x;
-    int drawY = centerY ? y - textHeight / 2 : y;
-    
-    SDL_Rect destRect = {drawX, drawY, textWidth, textHeight};
-    RenderTexture(renderer, texture.get(), destRect);
-}
-
 // Metody pomocnicze
 void StringGrid::setupSliders() {
     int sliderX = m_width - m_sliderWidth;
@@ -972,14 +950,6 @@ CellCoord StringGrid::getCellAtPosition(int x, int y) const {
 
 SDL_Rect StringGrid::getCellRect(size_t row, size_t col) const {
     return {getColumnX(col), getRowY(row), m_columnWidths[col], m_rowHeight};
-}
-
-SDL_Rect StringGrid::getHeaderRect(size_t col) const {
-    return {getColumnX(col), 0, m_columnWidths[col], m_headerHeight};
-}
-
-SDL_Rect StringGrid::getRowHeaderRect(size_t row) const {
-    return {0, getRowY(row), m_rowHeaderWidth, m_rowHeight};
 }
 
 void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,

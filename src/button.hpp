@@ -23,7 +23,6 @@ public:
     const char* getComponentType() const override;
 
 protected:
-    void draw(SDL_Renderer* renderer) override;
 
 private:
     OnClickCallback m_onClick;

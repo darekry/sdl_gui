@@ -20,7 +20,6 @@ public:
     const char* getComponentType() const override;
 
 protected:
-    void draw(SDL_Renderer* renderer) override;
 
 private:
     void reorderTabs();  // Prywatna metoda do aktualizacji pozycji przycisków
