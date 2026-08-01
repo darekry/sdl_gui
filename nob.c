@@ -785,9 +785,18 @@ static bool run_tests(const char *filter) {
 
 // ========== RELEASE ==========
 
+// Wszystkie publiczne nagłówki łączone w jeden sdl_gui.hpp.
+// Kolejność ma znaczenie (zależności). Pliki wspierające (std.hpp, logger.hpp,
+// constants.hpp, sdl_rect_helpers.hpp, tinyxml2.h) są INLINE'owane, dzięki czemu
+// dist/ jest w pełni samowystarczalne — użytkownik nie potrzebuje src/ ani lib/.
 static const char * hpp_order[] = {
+    "src/std.hpp",
+    "lib/tinyxml2.h",
     "src/easing.hpp",
     "src/sdl_deleters.hpp",
+    "src/logger.hpp",
+    "src/constants.hpp",
+    "src/sdl_rect_helpers.hpp",
     "src/layout_parser.hpp",
     "src/sgml_parser.hpp",
     "src/json_parser.hpp",
@@ -797,6 +806,7 @@ static const char * hpp_order[] = {
     "src/font_manager.hpp",
     "src/texture_manager.hpp",
     "src/theme.hpp",
+    "src/theme_presets.hpp",
     "src/anchor.hpp",
     "src/gui.hpp",
     "src/label.hpp",
@@ -805,7 +815,7 @@ static const char * hpp_order[] = {
     "src/checkbox.hpp",
     "src/slider.hpp",
     "src/range_slider.hpp",
-    "src/splitter.hpp",
+    "src/progress_bar.hpp",
     "src/text_editable.hpp",
     "src/text_input.hpp",
     "src/canvas.hpp",
@@ -817,10 +827,21 @@ static const char * hpp_order[] = {
     "src/text_area.hpp",
     "src/combobox.hpp",
     "src/context_menu.hpp",
+    "src/string_grid.hpp",
+    "src/list_view.hpp",
+    "src/scroll_area.hpp",
+    "src/arc_container.hpp",
+    "src/shader_panel.hpp",
     "src/gui_manager.hpp",
     "src/sdl_app.hpp",
+    "src/screen.hpp",
+    "src/screen_manager.hpp",
+    "src/window.hpp",
+    "src/window_manager.hpp",
+    "src/gui_context.hpp",
     "src/composite/dialog_box.hpp",
     "src/composite/message_box.hpp",
+    "src/composite/file_dialog.hpp",
 };
 
 static const char * includes_to_remove[] = {
@@ -842,7 +863,6 @@ static const char * includes_to_remove[] = {
     "#include \"checkbox.hpp\"",
     "#include \"slider.hpp\"",
     "#include \"range_slider.hpp\"",
-    "#include \"splitter.hpp\"",
     "#include \"text_input.hpp\"",
     "#include \"canvas.hpp\"",
     "#include \"cursor.hpp\"",
@@ -883,12 +903,57 @@ static const char * includes_to_remove[] = {
     "#include \"../range_slider.hpp\"",
     "#include \"../list_view.hpp\"",
     "#include \"../window_manager.hpp\"",
+    "#include \"std.hpp\"",
+    "#include \"logger.hpp\"",
+    "#include \"constants.hpp\"",
+    "#include \"sdl_rect_helpers.hpp\"",
+    "#include \"tinyxml2.h\"",
+    "#include \"string_grid.hpp\"",
+    "#include \"list_view.hpp\"",
+    "#include \"progress_bar.hpp\"",
+    "#include \"scroll_area.hpp\"",
+    "#include \"shader_panel.hpp\"",
+    "#include \"arc_container.hpp\"",
+    "#include \"screen.hpp\"",
+    "#include \"screen_manager.hpp\"",
+    "#include \"window.hpp\"",
+    "#include \"window_manager.hpp\"",
+    "#include \"gui_context.hpp\"",
+    "#include \"theme_presets.hpp\"",
+    "#include \"composite/file_dialog.hpp\"",
+    "#include \"file_dialog.hpp\"",
 };
 
-static bool line_should_remove(const char *line) {
+// Pliki wspierające, których systemowe include'y muszą zostać w połączonym
+// nagłówku (std.hpp to de facto lista include'ów; tinyxml2.h/logger.hpp itd.
+// potrzebują swoich zależności, a użytkownik nie ma dostępu do src/ ani lib/).
+static bool is_support_header(const char *path) {
+    return strstr(path, "tinyxml2.h") != NULL
+        || strstr(path, "std.hpp") != NULL
+        || strstr(path, "logger.hpp") != NULL
+        || strstr(path, "constants.hpp") != NULL
+        || strstr(path, "sdl_rect_helpers.hpp") != NULL;
+}
+
+// std.hpp ma dwie gałęzie: #ifdef __clangd__ (tradycyjne include'y) i #else
+// (import std.compat, wymaga -fmodule-file). W release NIE usuwamy gałęzi
+// modułowej — usuwamy całą konstrukcję warunkową i zostawiamy tylko includy,
+// żeby nagłówek działał u użytkownika bez prekompilowanych modułów.
+static bool line_is_std_header_guard(const char *line) {
+    if (strstr(line, "__clangd__") != NULL) return true;
+    if (strcmp(line, "#else") == 0) return true;
+    if (strcmp(line, "#endif") == 0) return true;
+    return false;
+}
+
+static bool line_should_remove(const char *line, const char *path) {
     if (strncmp(line, "#pragma once", 12) == 0) return true;
-    if (strncmp(line, "#include <", 10) == 0) return true;
-    if (strncmp(line, "#include \"SDL2/", 15) == 0) return true;
+    bool support = is_support_header(path);
+    if (!support) {
+        if (strncmp(line, "#include <", 10) == 0) return true;
+        if (strncmp(line, "#include \"SDL2/", 15) == 0) return true;
+    }
+    if (strstr(path, "std.hpp") != NULL && line_is_std_header_guard(line)) return true;
     if (strncmp(line, "import ", 7) == 0) return true;
     if (strncmp(line, "module;", 7) == 0) return true;
     if (strlen(line) == 0) return true;
@@ -910,12 +975,12 @@ static bool build_combined_header(void) {
     
     Nob_String_Builder sb = {0};
     nob_sb_append_cstr(&sb, "// Auto-generated header. Do not edit.\n#pragma once\n\n");
-    nob_sb_append_cstr(&sb, "#include \"std.hpp\"\n\n");
-    nob_sb_append_cstr(&sb, "// External libraries\n");
+    nob_sb_append_cstr(&sb, "// System headers (biblioteka wymaga: SDL3, SDL3_image, SDL3_ttf)\n");
     nob_sb_append_cstr(&sb, "#include <SDL3/SDL.h>\n#include <SDL3/SDL_gpu.h>\n");
     nob_sb_append_cstr(&sb, "#include <SDL3_image/SDL_image.h>\n#include <SDL3_ttf/SDL_ttf.h>\n");
     nob_sb_append_cstr(&sb, "#include <dirent.h>\n\n");
-    nob_sb_append_cstr(&sb, "// Project libraries\n#include \"tinyxml2.h\"\n\n");
+    nob_sb_append_cstr(&sb, "// ===== SDL GUI - kompletne publiczne API (jeden nagłówek) =====\n\n");
+    nob_sb_append_cstr(&sb, "// Kompilacja: clang++ -std=c++23 -stdlib=libc++\n\n");
     
     for (size_t i = 0; i < NOB_ARRAY_LEN(hpp_order); i++) {
         Nob_String_Builder file = {0};
@@ -932,7 +997,7 @@ static bool build_combined_header(void) {
             size_t len = end ? (size_t)(end - line) : strlen(line);
             char *copy = nob_temp_strndup(line, len);
             
-            if (!line_should_remove(copy)) {
+            if (!line_should_remove(copy, hpp_order[i])) {
                 nob_sb_append_buf(&sb, line, len);
                 nob_sb_append_cstr(&sb, "\n");
             }
@@ -1109,6 +1174,22 @@ static bool build_release(void) {
         }
     }
 
+    // Copy end-user documentation to dist/docs/
+    {
+        const char *docs_src = "docs/release";
+        const char *docs_marker = nob_temp_sprintf("%s/%s", docs_src, "_STYLE.md");
+        if (!nob_file_exists(docs_marker)) {
+            nob_log(ERROR, "Missing docs/release/ - run documentation generator first");
+            return false;
+        }
+        nob_log(INFO, "Copying documentation: %s -> %s/docs/", docs_src, DIST_DIR);
+        Nob_Cmd cmd = {0};
+        nob_cmd_append(&cmd, "rm", "-rf", DIST_DIR "/docs");
+        if (!nob_cmd_run(&cmd)) return false;
+        nob_cmd_append(&cmd, "cp", "-r", docs_src, DIST_DIR "/docs");
+        if (!nob_cmd_run(&cmd)) return false;
+    }
+
     // Smoke test: compile standalone example with combined header + static library
     {
         const char *standalone_src = EXAMPLES_DIR "/10_standalone.cpp";
@@ -1129,7 +1210,9 @@ static bool build_release(void) {
             nob_cmd_append(&cmd,
                 nob_temp_sprintf("-fmodule-file=std=%s", std_pcm_path(true)),
                 nob_temp_sprintf("-fmodule-file=std.compat=%s", std_compat_pcm_path(true)));
-            nob_cmd_append(&cmd, "-I" DIST_DIR, "-I" SRC_DIR, "-I" LIB_DIR);
+            // Tylko -I dist: dowodzi, że sdl_gui.hpp jest samowystarczalny
+            // (użytkownik nie potrzebuje src/ ani lib/).
+            nob_cmd_append(&cmd, "-I" DIST_DIR);
             nob_cmd_append(&cmd, "-o", standalone_exe, standalone_src, DIST_DIR "/libsdl_gui.a");
             cmd_add_sdl3(&cmd);
             if (!nob_cmd_run(&cmd)) return false;
