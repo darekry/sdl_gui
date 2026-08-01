@@ -135,6 +135,11 @@ public:
             }
         }
 
+        // SDL3 prepares the Vulkan driver twice (VULKAN_PrepareDriver + VULKAN_CreateDevice);
+        // without this the loader dlcloses the ICD in between and libGLX_nvidia.so.0 re-inits
+        // (wakes the dGPU on hybrid laptops: ~1.85s per wake, ~4.5s total instead of ~2.1s).
+        setenv("VK_LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING", "1", 0);
+
         t0 = SDL_GetTicks();
         SDL_PropertiesID props = SDL_CreateProperties();
         SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, "vulkan");

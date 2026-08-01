@@ -433,6 +433,8 @@ static GpuShader g_gpu_shaders[] = {
     {"desaturate_frag", "examples/shaders/desaturate.frag", "frag"},
     {"triangle_vert",   "examples/shaders/triangle.vert",   "vert"},
     {"triangle_frag",   "examples/shaders/triangle.frag",   "frag"},
+    {"time_water_frag", "examples/shaders/time_water.frag", "frag"},
+    {"mouse_glow_frag", "examples/shaders/mouse_glow.frag", "frag"},
 };
 
 static bool build_gpu_shaders(Nob_File_Paths *shader_objects, bool release) {
@@ -803,6 +805,7 @@ static const char * hpp_order[] = {
     "src/checkbox.hpp",
     "src/slider.hpp",
     "src/range_slider.hpp",
+    "src/splitter.hpp",
     "src/text_editable.hpp",
     "src/text_input.hpp",
     "src/canvas.hpp",
@@ -839,6 +842,7 @@ static const char * includes_to_remove[] = {
     "#include \"checkbox.hpp\"",
     "#include \"slider.hpp\"",
     "#include \"range_slider.hpp\"",
+    "#include \"splitter.hpp\"",
     "#include \"text_input.hpp\"",
     "#include \"canvas.hpp\"",
     "#include \"cursor.hpp\"",

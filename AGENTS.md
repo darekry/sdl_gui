@@ -27,7 +27,7 @@ SDL GUI to lekka biblioteka GUI oparta na SDL3. Cel: ułatwić tworzenie narzęd
 | Warstwa | Elementy |
 |---------|----------|
 | **Core** | GUIManager (kontekst, renderowanie), GUIElement (hierarchia + cache tekstur), TextEditable (selekcja, clipboard) |
-| **Widgety (21)** | Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, ListView, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu, Cursor, ArcContainer, ProgressBar, ScrollArea, ShaderPanel |
+| **Widgety (23)** | Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, ListView, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu, Cursor, ArcContainer, ProgressBar, ScrollArea, ShaderPanel, RangeSlider, Splitter |
 | **Composite** | DialogBox, MessageBox, FileDialog (`src/composite/`) |
 | **Editor** | EditorWindow, EditorState, PreviewWindow, LayoutImporter, LayoutExporter (`src/editor/`) |
 | **Ekrany/okna** | ScreenManager (gry), WindowManager (wiele okien systemowych) |
@@ -262,7 +262,7 @@ Zasoby muszą być dostępne przez `pkg-config sdl3 sdl3-image sdl3-ttf`. `PKG_C
 
 - **Framework**: Catch2 (amalgamated: `lib/catch_amalgamated.hpp`)
 - **Helper**: `tests/test_helper.hpp/cpp` — headless SDL init, `createMouseEvent()`, `createKeyboardEvent()`
-- **Widgety testowane (17)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor
+- **Widgety testowane (18)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, Splitter, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor
 - **Menedżery (4)**: FontManager, TextureManager, TimerManager, AnimationManager
 - **Systemy (5)**: GUIElement, GUIManager, Theme, Easing, UTF8
 - **Screen/Window (2)**: ScreenManager, WindowManager
@@ -328,6 +328,30 @@ Uruchom: `./nob test`
   (>20 wpisów), przenieś najstarsze do osobnego pliku CHANGELOG.md.
   ═══════════════════════════════════════════════════════════════════
 -->
+
+### Splitter widget — tiling panels (2026-08-01)
+- **Splitter** (`src/splitter.hpp`/`.cpp`) — kontener w stylu tiling WM: N paneli oddzielonych przeciągalnymi dividerami (vertical: panele obok siebie; horizontal: jeden nad drugim). Każdy panel ma frakcję 0..1 (względną, suma ≠ 1; 0.0 = zwinięcie panelu). Layout: `relayoutPanes()` — rozmiar = remaining × frac/sum.
+- **Interakcja**: drag dividera → `updateDividerFromMouse()` (clamp minPaneSize, przeliczenie frakcji sąsiednich paneli przez blockRemaining — bez dryfu), hover highlight, double-click → `equalizeDivider()`, `onChange` po drag/setPaneFraction/equalize. Capture myszy przez `GUIManager::captureMouse()` (wzorzec Panel/Slider).
+- **API**: `addPane` (dzieli na pół ostatni panel), `removePane`, `clearPanes`, `getPane`, `setPaneFraction`, `setVertical`, `setDividerThickness`, `setMinimumPaneSize`, `setDividerColor/Hover/Active`. Frakcje trzymane w `unordered_map<GUIElement*, float>` — odporne na usunięcie panelu przez `markForDeletion`+`cleanup` (override `cleanup()` + `syncFractions()`).
+- **Resize**: `GUIElement::updateLayout()` i `cleanup()` zwirtualizowane w `gui.hpp` (wcześniej nie były wirtualne); Splitter nadpisuje `updateLayout(w,h)` → `relayoutPanes()`, plus safety-net w `draw()` wykrywający zewnętrzny `setSize`.
+- **Theme**: 4 presety w `theme_presets.hpp` (`Splitter` — divider kolorowany z `borderColor` stylu).
+- **Testy**: `tests/test_splitter.cpp` — 5 case'ów, 65 asercji (frakeje, layout, drag+clamp, double-click equalize, removePane/cleanup, disabled).
+- **Przykład**: `examples/47_splitter.cpp` — zagnieżdżone splittery (ListView + TextArea), panel kontrolny (checkbox orientacja, slider frakcji, add/remove pane), resizable.
+- Efekt: 32/32 testy, 48/48 examples, release OK. Zmienione: `src/splitter.hpp`/`.cpp` (nowe), `src/gui.hpp` (virtual updateLayout/cleanup), `src/theme_presets.hpp`, `tests/test_splitter.cpp` (nowy), `examples/47_splitter.cpp` (nowy), `nob.c` (hpp_order), `AGENTS.md` (ten wpis)
+
+### Vulkan slow startup on NVIDIA fixed — keep driver loaded (2026-08-01)
+- **Problem**: `SDL_CreateGPUDevice` na NVIDIA RTX 2060 Mobile trwał ~4.5s (po aktualizacji sterowników; wcześniej "kilkanaście sekund"). Diagnoza przez wrapper ICD (`/tmp/kilo/icdwrap/`): init biblioteki `libGLX_nvidia.so.0` (dlopen) = ~1.85s — to przebudzenie dGPU z D3Cold (znany problem NVIDIA, potwierdzony na forums.developer.nvidia.com, bez fixa z ich strony). SDL3 robi PrepareVulkan dwukrotnie (VULKAN_PrepareDriver + VULKAN_CreateDevice), loader dlclose'uje ICD między przebiegami → 2× przebudzenie = ~4.5s.
+- **Fix**: `setenv("VK_LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING", "1", 0)` w konstruktorze GPU w `SDLApp` przed `SDL_CreateGPUDeviceWithProperties` (oficjalna opcja Vulkan-Loader od PR #1260, 2023). Loader nie wyładowuje ICD → drugi przebieg nie budzi dGPU ponownie.
+- Efekt: NVIDIA ~4.5s → ~2.1s; Intel bez zmian (~46ms); 47/47 examples się buduje.
+- Zmienione: `src/sdl_app.hpp` (setenv), `AGENTS.md` (ten wpis)
+
+### ShaderPanel animated uniforms — drawDirect + vertex colors (2026-07-31)
+- **Problem**: Intel Vulkan driver (ANV, UHD 630) crashował SEGV w `VULKAN_CreateGraphicsPipeline` gdy `ShaderPanel` blitował cache przez `SDL_RenderTexture` z render state + shaderem samplującym teksturę. Dodatkowo `SDL_SetGPURenderStateFragmentUniforms` (push constants) nie docierał do shadera (statyczny output nawet na llvmpipe).
+- **Rozwiązanie**: `ShaderPanel` używa `wantsDirectRender()` + `drawDirect()` — rysuje content panelu do `m_tempTexture`, potem blituje przez `SDL_RenderGeometry` z aktywnym render state. Dane per-frame (czas, pozycja myszy) przekazywane przez kolory werteksów (`SDL_Vertex.color` → fragment input `location = 0`, uv → `location = 1`; interfejs SDL GPU renderera potwierdzony w `SDL_render_gpu.c`/`tri_texture.vert`).
+- **Nowe API**: `setUniformTime(float)`, `setUniformMouse(x, y)`. Czas przez istniejący `AnimationManager::addAnimation()`, kursor przez event loop — zero nowych hooków.
+- **Shadery bez samplera**: `time_water.frag` / `mouse_glow.frag` (przykład 45) są w pełni proceduralne (fragTexCoord + fragColor), nie próbkują tekstury — to unika problematycznej ścieżki samplowania na Intelu. `desaturate.frag` (przykład 34) działa bez zmian.
+- Efekt: 47/47 examples, 31/31 tests. Przykład 45 działa na Intel i llvmpipe.
+- Zmienione: `src/shader_panel.hpp`/`.cpp` (przepisane), `examples/shaders/time_water.frag` (nowy), `examples/shaders/mouse_glow.frag` (nowy), `examples/45_gpu_shader_animation.cpp` (nowy), `nob.c` (rejestracja shaderów)
 
 ### GUIContext + parent-in-create + C API refactor (2026-07-14)
 - **GUIContext** (`src/gui_context.hpp`) — klasa łącząca `SDLApp` + `GUIManager` + `Theme` w jeden obiekt RAII. Konstruktor auto-aplikuje theme i ustawia window size. Metoda `run()` hermetyzuje całą pętlę zdarzeń.
