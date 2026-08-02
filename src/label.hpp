@@ -1,6 +1,5 @@
 #pragma once
 #include "gui.hpp"
-#include "texture_manager.hpp"
 
 
 class Label : public GUIElement {
@@ -15,13 +14,13 @@ public:
 public:
     void draw(SDL_Renderer* renderer) override;
 
+    uint64_t getRenderCacheKeySuffix() const override {
+        uint64_t h = std::hash<std::string_view>{}(m_text);
+        return h ^ (static_cast<uint64_t>(m_font_size) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2));
+    }
+
 private:
     void recalculateSize();
     std::string m_text;
     int m_font_size;
-    SharedTexture m_cachedTextTexture;
-    std::string m_cachedTextContent;
-    SDL_Color m_cachedTextColor{};
-    int m_cachedFontSize = -1;
-    bool m_textTextureDirty = true;
 };

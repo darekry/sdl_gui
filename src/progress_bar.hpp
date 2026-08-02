@@ -30,6 +30,7 @@ public:
 protected:
     void draw(SDL_Renderer* renderer) override;
 
+    bool canShareRenderCache() const override { return false; }
 private:
     float normalizedValue() const;
 

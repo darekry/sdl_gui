@@ -30,6 +30,7 @@ public:
 protected:
     void draw(SDL_Renderer* renderer) override;
 
+    bool canShareRenderCache() const override { return false; }
 private:
     enum class ActiveThumb : uint8_t {
         None,

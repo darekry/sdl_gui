@@ -79,7 +79,6 @@ public:
     void processHoverTooltip(bool currentlyHovered);
     void processButtonEvent(const SDL_Event& e);
     void render(SDL_Renderer* renderer);
-    void renderToCache();
     
     virtual bool isOverlay() const { return false; }
     virtual void renderOverlay(SDL_Renderer* renderer);
@@ -141,6 +140,15 @@ protected:
     
     virtual void draw(SDL_Renderer* renderer) { drawBackgroundAndBorder(renderer); }
 
+    // Współdzielony cache renderowania (TextureManager::renderCache).
+    // Domyślnie true: draw() zależy tylko od skomponowanego stylu + stanu + rozmiaru.
+    // Widgety, których draw() czyta stan wewnętrzny (checkbox, slider, tekst...),
+    // muszą zwrócić false albo dołączyć ten stan przez getRenderCacheKeySuffix().
+    virtual bool canShareRenderCache() const { return true; }
+    virtual uint64_t getRenderCacheKeySuffix() const { return 0; }
+    uint64_t buildRenderCacheKey() const;
+    void renderToCache();
+
     // Rozszerzenie: możliwość rysowania bezpośrednio (bez buforowania).
     // Domyślnie elementy nie korzystają z drawDirect — zwracają false w wantsDirectRender().
     virtual bool wantsDirectRender() const { return false; }
@@ -156,7 +164,8 @@ protected:
     mutable SDL_Point m_cachedAbsPos = {0, 0};
     mutable bool m_absPosValid = false;
     bool m_isDirty = true;
-        std::unique_ptr<SDL_Texture, decltype(&SDL_DestroyTexture)> m_cachedTexture{nullptr, SDL_DestroyTexture};
+        SharedTexture m_cachedTexture;
+        uint64_t m_cacheKey = 0;
         std::array<std::optional<Style>, 4> m_localStyles;
         static constexpr size_t stateIndex(ElementState state) {
             return static_cast<size_t>(state);

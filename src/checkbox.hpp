@@ -18,6 +18,7 @@ public:
 public:
     void draw(SDL_Renderer* renderer) override;
 
+    bool canShareRenderCache() const override { return false; }
 private:
     bool m_isChecked;
     OnChangeCallback m_onChange;

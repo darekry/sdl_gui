@@ -20,6 +20,7 @@ public:
 protected:
     void draw(SDL_Renderer* renderer) override;
 
+    bool canShareRenderCache() const override { return false; }
 private:
     bool m_isSelected = false;
     OnChangeCallback m_onChange;

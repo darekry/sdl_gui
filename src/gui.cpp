@@ -1,6 +1,7 @@
 #include "label.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
+#include "sdl_deleters.hpp"
 #include "constants.hpp"
 #include <SDL3/SDL.h>
 #include "std.hpp"
@@ -401,6 +402,12 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 src_rect.h = clipped_rect.h;
                 RenderTexture(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
             }
+            if (m_rotation == 0.0 && hasKeyboardFocus()) {
+                const Style& focusStyle = getComposedStyle(m_state);
+                drawRoundedRectBorder(renderer, SDLRectToFRect(abs_pos.x, abs_pos.y, m_width, m_height),
+                                      static_cast<float>(focusStyle.borderRadius.value_or(0)),
+                                      ColorToFColor(constants::kFocusOutlineColor), 1.0f);
+            }
         }
     }
 
@@ -420,34 +427,36 @@ void GUIElement::renderOverlay(SDL_Renderer* renderer) {
 
 void GUIElement::renderToCache() {
     if (!m_visible || m_width <= 0 || m_height <= 0) {
-        if (m_cachedTexture) m_cachedTexture.reset();
+        m_cachedTexture.reset();
+        m_cacheKey = 0;
         return;
     }
 
-    int tex_w = 0, tex_h = 0;
-    if (m_cachedTexture) {
-        float tw = 0.0f, th = 0.0f;
-        if (!SDL_GetTextureSize(m_cachedTexture.get(), &tw, &th)) {
-            LOG_DEBUG("GUIElement: SDL_GetTextureSize failed: %s", SDL_GetError());
-            tex_w = tex_h = 0;
-        } else {
-            tex_w = static_cast<int>(tw);
-            tex_h = static_cast<int>(th);
+    SDL_Renderer* renderer = m_manager.getRenderer();
+
+    if (canShareRenderCache() && m_rotation == 0.0) {
+        const uint64_t key = buildRenderCacheKey();
+        if (key != m_cacheKey || !m_cachedTexture) {
+            m_cachedTexture = m_manager.getTextureManager().renderCache(
+                key, m_width, m_height, [this](SDL_Renderer* r) { draw(r); });
+            m_cacheKey = key;
         }
-    }
-    if (!m_cachedTexture || tex_w != m_width || tex_h != m_height) {
-        m_cachedTexture.reset(SDL_CreateTexture(m_manager.getRenderer(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, m_width, m_height));
-        if (m_cachedTexture) {
-            SDL_SetTextureBlendMode(m_cachedTexture.get(), SDL_BLENDMODE_BLEND);
-        } else {
-            m_isDirty = false;
-            return;
-        }
+        m_isDirty = false;
+        return;
     }
 
-    SDL_Renderer* renderer = m_manager.getRenderer();
+    m_cacheKey = 0;
+    SharedTexture tex(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+                                        SDL_TEXTUREACCESS_TARGET, m_width, m_height),
+                      SDLTextureDeleter());
+    if (!tex) {
+        m_isDirty = false;
+        return;
+    }
+    SDL_SetTextureBlendMode(tex.get(), SDL_BLENDMODE_BLEND);
+
     {
-        ScopedRenderTarget targetScope(renderer, m_cachedTexture.get());
+        ScopedRenderTarget targetScope(renderer, tex.get());
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
@@ -455,6 +464,12 @@ void GUIElement::renderToCache() {
         draw(renderer);
 
         if (m_rotation != 0.0) {
+            if (hasKeyboardFocus()) {
+                const Style& focusStyle = getComposedStyle(m_state);
+                drawRoundedRectBorder(renderer, SDLRectToFRect(0, 0, m_width, m_height),
+                                      static_cast<float>(focusStyle.borderRadius.value_or(0)),
+                                      ColorToFColor(constants::kFocusOutlineColor), 1.0f);
+            }
             SDL_SetRenderTarget(renderer, nullptr);
             for (auto& child : m_children) {
                 if (child && child->isVisible() && child->m_isDirty) {
@@ -462,7 +477,7 @@ void GUIElement::renderToCache() {
                 }
             }
 
-            SDL_SetRenderTarget(renderer, m_cachedTexture.get());
+            SDL_SetRenderTarget(renderer, tex.get());
             for (auto& child : m_children) {
                 if (child && child->isVisible() && child->m_cachedTexture) {
                     SDL_Rect childDst = {child->m_x, child->m_y, child->m_width, child->m_height};
@@ -472,6 +487,7 @@ void GUIElement::renderToCache() {
         }
     }
 
+    m_cachedTexture = std::move(tex);
     m_isDirty = false;
 }
 
@@ -644,11 +660,55 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
     if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
         drawRoundedRectBorder(renderer, frect, fradius, ColorToFColor(*style.borderColor), static_cast<float>(*style.borderWidth));
     }
+}
 
-    if (hasKeyboardFocus()) {
-        constexpr float kFocusThickness = 1.0f;
-        drawRoundedRectBorder(renderer, frect, fradius, ColorToFColor(constants::kFocusOutlineColor), kFocusThickness);
+uint64_t GUIElement::buildRenderCacheKey() const {
+    uint64_t h = 1469598103934665603ULL;
+    auto mix = [&h](uint64_t v) {
+        h ^= v;
+        h *= 1099511628211ULL;
+    };
+    auto mixColor = [&mix](const std::optional<SDL_Color>& c) {
+        mix(c.has_value() ? 1ULL : 0ULL);
+        if (c) {
+            const SDL_Color& v = *c;
+            mix((static_cast<uint64_t>(v.r) << 24) | (static_cast<uint64_t>(v.g) << 16) |
+                (static_cast<uint64_t>(v.b) << 8) | static_cast<uint64_t>(v.a));
+        }
+    };
+
+    mix(std::hash<std::string_view>{}(getComponentType()));
+    mix(static_cast<uint64_t>(m_width));
+    mix(static_cast<uint64_t>(m_height));
+    mix(static_cast<uint64_t>(m_state));
+
+    const Style& st = getComposedStyle(m_state);
+    mixColor(st.backgroundColor);
+    mixColor(st.textColor);
+    mix(st.texture.has_value() ? 1ULL : 0ULL);
+    if (st.texture) {
+        mix(reinterpret_cast<uint64_t>(st.texture->get()));
     }
+    mixColor(st.borderColor);
+    mix(st.borderWidth.has_value() ? 1ULL : 0ULL);
+    if (st.borderWidth) {
+        mix(static_cast<uint64_t>(*st.borderWidth));
+    }
+    mix(st.borderRadius.has_value() ? 1ULL : 0ULL);
+    if (st.borderRadius) {
+        mix(static_cast<uint64_t>(*st.borderRadius));
+    }
+    mix(st.fontSize.has_value() ? 1ULL : 0ULL);
+    if (st.fontSize) {
+        mix(static_cast<uint64_t>(*st.fontSize));
+    }
+    mix(st.fontName.has_value() ? 1ULL : 0ULL);
+    if (st.fontName) {
+        mix(std::hash<std::string_view>{}(*st.fontName));
+    }
+
+    mix(getRenderCacheKeySuffix());
+    return h;
 }
 
 size_t GUIElement::countDescendants() const {

@@ -32,6 +32,8 @@ public:
     // Binary search: char index at pixel x within text (shared by TextInput/TextArea)
     static size_t charIndexAtX(std::string_view text, TTF_Font* font, int x);
 
+    bool canShareRenderCache() const override { return false; }
+
 protected:
     // Text content
     std::string m_text;

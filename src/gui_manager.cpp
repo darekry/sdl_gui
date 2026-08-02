@@ -11,6 +11,7 @@
 static constexpr int DEFAULT_FONT_SIZE = 24;
 static constexpr int TOOLTIP_FONT_SIZE = 14;
 static constexpr int TOOLTIP_PADDING = 5;
+static constexpr size_t kRenderCachePruneThreshold = 256;
 static const SDL_Color TOOLTIP_BG_COLOR = {.r=255, .g=255, .b=225, .a=255};
 
 static bool isDescendantOf(GUIElement* descendant, GUIElement* ancestor) {
@@ -131,6 +132,9 @@ void GUIManager::update() {
     timerManager->update();
     animation_manager->update();
 
+    if (m_textureManager.getRenderCacheSize() > kRenderCachePruneThreshold) {
+        m_textureManager.pruneUnused();
+    }
 }
 
 void GUIManager::render() {

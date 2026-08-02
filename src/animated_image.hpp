@@ -58,6 +58,7 @@ public:
     void drawDirect(SDL_Renderer* renderer) override;
     const char* getComponentType() const override { return "AnimatedImage"; }
 
+    bool canShareRenderCache() const override { return false; }
 private:
     // Helperzy
     void ensureTextureLoaded();

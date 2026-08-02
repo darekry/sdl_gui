@@ -50,6 +50,14 @@ public:
     // Metoda do ładowania tekstury z pamięci (dla embedded assets)
     SharedTexture loadTextureFromMemory(const uint8_t* data, size_t size, std::string_view key);
 
+    // Metoda do renderowania elementu do współdzielonej, niezmiennej tekstury cache.
+    // Jeśli tekstura o danym kluczu już istnieje, zwraca ją BEZ ponownego rysowania.
+    // Wpis jest niezmienny - nigdy nie jest nadpisywany, usuwany przez pruneUnused()
+    // gdy przestaje być używany. Klucz musi jednoznacznie opisywać wszystkie dane
+    // wejściowe draw() (typ, rozmiar, stan, styl, stan wewnętrzny widgetu).
+    SharedTexture renderCache(uint64_t key, int width, int height,
+                              const std::function<void(SDL_Renderer*)>& draw);
+
     // Metoda do dodawania istniejącej tekstury i przejmowania nad nią własności
     SharedTexture addTexture(std::string_view key, SDL_Texture* texture);
     SharedTexture addTexture(std::string_view key, SharedTexture texture);
@@ -74,10 +82,12 @@ public:
     void pruneUnused();
     void clearCache();
     [[nodiscard]] size_t getCacheSize() const;
+    [[nodiscard]] size_t getRenderCacheSize() const;
 
 private:
     SDL_Renderer* m_renderer;
     std::unordered_map<std::string, SharedTexture, StringHash, std::equal_to<>> m_textureCache;
+    std::unordered_map<uint64_t, SharedTexture> m_renderCache;
     SharedTexture m_defaultTexture; // Domyślna tekstura
     bool m_initialized = false; // SDL_image initialization status
 };

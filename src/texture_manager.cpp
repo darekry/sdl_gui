@@ -1,5 +1,6 @@
 #include "texture_manager.hpp"
 #include "sdl_deleters.hpp"
+#include "sdl_rect_helpers.hpp"
 #include <SDL3/SDL.h>
 #include "logger.hpp"
 
@@ -157,6 +158,40 @@ SharedTexture TextureManager::loadTextureFromMemory(const uint8_t* data, size_t 
     return inserted_it->second;
 }
 
+SharedTexture TextureManager::renderCache(uint64_t key, int width, int height,
+                                          const std::function<void(SDL_Renderer*)>& draw) {
+    if (width <= 0 || height <= 0) {
+        return nullptr;
+    }
+
+    auto it = m_renderCache.find(key);
+    if (it != m_renderCache.end()) {
+        return it->second;
+    }
+
+    SharedTexture tex(SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA8888,
+                                        SDL_TEXTUREACCESS_TARGET, width, height),
+                      SDLTextureDeleter());
+    if (!tex) {
+        LOG_DEBUG("TextureManager::renderCache: SDL_CreateTexture failed for key %llu: %s",
+                  static_cast<unsigned long long>(key), SDL_GetError());
+        return nullptr;
+    }
+    SDL_SetTextureBlendMode(tex.get(), SDL_BLENDMODE_BLEND);
+
+    {
+        ScopedRenderTarget scope(m_renderer, tex.get());
+        SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 0);
+        SDL_RenderClear(m_renderer);
+        if (draw) {
+            draw(m_renderer);
+        }
+    }
+
+    m_renderCache.emplace(key, tex);
+    return tex;
+}
+
 SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* texture) {
     auto it = m_textureCache.find(key);
     if (it != m_textureCache.end()) {
@@ -271,24 +306,29 @@ bool TextureManager::queryTexture(std::string_view path, int& width, int& height
 }
 
 void TextureManager::pruneUnused() {
-    auto it = m_textureCache.begin();
-    size_t removed = 0;
-    while (it != m_textureCache.end()) {
-        if (it->second.use_count() == 1) {
-            it = m_textureCache.erase(it);
-            ++removed;
-        } else {
-            ++it;
+    auto pruneMap = [](auto& map) -> size_t {
+        size_t removed = 0;
+        auto it = map.begin();
+        while (it != map.end()) {
+            if (it->second.use_count() == 1) {
+                it = map.erase(it);
+                ++removed;
+            } else {
+                ++it;
+            }
         }
-    }
+        return removed;
+    };
+    size_t removed = pruneMap(m_textureCache) + pruneMap(m_renderCache);
     if (removed > 0) {
         LOG_DEBUG("TextureManager::pruneUnused(): Removed %zu unused textures.", removed);
     }
 }
 
 void TextureManager::clearCache() {
-    size_t count = m_textureCache.size();
+    size_t count = m_textureCache.size() + m_renderCache.size();
     m_textureCache.clear();
+    m_renderCache.clear();
     if (count > 0) {
         LOG_DEBUG("TextureManager::clearCache(): Cleared %zu textures.", count);
     }
@@ -296,4 +336,8 @@ void TextureManager::clearCache() {
 
 size_t TextureManager::getCacheSize() const {
     return m_textureCache.size();
+}
+
+size_t TextureManager::getRenderCacheSize() const {
+    return m_renderCache.size();
 }

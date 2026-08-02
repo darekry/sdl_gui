@@ -24,7 +24,7 @@ void Label::recalculateSize() {
 }
 
 Label::Label(GUIManager& manager, int x, int y, std::string_view text, int font_size)
-    : GUIElement(manager, x, y, 0, 0), m_text(text), m_font_size(font_size), m_textTextureDirty(true) {
+    : GUIElement(manager, x, y, 0, 0), m_text(text), m_font_size(font_size) {
     recalculateSize();
     markDirty();
 }
@@ -32,7 +32,6 @@ Label::Label(GUIManager& manager, int x, int y, std::string_view text, int font_
 void Label::setText(std::string_view text) {
     if (m_text != text) {
         m_text = text;
-        m_textTextureDirty = true;
         recalculateSize();
         markDirty();
     }
@@ -50,43 +49,20 @@ void Label::draw(SDL_Renderer* renderer) {
     }
 
     int font_size = m_font_size > 0 ? m_font_size : (resolvedStyle.fontSize.value_or(m_manager.getTheme().getDefaultStyle().fontSize.value_or(16)));
-    SDL_Color currentColor = resolvedStyle.textColor.value();
 
-    bool needsRecreate = m_textTextureDirty ||
-                         m_cachedTextContent != m_text ||
-                         m_cachedFontSize != font_size ||
-                         (m_cachedTextColor.r != currentColor.r ||
-                          m_cachedTextColor.g != currentColor.g ||
-                          m_cachedTextColor.b != currentColor.b ||
-                          m_cachedTextColor.a != currentColor.a);
-
-    if (needsRecreate) {
-        auto& fontManager = m_manager.getFontManager();
-        auto font = fontManager.loadFont(resolvedStyle.fontName.value_or(constants::kDefaultFontPath), font_size);
-
-        if (!font) {
-            LOG_DEBUG("no font");
-            return;
-        }
-
-        auto& textureManager = m_manager.getTextureManager();
-        m_cachedTextTexture = textureManager.createTextureFromText(m_text, font, currentColor);
-
-        if (!m_cachedTextTexture) {
-            LOG_DEBUG("no shared texture");
-            return;
-        }
-
-        m_cachedTextContent = m_text;
-        m_cachedTextColor = currentColor;
-        m_cachedFontSize = font_size;
-        m_textTextureDirty = false;
+    auto& fontManager = m_manager.getFontManager();
+    auto font = fontManager.loadFont(resolvedStyle.fontName.value_or(constants::kDefaultFontPath), font_size);
+    if (!font) {
+        LOG_DEBUG("no font");
+        return;
     }
 
-    if (!m_cachedTextTexture) {
+    auto textTexture = m_manager.getTextureManager().createTextureFromText(m_text, font, resolvedStyle.textColor.value());
+    if (!textTexture) {
+        LOG_DEBUG("no shared texture");
         return;
     }
 
     SDL_Rect dstRect = {0, 0, m_width, m_height};
-    RenderTexture(renderer, m_cachedTextTexture.get(), dstRect);
+    RenderTexture(renderer, textTexture.get(), dstRect);
 }
