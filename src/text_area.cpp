@@ -13,6 +13,20 @@ TextArea::TextArea(GUIManager& manager, int x, int y, int w, int h, std::string_
     m_needs_texture_update = true;
     m_text_offset_x = 0;
     m_lines.push_back("");  // Zainicjalizuj z pustą linią, aby uniknąć SIGSEGV w update_text_offset()
+    setCanGetKeyboardFocus(true);
+}
+
+void TextArea::onFocusGained() {
+    GUIElement::onFocusGained();
+    SDL_StartTextInput(SDL_GetRenderWindow(m_manager.getRenderer()));
+    m_showCursor = true;
+    m_cursorBlinkTime = SDL_GetTicks();
+}
+
+void TextArea::onFocusLost() {
+    GUIElement::onFocusLost();
+    SDL_StopTextInput(SDL_GetRenderWindow(m_manager.getRenderer()));
+    m_showCursor = false;
 }
 
 void TextArea::setText(std::string_view text) {
@@ -61,7 +75,7 @@ void TextArea::setLocked(bool locked) {
     if (m_locked) {
         m_isHovered = false;
         setState(ElementState::Normal);
-        SDL_StopTextInput(SDL_GetRenderWindow(m_manager.getRenderer()));
+        m_manager.setKeyboardFocus(nullptr);
         m_showCursor = false;
     }
     markDirty();
@@ -135,7 +149,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && contains(e.button.x, e.button.y)) {
         setState(ElementState::Hover);
         m_isHovered = true;
-        SDL_StartTextInput(SDL_GetRenderWindow(m_manager.getRenderer()));
+        m_manager.setKeyboardFocus(this);
         m_showCursor = true;
         m_cursorBlinkTime = SDL_GetTicks();
         
@@ -175,7 +189,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         }
         m_isHovered = false;
         m_isDragging = false;
-        SDL_StopTextInput(SDL_GetRenderWindow(m_manager.getRenderer()));
+        m_manager.setKeyboardFocus(nullptr);
         m_showCursor = false;
     }
     
@@ -231,7 +245,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
                 eventHandled = true;
             }
         }
-    } else if (e.type == SDL_EVENT_TEXT_INPUT && m_isHovered) {
+    } else if (e.type == SDL_EVENT_TEXT_INPUT && (m_isHovered || hasKeyboardFocus())) {
         // Replace selection if exists, otherwise insert at cursor
         if (hasSelection()) {
             size_t start = std::min(m_selectionStart, m_selectionEnd);
@@ -247,7 +261,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         markDirty();
         if (m_onTextChanged) { m_onTextChanged(this); }
         eventHandled = true;
-    } else if (e.type == SDL_EVENT_KEY_DOWN && m_isHovered) {
+    } else if (e.type == SDL_EVENT_KEY_DOWN && (m_isHovered || hasKeyboardFocus())) {
         bool shiftPressed = (e.key.mod & SDL_KMOD_SHIFT);
         
         if (e.key.key == SDLK_BACKSPACE && m_cursorPos > 0) {
@@ -580,7 +594,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
 }
 
 void TextArea::renderOverlay(SDL_Renderer* renderer) {
-    if (!m_isHovered) return;
+    if (!m_isHovered && !hasKeyboardFocus()) return;
     
     auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
     if (!font) return;

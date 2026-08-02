@@ -1,8 +1,91 @@
 #include "../lib/catch_amalgamated.hpp"
 
 #include "test_helper.hpp"
+#include "../src/panel.hpp"
 #include "../src/text_area.hpp"
 #include "../src/gui_manager.hpp"
+
+static std::vector<Uint8> readPixelRow(SDL_Renderer* renderer, int x, int y, int w) {
+    SDL_Rect rect{x, y, w, 1};
+    SDL_Surface* surf = SDL_RenderReadPixels(renderer, &rect);
+    REQUIRE(surf != nullptr);
+    std::vector<Uint8> bytes(static_cast<size_t>(w) * 4);
+    std::memcpy(bytes.data(), surf->pixels, bytes.size());
+    SDL_DestroySurface(surf);
+    return bytes;
+}
+
+// Regression: TextArea draws its content (lines, scroll offset) directly, so it
+// must opt out of the shared render cache — otherwise editing/typing never
+// reaches the screen (stale shared texture reused for the same style key).
+TEST_CASE("TextArea re-renders content after edit (shared cache opt-out)", "[text_area][pixel]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.setWindowSize(320, 240);
+
+    auto ta = std::make_unique<TextArea>(manager, 20, 20, 200, 100, "assets/fonts/font.ttf", 16);
+    TextArea* area = ta.get();
+    manager.addElement(std::move(ta));
+
+    area->setText("AAAA");
+    manager.update();
+    manager.cleanup();
+    manager.render();
+    auto rowA = readPixelRow(helper.getRenderer(), 22, 30, 120);
+
+    area->setText("BBBB");
+    manager.update();
+    manager.cleanup();
+    manager.render();
+    auto rowB = readPixelRow(helper.getRenderer(), 22, 30, 120);
+
+    REQUIRE(rowA != rowB);
+}
+
+// Regression: TextArea must join the keyboard focus system. GUIManager only
+// routes key/text events to the focused element and only calls renderOverlay
+// for it, so a TextArea that never gains focus swallows typing/deleting and
+// never draws its cursor.
+TEST_CASE("TextArea receives input through GUIManager dispatch", "[text_area][pixel]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.setWindowSize(800, 600);
+
+    auto panel = std::make_unique<Panel>(manager, 50, 50, 700, 500);
+    auto ta = std::make_unique<TextArea>(manager, 20, 50, 660, 430, "assets/fonts/font.ttf", 18);
+    TextArea* area = ta.get();
+    panel->addChild(std::move(ta));
+    manager.addElement(std::move(panel));
+
+    SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 200, 200);
+    manager.processEvent(event);
+    REQUIRE(manager.getKeyboardFocus() == area);
+
+    manager.update();
+    manager.cleanup();
+    manager.render();
+
+    // cursor must be visible after the click (renderOverlay for focused element)
+    auto row = readPixelRow(helper.getRenderer(), 102, 102, 4);
+    bool hasCursorPixels = std::any_of(row.begin(), row.end(), [](Uint8 b) { return b != 0; });
+    CAPTURE(row[0], row[1], row[2], row[3]);
+    REQUIRE(hasCursorPixels);
+
+    manager.processEvent(helper.createTextInputEvent("X"));
+    REQUIRE(area->getText() == "X");
+
+    manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
+    REQUIRE(area->getText().empty());
+
+    manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+    manager.processEvent(helper.createTextInputEvent("A"));
+    REQUIRE(area->getText() == "A");
+
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 600, 550));
+    REQUIRE(manager.getKeyboardFocus() != area);
+}
 
 TEST_CASE("TextArea Focus Behavior", "[text_area]") {
     TestHelper helper;

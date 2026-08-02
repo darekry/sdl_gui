@@ -28,6 +28,9 @@ public:
     bool handleEvent(const SDL_Event& e) override;
     void renderOverlay(SDL_Renderer* renderer) override;
     [[nodiscard]] const char* getComponentType() const override;
+    bool canShareRenderCache() const override { return false; }
+    void onFocusGained() override;
+    void onFocusLost() override;
 protected:
     void draw(SDL_Renderer* renderer) override;
 

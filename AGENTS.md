@@ -323,46 +323,27 @@ Uruchom: `./nob test`
 
   Nie duplikuj wpisów. Stare wpisy też mają wartość — pokazują
   historię decyzji projektowych. Jeśli lista staje się za długa
-  (>20 wpisów), przenieś najstarsze do osobnego pliku CHANGELOG.md.
+  (>10 wpisów), przenieś najstarsze do osobnego pliku CHANGELOG.md.
   ═══════════════════════════════════════════════════════════════════
 -->
 
 Starsza historia zmian (przed 2026-07-31): [CHANGELOG.md](CHANGELOG.md).
 
+### Bugfix: TextArea nie uczestniczył w systemie keyboard focus — martwa edycja (2026-08-02)
+- 
+### Bugfix: TextArea pominięty w opt-out współdzielonego render cache (2026-08-02)
+
+
 ### Testy anchorów + 2 realne bugi w systemie Anchor (2026-08-02)
-- **Nowy test**: `tests/test_anchor.cpp` (4 case'y, 47 asercji) — presety (topLeft/topRight/bottomRight/center/fill/topBar/bottomBar/leftSidebar/rightSidebar/horizontalStretch), kodowanie współrzędnych (0-1 = procenty, >1 = piksele, 0.5 = centrum), stretch przy obu krawędziach, re-aplikacja po `handleResize`, propagacja na dzieci (`updateLayout`).
-- **Bug 1 — off-by-one w `toPixels`** (src/gui.cpp:790): wartości >1.0 (piksele) były pomniejszane o 1 (`value - 1.0f`), więc `topLeft(10)` dawało 9px, `bottomBar(50)` 49px itd. — sprzeczne z dokumentacją (">1.0 = piksele") i komentarzami w przykładach. Fix: `static_cast<int>(value)` (dokładne 1.0 to nadal 100%).
-- **Bug 2 — odwrócone presety sidebarów** (src/anchor.hpp): `leftSidebar(200)` = `{left:0, right:200}` — a `right` w engine to offset od PRAWEJ krawędzi, więc stretch dawał szerokość `parentW - 200` (600 na oknie 800), nie 200. Fix: presety pinują tylko krawędź (`{0, top, -1, bottom}` / `{-1, top, 0, bottom}`), szerokość pochodzi z oryginalnego rozmiaru elementu (wzór jak `topBar`/`bottomBar`); parametr `width` zostaje dla kompatybilności API (patrz komentarz w anchor.hpp). C API (`sdlgui_anchor_left_sidebar`) dziedziczy fix automatycznie — zaktualizowane asercje w `test_sdl_gui_c_api.cpp`.
-- **UBSan** wyłapał też błąd w teście (wywołanie na `unique_ptr` po `std::move`) — "member call on null pointer".
-- Efekt: 43/43 testów (było 42), 47/47 examples, release OK. Zmienione: `src/anchor.hpp`, `src/gui.cpp`, `tests/test_anchor.cpp` (nowy), `tests/test_sdl_gui_c_api.cpp`, `AGENTS.md` (ten wpis)
+- **Nowy test**: `tests/test_anchor.cpp` (4 case'y, 47 asercji) —
 
 ### Test runner równoległy + ukryte okna + brakujące testy (2026-08-02)
 - **Problem**: `./nob test` uruchamiał 33 binarki sekwencyjnie (~160 s; każdy test ~2-4 s startu SDL/ASAN) i zalewał konsolę logami.
-- **Parallel runner**: `run_tests()` w nob.c przepisany na dynamiczną kolejkę — max `min(16, nprocs)` równoległych procesów (`NOB_TEST_JOBS=<n>` nadpisuje), gdy test się kończy od razu startuje następny (`nob__proc_wait_async` + WNOHANG). Output każdego testu idzie do `output/test_logs/<nazwa>.log`; konsola dostaje `[INFO] Test X passed` / `[ERROR] Test X FAILED` + ogon logu przy porażce. Bugfix: nazwy ścieżek z `nob_temp_*` były nadpisywane przez arenę temp — kopiowane przez `strdup`.
-- **Ukryte okna**: nowa zmienna `SDL_GUI_HIDDEN=1` (ustawiana przez runnera) — `SDLApp` (oba konstruktory) i `Window` dodają `SDL_WINDOW_HIDDEN`. Okna już wcześniej były ukryte w `TestHelper`; teraz ukrywają się też WindowManager i konteksty C API (GPU działa na ukrytym oknie — przetestowane). Jedyne odstępstwo: pixel test kursora (`SDL_WarpMouseInWindow` wymaga zmapowanego okna na X11) jawnie woła `SDL_ShowWindow` przy tej zmiennej.
-- **Brakujące testy (9 nowych plików)**: `test_style.cpp` (mergeWith, ==, SDL_Color==), `test_arc_container.cpp` (contains/arc range/children pod kątem), `test_progress_bar.cpp` (clampy, range edge cases, render), `test_scroll_area.cpp` (wheel, clamp, scrollbars), `test_shader_panel.cpp` (CPU: shader no-op, uniforms, render), `test_text_editable.cpp` (selekcja, clipboard, delete/backspace, UTF-8, charIndexAtX przez podklasę testową), `test_json_parser.cpp` / `test_sgml_parser.cpp` / `test_layout_parser.cpp` (fixture'y `tests/data/` — `layout.json/xml`, `widgets.json`, `bad.*`; typy widgetów, style, zasoby, brakujące/złe pliki).
-- **Bugfix w ArcContainer**: `angleInRange()` degenerował pełne koło `[0,360]` do punktu 0° (po normalizacji 360→0), więc `contains()` odrzucał wszystko poza osią 0° — fix: `start == end` po normalizacji = pełne koło.
-- Efekt: 42/42 testów (było 33), ~32 s zamiast ~160 s (5x), 47/47 examples, `non_unity` OK, release OK. Zmienione: `nob.c`, `src/sdl_app.hpp`, `src/window.cpp`, `src/arc_container.cpp`, `tests/test_sdl_gui_c_api.cpp`, 9 nowych `tests/test_*.cpp`, `tests/data/` (5 fixture'ów), `AGENTS.md` (ten wpis)
 
 ### C API Phase 3 — RangeSlider, Cursor, ShaderPanel + kontekst GPU (2026-08-02)
-- **Luka**: C API (sdl_gui.h) nie opakowywał 3 widgetów istniejących w C++ — RangeSlider, Cursor, ShaderPanel (GPU). Splitter nie istnieje w tym checkout (osobna sesja).
-- **RangeSlider**: pełne opakowanie — create (z orientacją), get/set lower/upper (clamp `lower ≤ upper`), setRange/setMin/setMax/getMin/getMax, wheelStep (min 1), setOnChange.
-- **Cursor**: `sdlgui_cursor_create` instaluje kursor przez `GUIManager::setCursor` (dodany getter `getCursor()` — cursor nie jest w `m_elements`, tylko w `m_liveElements`); enum `sdlgui_cursor_state_t` (9 stanów 1:1 z CursorState), `set_texture`/`set_animated_texture` (sprite-sheet z fps), set/get state/offset/scale, `set_visible`/`is_visible` (osobne — `GUIElement::setVisible` nie jest wirtualne, Cursor::setVisible steruje SDL_HideCursor/ShowCursor), `set_on_state_changed` (nowy callback `sdlgui_cursor_state_callback_t`).
-- **ShaderPanel + GPU**: `GUIContext` dostał konstruktor GPU (`SDLApp` z `GPU_VULKAN`) + `getGPUDevice()`; nowe `sdlgui_create_gpu()` (zwraca NULL bez Vulkan) i `sdlgui_get_gpu_device()`. Na kontekście CPU ShaderPanel renderuje się jako zwykły panel, shader ignorowany (`set_shader` z NULL/0-size bezpiecznie no-op). `sdl_gui.h` dołącza teraz `<SDL3/SDL_gpu.h>`.
-- **Testy**: +4 case'y (RangeSlider — 9 sekcji w tym clampy/swap/callback; Cursor — 7 sekcji; ShaderPanel — 4 sekcje + render CPU; GPU context — soft test, pomija gdy brak Vulkan). 50/50 case'ów, 415 asercji (w tym pixel test renderowania kursora); pełny suite 33/33.
-- **Przykłady**: nowy `examples/c/10_range_slider_cursor.c` (pure C — **jeden kontekst**: GPU-first z fallbackiem na CPU; na systemach z Vulkanem RangeSlider+Cursor+ShaderPanel w jednym oknie); `examples/41_c_api_demo.cpp` rozszerzony o Phase 3 (RangeSlider/Cursor przez C API na widgetach C++).
-- **Bugfix przykłady (feedback użytkownika)**: kursor niewidoczny w `c_10` i `41_c_api_demo` — przyczyny: (a) `41` tworzył Cursor bez żadnej tekstury (systemowy kursor ukryty → brak kursora); (b) `c_10` tworzył DRUGIE okno GPU i puszczał tylko jego pętlę — okno z RangeSlider/kursorem nigdy się nie renderowało; (c) `assets/button2.png` nie istnieje (użyte w c_10). Fix: tekstury w obu przykładach (button1.png/button_bg.png), c_10 przepisany na jeden kontekst. Nowy `sdlgui_get_window()` w API (potrzebny do `SDL_WarpMouseInWindow`); pixel test `Cursor renders pixels` — warp myszy → render → odczyt piksela spod kursora (odczyt PRZED `RenderPresent` — po present backbuffer jest niezdefiniowany).
-- **Docs**: `docs/release/c_api.md` — nowe sekcje (GPU context, RangeSlider, Cursor, ShaderPanel), callback w tabeli Callbacki, nota o Cursor w ownership.
-- **Uwaga**: LeakSanitizer zgłasza wyciek ~50 KB w X11_VideoInit SDL3 przy tworzeniu kontekstu GPU (Vulkan) — zewnętrzny (SDL), nie nasz kod, nie zmienia exit code.
-- Efekt: 33/33 testów, 50/50 case'ów C API, 48/48 examples (w tym nowy C), release + C smoke test + standalone OK. Zmienione: `src/sdl_gui.h` (+~135 linii API, w tym sdlgui_get_window), `src/sdl_gui_c_api.cpp` (+~260 linii), `src/gui_context.hpp` (GPU ctor + getGPUDevice), `src/gui_manager.hpp` (getCursor), `tests/test_sdl_gui_c_api.cpp`, `examples/c/10_range_slider_cursor.c` (nowy), `examples/41_c_api_demo.cpp`, `docs/release/c_api.md`, `AGENTS.md` (ten wpis)
+
 
 ### Shared render cache — dedup per (style, state, size) (2026-08-02)
-- **Problem**: `GUIElement::m_cachedTexture` był per-elementowym render-targetem — 30 identycznych przycisków = 30 tekstur w VRAM, a każde najechanie myszą przeliczało teksturę od nowa dla każdego elementu z osobna.
-- **Fix**: cache renderowania przeniesiony do TextureManagera jako **współdzielony, niezmienny wpis** — `TextureManager::renderCache(uint64_t key, w, h, draw)` w osobnej mapie `m_renderCache`: hit → zwraca istniejący wpis bez rysowania, miss → render-once + wstaw. Wpisy nigdy nie są nadpisywane (bezpieczne współdzielenie), usuwane przez `pruneUnused()` (use_count==1).
-- **Klucz** — numeryczny FNV-1a 64-bit (zero alokacji, ~20 ns): typ + w×h + stan + pełny skomponowany styl (wszystkie pola z tagiem obecności) + sufiks widgetu. GUIElement trzyma `m_cacheKey` i przy dirty tylko robi lookup — zmiana stanu to zmiana klucza, nie re-render; 30 identycznych przycisków = 1 wpis Normal + 1 Hover + 1 Pressed (każdy wyrenderowany raz).
-- **Poprawność**: focus outline usunięty z `drawBackgroundAndBorder` (zatruwałby klucz — wpis sfokusowanego elementu wyciekłby do niefokusowanych) → rysowany jako overlay w `render()` po blicie cache (dla rotacji zostaje pieczony). Nowe wirtuale: `canShareRenderCache()` (domyślnie true — draw zależy tylko od stylu; opt-out: Checkbox, RadioButton, Slider, RangeSlider, ProgressBar, ComboBox, Cursor, AnimatedImage, TextEditable) i `getRenderCacheKeySuffix()` (Label: hash m_text+m_font_size). Rotacja (`m_rotation != 0`, piecze dzieci) → niesdzielona ścieżka jak dawniej.
-- **Sprzątanie**: `pruneUnused()` (wcześniej martwy) wołany z `GUIManager::update()` gdy `getRenderCacheSize() > 256` — stany Hover/Pressed żyją między najechaniami, porzucone wpisy znikają. Usunięty podwójny cache tekstu w Label (`m_cachedTextTexture`/`m_cachedTextContent`/`m_cachedTextColor`/`m_cachedFontSize`/`m_textTextureDirty` — nigdy nie trafiał, bo `draw()` wywołuje się raz na unikalny klucz widget-cache, a `createTextureFromText` jest sam kluczowany). `renderToCache()` przeniesiony do `protected` (brak zewnętrznych wywołań).
-- Efekt: 33/33 testy (nowy `tests/test_render_cache.cpp` — 4 sekcje: dedup identycznych, wspólny wpis Hover, oddzielny wpis dla innego stylu, bypass opt-out), 47/47 examples, `non_unity` OK. Zmienione: `src/texture_manager.hpp`/`.cpp` (renderCache, m_renderCache, prune/clear obu map), `src/gui.hpp`/`.cpp` (SharedTexture cache, klucz, focus overlay), 9 nagłówków widgetów (opt-out/sufiks), `src/gui_manager.cpp` (prune policy), `tests/test_render_cache.cpp` (nowy), `AGENTS.md` (ten wpis)
 
 ---
 
