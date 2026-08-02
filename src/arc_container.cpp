@@ -24,6 +24,11 @@ bool ArcContainer::angleInRange(float angle, float start, float end) {
     start = normalizeAngle(start);
     end = normalizeAngle(end);
     
+    // Degenerate range after normalization (e.g. [0, 360]) means full circle
+    if (start == end) {
+        return true;
+    }
+    
     if (start <= end) {
         return angle >= start && angle <= end;
     } else {

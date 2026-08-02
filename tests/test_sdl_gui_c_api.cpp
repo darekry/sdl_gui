@@ -1722,6 +1722,12 @@ TEST_CASE("C API - Cursor renders pixels", "[c_api][cursor][pixel]") {
     SDL_Window* win = sdlgui_get_window(gui);
     REQUIRE(win != nullptr);
 
+    /* ./nob test sets SDL_GUI_HIDDEN so windows don't flash; the mouse warp
+       below requires a mapped window, so show it explicitly. */
+    if (getenv("SDL_GUI_HIDDEN")) {
+        SDL_ShowWindow(win);
+    }
+
     const int mx = 50, my = 50;
     SDL_WarpMouseInWindow(win, (float)mx, (float)my);
 

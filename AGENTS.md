@@ -261,21 +261,17 @@ Zasoby muszą być dostępne przez `pkg-config sdl3 sdl3-image sdl3-ttf`. `PKG_C
 ## Testy
 
 - **Framework**: Catch2 (amalgamated: `lib/catch_amalgamated.hpp`)
-- **Helper**: `tests/test_helper.hpp/cpp` — headless SDL init, `createMouseEvent()`, `createKeyboardEvent()`
-- **Widgety testowane (18)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, Splitter, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor
+- **Helper**: `tests/test_helper.hpp/cpp` — headless SDL init (okno tworzone jako `SDL_WINDOW_HIDDEN`), `createMouseEvent()`, `createKeyboardEvent()`
+- **Uruchamianie**: `./nob test` uruchamia binarki testowe **równolegle** (dynamiczna kolejka, domyślnie `min(16, nprocs)` zadań; `NOB_TEST_JOBS=<n>` zmienia limit). Output każdego testu trafia do `output/test_logs/<nazwa>.log` — przy porażce wypisywany jest ogon logu. Okna SDL w testach są ukrywane przez zmienną `SDL_GUI_HIDDEN=1` (ustawianą przez runnera; respektują ją `SDLApp`, `Window` i `WindowManager`).
+- **Widgety testowane (23)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor, ArcContainer, ProgressBar, ScrollArea, ShaderPanel (CPU), TextEditable (bazowa klasa przez podklasę testową), Style
 - **Menedżery (4)**: FontManager, TextureManager, TimerManager, AnimationManager
 - **Systemy (5)**: GUIElement, GUIManager, Theme, Easing, UTF8
 - **Screen/Window (2)**: ScreenManager, WindowManager
-- **C API (1)**: test_sdl_gui_c_api (17 przypadków, Phase 0+1)
-- **C API (1)**: test_sdl_gui_c_api (36 przypadków, Phase 0+1+2, 306 asercji)
-- **C API (1)**: test_sdl_gui_c_api (40 przypadków, Phase 0+1+2, 316 asercji)
-- **C API (1)**: test_sdl_gui_c_api (45 przypadków, Phase 0+1+2+timers, 331 asercji)
-- **C API (1)**: test_sdl_gui_c_api (49 przypadków, Phase 0+1+2+3, 407 asercji)
-- **C API (1)**: test_sdl_gui_c_api (50 przypadków, Phase 0+1+2+3, 415 asercji; + pixel test potwierdzający renderowanie kursora)
-- **Brakujące testy**: ArcContainer, ProgressBar, ScrollArea, ShaderPanel, TextEditable, Style, parsery
-- **Znane bugi**: Combobox — heap-use-after-free (pre-existing); Label nie ma override `getComponentType()` → naprawione w (2026-07-14)
+- **Parsery (3)**: JsonParser, SGMLParser, LayoutParser (fixture'y w `tests/data/` — `layout.json`, `layout.xml`, `widgets.json`, `bad.*`)
+- **C API (1)**: test_sdl_gui_c_api (50 przypadków, Phase 0+1+2+3, 415 asercji; + pixel test potwierdzający renderowanie kursora — wymaga zmapowanego okna, więc przy `SDL_GUI_HIDDEN` jawnie woła `SDL_ShowWindow`)
+- **Znane bugi**: Combobox — heap-use-after-free (pre-existing)
 
-Testy integracyjne: 44 przykładów w `examples/` do manualnej weryfikacji wizualnej (w tym 9 przykłady C i 1 demo C/C++).
+Testy integracyjne: 47 przykładów w `examples/` do manualnej weryfikacji wizualnej (w tym 9 przykładów C i 1 demo C/C++).
 
 ## Powtarzalne zadania
 
@@ -332,6 +328,14 @@ Uruchom: `./nob test`
 -->
 
 Starsza historia zmian (przed 2026-07-31): [CHANGELOG.md](CHANGELOG.md).
+
+### Test runner równoległy + ukryte okna + brakujące testy (2026-08-02)
+- **Problem**: `./nob test` uruchamiał 33 binarki sekwencyjnie (~160 s; każdy test ~2-4 s startu SDL/ASAN) i zalewał konsolę logami.
+- **Parallel runner**: `run_tests()` w nob.c przepisany na dynamiczną kolejkę — max `min(16, nprocs)` równoległych procesów (`NOB_TEST_JOBS=<n>` nadpisuje), gdy test się kończy od razu startuje następny (`nob__proc_wait_async` + WNOHANG). Output każdego testu idzie do `output/test_logs/<nazwa>.log`; konsola dostaje `[INFO] Test X passed` / `[ERROR] Test X FAILED` + ogon logu przy porażce. Bugfix: nazwy ścieżek z `nob_temp_*` były nadpisywane przez arenę temp — kopiowane przez `strdup`.
+- **Ukryte okna**: nowa zmienna `SDL_GUI_HIDDEN=1` (ustawiana przez runnera) — `SDLApp` (oba konstruktory) i `Window` dodają `SDL_WINDOW_HIDDEN`. Okna już wcześniej były ukryte w `TestHelper`; teraz ukrywają się też WindowManager i konteksty C API (GPU działa na ukrytym oknie — przetestowane). Jedyne odstępstwo: pixel test kursora (`SDL_WarpMouseInWindow` wymaga zmapowanego okna na X11) jawnie woła `SDL_ShowWindow` przy tej zmiennej.
+- **Brakujące testy (9 nowych plików)**: `test_style.cpp` (mergeWith, ==, SDL_Color==), `test_arc_container.cpp` (contains/arc range/children pod kątem), `test_progress_bar.cpp` (clampy, range edge cases, render), `test_scroll_area.cpp` (wheel, clamp, scrollbars), `test_shader_panel.cpp` (CPU: shader no-op, uniforms, render), `test_text_editable.cpp` (selekcja, clipboard, delete/backspace, UTF-8, charIndexAtX przez podklasę testową), `test_json_parser.cpp` / `test_sgml_parser.cpp` / `test_layout_parser.cpp` (fixture'y `tests/data/` — `layout.json/xml`, `widgets.json`, `bad.*`; typy widgetów, style, zasoby, brakujące/złe pliki).
+- **Bugfix w ArcContainer**: `angleInRange()` degenerował pełne koło `[0,360]` do punktu 0° (po normalizacji 360→0), więc `contains()` odrzucał wszystko poza osią 0° — fix: `start == end` po normalizacji = pełne koło.
+- Efekt: 42/42 testów (było 33), ~32 s zamiast ~160 s (5x), 47/47 examples, `non_unity` OK, release OK. Zmienione: `nob.c`, `src/sdl_app.hpp`, `src/window.cpp`, `src/arc_container.cpp`, `tests/test_sdl_gui_c_api.cpp`, 9 nowych `tests/test_*.cpp`, `tests/data/` (5 fixture'ów), `AGENTS.md` (ten wpis)
 
 ### C API Phase 3 — RangeSlider, Cursor, ShaderPanel + kontekst GPU (2026-08-02)
 - **Luka**: C API (sdl_gui.h) nie opakowywał 3 widgetów istniejących w C++ — RangeSlider, Cursor, ShaderPanel (GPU). Splitter nie istnieje w tym checkout (osobna sesja).

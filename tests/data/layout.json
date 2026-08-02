@@ -1,0 +1,48 @@
+{
+  "resources": {
+    "fonts": [
+      {"path": "assets/fonts/DejaVuSansMono.ttf", "size": 16}
+    ]
+  },
+  "root": {
+    "type": "Panel",
+    "id": "main_panel",
+    "x": 10,
+    "y": 20,
+    "width": 400,
+    "height": 300,
+    "tooltip": "main panel",
+    "styles": [
+      {"state": "Normal", "backgroundColor": "#123456", "borderWidth": 2}
+    ],
+    "children": [
+      {
+        "type": "Button",
+        "id": "ok_btn",
+        "x": 50,
+        "y": 250,
+        "width": 100,
+        "height": 40,
+        "enabled": false
+      },
+      {
+        "type": "Label",
+        "id": "title_label",
+        "x": 10,
+        "y": 10,
+        "text": "Hello World",
+        "fontSize": 18
+      },
+      {
+        "type": "ProgressBar",
+        "x": 20,
+        "y": 100,
+        "width": 200,
+        "height": 30,
+        "value": 75,
+        "min": 0,
+        "max": 100
+      }
+    ]
+  }
+}

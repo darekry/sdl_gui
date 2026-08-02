@@ -1,0 +1,21 @@
+{
+  "root": {
+    "type": "Panel",
+    "x": 0, "y": 0, "width": 500, "height": 400,
+    "children": [
+      {"type": "Checkbox", "x": 10, "y": 10, "checked": true},
+      {"type": "RadioButton", "x": 10, "y": 40, "selected": true},
+      {"type": "ComboBox", "x": 10, "y": 70, "width": 150, "height": 30, "selectedIndex": 1,
+       "items": [{"text": "A"}, {"text": "B"}, {"text": "C"}]},
+      {"type": "ListView", "x": 10, "y": 110, "width": 200, "height": 150, "rowHeight": 25, "selectedIndex": 0,
+       "items": [{"text": "one"}, {"text": "two"}]},
+      {"type": "Slider", "x": 10, "y": 270, "width": 150, "height": 20, "min": 0, "max": 100, "value": 42},
+      {"type": "RangeSlider", "x": 10, "y": 300, "width": 150, "height": 20, "min": 0, "max": 100, "lower": 20, "upper": 80},
+      {"type": "TextInput", "x": 200, "y": 10, "width": 120, "height": 30, "text": "abc", "locked": true},
+      {"type": "ArcContainer", "x": 250, "y": 60, "radius": 50,
+       "children": [{"type": "Button", "width": 20, "height": 20, "angle": 0, "text": "B"}]},
+      {"type": "ScrollArea", "x": 250, "y": 180, "width": 200, "height": 150,
+       "contentWidth": 400, "contentHeight": 600}
+    ]
+  }
+}

@@ -745,36 +745,151 @@ static bool build_tests(bool release, const char *filter) {
     return true;
 }
 
+typedef struct {
+    const char *name;
+    const char *log_path;
+    Nob_Proc proc;
+} TestRun;
+
+typedef struct {
+    TestRun *items;
+    size_t count;
+    size_t capacity;
+} TestRuns;
+
+static size_t test_jobs(void) {
+    const char *env_jobs = getenv("NOB_TEST_JOBS");
+    if (env_jobs) {
+        int jobs = atoi(env_jobs);
+        if (jobs > 0) return (size_t)jobs;
+    }
+    size_t procs = (size_t)nob_nprocs();
+    return procs > 16 ? 16 : procs; // ASAN is memory-hungry; cap at 16
+}
+
+// Print the last `lines` lines of a file to stderr (for failing test logs).
+static void print_tail(const char *path, size_t lines) {
+    Nob_String_Builder sb = {0};
+    if (!nob_read_entire_file(path, &sb)) {
+        nob_log(ERROR, "  (could not read log: %s)", path);
+        return;
+    }
+    nob_sb_append_null(&sb);
+
+    size_t total = sb.count - 1; // without the NUL
+    size_t start = 0;
+    if (total > 0) {
+        size_t found = 0;
+        for (size_t i = total; i > 0; --i) {
+            if (sb.items[i - 1] == '\n') {
+                found++;
+                if (found >= lines) { start = i; break; }
+            }
+        }
+    }
+    fprintf(stderr, "%.*s\n", (int)(total - start), sb.items + start);
+    nob_sb_free(sb);
+}
+
+// Start one test process with stdout+stderr redirected to output/test_logs/<name>.log.
+// Name and log path are strdup'd into stable memory (nob_temp_* gets clobbered).
+static void start_test(TestRuns *runs, const char *logs_dir, const char *name,
+                       size_t *failed) {
+    const char *exe = nob_temp_sprintf("%s/%s", OUTPUT_DIR, name);
+    const char *log_path = nob_temp_sprintf("%s/%s.log", logs_dir, name);
+
+    Nob_Cmd cmd = {0};
+    nob_cmd_append(&cmd, "env",
+                   "ASAN_OPTIONS=detect_container_overflow=0:detect_leaks=0",
+                   "SDL_GUI_HIDDEN=1", exe);
+
+    Nob_Fd fdout = nob_fd_open_for_write(log_path);
+    if (fdout == NOB_INVALID_FD) {
+        nob_log(ERROR, "Could not open test log %s", log_path);
+        (*failed)++;
+        return;
+    }
+
+    Nob_Proc proc = nob_cmd_run_async_redirect_and_reset(&cmd,
+        (Nob_Cmd_Redirect){.fdout = &fdout, .fderr = &fdout});
+
+    if (proc == NOB_INVALID_PROC) {
+        nob_log(ERROR, "Could not start test %s", name);
+        (*failed)++;
+        return;
+    }
+
+    nob_da_append(runs, ((TestRun){
+        .name = strdup(name),
+        .log_path = strdup(log_path),
+        .proc = proc
+    }));
+}
+
 static bool run_tests(const char *filter) {
     Nob_File_Paths tests = {0};
     if (!collect_test_sources(&tests)) return false;
-    
-    size_t passed = 0, failed = 0, skipped = 0;
-    
+
+    const char *logs_dir = OUTPUT_DIR "/test_logs";
+    if (!nob_mkdir_if_not_exists(logs_dir)) return false;
+
+    // Collect the names we are going to run (filtered)
+    Nob_File_Paths pending = {0};
+    size_t skipped = 0;
     nob_da_foreach(const char*, src, &tests) {
         const char *basename = nob_path_name(*src);
         char *name = nob_temp_strdup(basename);
         char *dot = strrchr(name, '.');
         if (dot) *dot = '\0';
-        
+
         if (filter && !strstr(name, filter)) {
             skipped++;
             continue;
         }
-        
-        const char *exe = nob_temp_sprintf("%s/%s", OUTPUT_DIR, name);
-        
-        nob_log(INFO, "Running: %s", name);
-        Nob_Cmd cmd = {0};
-        nob_cmd_append(&cmd, "env", "ASAN_OPTIONS=detect_container_overflow=0:detect_leaks=0", exe);
-        if (!nob_cmd_run(&cmd, .dont_reset = true)) {
-            nob_log(ERROR, "Test %s failed", name);
-            failed++;
-        } else {
-            passed++;
+        nob_da_append(&pending, strdup(name));
+    }
+
+    const size_t jobs = test_jobs();
+    nob_log(INFO, "Running tests (jobs=%zu, logs in %s/)", jobs, logs_dir);
+
+    TestRuns runs = {0};
+    size_t passed = 0, failed = 0;
+    size_t next = 0;
+
+    // Dynamic work queue: keep up to `jobs` tests running; as soon as one
+    // finishes, start the next pending test.
+    while (next < pending.count || runs.count > 0) {
+        while (runs.count < jobs && next < pending.count) {
+            start_test(&runs, logs_dir, pending.items[next], &failed);
+            next++;
+        }
+
+        bool progressed = false;
+        size_t i = 0;
+        while (i < runs.count) {
+            int res = nob__proc_wait_async(runs.items[i].proc, 0);
+            if (res == 1 || res == -1) {
+                progressed = true;
+                if (res == -1) {
+                    failed++;
+                    nob_log(ERROR, "Test %s FAILED (log: %s)", runs.items[i].name, runs.items[i].log_path);
+                    print_tail(runs.items[i].log_path, 60);
+                } else {
+                    passed++;
+                    nob_log(INFO, "Test %s passed", runs.items[i].name);
+                }
+                runs.items[i] = runs.items[runs.count - 1];
+                runs.count--;
+            } else {
+                i++;
+            }
+        }
+
+        if (!progressed && runs.count > 0) {
+            usleep(5000); // all procs still running; avoid a busy spin
         }
     }
-    
+
     if (skipped > 0) {
         nob_log(INFO, "Tests: %zu passed, %zu failed, %zu skipped (of %zu)", passed, failed, skipped, tests.count);
     } else {

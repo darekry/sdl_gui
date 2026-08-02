@@ -11,6 +11,9 @@ Window::Window(const std::string& title, int width, int height,
     if (resizable) {
         windowFlags |= SDL_WINDOW_RESIZABLE;
     }
+    if (getenv("SDL_GUI_HIDDEN")) {
+        windowFlags |= SDL_WINDOW_HIDDEN;
+    }
     
     m_window = SDL_CreateWindow(title.c_str(), width, height, windowFlags);
     

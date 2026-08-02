@@ -42,6 +42,9 @@ public:
         if (resizable) {
             windowFlags |= SDL_WINDOW_RESIZABLE;
         }
+        if (getenv("SDL_GUI_HIDDEN")) {
+            windowFlags |= SDL_WINDOW_HIDDEN;
+        }
 
         m_window = SDL_CreateWindow(title, width, height, windowFlags);
         if (!m_window) {
@@ -90,6 +93,9 @@ public:
         SDL_WindowFlags windowFlags = 0;
         if (resizable) {
             windowFlags |= SDL_WINDOW_RESIZABLE;
+        }
+        if (getenv("SDL_GUI_HIDDEN")) {
+            windowFlags |= SDL_WINDOW_HIDDEN;
         }
 
         t0 = SDL_GetTicks();

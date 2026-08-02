@@ -1,0 +1,11 @@
+<Layout>
+  <Resources>
+    <Font path="assets/fonts/DejaVuSansMono.ttf" size="16" />
+  </Resources>
+  <Panel id="main_panel" x="10" y="20" width="400" height="300" tooltip="main panel">
+    <Button id="ok_btn" x="50" y="250" width="100" height="40" enabled="false" text="OK" />
+    <Label id="title_label" x="10" y="10" text="Hello World" fontSize="18" />
+    <ProgressBar x="20" y="100" width="200" height="30" value="75" min="0" max="100" />
+    <Style state="Normal" backgroundColor="#123456" borderWidth="2" />
+  </Panel>
+</Layout>
