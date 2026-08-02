@@ -265,13 +265,13 @@ TEST_CASE("C API - Anchor factories", "[c_api]") {
         sdlgui_anchor_t a = sdlgui_anchor_left_sidebar(200, 10, 20);
         REQUIRE(a.left == 0.0f);
         REQUIRE(a.top == 10.0f);
-        REQUIRE(a.right == 200.0f);
+        REQUIRE(a.right < 0);
         REQUIRE(a.bottom == 20.0f);
     }
 
     SECTION("right_sidebar") {
         sdlgui_anchor_t a = sdlgui_anchor_right_sidebar(200, 10, 20);
-        REQUIRE(a.left == 200.0f);
+        REQUIRE(a.left < 0);
         REQUIRE(a.top == 10.0f);
         REQUIRE(a.right == 0.0f);
         REQUIRE(a.bottom == 20.0f);

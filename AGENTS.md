@@ -265,7 +265,7 @@ Zasoby muszą być dostępne przez `pkg-config sdl3 sdl3-image sdl3-ttf`. `PKG_C
 - **Uruchamianie**: `./nob test` uruchamia binarki testowe **równolegle** (dynamiczna kolejka, domyślnie `min(16, nprocs)` zadań; `NOB_TEST_JOBS=<n>` zmienia limit). Output każdego testu trafia do `output/test_logs/<nazwa>.log` — przy porażce wypisywany jest ogon logu. Okna SDL w testach są ukrywane przez zmienną `SDL_GUI_HIDDEN=1` (ustawianą przez runnera; respektują ją `SDLApp`, `Window` i `WindowManager`).
 - **Widgety testowane (23)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor, ArcContainer, ProgressBar, ScrollArea, ShaderPanel (CPU), TextEditable (bazowa klasa przez podklasę testową), Style
 - **Menedżery (4)**: FontManager, TextureManager, TimerManager, AnimationManager
-- **Systemy (5)**: GUIElement, GUIManager, Theme, Easing, UTF8
+- **Systemy (6)**: GUIElement, GUIManager, Theme, Easing, UTF8, Anchor (presety, kodowanie 0-1/px, stretch, resize)
 - **Screen/Window (2)**: ScreenManager, WindowManager
 - **Parsery (3)**: JsonParser, SGMLParser, LayoutParser (fixture'y w `tests/data/` — `layout.json`, `layout.xml`, `widgets.json`, `bad.*`)
 - **C API (1)**: test_sdl_gui_c_api (50 przypadków, Phase 0+1+2+3, 415 asercji; + pixel test potwierdzający renderowanie kursora — wymaga zmapowanego okna, więc przy `SDL_GUI_HIDDEN` jawnie woła `SDL_ShowWindow`)
@@ -328,6 +328,13 @@ Uruchom: `./nob test`
 -->
 
 Starsza historia zmian (przed 2026-07-31): [CHANGELOG.md](CHANGELOG.md).
+
+### Testy anchorów + 2 realne bugi w systemie Anchor (2026-08-02)
+- **Nowy test**: `tests/test_anchor.cpp` (4 case'y, 47 asercji) — presety (topLeft/topRight/bottomRight/center/fill/topBar/bottomBar/leftSidebar/rightSidebar/horizontalStretch), kodowanie współrzędnych (0-1 = procenty, >1 = piksele, 0.5 = centrum), stretch przy obu krawędziach, re-aplikacja po `handleResize`, propagacja na dzieci (`updateLayout`).
+- **Bug 1 — off-by-one w `toPixels`** (src/gui.cpp:790): wartości >1.0 (piksele) były pomniejszane o 1 (`value - 1.0f`), więc `topLeft(10)` dawało 9px, `bottomBar(50)` 49px itd. — sprzeczne z dokumentacją (">1.0 = piksele") i komentarzami w przykładach. Fix: `static_cast<int>(value)` (dokładne 1.0 to nadal 100%).
+- **Bug 2 — odwrócone presety sidebarów** (src/anchor.hpp): `leftSidebar(200)` = `{left:0, right:200}` — a `right` w engine to offset od PRAWEJ krawędzi, więc stretch dawał szerokość `parentW - 200` (600 na oknie 800), nie 200. Fix: presety pinują tylko krawędź (`{0, top, -1, bottom}` / `{-1, top, 0, bottom}`), szerokość pochodzi z oryginalnego rozmiaru elementu (wzór jak `topBar`/`bottomBar`); parametr `width` zostaje dla kompatybilności API (patrz komentarz w anchor.hpp). C API (`sdlgui_anchor_left_sidebar`) dziedziczy fix automatycznie — zaktualizowane asercje w `test_sdl_gui_c_api.cpp`.
+- **UBSan** wyłapał też błąd w teście (wywołanie na `unique_ptr` po `std::move`) — "member call on null pointer".
+- Efekt: 43/43 testów (było 42), 47/47 examples, release OK. Zmienione: `src/anchor.hpp`, `src/gui.cpp`, `tests/test_anchor.cpp` (nowy), `tests/test_sdl_gui_c_api.cpp`, `AGENTS.md` (ten wpis)
 
 ### Test runner równoległy + ukryte okna + brakujące testy (2026-08-02)
 - **Problem**: `./nob test` uruchamiał 33 binarki sekwencyjnie (~160 s; każdy test ~2-4 s startu SDL/ASAN) i zalewał konsolę logami.

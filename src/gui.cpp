@@ -786,8 +786,8 @@ void GUIElement::applyAnchor(int parentWidth, int parentHeight) {
             // Percentage
             return static_cast<int>(static_cast<float>(isHorizontal ? parentWidth : parentHeight) * value);
         }
-        // Fixed pixels (subtract 1 to distinguish from percentages)
-        return static_cast<int>(value - 1.0f);
+        // Fixed pixels (>1.0; exact 1.0 is already handled as 100% percentage)
+        return static_cast<int>(value);
     };
     
     // Determine element size to use for positioning

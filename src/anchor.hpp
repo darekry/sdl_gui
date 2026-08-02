@@ -101,14 +101,20 @@ struct Anchor {
         return Anchor{leftMargin, height, rightMargin, -1};
     }
     
-    /** Left sidebar - full height, fixed width from left */
+    /** Left sidebar - full height, fixed width from left
+     *  Width comes from the element's original size (kept by the anchor engine),
+     *  the width parameter is accepted for API compatibility. */
     static Anchor leftSidebar(float width, float topMargin = 0, float bottomMargin = 0) {
-        return Anchor{0, topMargin, width, bottomMargin};
+        (void)width;
+        return Anchor{0, topMargin, -1, bottomMargin};
     }
     
-    /** Right sidebar - full height, fixed width from right */
+    /** Right sidebar - full height, fixed width from right
+     *  Width comes from the element's original size (kept by the anchor engine),
+     *  the width parameter is accepted for API compatibility. */
     static Anchor rightSidebar(float width, float topMargin = 0, float bottomMargin = 0) {
-        return Anchor{width, topMargin, 0, bottomMargin};
+        (void)width;
+        return Anchor{-1, topMargin, 0, bottomMargin};
     }
 };
 
