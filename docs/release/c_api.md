@@ -15,6 +15,8 @@ typedef void* sdlgui_element_t;  /* dowolny widget (GUIElement*) */
 | Funkcja | Opis |
 |---------|------|
 | `sdlgui_t sdlgui_create(const char* title, int width, int height, int resizable)` | Tworzy kontekst: inicjalizuje SDL, tworzy okno i renderer, nakłada domyślny motyw (Win9x). `resizable`: `0` = stały rozmiar, `1` = okno z możliwością zmiany rozmiaru. Zwraca `NULL` przy błędzie |
+| `sdlgui_t sdlgui_create_gpu(const char* title, int width, int height, int resizable)` | Tworzy kontekst z **rendererem GPU (Vulkan/SPIR-V)** — wymagany, aby `ShaderPanel` faktycznie uruchamiał shadery. Zwraca `NULL` przy błędzie (np. brak sterownika Vulkan) |
+| `SDL_GPUDevice* sdlgui_get_gpu_device(sdlgui_t gui)` | Urządzenie GPU kontekstu, lub `NULL` dla kontekstu CPU. Przydatne do budowy/kompilacji shaderów SPIR-V przed `sdlgui_shader_panel_set_shader()` |
 | `void sdlgui_destroy(sdlgui_t gui)` | Niszczy kontekst i zwalnia zasoby SDL. **Wszystkie uchwyty elementów stają się nieważne** |
 
 Po `sdlgui_create()` motywem domyślnym jest Win9x — można go zmienić w każdej
@@ -25,6 +27,7 @@ chwili (patrz niżej).
 | Funkcja | Opis |
 |---------|------|
 | `SDL_Renderer* sdlgui_get_renderer(sdlgui_t gui)` | Renderer kontekstu (do czyszczenia ekranu, `SDL_RenderPresent` itd.) |
+| `SDL_Window* sdlgui_get_window(sdlgui_t gui)` | Okno kontekstu (np. do `SDL_WarpMouseInWindow`, przechwytywania myszy) |
 | `bool sdlgui_process_event(sdlgui_t gui, const SDL_Event* e)` | Przekazuje zdarzenie SDL do GUI. **Zwraca `bool handled`** — `true` gdy zdarzenie zostało skonsumowane przez widgety (klik, wpisywanie tekstu, nawigacja Tab). Takiego zdarzenia aplikacja nie powinna już przetwarzać sama |
 | `void sdlgui_update(sdlgui_t gui)` | Aktualizuje timery, animacje i tooltipy. Wymagane w każdej klatce |
 | `void sdlgui_cleanup(sdlgui_t gui)` | Usuwa elementy oznaczone do usunięcia. Wymagane w każdej klatce |
@@ -374,6 +377,63 @@ typedef enum {
 | `void sdlgui_context_menu_hide(sdlgui_element_t e)` | Ukrywa |
 | `int sdlgui_context_menu_is_visible(sdlgui_element_t e)` | Czy widoczne |
 
+### RangeSlider
+
+Podwójny suwak zakresu — wybiera przedział `[lower, upper]` między `min` i
+`max`. Wartości są automatycznie clampowane (`lower ≤ upper`; podanie
+odwróconych wartości przy tworzeniu zamienia je miejscami).
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_element_t sdlgui_range_slider_create(sdlgui_t gui, sdlgui_element_t parent, int x, int y, int w, int h, int min_val, int max_val, int lower_val, int upper_val, sdlgui_orientation_t orientation)` | Tworzy suwak zakresu |
+| `int sdlgui_range_slider_get_lower_value(sdlgui_element_t e)` | Dolna wartość przedziału |
+| `void sdlgui_range_slider_set_lower_value(sdlgui_element_t e, int value)` | Ustawia dolną wartość (clamp do `≤ upper`) |
+| `int sdlgui_range_slider_get_upper_value(sdlgui_element_t e)` | Górna wartość przedziału |
+| `void sdlgui_range_slider_set_upper_value(sdlgui_element_t e, int value)` | Ustawia górną wartość (clamp do `≥ lower`) |
+| `void sdlgui_range_slider_set_range(sdlgui_element_t e, int min_val, int max_val)` | Zmienia zakres min/max |
+| `int sdlgui_range_slider_get_min(sdlgui_element_t e)` / `sdlgui_range_slider_set_min(sdlgui_element_t e, int min)` | Odczyt/zmiana minimum |
+| `int sdlgui_range_slider_get_max(sdlgui_element_t e)` / `sdlgui_range_slider_set_max(sdlgui_element_t e, int max)` | Odczyt/zmiana maksimum |
+| `void sdlgui_range_slider_set_wheel_step(sdlgui_element_t e, int step)` / `int sdlgui_range_slider_get_wheel_step(sdlgui_element_t e)` | Krok kółka myszy (min. 1) |
+| `void sdlgui_range_slider_set_on_change(sdlgui_element_t e, sdlgui_callback_t cb, void* userdata)` | Callback przy zmianie którejkolwiek wartości |
+
+### Cursor
+
+Niestandardowy kursor rysowany jako overlay (ukrywa systemowy kursor).
+Każdy stan ma własną teksturę (statyczną lub animowaną sprite-sheet).
+
+```c
+typedef enum {
+    SDLGUI_CURSOR_NORMAL, SDLGUI_CURSOR_HOVER, SDLGUI_CURSOR_PRESSED,
+    SDLGUI_CURSOR_DISABLED, SDLGUI_CURSOR_BUSY, SDLGUI_CURSOR_TEXT,
+    SDLGUI_CURSOR_CUSTOM1, SDLGUI_CURSOR_CUSTOM2, SDLGUI_CURSOR_CUSTOM3
+} sdlgui_cursor_state_t;
+```
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_element_t sdlgui_cursor_create(sdlgui_t gui)` | Tworzy kursor i instaluje go w GUI. Utworzenie kolejnego kursora **zastępuje i niszczy poprzedni** — stare uchwyty stają się nieważne |
+| `void sdlgui_cursor_set_texture(sdlgui_element_t e, sdlgui_cursor_state_t state, const char* path, int hotspot_x, int hotspot_y)` | Ustawia statyczną teksturę stanu (obsługuje embedded assets; hotspot = punkt kliknięcia, domyślnie 0,0) |
+| `void sdlgui_cursor_set_animated_texture(sdlgui_element_t e, sdlgui_cursor_state_t state, const char* path, int total_frames, int rows, float fps, int hotspot_x, int hotspot_y)` | Animowany sprite-sheet: `total_frames` klatek w `rows` wierszach (kolumny liczone automatycznie). `fps ≤ 0` = 12 fps. `total_frames ≤ 0` = tekstura statyczna |
+| `void sdlgui_cursor_set_state(sdlgui_element_t e, sdlgui_cursor_state_t state)` / `int sdlgui_cursor_get_state(sdlgui_element_t e)` | Zmiana/odczyt bieżącego stanu |
+| `void sdlgui_cursor_set_offset(sdlgui_element_t e, int offset_x, int offset_y)` / `void sdlgui_cursor_get_offset(sdlgui_element_t e, int* offset_x, int* offset_y)` | Przesunięcie rysowania od hotspotu |
+| `void sdlgui_cursor_set_scale(sdlgui_element_t e, float scale)` / `float sdlgui_cursor_get_scale(sdlgui_element_t e)` | Skala (min. 0.1) |
+| `void sdlgui_cursor_set_visible(sdlgui_element_t e, int visible)` / `int sdlgui_cursor_is_visible(sdlgui_element_t e)` | Widoczność (przy ukryciu przywracany jest systemowy kursor) |
+| `void sdlgui_cursor_set_on_state_changed(sdlgui_element_t e, sdlgui_cursor_state_callback_t cb, void* userdata)` | Callback przy zmianie stanu |
+
+### ShaderPanel (GPU)
+
+Panel renderujący swoją zawartość przez shader fragmentowy (SPIR-V,
+entry point `main`). Działa tylko na kontekście GPU (`sdlgui_create_gpu`);
+na kontekście CPU renderuje się jak zwykły panel, a shadery są ignorowane.
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_element_t sdlgui_shader_panel_create(sdlgui_t gui, sdlgui_element_t parent, int x, int y, int w, int h)` | Tworzy panel shaderowy |
+| `void sdlgui_shader_panel_set_shader(sdlgui_element_t e, const uint8_t* spirv_data, size_t spirv_size)` | Ustawia bytecode SPIR-V shadera fragmentowego (zastępuje poprzedni). `NULL`/puste dane są ignorowane |
+| `void sdlgui_shader_panel_set_shader_enabled(sdlgui_element_t e, int enabled)` / `int sdlgui_shader_panel_is_shader_enabled(sdlgui_element_t e)` | Włącza/wyłącza shader (bez usuwania) |
+| `void sdlgui_shader_panel_set_uniform_time(sdlgui_element_t e, float time)` | Uniform czasu (kanał x koloru wierzchołków) |
+| `void sdlgui_shader_panel_set_uniform_mouse(sdlgui_element_t e, float x, float y)` | Uniform pozycji myszy (kanały y/z) |
+
 ## Callbacki
 
 | Typ | Sygnatura | Używany przez |
@@ -386,6 +446,7 @@ typedef enum {
 | `sdlgui_timer_callback_t` | `void (*)(sdlgui_element_t element, void* userdata)` | Timery (`sdlgui_add_timer`) |
 | `sdlgui_anim_callback_t` | `void (*)(void* userdata)` | Pętle i zakończenia animacji |
 | `sdlgui_context_menu_callback_t` | `void (*)(void* userdata)` | Pozycje ContextMenu (bez elementu i indeksu) |
+| `sdlgui_cursor_state_callback_t` | `void (*)(sdlgui_element_t element, sdlgui_cursor_state_t state, void* userdata)` | Cursor — zmiana stanu |
 
 Wzorzec ustawiania: `sdlgui_<widget>_set_on_<event>(element, cb, userdata)` —
 `userdata` jest dowolnym wskaźnikiem przekazywanym z powrotem do callbacka
@@ -399,6 +460,9 @@ Wzorzec ustawiania: `sdlgui_<widget>_set_on_<event>(element, cb, userdata)` —
   `sdlgui_scroll_area_set_content` i
   `sdlgui_arc_container_add_child_at_angle` przenoszą element do nowego
   rodzica — po wywołaniu elementem zarządza rodzic.
+- **Cursor**: `sdlgui_cursor_create` instaluje kursor w GUI (własność
+  GUIManagera, nie jest top-level w `m_elements`). Kolejne
+  `sdlgui_cursor_create` zastępuje i niszczy poprzedni.
 - Uchwyt elementu jest surowym wskaźnikiem. Staje się **dangling** po:
   `sdlgui_element_mark_for_deletion()` + `sdlgui_cleanup()`, po
   `sdlgui_destroy()` oraz po zniszczeniu rodzica.

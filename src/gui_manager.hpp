@@ -114,6 +114,7 @@ public:
     void focusNextElement(bool forward);
 
     void setCursor(std::unique_ptr<Cursor> new_cursor);
+    [[nodiscard]] Cursor* getCursor() const { return cursor.get(); }
     
     bool isElementAlive(GUIElement* element) const;
     void registerElement(GUIElement* element);

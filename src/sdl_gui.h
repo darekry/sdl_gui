@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stddef.h>      /* size_t */
 #include <SDL3/SDL.h>    /* SDL_Color, SDL_Event, SDL_Renderer */
+#include <SDL3/SDL_gpu.h> /* SDL_GPUDevice */
 
 #ifdef __cplusplus
 extern "C" {
@@ -134,6 +135,7 @@ void     sdlgui_destroy(sdlgui_t gui);
    ═══════════════════════════════════════════════════════════════ */
 
 SDL_Renderer*  sdlgui_get_renderer(sdlgui_t gui);
+SDL_Window*    sdlgui_get_window(sdlgui_t gui);
 bool           sdlgui_process_event(sdlgui_t gui, const SDL_Event* e);
 void           sdlgui_update(sdlgui_t gui);
 void           sdlgui_cleanup(sdlgui_t gui);
@@ -587,6 +589,141 @@ void             sdlgui_context_menu_clear_items(sdlgui_element_t e);
 void             sdlgui_context_menu_show_at(sdlgui_element_t e, int x, int y);
 void             sdlgui_context_menu_hide(sdlgui_element_t e);
 int              sdlgui_context_menu_is_visible(sdlgui_element_t e);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 3: GPU context (Vulkan + SDL_CreateGPURenderer)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/*
+ * Create a GUI context with a GPU renderer (Vulkan/SPIR-V).
+ * Required for ShaderPanel to actually run shaders.
+ * Returns NULL on failure (e.g. no Vulkan driver).
+ */
+sdlgui_t       sdlgui_create_gpu(const char* title, int width, int height, int resizable);
+
+/*
+ * Returns the underlying SDL_GPUDevice, or NULL for a CPU context.
+ * Usable to build/validate SPIR-V shaders before sdlgui_shader_panel_set_shader().
+ */
+SDL_GPUDevice* sdlgui_get_gpu_device(sdlgui_t gui);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 3: RangeSlider
+   ═══════════════════════════════════════════════════════════════════ */
+
+/*
+ * Dual-thumb slider: selects a [lower, upper] value range.
+ * lower_val and upper_val are clamped to [min_val, max_val]
+ * (lower_val > upper_val swaps them).
+ */
+sdlgui_element_t sdlgui_range_slider_create(sdlgui_t gui, sdlgui_element_t parent,
+                                             int x, int y, int w, int h,
+                                             int min_val, int max_val,
+                                             int lower_val, int upper_val,
+                                             sdlgui_orientation_t orientation);
+int              sdlgui_range_slider_get_lower_value(sdlgui_element_t e);
+void             sdlgui_range_slider_set_lower_value(sdlgui_element_t e, int value);
+int              sdlgui_range_slider_get_upper_value(sdlgui_element_t e);
+void             sdlgui_range_slider_set_upper_value(sdlgui_element_t e, int value);
+void             sdlgui_range_slider_set_range(sdlgui_element_t e, int min_val, int max_val);
+int              sdlgui_range_slider_get_min(sdlgui_element_t e);
+int              sdlgui_range_slider_get_max(sdlgui_element_t e);
+void             sdlgui_range_slider_set_min(sdlgui_element_t e, int min);
+void             sdlgui_range_slider_set_max(sdlgui_element_t e, int max);
+void             sdlgui_range_slider_set_wheel_step(sdlgui_element_t e, int step);
+int              sdlgui_range_slider_get_wheel_step(sdlgui_element_t e);
+void             sdlgui_range_slider_set_on_change(sdlgui_element_t e,
+                                                   sdlgui_callback_t cb, void* userdata);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 3: Cursor
+   ═══════════════════════════════════════════════════════════════════ */
+
+typedef enum {
+    SDLGUI_CURSOR_NORMAL   = 0,
+    SDLGUI_CURSOR_HOVER    = 1,
+    SDLGUI_CURSOR_PRESSED  = 2,
+    SDLGUI_CURSOR_DISABLED = 3,
+    SDLGUI_CURSOR_BUSY     = 4,
+    SDLGUI_CURSOR_TEXT     = 5,
+    SDLGUI_CURSOR_CUSTOM1  = 6,
+    SDLGUI_CURSOR_CUSTOM2  = 7,
+    SDLGUI_CURSOR_CUSTOM3  = 8
+} sdlgui_cursor_state_t;
+
+/*
+ * Cursor state callback: state is the new cursor state.
+ */
+typedef void (*sdlgui_cursor_state_callback_t)(sdlgui_element_t element,
+                                               sdlgui_cursor_state_t state,
+                                               void* userdata);
+
+/*
+ * Create a custom cursor overlay and install it on the GUI.
+ * The system cursor is hidden while a custom cursor is installed.
+ * Creating another cursor replaces (and destroys) the previous one —
+ * old handles become invalid.
+ * Returns the cursor element handle (top-level, owned by the GUI).
+ */
+sdlgui_element_t sdlgui_cursor_create(sdlgui_t gui);
+
+/*
+ * Set the texture for a given cursor state. path is loaded via
+ * TextureManager (embedded assets supported). hotspot_x/y is the
+ * click point inside the texture (default 0,0 = top-left).
+ */
+void sdlgui_cursor_set_texture(sdlgui_element_t e, sdlgui_cursor_state_t state,
+                               const char* path, int hotspot_x, int hotspot_y);
+
+/*
+ * Set an animated sprite-sheet cursor for a state.
+ * total_frames frames laid out in `rows` rows (columns are computed).
+ * fps controls animation speed (default 12 if <= 0).
+ * If total_frames <= 0, falls back to a static texture.
+ */
+void sdlgui_cursor_set_animated_texture(sdlgui_element_t e, sdlgui_cursor_state_t state,
+                                        const char* path, int total_frames, int rows,
+                                        float fps, int hotspot_x, int hotspot_y);
+
+void  sdlgui_cursor_set_state(sdlgui_element_t e, sdlgui_cursor_state_t state);
+int   sdlgui_cursor_get_state(sdlgui_element_t e);
+void  sdlgui_cursor_set_offset(sdlgui_element_t e, int offset_x, int offset_y);
+void  sdlgui_cursor_get_offset(sdlgui_element_t e, int* offset_x, int* offset_y);
+void  sdlgui_cursor_set_scale(sdlgui_element_t e, float scale);
+float sdlgui_cursor_get_scale(sdlgui_element_t e);
+void  sdlgui_cursor_set_visible(sdlgui_element_t e, int visible);
+int   sdlgui_cursor_is_visible(sdlgui_element_t e);
+void  sdlgui_cursor_set_on_state_changed(sdlgui_element_t e,
+                                         sdlgui_cursor_state_callback_t cb, void* userdata);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 3: ShaderPanel (GPU)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/*
+ * Panel that renders its content through a fragment shader.
+ * Requires a GPU context (sdlgui_create_gpu). On a CPU context the
+ * panel still renders (as a plain panel), but shaders are ignored.
+ */
+sdlgui_element_t sdlgui_shader_panel_create(sdlgui_t gui, sdlgui_element_t parent,
+                                             int x, int y, int w, int h);
+
+/*
+ * Upload SPIR-V fragment shader bytecode. Entry point must be "main".
+ * Replaces any previously set shader. Has no effect on CPU contexts.
+ */
+void sdlgui_shader_panel_set_shader(sdlgui_element_t e,
+                                    const uint8_t* spirv_data, size_t spirv_size);
+
+void sdlgui_shader_panel_set_shader_enabled(sdlgui_element_t e, int enabled);
+int  sdlgui_shader_panel_is_shader_enabled(sdlgui_element_t e);
+
+/*
+ * Uniforms passed to the shader as vertex colors:
+ * time (x channel), mouse (y/z channels).
+ */
+void sdlgui_shader_panel_set_uniform_time(sdlgui_element_t e, float time);
+void sdlgui_shader_panel_set_uniform_mouse(sdlgui_element_t e, float x, float y);
 
 #ifdef __cplusplus
 }

@@ -20,6 +20,9 @@
 #include "arc_container.hpp"
 #include "tab_control.hpp"
 #include "context_menu.hpp"
+#include "range_slider.hpp"
+#include "cursor.hpp"
+#include "shader_panel.hpp"
 
 #include "sdl_gui.h"
 
@@ -98,6 +101,20 @@ void sdlgui_destroy(sdlgui_t gui) {
     delete unwrap_ctx(gui);
 }
 
+sdlgui_t sdlgui_create_gpu(const char* title, int width, int height, int resizable) {
+    try {
+        auto* ctx = new CContext(title, width, height, resizable != 0, GPU_VULKAN);
+        return ctx;
+    } catch (...) {
+        return nullptr;
+    }
+}
+
+SDL_GPUDevice* sdlgui_get_gpu_device(sdlgui_t gui) {
+    auto* ctx = unwrap_ctx(gui);
+    return ctx->getGPUDevice();
+}
+
 /* ═══════════════════════════════════════════════════════════
    Core loop API
    ═══════════════════════════════════════════════════════════ */
@@ -105,6 +122,11 @@ void sdlgui_destroy(sdlgui_t gui) {
 SDL_Renderer* sdlgui_get_renderer(sdlgui_t gui) {
     auto* ctx = unwrap_ctx(gui);
     return ctx->getRenderer();
+}
+
+SDL_Window* sdlgui_get_window(sdlgui_t gui) {
+    auto* ctx = unwrap_ctx(gui);
+    return ctx->getWindow();
 }
 
 bool sdlgui_process_event(sdlgui_t gui, const SDL_Event* e) {
@@ -1115,6 +1137,209 @@ void sdlgui_context_menu_hide(sdlgui_element_t e) {
 
 int sdlgui_context_menu_is_visible(sdlgui_element_t e) {
     return static_cast<ContextMenu*>(unwrap_elem(e))->isVisible() ? 1 : 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 3: RangeSlider
+   ═══════════════════════════════════════════════════════════════════ */
+
+sdlgui_element_t sdlgui_range_slider_create(sdlgui_t gui, sdlgui_element_t parent,
+                                             int x, int y, int w, int h,
+                                             int min_val, int max_val,
+                                             int lower_val, int upper_val,
+                                             sdlgui_orientation_t orientation) {
+    auto* ctx = unwrap_ctx(gui);
+    Orientation orient = (orientation == SDLGUI_ORIENTATION_VERTICAL)
+                         ? Orientation::Vertical
+                         : Orientation::Horizontal;
+    auto rs = std::make_unique<RangeSlider>(ctx->getGUIManager(), x, y, w, h,
+                                            min_val, max_val, lower_val, upper_val, orient);
+    return add_element(ctx, parent, std::move(rs));
+}
+
+int sdlgui_range_slider_get_lower_value(sdlgui_element_t e) {
+    return static_cast<RangeSlider*>(unwrap_elem(e))->getLowerValue();
+}
+
+void sdlgui_range_slider_set_lower_value(sdlgui_element_t e, int value) {
+    static_cast<RangeSlider*>(unwrap_elem(e))->setLowerValue(value);
+}
+
+int sdlgui_range_slider_get_upper_value(sdlgui_element_t e) {
+    return static_cast<RangeSlider*>(unwrap_elem(e))->getUpperValue();
+}
+
+void sdlgui_range_slider_set_upper_value(sdlgui_element_t e, int value) {
+    static_cast<RangeSlider*>(unwrap_elem(e))->setUpperValue(value);
+}
+
+void sdlgui_range_slider_set_range(sdlgui_element_t e, int min_val, int max_val) {
+    static_cast<RangeSlider*>(unwrap_elem(e))->setRange(min_val, max_val);
+}
+
+int sdlgui_range_slider_get_min(sdlgui_element_t e) {
+    return static_cast<RangeSlider*>(unwrap_elem(e))->getMin();
+}
+
+int sdlgui_range_slider_get_max(sdlgui_element_t e) {
+    return static_cast<RangeSlider*>(unwrap_elem(e))->getMax();
+}
+
+void sdlgui_range_slider_set_min(sdlgui_element_t e, int min) {
+    static_cast<RangeSlider*>(unwrap_elem(e))->setMin(min);
+}
+
+void sdlgui_range_slider_set_max(sdlgui_element_t e, int max) {
+    static_cast<RangeSlider*>(unwrap_elem(e))->setMax(max);
+}
+
+void sdlgui_range_slider_set_wheel_step(sdlgui_element_t e, int step) {
+    static_cast<RangeSlider*>(unwrap_elem(e))->setWheelStep(step);
+}
+
+int sdlgui_range_slider_get_wheel_step(sdlgui_element_t e) {
+    return static_cast<RangeSlider*>(unwrap_elem(e))->getWheelStep();
+}
+
+void sdlgui_range_slider_set_on_change(sdlgui_element_t e,
+                                       sdlgui_callback_t cb, void* userdata) {
+    auto* rs = static_cast<RangeSlider*>(unwrap_elem(e));
+    rs->setOnChangeCallback([cb, userdata](GUIElement* elem) {
+        if (cb) cb(wrap_elem(elem), userdata);
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 3: Cursor
+   ═══════════════════════════════════════════════════════════════════ */
+
+static CursorState convert_cursor_state(sdlgui_cursor_state_t s) {
+    switch (s) {
+        case SDLGUI_CURSOR_NORMAL:   return CursorState::Normal;
+        case SDLGUI_CURSOR_HOVER:    return CursorState::Hover;
+        case SDLGUI_CURSOR_PRESSED:  return CursorState::Pressed;
+        case SDLGUI_CURSOR_DISABLED: return CursorState::Disabled;
+        case SDLGUI_CURSOR_BUSY:     return CursorState::Busy;
+        case SDLGUI_CURSOR_TEXT:     return CursorState::Text;
+        case SDLGUI_CURSOR_CUSTOM1:  return CursorState::Custom1;
+        case SDLGUI_CURSOR_CUSTOM2:  return CursorState::Custom2;
+        case SDLGUI_CURSOR_CUSTOM3:  return CursorState::Custom3;
+    }
+    return CursorState::Normal;
+}
+
+static sdlgui_cursor_state_t convert_cursor_state_back(CursorState s) {
+    switch (s) {
+        case CursorState::Normal:   return SDLGUI_CURSOR_NORMAL;
+        case CursorState::Hover:    return SDLGUI_CURSOR_HOVER;
+        case CursorState::Pressed:  return SDLGUI_CURSOR_PRESSED;
+        case CursorState::Disabled: return SDLGUI_CURSOR_DISABLED;
+        case CursorState::Busy:     return SDLGUI_CURSOR_BUSY;
+        case CursorState::Text:     return SDLGUI_CURSOR_TEXT;
+        case CursorState::Custom1:  return SDLGUI_CURSOR_CUSTOM1;
+        case CursorState::Custom2:  return SDLGUI_CURSOR_CUSTOM2;
+        case CursorState::Custom3:  return SDLGUI_CURSOR_CUSTOM3;
+    }
+    return SDLGUI_CURSOR_NORMAL;
+}
+
+sdlgui_element_t sdlgui_cursor_create(sdlgui_t gui) {
+    auto* ctx = unwrap_ctx(gui);
+    auto cursor = std::make_unique<Cursor>(ctx->getGUIManager());
+    Cursor* raw = cursor.get();
+    ctx->getGUIManager().setCursor(std::move(cursor));
+    return wrap_elem(raw);
+}
+
+void sdlgui_cursor_set_texture(sdlgui_element_t e, sdlgui_cursor_state_t state,
+                               const char* path, int hotspot_x, int hotspot_y) {
+    static_cast<Cursor*>(unwrap_elem(e))->setCursorTexture(
+        convert_cursor_state(state), path ? path : "", hotspot_x, hotspot_y);
+}
+
+void sdlgui_cursor_set_animated_texture(sdlgui_element_t e, sdlgui_cursor_state_t state,
+                                        const char* path, int total_frames, int rows,
+                                        float fps, int hotspot_x, int hotspot_y) {
+    static_cast<Cursor*>(unwrap_elem(e))->setAnimatedCursor(
+        convert_cursor_state(state), path ? path : "", total_frames, rows, fps, hotspot_x, hotspot_y);
+}
+
+void sdlgui_cursor_set_state(sdlgui_element_t e, sdlgui_cursor_state_t state) {
+    static_cast<Cursor*>(unwrap_elem(e))->setState(convert_cursor_state(state));
+}
+
+int sdlgui_cursor_get_state(sdlgui_element_t e) {
+    return static_cast<int>(convert_cursor_state_back(static_cast<Cursor*>(unwrap_elem(e))->getState()));
+}
+
+void sdlgui_cursor_set_offset(sdlgui_element_t e, int offset_x, int offset_y) {
+    static_cast<Cursor*>(unwrap_elem(e))->setOffset(offset_x, offset_y);
+}
+
+void sdlgui_cursor_get_offset(sdlgui_element_t e, int* offset_x, int* offset_y) {
+    int x = 0, y = 0;
+    static_cast<Cursor*>(unwrap_elem(e))->getOffset(x, y);
+    if (offset_x) *offset_x = x;
+    if (offset_y) *offset_y = y;
+}
+
+void sdlgui_cursor_set_scale(sdlgui_element_t e, float scale) {
+    static_cast<Cursor*>(unwrap_elem(e))->setScale(scale);
+}
+
+float sdlgui_cursor_get_scale(sdlgui_element_t e) {
+    return static_cast<Cursor*>(unwrap_elem(e))->getScale();
+}
+
+void sdlgui_cursor_set_visible(sdlgui_element_t e, int visible) {
+    static_cast<Cursor*>(unwrap_elem(e))->setVisible(visible != 0);
+}
+
+int sdlgui_cursor_is_visible(sdlgui_element_t e) {
+    return static_cast<Cursor*>(unwrap_elem(e))->isVisible() ? 1 : 0;
+}
+
+void sdlgui_cursor_set_on_state_changed(sdlgui_element_t e,
+                                        sdlgui_cursor_state_callback_t cb, void* userdata) {
+    auto* cursor = static_cast<Cursor*>(unwrap_elem(e));
+    cursor->setOnStateChanged([cb, userdata, cursor](CursorState state) {
+        if (cb) cb(wrap_elem(cursor), convert_cursor_state_back(state), userdata);
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 3: ShaderPanel
+   ═══════════════════════════════════════════════════════════════════ */
+
+sdlgui_element_t sdlgui_shader_panel_create(sdlgui_t gui, sdlgui_element_t parent,
+                                             int x, int y, int w, int h) {
+    auto* ctx = unwrap_ctx(gui);
+    auto sp = std::make_unique<ShaderPanel>(ctx->getGUIManager(), x, y, w, h);
+    return add_element(ctx, parent, std::move(sp));
+}
+
+void sdlgui_shader_panel_set_shader(sdlgui_element_t e,
+                                    const uint8_t* spirv_data, size_t spirv_size) {
+    if (!spirv_data || spirv_size == 0) {
+        return;
+    }
+    static_cast<ShaderPanel*>(unwrap_elem(e))->setShader(spirv_data, spirv_size);
+}
+
+void sdlgui_shader_panel_set_shader_enabled(sdlgui_element_t e, int enabled) {
+    static_cast<ShaderPanel*>(unwrap_elem(e))->setShaderEnabled(enabled != 0);
+}
+
+int sdlgui_shader_panel_is_shader_enabled(sdlgui_element_t e) {
+    return static_cast<ShaderPanel*>(unwrap_elem(e))->isShaderEnabled() ? 1 : 0;
+}
+
+void sdlgui_shader_panel_set_uniform_time(sdlgui_element_t e, float time) {
+    static_cast<ShaderPanel*>(unwrap_elem(e))->setUniformTime(time);
+}
+
+void sdlgui_shader_panel_set_uniform_mouse(sdlgui_element_t e, float x, float y) {
+    static_cast<ShaderPanel*>(unwrap_elem(e))->setUniformMouse(x, y);
 }
 
 } // extern "C"

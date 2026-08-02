@@ -1487,3 +1487,322 @@ TEST_CASE("C API - animate_float with easing", "[c_api][anim]") {
 
     sdlgui_destroy(gui);
 }
+
+/* ════════════════════════════════════════════════════
+   Phase 3: RangeSlider
+   ════════════════════════════════════════════════════ */
+
+TEST_CASE("C API - RangeSlider", "[c_api][range_slider]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    SECTION("create horizontal") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 200, 40,
+                                                          0, 100, 25, 75,
+                                                          SDLGUI_ORIENTATION_HORIZONTAL);
+        REQUIRE(rs != nullptr);
+        REQUIRE(std::strcmp(sdlgui_element_get_type(rs), "RangeSlider") == 0);
+        REQUIRE(sdlgui_range_slider_get_lower_value(rs) == 25);
+        REQUIRE(sdlgui_range_slider_get_upper_value(rs) == 75);
+    }
+
+    SECTION("create vertical") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 40, 200,
+                                                          0, 100, 25, 75,
+                                                          SDLGUI_ORIENTATION_VERTICAL);
+        REQUIRE(rs != nullptr);
+    }
+
+    SECTION("values clamped to range") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 200, 40,
+                                                          -50, 50, -100, 100,
+                                                          SDLGUI_ORIENTATION_HORIZONTAL);
+        REQUIRE(sdlgui_range_slider_get_min(rs) == -50);
+        REQUIRE(sdlgui_range_slider_get_max(rs) == 50);
+        REQUIRE(sdlgui_range_slider_get_lower_value(rs) == -50);
+        REQUIRE(sdlgui_range_slider_get_upper_value(rs) == 50);
+    }
+
+    SECTION("swapped values are normalized") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 200, 40,
+                                                          0, 100, 80, 20,
+                                                          SDLGUI_ORIENTATION_HORIZONTAL);
+        REQUIRE(sdlgui_range_slider_get_lower_value(rs) == 20);
+        REQUIRE(sdlgui_range_slider_get_upper_value(rs) == 80);
+    }
+
+    SECTION("set_lower_value and set_upper_value") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 200, 40,
+                                                          0, 100, 25, 75,
+                                                          SDLGUI_ORIENTATION_HORIZONTAL);
+
+        sdlgui_range_slider_set_lower_value(rs, 40);
+        REQUIRE(sdlgui_range_slider_get_lower_value(rs) == 40);
+
+        sdlgui_range_slider_set_upper_value(rs, 60);
+        REQUIRE(sdlgui_range_slider_get_upper_value(rs) == 60);
+    }
+
+    SECTION("lower cannot exceed upper") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 200, 40,
+                                                          0, 100, 25, 75,
+                                                          SDLGUI_ORIENTATION_HORIZONTAL);
+
+        sdlgui_range_slider_set_lower_value(rs, 90);
+        REQUIRE(sdlgui_range_slider_get_lower_value(rs) == 75);
+
+        sdlgui_range_slider_set_upper_value(rs, 10); /* clamped up to lower value */
+        REQUIRE(sdlgui_range_slider_get_upper_value(rs) == 75);
+    }
+
+    SECTION("set_range") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 200, 40,
+                                                          0, 100, 25, 75,
+                                                          SDLGUI_ORIENTATION_HORIZONTAL);
+
+        sdlgui_range_slider_set_range(rs, 10, 90);
+        REQUIRE(sdlgui_range_slider_get_min(rs) == 10);
+        REQUIRE(sdlgui_range_slider_get_max(rs) == 90);
+    }
+
+    SECTION("set_min and set_max individually") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 200, 40,
+                                                          0, 100, 25, 75,
+                                                          SDLGUI_ORIENTATION_HORIZONTAL);
+
+        sdlgui_range_slider_set_min(rs, 20);
+        REQUIRE(sdlgui_range_slider_get_min(rs) == 20);
+
+        sdlgui_range_slider_set_max(rs, 80);
+        REQUIRE(sdlgui_range_slider_get_max(rs) == 80);
+    }
+
+    SECTION("wheel_step") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 200, 40,
+                                                          0, 100, 25, 75,
+                                                          SDLGUI_ORIENTATION_HORIZONTAL);
+
+        REQUIRE(sdlgui_range_slider_get_wheel_step(rs) == 1);
+        sdlgui_range_slider_set_wheel_step(rs, 5);
+        REQUIRE(sdlgui_range_slider_get_wheel_step(rs) == 5);
+        sdlgui_range_slider_set_wheel_step(rs, 0); /* clamped to 1 */
+        REQUIRE(sdlgui_range_slider_get_wheel_step(rs) == 1);
+    }
+
+    SECTION("change callback fires") {
+        sdlgui_element_t rs = sdlgui_range_slider_create(gui, nullptr, 10, 10, 200, 40,
+                                                          0, 100, 25, 75,
+                                                          SDLGUI_ORIENTATION_HORIZONTAL);
+
+        int called = 0;
+        sdlgui_range_slider_set_on_change(rs,
+            [](sdlgui_element_t elem, void* data) {
+                (void)elem;
+                *static_cast<int*>(data) = 1;
+            },
+            &called);
+
+        sdlgui_range_slider_set_lower_value(rs, 30);
+        REQUIRE(called == 1);
+
+        sdlgui_range_slider_set_lower_value(rs, 30); /* no change → no callback */
+        REQUIRE(called == 1);
+    }
+
+    sdlgui_destroy(gui);
+}
+
+/* ════════════════════════════════════════════════════
+   Phase 3: Cursor
+   ════════════════════════════════════════════════════ */
+
+TEST_CASE("C API - Cursor", "[c_api][cursor]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    SECTION("create") {
+        sdlgui_element_t cur = sdlgui_cursor_create(gui);
+        REQUIRE(cur != nullptr);
+        REQUIRE(std::strcmp(sdlgui_element_get_type(cur), "Cursor") == 0);
+    }
+
+    SECTION("set_state and get_state") {
+        sdlgui_element_t cur = sdlgui_cursor_create(gui);
+
+        REQUIRE(sdlgui_cursor_get_state(cur) == SDLGUI_CURSOR_NORMAL);
+        sdlgui_cursor_set_state(cur, SDLGUI_CURSOR_HOVER);
+        REQUIRE(sdlgui_cursor_get_state(cur) == SDLGUI_CURSOR_HOVER);
+        sdlgui_cursor_set_state(cur, SDLGUI_CURSOR_BUSY);
+        REQUIRE(sdlgui_cursor_get_state(cur) == SDLGUI_CURSOR_BUSY);
+        sdlgui_cursor_set_state(cur, SDLGUI_CURSOR_CUSTOM3);
+        REQUIRE(sdlgui_cursor_get_state(cur) == SDLGUI_CURSOR_CUSTOM3);
+    }
+
+    SECTION("offset") {
+        sdlgui_element_t cur = sdlgui_cursor_create(gui);
+
+        sdlgui_cursor_set_offset(cur, 5, -7);
+        int x = 0, y = 0;
+        sdlgui_cursor_get_offset(cur, &x, &y);
+        REQUIRE(x == 5);
+        REQUIRE(y == -7);
+    }
+
+    SECTION("scale") {
+        sdlgui_element_t cur = sdlgui_cursor_create(gui);
+
+        REQUIRE(sdlgui_cursor_get_scale(cur) == 1.0f);
+        sdlgui_cursor_set_scale(cur, 0.5f);
+        REQUIRE(sdlgui_cursor_get_scale(cur) == 0.5f);
+    }
+
+    SECTION("visible") {
+        sdlgui_element_t cur = sdlgui_cursor_create(gui);
+
+        REQUIRE(sdlgui_cursor_is_visible(cur) == 1);
+        sdlgui_cursor_set_visible(cur, 0);
+        REQUIRE(sdlgui_cursor_is_visible(cur) == 0);
+        sdlgui_cursor_set_visible(cur, 1);
+        REQUIRE(sdlgui_cursor_is_visible(cur) == 1);
+    }
+
+    SECTION("set_texture with missing file does not crash") {
+        sdlgui_element_t cur = sdlgui_cursor_create(gui);
+        sdlgui_cursor_set_texture(cur, SDLGUI_CURSOR_NORMAL, "assets/does_not_exist.png", 8, 8);
+        sdlgui_cursor_set_animated_texture(cur, SDLGUI_CURSOR_BUSY, "assets/does_not_exist.png",
+                                           4, 2, 8.0f, 16, 16);
+        REQUIRE(sdlgui_cursor_get_state(cur) == SDLGUI_CURSOR_NORMAL);
+    }
+
+    SECTION("state changed callback fires") {
+        sdlgui_element_t cur = sdlgui_cursor_create(gui);
+
+        int calls = 0;
+        sdlgui_cursor_state_t lastState = SDLGUI_CURSOR_NORMAL;
+        struct CBData {
+            int* calls;
+            sdlgui_cursor_state_t* last;
+        };
+        CBData data = {&calls, &lastState};
+
+        sdlgui_cursor_set_on_state_changed(cur,
+            [](sdlgui_element_t elem, sdlgui_cursor_state_t state, void* userdata) {
+                (void)elem;
+                CBData* d = static_cast<CBData*>(userdata);
+                *d->calls += 1;
+                *d->last = state;
+            },
+            &data);
+
+        sdlgui_cursor_set_state(cur, SDLGUI_CURSOR_TEXT);
+        REQUIRE(calls == 1);
+        REQUIRE(lastState == SDLGUI_CURSOR_TEXT);
+
+        sdlgui_cursor_set_state(cur, SDLGUI_CURSOR_TEXT); /* same state → no callback */
+        REQUIRE(calls == 1);
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - Cursor renders pixels", "[c_api][cursor][pixel]") {
+    /* End-to-end: texture load → renderOverlay → visible pixels. */
+    sdlgui_t gui = sdlgui_create("Test", 320, 240, 0);
+    REQUIRE(gui != nullptr);
+    SDL_Delay(10); /* let the window get mapped */
+
+    sdlgui_element_t cur = sdlgui_cursor_create(gui);
+    REQUIRE(cur != nullptr);
+    REQUIRE(sdlgui_cursor_is_visible(cur) == 1);
+
+    /* Asset exists on disk (tests run from repo root); 100x40, scaled to 50x20 */
+    sdlgui_cursor_set_texture(cur, SDLGUI_CURSOR_NORMAL, "assets/button1.png", 0, 0);
+    sdlgui_cursor_set_scale(cur, 0.5f);
+
+    SDL_Window* win = sdlgui_get_window(gui);
+    REQUIRE(win != nullptr);
+
+    const int mx = 50, my = 50;
+    SDL_WarpMouseInWindow(win, (float)mx, (float)my);
+
+    float gx = -1.0f, gy = -1.0f;
+    for (int i = 0; i < 100 && (int)gx != mx; ++i) {
+        SDL_PumpEvents();
+        SDL_GetMouseState(&gx, &gy);
+        if ((int)gx != mx) SDL_Delay(2);
+    }
+    REQUIRE((int)gx == mx); /* warp took effect */
+
+    SDL_Renderer* ren = sdlgui_get_renderer(gui);
+    SDL_SetRenderDrawColor(ren, 40, 42, 54, 255);
+    SDL_RenderClear(ren);
+    sdlgui_render(gui);
+
+    /* Read BEFORE Present: after Present the backbuffer is undefined. */
+    /* hotspot (0,0) → texture covers (50,50)-(100,70); probe (51,51) */
+    SDL_Rect r{mx + 1, my + 1, 1, 1};
+    SDL_Surface* surf = SDL_RenderReadPixels(ren, &r);
+    REQUIRE(surf != nullptr);
+    Uint8* p = (Uint8*)surf->pixels;
+    REQUIRE(p[3] > 200);                              /* opaque */
+    bool isBackground = (p[0] == 40 && p[1] == 42 && p[2] == 54);
+    REQUIRE_FALSE(isBackground);                      /* not background */
+    SDL_DestroySurface(surf);
+
+    sdlgui_destroy(gui);
+}
+
+/* ════════════════════════════════════════════════════
+   Phase 3: ShaderPanel
+   ════════════════════════════════════════════════════ */
+
+TEST_CASE("C API - ShaderPanel", "[c_api][shader_panel]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    sdlgui_element_t sp = sdlgui_shader_panel_create(gui, nullptr, 10, 10, 200, 100);
+    REQUIRE(sp != nullptr);
+    REQUIRE(std::strcmp(sdlgui_element_get_type(sp), "ShaderPanel") == 0);
+
+    SECTION("shader enabled toggles") {
+        REQUIRE(sdlgui_shader_panel_is_shader_enabled(sp) == 1);
+        sdlgui_shader_panel_set_shader_enabled(sp, 0);
+        REQUIRE(sdlgui_shader_panel_is_shader_enabled(sp) == 0);
+        sdlgui_shader_panel_set_shader_enabled(sp, 1);
+        REQUIRE(sdlgui_shader_panel_is_shader_enabled(sp) == 1);
+    }
+
+    SECTION("set_shader with NULL data is safe") {
+        sdlgui_shader_panel_set_shader(sp, nullptr, 0);
+        sdlgui_shader_panel_set_shader(sp, (const uint8_t*)"abc", 3); /* CPU ctx: ignored */
+    }
+
+    SECTION("uniforms") {
+        sdlgui_shader_panel_set_uniform_time(sp, 1.5f);
+        sdlgui_shader_panel_set_uniform_mouse(sp, 100.0f, 200.0f);
+    }
+
+    SECTION("render on CPU context") {
+        sdlgui_render(gui);
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - GPU context", "[c_api][gpu]") {
+    /* Soft test: GPU may be unavailable (headless CI, no Vulkan driver). */
+    sdlgui_t gpu = sdlgui_create_gpu("Test", 800, 600, 0);
+    if (!gpu) {
+        SUCCEED("GPU context not available on this system; skipping");
+        return;
+    }
+
+    REQUIRE(sdlgui_get_gpu_device(gpu) != nullptr);
+
+    sdlgui_element_t sp = sdlgui_shader_panel_create(gpu, nullptr, 10, 10, 200, 100);
+    REQUIRE(sp != nullptr);
+    sdlgui_shader_panel_set_uniform_time(sp, 0.5f);
+    sdlgui_render(gpu);
+
+    sdlgui_destroy(gpu);
+}

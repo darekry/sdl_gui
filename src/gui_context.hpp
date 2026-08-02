@@ -22,8 +22,18 @@ public:
         m_guiManager.setWindowSize(width, height);
     }
 
+    /* GPU context (Vulkan + SDL_CreateGPURenderer) — for ShaderPanel etc. */
+    GUIContext(const char* title, int width, int height, bool resizable, GPUBackend /*backend*/, bool gpuDebug = false)
+        : m_app(title, width, height, resizable, GPU_VULKAN, gpuDebug)
+        , m_guiManager(m_app.getRenderer())
+    {
+        m_guiManager.setTheme(Theme::createDefaultTheme());
+        m_guiManager.setWindowSize(width, height);
+    }
+
     [[nodiscard]] SDL_Renderer* getRenderer() const { return m_app.getRenderer(); }
     [[nodiscard]] SDL_Window* getWindow() const { return m_app.getWindow(); }
+    [[nodiscard]] SDL_GPUDevice* getGPUDevice() const { return m_app.getGPUDevice(); }
     [[nodiscard]] SDLApp& getApp() { return m_app; }
     [[nodiscard]] GUIManager& getGUIManager() { return m_guiManager; }
 
