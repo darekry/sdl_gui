@@ -51,8 +51,7 @@ public:
             static_cast<float>(m_lift_amount), m_anim_duration,
             Easing::easeOutQuad);
         m_current_anim_id = m_manager.getAnimationManager()->addAnimation(16, [this]() {
-            m_y = static_cast<int>(m_base_y - m_anim_y_offset);
-            markDirty();
+            setPosition(m_x, static_cast<int>(m_base_y - m_anim_y_offset));
         });
     }
 
@@ -93,13 +92,11 @@ public:
             if (currentlyHovered && !m_isHovered) {
                 m_isHovered = true;
                 setState(ElementState::Hover);
-                m_y = m_base_y - m_lift_amount;
-                markDirty();
+                setPosition(m_x, static_cast<int>(m_base_y - m_lift_amount));
             } else if (!currentlyHovered && m_isHovered) {
                 m_isHovered = false;
                 setState(ElementState::Normal);
-                m_y = m_base_y;
-                markDirty();
+                setPosition(m_x, static_cast<int>(m_base_y));
             }
         }
         GUIElement::handleEvent(event);
