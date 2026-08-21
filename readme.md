@@ -674,68 +674,88 @@ guiManager.setTheme(theme);
 
 ## Examples Index
 
-Examples are numbered by complexity — follow this order when learning the library.
+Examples are numbered by complexity — simplest first, full applications last.
+Follow this order when learning the library.
 
-### Basics (00–10)
+### Getting Started (00–02)
 | # | Example | Description |
 |---|---------|-------------|
 | 00 | `00_hello_world.cpp` | Minimal window with a label |
-| 01 | `01_panel.cpp` | Panel container with border styling |
-| 02 | `02_text_input.cpp` | TextInput single-line input |
-| 03 | `03_slider.cpp` | Slider value control with callback |
-| 04 | `04_checkbox.cpp` | Checkbox toggle control |
-| 05 | `05_radio_button.cpp` | RadioButton and RadioGroup |
-| 06 | `06_combobox.cpp` | ComboBox dropdown selection |
-| 07 | `07_paint.cpp` | Canvas freehand drawing |
-| 08 | `08_tooltip.cpp` | Tooltips on multiple widget types |
+| 01 | `01_run_basic.cpp` | Shortest possible app via `SDLApp::run()` |
+| 02 | `02_run_callback.cpp` | `SDLApp::run()` with custom event handling |
+
+### Basic Widgets (03–10)
+| 03 | `03_panel.cpp` | Panel container with border styling |
+| 04 | `04_text_input.cpp` | TextInput single-line input |
+| 05 | `05_slider.cpp` | Slider value control with callback |
+| 06 | `06_checkbox.cpp` | Checkbox toggle control |
+| 07 | `07_radio_button.cpp` | RadioButton and RadioGroup |
+| 08 | `08_combobox.cpp` | ComboBox dropdown selection |
 | 09 | `09_text_area.cpp` | TextArea multi-line input, font loading, clipboard |
-| 10 | `10_standalone.cpp` | Standalone app using combined header + static library |
+| 10 | `10_range_slider.cpp` | RangeSlider dual-handle range control |
 
-### Containers & Menus (11–15)
-| 11 | `11_tabs.cpp` | TabControl tabbed interface |
+### Interaction (11–14)
+| 11 | `11_tooltip.cpp` | Tooltips on multiple widget types |
 | 12 | `12_context_menu.cpp` | ContextMenu right-click menus |
-| 13 | `13_animation.cpp` | AnimationManager with easing functions |
-| 14 | `14_list_view.cpp` | ListView data list with selection |
-| 15 | `15_sprite_animator.cpp` | AnimatedImage with interactive playback controls |
+| 13 | `13_tabs.cpp` | TabControl tabbed interface |
+| 14 | `14_paint.cpp` | Canvas freehand drawing |
 
-### Images & Progress (16–20)
-| 16 | `16_animated_image.cpp` | AnimatedImage low-level sprite sheet setup |
-| 17 | `17_progress_bar.cpp` | ProgressBar + animation-driven loading |
-| 18 | `18_window.cpp` | Composite draggable window widget |
+### Data & Containers (15–21)
+| 15 | `15_progress_bar.cpp` | ProgressBar + animation-driven loading |
+| 16 | `16_list_view.cpp` | ListView data list with selection |
+| 17 | `17_string_grid.cpp` | StringGrid data table with inline editing |
+| 18 | `18_scroll_area.cpp` | ScrollArea scrollable container |
 | 19 | `19_arc_container.cpp` | ArcContainer radial layout |
-| 20 | `20_rounded_corners.cpp` | BorderRadius on multiple widget types |
+| 20 | `20_widgets_combo.cpp` | Multiple widgets working together |
+| 21 | `21_window.cpp` | Composite draggable window widget |
 
-### Styling & Layout Files (21–25)
-| 21 | `21_themes.cpp` | Theme system (light/dark) |
-| 22 | `22_json_parser.cpp` | Loading GUI layouts from JSON files |
-| 23 | `23_xml_parser.cpp` | Loading GUI layouts from XML/SGML files |
-| 24 | `24_button.cpp` | Button styling deep dive (5 variants) |
-| 25 | `25_scrollview_prototype.cpp` | Manual scroll view implementation |
+### Animation (22–24)
+| 22 | `22_animation.cpp` | AnimationManager with easing functions |
+| 23 | `23_animated_image.cpp` | AnimatedImage sprite sheet setup |
+| 24 | `24_hover_animation.cpp` | Custom Panel subclasses with hover animations |
 
-### Advanced Widgets (26–30)
-| 26 | `26_scroll_area.cpp` | ScrollArea scrollable container |
-| 27 | `27_file_dialog.cpp` | FileDialog open/save with path filtering |
-| 28 | `28_dialog.cpp` | DialogBox and MessageBox (8 variants) |
-| 29 | `29_embedded_assets.cpp` | Embedded binary assets via ld |
-| 30 | `30_mouse_cursor.cpp` | Custom cursor system with state management |
+### Styling & Themes (25–28)
+| 25 | `25_rounded_corners.cpp` | BorderRadius on multiple widget types |
+| 26 | `26_button_styling.cpp` | Button styling deep dive (5 variants) |
+| 27 | `27_themes.cpp` | Theme system (light/dark) |
+| 28 | `28_theme_playground.cpp` | Real-time theme editor with RGB sliders |
 
-### Full Applications (31–40)
-| 31 | `31_resize.cpp` | Anchor system: responsive layout with SDL resize |
-| 32 | `32_string_grid.cpp` | StringGrid data table with inline editing |
-| 33 | `33_hover_animation.cpp` | Custom Panel subclasses with hover animations |
-| 34 | `34_gpu_shader.cpp` | ShaderPanel GPU fragment shader on GUI |
-| 35 | `35_texture_font_previewer.cpp` | Texture and font preview tool |
-| 36 | `36_theme_playground.cpp` | Real-time theme editor with RGB sliders |
-| 37 | `37_performance.cpp` | Performance stress test with FPS counter |
-| 38 | `38_screen_manager.cpp` | ScreenManager: game screen lifecycle |
-| 39 | `39_window_manager.cpp` | WindowManager multi-window SDL application |
-| 40 | `40_wysiwyg_editor.cpp` | Full WYSIWYG GUI editor |
+### Layout & Assets (29–32)
+| 29 | `29_resize.cpp` | Anchor system: responsive layout with SDL resize |
+| 30 | `30_json_parser.cpp` | Loading GUI layouts from JSON files |
+| 31 | `31_xml_parser.cpp` | Loading GUI layouts from XML/SGML files |
+| 32 | `32_embedded_assets.cpp` | Embedded binary assets via ld |
+
+### Resources & Tools (33–34)
+| 33 | `33_mouse_cursor.cpp` | Custom cursor system with state management |
+| 34 | `34_texture_font_previewer.cpp` | Texture and font preview tool |
+
+### Dialogs (35–36)
+| 35 | `35_dialog.cpp` | DialogBox and MessageBox (8 variants) |
+| 36 | `36_file_dialog.cpp` | FileDialog open/save with path filtering |
+
+### Window Systems (37–38)
+| 37 | `37_screen_manager.cpp` | ScreenManager: game screen lifecycle |
+| 38 | `38_window_manager.cpp` | WindowManager multi-window SDL application |
+
+### Performance & GPU (39–41)
+| 39 | `39_performance.cpp` | Performance stress test with FPS counter |
+| 40 | `40_gpu_shader.cpp` | ShaderPanel GPU fragment shader on GUI |
+| 41 | `41_gpu_shader_animation.cpp` | Animated GPU shaders reacting to time and mouse |
+
+### Full Applications & Special (42–47)
+| 42 | `42_mobile_touch.cpp` | Touch-optimized mobile UI patterns |
+| 43 | `43_gamepad_controller.cpp` | Gamepad navigation UI patterns |
+| 44 | `44_tv_remote.cpp` | TV / 10-foot UI patterns |
+| 45 | `45_wysiwyg_editor.cpp` | Full WYSIWYG GUI editor |
+| 46 | `46_c_api_demo.cpp` | C API used side-by-side with C++ API |
+| 47 | `47_standalone.cpp` | Standalone app using combined header + static library |
 
 Run examples after building:
 ```bash
-./output/example_button
-./output/example_dialog
-./output/example_json_parser assets/test_layout.json
+./output/00_hello_world
+./output/35_dialog
+./output/30_json_parser examples/comprehensive_layout.json
 ```
 
 ## API Documentation

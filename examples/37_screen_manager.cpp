@@ -1,5 +1,5 @@
 /**
- * @file 38_screen_manager.cpp
+ * @file 37_screen_manager.cpp
  * @brief Demonstracja ScreenManager - przełączanie ekranów w jednym oknie
  * 
  * Ten przykład pokazuje:

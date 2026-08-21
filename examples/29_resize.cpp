@@ -1,5 +1,5 @@
 /**
- * @file 31_resize.cpp
+ * @file 29_resize.cpp
  * @brief Demonstrates Anchor system for responsive layout
  * 
  * This example shows how to use anchors to create responsive GUI elements

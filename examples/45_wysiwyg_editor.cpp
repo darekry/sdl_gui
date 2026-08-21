@@ -1,5 +1,5 @@
 /**
- * @file 40_wysiwyg_editor.cpp
+ * @file 45_wysiwyg_editor.cpp
  * @brief WYSIWYG GUI Editor - Two-window architecture demonstration
  * 
  * This example demonstrates:

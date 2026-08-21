@@ -1,5 +1,5 @@
 /**
- * @file 39_window_manager.cpp
+ * @file 38_window_manager.cpp
  * @brief Demonstracja WindowManager - wiele okien systemowych
  * 
  * Ten przykład pokazuje:

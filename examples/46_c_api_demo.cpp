@@ -1,5 +1,5 @@
 /*
- * 41_c_api_demo.cpp — Side-by-side C and C++ API usage
+ * 46_c_api_demo.cpp — Side-by-side C and C++ API usage
  *
  * Demonstrates that C API handles work with C++ widgets and vice versa.
  */

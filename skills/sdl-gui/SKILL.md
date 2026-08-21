@@ -77,9 +77,9 @@ Read the relevant file BEFORE using an API — signatures are 1:1 with the heade
 | Style/Theme/ThemePresets, Anchor, SDLApp, GUIContext, layout parsers (JSON/XML), logging, Easing | `resources.md` |
 | C API (`sdlgui_*`) | `c_api.md` |
 
-In addition, the dev repo has examples in `examples/` (01–47, e.g.
-`38_screen_manager.cpp`, `43_gamepad_controller.cpp`, `31_resize.cpp`) — use
-them as reference; in target code use only `sdl_gui.hpp`.
+In addition, the dev repo has examples in `examples/` (00–47, numbered simple →
+complex, e.g. `37_screen_manager.cpp`, `43_gamepad_controller.cpp`,
+`29_resize.cpp`) — use them as reference; in target code use only `sdl_gui.hpp`.
 
 ## Compilation and linking
 

@@ -158,6 +158,7 @@ object outlives the animation.
 - Gamepad: open with `SDL_OpenGamepad(deviceID)` on
   `SDL_EVENT_GAMEPAD_ADDED`, read axes/buttons in `Screen::handleEvent`;
   see `examples/43_gamepad_controller.cpp` for a D-pad grid + focus pattern.
+
 - On `SDL_EVENT_WINDOW_RESIZED` call `manager.handleResize(w, h)` so anchors
   (HUD) reposition.
 

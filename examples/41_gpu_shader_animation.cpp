@@ -1,5 +1,5 @@
 /**
- * @file 45_gpu_shader_animation.cpp
+ * @file 41_gpu_shader_animation.cpp
  * @brief Animated GPU fragment shaders reacting to time and mouse position
  *
  * Left panel: water shader animated by time, driven by AnimationManager.
