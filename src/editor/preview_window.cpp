@@ -48,18 +48,14 @@ void PreviewWindow::refreshElement(size_t index) {
 void PreviewWindow::removeElementWidget(size_t index) {
     auto it = m_widgetMap.find(index);
     if (it != m_widgetMap.end()) {
-        if (it->second) {
-            it->second->markForDeletion();
-        }
+        it->second->markForDeletion();
         m_widgetMap.erase(it);
     }
 }
 
 void PreviewWindow::clearAllWidgets() {
     for (auto& [idx, widget] : m_widgetMap) {
-        if (widget) {
-            widget->markForDeletion();
-        }
+        widget->markForDeletion();
     }
     m_widgetMap.clear();
 }
@@ -83,7 +79,7 @@ void PreviewWindow::createWidgetForElement(size_t index) {
         auto parentIt = m_state.findElementById(elem.parentId);
         if (parentIt.has_value()) {
             auto widgetIt = m_widgetMap.find(parentIt.value());
-            if (widgetIt != m_widgetMap.end() && widgetIt->second) {
+            if (widgetIt != m_widgetMap.end()) {
                 parentWidget = widgetIt->second;
             }
         }
@@ -310,7 +306,7 @@ void CanvasPanel::drawSelectionHighlight(SDL_Renderer* renderer, size_t index) {
     if (m_previewWindow == nullptr) return;
     
     auto it = m_previewWindow->m_widgetMap.find(index);
-    if (it == m_previewWindow->m_widgetMap.end() || it->second == nullptr) return;
+    if (it == m_previewWindow->m_widgetMap.end()) return;
     
     GUIElement* widget = it->second;
     SDL_Point abs = widget->getAbsolutePosition();
@@ -400,10 +396,7 @@ void CanvasPanel::handleElementClick(float mouseX, float mouseY, size_t elementI
         m_previewWindow->m_onSelectionChanged(elementIndex);
     }
     
-    const EditorElement* elem = m_state.getSelectedElement();
-    if (elem) {
-        startDrag(mouseX, mouseY);
-    }
+    startDrag(mouseX, mouseY);
 }
 
 void CanvasPanel::startDrag(float mouseX, float mouseY) {
@@ -440,7 +433,7 @@ void CanvasPanel::updateDrag(float mouseX, float mouseY) {
     
     if (m_previewWindow) {
         auto it = m_previewWindow->m_widgetMap.find(selectedIndex);
-        if (it != m_previewWindow->m_widgetMap.end() && it->second) {
+        if (it != m_previewWindow->m_widgetMap.end()) {
             it->second->setPosition(newX, newY);
         }
         

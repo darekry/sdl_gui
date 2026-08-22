@@ -245,12 +245,8 @@ FileDialog::FileDialog(
 
 void FileDialog::setCurrentPath(std::string_view path) {
     m_currentPath = path;
-    if (m_pathLabel) {
-        m_pathLabel->setText(m_currentPath);
-    }
-    if (m_titleLabel) {
-        m_titleLabel->setText(m_title + " - " + m_currentPath);
-    }
+    m_pathLabel->setText(m_currentPath);
+    m_titleLabel->setText(m_title + " - " + m_currentPath);
 }
 
 void FileDialog::navigateTo(const std::string& path) {
@@ -264,7 +260,7 @@ void FileDialog::navigateTo(const std::string& path) {
     refreshDirectories();
     refreshFiles();
     m_selectedFile.clear();
-    if (m_filenameInput) m_filenameInput->setText(std::string{});
+    m_filenameInput->setText(std::string{});
 }
 
 void FileDialog::navigateUp() {
@@ -275,8 +271,6 @@ void FileDialog::navigateUp() {
 }
 
 void FileDialog::refreshDirectories() {
-    if (!m_dirGrid) return;
-
     m_dirGrid->clear();
     m_dirGrid->setColumnCount(1);
 
@@ -307,8 +301,6 @@ void FileDialog::refreshDirectories() {
 }
 
 void FileDialog::refreshFiles() {
-    if (!m_fileGrid) return;
-
     m_fileGrid->clear();
     m_fileGrid->setColumnCount(1);
 
@@ -342,16 +334,11 @@ void FileDialog::refreshFiles() {
 
 void FileDialog::onFileSelected(const std::string& filename) {
     m_selectedFile = filename;
-    if (m_filenameInput) {
-        m_filenameInput->setText(filename);
-    }
+    m_filenameInput->setText(filename);
 }
 
 void FileDialog::confirmSelection() {
-    std::string filename;
-    if (m_filenameInput) {
-        filename = m_filenameInput->getText();
-    }
+    std::string filename = m_filenameInput->getText();
 
     if (filename.empty()) {
         filename = m_selectedFile;

@@ -344,7 +344,7 @@ void GUIElement::processHoverTooltip(bool currentlyHovered) {
         m_isHovered = true;
         if (!tooltip.empty()) {
             tooltipTimerId = startTimer(constants::kTooltipDelayMs, true, [](GUIElement* self) {
-                if (self) { self->m_manager.showTooltip(self, self->tooltip); }
+                self->m_manager.showTooltip(self, self->tooltip);
             });
         }
     } else if (!currentlyHovered && m_isHovered) {
@@ -414,7 +414,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
     SDL_Rect child_clip_rect = m_clip_children ? clipped_rect : parent_clip_rect;
     if (m_rotation == 0.0) {
         for (auto& child : m_children) {
-            if (child && child->isVisible()) {
+            if (child->isVisible()) {
                 child->render(renderer, child_clip_rect);
             }
         }
@@ -472,14 +472,14 @@ void GUIElement::renderToCache() {
             }
             SDL_SetRenderTarget(renderer, nullptr);
             for (auto& child : m_children) {
-                if (child && child->isVisible() && child->m_isDirty) {
+                if (child->isVisible() && child->m_isDirty) {
                     child->renderToCache();
                 }
             }
 
             SDL_SetRenderTarget(renderer, tex.get());
             for (auto& child : m_children) {
-                if (child && child->isVisible() && child->m_cachedTexture) {
+                if (child->isVisible() && child->m_cachedTexture) {
                     SDL_Rect childDst = {child->m_x, child->m_y, child->m_width, child->m_height};
                     RenderTexture(renderer, child->m_cachedTexture.get(), childDst);
                 }
@@ -501,9 +501,7 @@ void GUIElement::markDirty(bool cascadeToParents) {
 void GUIElement::markDirtyRecursively() {
     m_isDirty = true;
     for (auto& child : m_children) {
-        if (child) {
-            child->markDirtyRecursively();
-        }
+        child->markDirtyRecursively();
     }
 }
 
@@ -517,9 +515,7 @@ bool GUIElement::isMarkedForDeletion() const {
 }
 void GUIElement::cleanup() {
     for (const auto& child : m_children) {
-        if (child) {
-            child->cleanup();
-        }
+        child->cleanup();
     }
 
     const auto initial_size = m_children.size();
@@ -539,18 +535,11 @@ void GUIElement::cleanup() {
 }
 
 uint32_t GUIElement::startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback) {
-    if (m_manager.getTimerManager()) {
-        return m_manager.getTimerManager()->addTimer(this, delay, singleShot, [callback](GUIElement* target) {
-            callback(target);
-        });
-    }
-    return 0;
+    return m_manager.getTimerManager()->addTimer(this, delay, singleShot, std::move(callback));
 }
 
 void GUIElement::stopTimer(uint32_t timerId) {
-    if (m_manager.getTimerManager()) {
-        m_manager.getTimerManager()->removeTimer(timerId);
-    }
+    m_manager.getTimerManager()->removeTimer(timerId);
 }
 
 // --- Implementacja nowego API do stylizacji ---
@@ -857,9 +846,7 @@ void GUIElement::updateLayout(int parentWidth, int parentHeight) {
     
     // Propagate to children
     for (auto& child : m_children) {
-        if (child) {
-            child->updateLayout(m_width, m_height);
-        }
+        child->updateLayout(m_width, m_height);
     }
 }
 

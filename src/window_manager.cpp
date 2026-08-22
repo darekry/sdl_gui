@@ -52,7 +52,7 @@ Window* WindowManager::createWindow(const std::string& title, int width, int hei
 
 Window* WindowManager::getWindowByID(Uint32 windowID) const {
     for (const auto& window : m_windows) {
-        if (window && window->getWindowID() == windowID) {
+        if (window->getWindowID() == windowID) {
             return window.get();
         }
     }
@@ -70,7 +70,7 @@ size_t WindowManager::getWindowCount() const {
 
 Window* WindowManager::getFocusedWindow() const {
     for (const auto& window : m_windows) {
-        if (window && window->isFocused()) {
+        if (window->isFocused()) {
             return window.get();
         }
     }
@@ -79,7 +79,7 @@ Window* WindowManager::getFocusedWindow() const {
 
 bool WindowManager::hasOpenWindows() const {
     for (const auto& window : m_windows) {
-        if (window && !window->isMarkedForClose()) {
+        if (!window->isMarkedForClose()) {
             return true;
         }
     }
@@ -98,17 +98,13 @@ bool WindowManager::closeWindow(Uint32 windowID) {
 void WindowManager::closeSecondaryWindows() {
     // Keep only the first window
     for (size_t i = 1; i < m_windows.size(); ++i) {
-        if (m_windows[i]) {
-            m_windows[i]->markForClose();
-        }
+        m_windows[i]->markForClose();
     }
 }
 
 void WindowManager::closeAllWindows() {
     for (auto& window : m_windows) {
-        if (window) {
-            window->markForClose();
-        }
+        window->markForClose();
     }
 }
 
@@ -191,7 +187,7 @@ bool WindowManager::processEvents() {
 
 void WindowManager::updateAll() {
     for (auto& window : m_windows) {
-        if (window && !window->isMarkedForClose()) {
+        if (!window->isMarkedForClose()) {
             window->update();
         }
     }
@@ -208,9 +204,7 @@ void WindowManager::renderAll() {
 void WindowManager::cleanupAll() {
     // Cleanup GUIManagers
     for (auto& window : m_windows) {
-        if (window) {
-            window->cleanup();
-        }
+        window->cleanup();
     }
     
     // Remove windows marked for close
@@ -225,7 +219,7 @@ void WindowManager::requestQuit() {
 void WindowManager::removeMarkedWindows() {
     auto it = std::remove_if(m_windows.begin(), m_windows.end(),
         [](const std::unique_ptr<Window>& window) {
-            return window && window->isMarkedForClose();
+            return window->isMarkedForClose();
         });
     
     size_t removedCount = static_cast<size_t>(std::distance(it, m_windows.end()));

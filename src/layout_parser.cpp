@@ -291,82 +291,79 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
         return nullptr;
     }
 
-    if (element)
+    if (hasNode(node, "id")) element->setID(getString(node, "id"));
+    element->setPosition(getInt(node, "x", element->getX()), getInt(node, "y", element->getY()));
+    element->setSize(getInt(node, "width", element->getWidth()), getInt(node, "height", element->getHeight()));
+    
+    // Parse anchor for responsive positioning
+    if (hasNode(node, "anchorLeft") || hasNode(node, "anchorTop") || 
+        hasNode(node, "anchorRight") || hasNode(node, "anchorBottom"))
     {
-        if (hasNode(node, "id")) element->setID(getString(node, "id"));
-        element->setPosition(getInt(node, "x", element->getX()), getInt(node, "y", element->getY()));
-        element->setSize(getInt(node, "width", element->getWidth()), getInt(node, "height", element->getHeight()));
-        
-        // Parse anchor for responsive positioning
-        if (hasNode(node, "anchorLeft") || hasNode(node, "anchorTop") || 
-            hasNode(node, "anchorRight") || hasNode(node, "anchorBottom"))
-        {
-            Anchor anchor;
-            if (hasNode(node, "anchorLeft")) anchor.left = getFloat(node, "anchorLeft", -1.0f);
-            if (hasNode(node, "anchorTop")) anchor.top = getFloat(node, "anchorTop", -1.0f);
-            if (hasNode(node, "anchorRight")) anchor.right = getFloat(node, "anchorRight", -1.0f);
-            if (hasNode(node, "anchorBottom")) anchor.bottom = getFloat(node, "anchorBottom", -1.0f);
-            element->setAnchor(anchor);
-            element->storeOriginalSize();
-        }
-        
-        if (hasNode(node, "visible")) element->setVisible(getBool(node, "visible", true));
-        if (hasNode(node, "enabled")) element->setEnabled(getBool(node, "enabled", true));
-        if (hasNode(node, "tooltip")) element->setTooltip(getString(node, "tooltip"));
-        if (hasNode(node, "clipChildren")) element->setClipChildren(getBool(node, "clipChildren", true));
-        if (hasNode(node, "rotation")) element->setRotation(static_cast<double>(getFloat(node, "rotation", 0.0f)));
-        if (hasNode(node, "rotationCenterX") || hasNode(node, "rotationCenterY"))
-            element->setRotationCenter(getInt(node, "rotationCenterX", -1), getInt(node, "rotationCenterY", -1));
+        Anchor anchor;
+        if (hasNode(node, "anchorLeft")) anchor.left = getFloat(node, "anchorLeft", -1.0f);
+        if (hasNode(node, "anchorTop")) anchor.top = getFloat(node, "anchorTop", -1.0f);
+        if (hasNode(node, "anchorRight")) anchor.right = getFloat(node, "anchorRight", -1.0f);
+        if (hasNode(node, "anchorBottom")) anchor.bottom = getFloat(node, "anchorBottom", -1.0f);
+        element->setAnchor(anchor);
+        element->storeOriginalSize();
+    }
+    
+    if (hasNode(node, "visible")) element->setVisible(getBool(node, "visible", true));
+    if (hasNode(node, "enabled")) element->setEnabled(getBool(node, "enabled", true));
+    if (hasNode(node, "tooltip")) element->setTooltip(getString(node, "tooltip"));
+    if (hasNode(node, "clipChildren")) element->setClipChildren(getBool(node, "clipChildren", true));
+    if (hasNode(node, "rotation")) element->setRotation(static_cast<double>(getFloat(node, "rotation", 0.0f)));
+    if (hasNode(node, "rotationCenterX") || hasNode(node, "rotationCenterY"))
+        element->setRotationCenter(getInt(node, "rotationCenterX", -1), getInt(node, "rotationCenterY", -1));
 
-        if (isArray(node, "styles"))
-        {
-            forEachInArray(node, "styles", [this, &element](void* styleNode) {
-                parseStyle(styleNode, element.get());
-            });
-        }
+    if (isArray(node, "styles"))
+    {
+        forEachInArray(node, "styles", [this, &element](void* styleNode) {
+            parseStyle(styleNode, element.get());
+        });
+    }
 
-        if (type == "ArcContainer")
-        {
-            auto* arcContainer = static_cast<ArcContainer*>(element.get());
-            forEachInArray(node, "children", [this, arcContainer](void* childNode) {
-                auto childElement = parseNode(childNode);
-                if (childElement)
-                {
-                    float angle = getFloat(childNode, "angle", 0.0f);
-                    bool rotateChild = getBool(childNode, "rotateChild", true);
-                    int offset = getInt(childNode, "offset", 0);
-                    arcContainer->addChildAtAngle(std::move(childElement), angle, rotateChild, offset);
-                }
-            });
-        }
-        else if (type == "ScrollArea")
-        {
-            std::vector<std::unique_ptr<GUIElement>> contentChildren;
-            forEachInArray(node, "children", [this, &contentChildren](void* childNode) {
-                auto childElement = parseNode(childNode);
-                if (childElement) contentChildren.push_back(std::move(childElement));
-            });
-            if (!contentChildren.empty())
+    if (type == "ArcContainer")
+    {
+        auto* arcContainer = static_cast<ArcContainer*>(element.get());
+        forEachInArray(node, "children", [this, arcContainer](void* childNode) {
+            auto childElement = parseNode(childNode);
+            if (childElement)
             {
-                auto* sa = static_cast<ScrollArea*>(element.get());
-                if (contentChildren.size() == 1)
-                    sa->setContent(std::move(contentChildren[0]));
-                else
-                {
-                    auto panel = std::make_unique<Panel>(m_guiManager, 0, 0, 0, 0);
-                    for (auto& c : contentChildren)
-                        panel->addChild(std::move(c));
-                    sa->setContent(std::move(panel));
-                }
+                float angle = getFloat(childNode, "angle", 0.0f);
+                bool rotateChild = getBool(childNode, "rotateChild", true);
+                int offset = getInt(childNode, "offset", 0);
+                arcContainer->addChildAtAngle(std::move(childElement), angle, rotateChild, offset);
+            }
+        });
+    }
+    else if (type == "ScrollArea")
+    {
+        std::vector<std::unique_ptr<GUIElement>> contentChildren;
+        forEachInArray(node, "children", [this, &contentChildren](void* childNode) {
+            auto childElement = parseNode(childNode);
+            if (childElement) contentChildren.push_back(std::move(childElement));
+        });
+        if (!contentChildren.empty())
+        {
+            auto* sa = static_cast<ScrollArea*>(element.get());
+            if (contentChildren.size() == 1)
+                sa->setContent(std::move(contentChildren[0]));
+            else
+            {
+                auto panel = std::make_unique<Panel>(m_guiManager, 0, 0, 0, 0);
+                for (auto& c : contentChildren)
+                    panel->addChild(std::move(c));
+                sa->setContent(std::move(panel));
             }
         }
-        else if (type != "TabControl")
-        {
-            forEachInArray(node, "children", [this, &element](void* childNode) {
-                auto childElement = parseNode(childNode);
-                if (childElement) element->addChild(std::move(childElement));
-            });
-        }
+    }
+    else if (type != "TabControl")
+    {
+        forEachInArray(node, "children", [this, &element](void* childNode) {
+            auto childElement = parseNode(childNode);
+            if (childElement) element->addChild(std::move(childElement));
+        });
     }
 
     return element;
@@ -397,8 +394,6 @@ void LayoutParser::parseResources(void* resourcesNode)
 
 void LayoutParser::parseStyle(void* styleNode, GUIElement* element)
 {
-    if (!styleNode || !element) return;
-
     std::string stateStr = getString(styleNode, "state", "Normal");
     ElementState state = ElementState::Normal;
     if (stateStr == "Hover") state = ElementState::Hover;

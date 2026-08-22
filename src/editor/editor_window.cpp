@@ -629,8 +629,7 @@ void EditorWindow::updatePropertiesPanel() {
 
 void EditorWindow::populateStyleFields() {
     auto* selected = m_editorState.getSelectedElement();
-    if (!selected) return;
-    
+
     Style style;
     if (selected->hasStyle(m_currentStyleState)) {
         style = selected->styles[m_currentStyleState];

@@ -265,20 +265,22 @@ void StringGrid::startEditing(size_t row, size_t col) {
 }
 
 void StringGrid::stopEditing() {
-    if (m_isEditing && m_cellEditor && m_editingCell.isValid()) {
-        std::string newText = m_cellEditor->getText();
-        if (m_editingCell.row < m_data.size() && m_editingCell.col < m_data[m_editingCell.row].size()) {
-            m_data[m_editingCell.row][m_editingCell.col] = newText;
-            if (m_onCellEdit) {
-                m_onCellEdit(this, m_editingCell, newText);
+    if (m_cellEditor) {
+        if (m_editingCell.isValid()) {
+            std::string newText = m_cellEditor->getText();
+            if (m_editingCell.row < m_data.size() && m_editingCell.col < m_data[m_editingCell.row].size()) {
+                m_data[m_editingCell.row][m_editingCell.col] = newText;
+                if (m_onCellEdit) {
+                    m_onCellEdit(this, m_editingCell, newText);
+                }
             }
         }
+
+        if (m_manager.getKeyboardFocus() == m_cellEditor.get()) {
+            m_manager.setKeyboardFocus(nullptr);
+        }
     }
-    
-    if (m_cellEditor && m_manager.getKeyboardFocus() == m_cellEditor.get()) {
-        m_manager.setKeyboardFocus(nullptr);
-    }
-    
+
     m_isEditing = false;
     m_editingCell = CellCoord::invalid();
     m_cellEditor.reset();
@@ -1125,15 +1127,13 @@ void StringGrid::drawSelection(SDL_Renderer* renderer, int offsetX, int offsetY)
     SetDrawColor(renderer, m_selectionColor);
     SDL_Rect selRect = {offsetX + startX, offsetY + startY, selWidth, selHeight};
     RenderFillRect(renderer, selRect);
-    
-    if (m_selectedCell) {
-        SDL_Rect activeCellRect = getCellRect(m_selectedCell->row, m_selectedCell->col);
-        SDL_Rect absCellRect = {offsetX + activeCellRect.x, offsetY + activeCellRect.y, 
-                                activeCellRect.w, activeCellRect.h};
-        SetDrawColor(renderer, m_selectedCellBorderColor);
-        RenderRect(renderer, absCellRect);
-    }
-    
+
+    SDL_Rect activeCellRect = getCellRect(m_selectedCell->row, m_selectedCell->col);
+    SDL_Rect absCellRect = {offsetX + activeCellRect.x, offsetY + activeCellRect.y,
+                            activeCellRect.w, activeCellRect.h};
+    SetDrawColor(renderer, m_selectedCellBorderColor);
+    RenderRect(renderer, absCellRect);
+
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 

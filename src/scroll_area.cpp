@@ -20,8 +20,6 @@ ScrollArea::ScrollArea(GUIManager& manager, int x, int y, int width, int height)
 }
 
 void ScrollArea::setContent(std::unique_ptr<GUIElement> content) {
-    if (!m_viewport || !m_content) return;
-
     auto* contentPanel = dynamic_cast<Panel*>(m_content);
     if (contentPanel) {
         contentPanel->clearChildren();
@@ -35,9 +33,7 @@ void ScrollArea::setContent(std::unique_ptr<GUIElement> content) {
 void ScrollArea::setContentSize(int width, int height) {
     m_contentWidth = width;
     m_contentHeight = height;
-    if (m_content) {
-        m_content->setSize(width, height);
-    }
+    m_content->setSize(width, height);
     updateSliderRanges();
     markDirty();
 }
@@ -64,9 +60,7 @@ void ScrollArea::setHorizontalScroll(bool enabled) {
 void ScrollArea::setScrollOffset(int x, int y) {
     m_scrollX = x;
     m_scrollY = y;
-    if (m_content) {
-        m_content->setPosition(-m_scrollX, -m_scrollY);
-    }
+    m_content->setPosition(-m_scrollX, -m_scrollY);
     if (m_vSlider) m_vSlider->setValue(y);
     if (m_hSlider) m_hSlider->setValue(x);
     markDirty();
@@ -82,10 +76,8 @@ void ScrollArea::updateLayout() {
     int vpW = m_width - (showV ? sliderW : 0);
     int vpH = m_height - (showH ? sliderH : 0);
 
-    if (m_viewport) {
-        m_viewport->setPosition(0, 0);
-        m_viewport->setSize(vpW, vpH);
-    }
+    m_viewport->setPosition(0, 0);
+    m_viewport->setSize(vpW, vpH);
 
     if (showV) {
         if (!m_vSlider) {
@@ -95,7 +87,7 @@ void ScrollArea::updateLayout() {
             m_vSlider = vs.get();
             m_vSlider->setOnChangeCallback([this](GUIElement*) {
                 m_scrollY = m_vSlider->getValue();
-                if (m_content) m_content->setPosition(-m_scrollX, -m_scrollY);
+                m_content->setPosition(-m_scrollX, -m_scrollY);
             });
             Panel::addChild(std::move(vs));
         } else {
@@ -115,7 +107,7 @@ void ScrollArea::updateLayout() {
             m_hSlider = hs.get();
             m_hSlider->setOnChangeCallback([this](GUIElement*) {
                 m_scrollX = m_hSlider->getValue();
-                if (m_content) m_content->setPosition(-m_scrollX, -m_scrollY);
+                m_content->setPosition(-m_scrollX, -m_scrollY);
             });
             Panel::addChild(std::move(hs));
         } else {
@@ -131,8 +123,8 @@ void ScrollArea::updateLayout() {
 }
 
 void ScrollArea::updateSliderRanges() {
-    int vpW = m_viewport ? m_viewport->getWidth() : m_width;
-    int vpH = m_viewport ? m_viewport->getHeight() : m_height;
+    int vpW = m_viewport->getWidth();
+    int vpH = m_viewport->getHeight();
 
     int maxX = std::max(0, m_contentWidth - vpW);
     int maxY = std::max(0, m_contentHeight - vpH);
@@ -161,13 +153,13 @@ bool ScrollArea::handleEvent(const SDL_Event& e) {
                 int step = 60;
                 int delta = (e.wheel.y > 0) ? -step : step;
                 int newVal = std::clamp(m_scrollY + delta, 0,
-                    std::max(0, m_contentHeight - (m_viewport ? m_viewport->getHeight() : 0)));
+                    std::max(0, m_contentHeight - m_viewport->getHeight()));
                 setScrollOffset(m_scrollX, newVal);
             } else if (m_hSlider && m_hSlider->isVisible()) {
                 int step = 60;
                 int delta = (e.wheel.y > 0) ? -step : step;
                 int newVal = std::clamp(m_scrollX + delta, 0,
-                    std::max(0, m_contentWidth - (m_viewport ? m_viewport->getWidth() : 0)));
+                    std::max(0, m_contentWidth - m_viewport->getWidth()));
                 setScrollOffset(newVal, m_scrollY);
             }
             return true;

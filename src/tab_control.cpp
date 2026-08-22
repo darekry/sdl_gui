@@ -50,7 +50,7 @@ void TabControl::setActiveTab(Button* tabButton) {
     // Deaktywuj poprzednią zakładkę
     for (size_t i = 0; i < m_tabButtons.size(); ++i) {
         if (m_tabButtons[i] == m_activeTabButton) {
-            if(m_tabPanels[i]) m_tabPanels[i]->setVisible(false);
+            m_tabPanels[i]->setVisible(false);
             break;
         }
     }
@@ -60,7 +60,7 @@ void TabControl::setActiveTab(Button* tabButton) {
     // Aktywuj nową zakładkę
     for (size_t i = 0; i < m_tabButtons.size(); ++i) {
         if (m_tabButtons[i] == m_activeTabButton) {
-            if(m_tabPanels[i]) m_tabPanels[i]->setVisible(true);
+            m_tabPanels[i]->setVisible(true);
             break;
         }
     }

@@ -15,7 +15,6 @@ static constexpr size_t kRenderCachePruneThreshold = 256;
 static const SDL_Color TOOLTIP_BG_COLOR = {.r=255, .g=255, .b=225, .a=255};
 
 static bool isDescendantOf(GUIElement* descendant, GUIElement* ancestor) {
-    if (!descendant || !ancestor) return false;
     GUIElement* current = descendant->getParent();
     while (current) {
         if (current == ancestor) return true;
@@ -44,14 +43,6 @@ GUIManager::~GUIManager() = default;
 GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     if (element) {
         auto* raw_ptr = element.get();
-        
-        for (const auto& e : m_elements) {
-            if (e.get() == raw_ptr) {
-                LOG_ERROR("GUIManager", "addElement() - element already exists in m_elements! ptr={}", static_cast<const void*>(raw_ptr));
-                return nullptr;
-            }
-        }
-        
         registerElement(raw_ptr);
         m_elements.push_back(std::move(element));
         return raw_ptr;
@@ -139,7 +130,7 @@ void GUIManager::update() {
 
 void GUIManager::render() {
     for (const auto& element : m_elements) {
-        if (element && !element->isOverlay() && !element->isMarkedForDeletion()) {
+        if (!element->isOverlay() && !element->isMarkedForDeletion()) {
             element->render(m_renderer);
         }
     }
@@ -149,7 +140,7 @@ void GUIManager::render() {
     }
 
     for (const auto& element : m_elements) {
-        if (element && element->isOverlay() && !element->isMarkedForDeletion()) {
+        if (element->isOverlay() && !element->isMarkedForDeletion()) {
             element->renderOverlay(m_renderer);
         }
     }
@@ -177,7 +168,6 @@ void GUIManager::cleanup() {
     }
 
     auto hasAncestorMarkedForDeletion = [](GUIElement* element) {
-        if (!element) return false;
         GUIElement* current = element;
         while (current) {
             if (current->isMarkedForDeletion()) return true;
@@ -201,28 +191,16 @@ void GUIManager::cleanup() {
     
   //  LOG_DEBUG("GUIManager::cleanup() - calling cleanup on elements");
     for (const auto& element : m_elements) {
-        if (element) {
-            element->cleanup();
-        }
+        element->cleanup();
     }
-    
-    size_t total_removed_count = 0;
-    for (const auto& element : m_elements) {
-        if (element && element->isMarkedForDeletion()) {
-            total_removed_count += 1 + element->countDescendants();
-        }
-    }
-    (void)total_removed_count;
-    
-  //  LOG_DEBUG("GUIManager::cleanup() - total elements to remove: %zu", total_removed_count);
 
     // Elements to be removed (and their children via unique_ptr destructor)
     // After erase, all children will be destroyed too
     // So we need to clear focus/capture if they point to any descendant of removed elements
-    
+
     auto new_end = std::remove_if(m_elements.begin(), m_elements.end(),
                                   [](const std::unique_ptr<GUIElement>& element) {
-        return element && element->isMarkedForDeletion();
+        return element->isMarkedForDeletion();
     });
 
     std::size_t prefix_distance = static_cast<std::size_t>(std::distance(m_elements.begin(), new_end));
@@ -270,11 +248,9 @@ void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
     
     m_tooltipPanel->setPosition(posX, posY);
     m_tooltipPanel->setSize(panelWidth, panelHeight);
-    
-    if (m_tooltipLabel) {
-        m_tooltipLabel->setText(text);
-    }
-    
+
+    m_tooltipLabel->setText(text);
+
     m_tooltipPanel->setVisible(true);
     tooltipElement = std::move(m_tooltipPanel);
 }
@@ -295,9 +271,7 @@ TimerManager* GUIManager::getTimerManager() {
 void GUIManager::setTheme(Theme theme) {
     m_theme = std::move(theme);
     for (const auto& element : m_elements) {
-        if (element) {
-            element->markDirtyRecursively();
-        }
+        element->markDirtyRecursively();
     }
 }
 
@@ -352,10 +326,8 @@ void GUIManager::setCursor(std::unique_ptr<Cursor> new_cursor) {
 
 GUIElement* GUIManager::findElementAt(int x, int y) {
     for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it) {
-        if (*it) {
-            if (auto* element = (*it)->findElementAt(x, y)) {
-                return element;
-            }
+        if (auto* element = (*it)->findElementAt(x, y)) {
+            return element;
         }
     }
     return nullptr;
@@ -388,7 +360,7 @@ void GUIManager::handleResize(int width, int height) {
     
     // Update all top-level elements with anchors
     for (const auto& element : m_elements) {
-        if (element && element->hasAnchor()) {
+        if (element->hasAnchor()) {
             element->updateLayout(width, height);
         }
     }
@@ -415,7 +387,7 @@ void GUIManager::setWindowSize(int width, int height) {
 
 void GUIManager::collectFocusableElements(std::vector<GUIElement*>& out) const {
     std::function<void(GUIElement*)> collect = [&](GUIElement* element) {
-        if (!element || !element->isVisible()) return;
+        if (!element->isVisible()) return;
         if (element->canGetKeyboardFocus()) {
             out.push_back(element);
         }
@@ -438,7 +410,7 @@ void GUIManager::collectFocusableElements(std::vector<GUIElement*>& out) const {
 
 GUIElement* GUIManager::getActiveOverlay() const {
     for (const auto& element : m_elements) {
-        if (element && element->isOverlay() && element->isVisible() && !element->isMarkedForDeletion()) {
+        if (element->isOverlay() && element->isVisible() && !element->isMarkedForDeletion()) {
             return element.get();
         }
     }

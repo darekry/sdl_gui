@@ -235,7 +235,6 @@ void AnimatedImage::play() {
     // Use GUIElement::startTimer to add timer
     // Timer callback will be called with GUIElement* target == this
     m_playTimerId = startTimer(interval, false, [](GUIElement* self) {
-        if (!self) return;
         auto* widget = static_cast<AnimatedImage*>(self);
         if (!widget->m_isPlaying) return;
         int next = widget->m_currentFrame + 1;
@@ -332,7 +331,6 @@ void AnimatedImage::animateToFrame(int targetFrame, uint32_t duration_ms, bool l
     // Start a frequent timer to markDirty while animation progresses so render will update.
     // Use 16ms tick for smoothness
     m_animTickTimerId = startTimer(16, false, [](GUIElement* self) {
-        if (!self) return;
         // markDirty each tick to force re-render while animation progresses
         self->markDirty();
     });

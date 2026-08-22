@@ -216,23 +216,19 @@ void DialogBox::createTitleBar(std::string_view title) {
     addChild(std::move(titleLabel));
     
     // Przesuń message label
-    if (m_messageLabel) {
-        m_messageLabel->setPosition(10, m_titleBarHeight + 10);
-    }
+    m_messageLabel->setPosition(10, m_titleBarHeight + 10);
 }
 
 void DialogBox::setMessage(std::string_view message) {
     m_message = message;
-    if (m_messageLabel) {
-        m_messageLabel->setText(message);
-    }
+    m_messageLabel->setText(message);
     markDirty();
 }
 
 void DialogBox::setTitle(std::string_view title) {
     if (!m_hasTitleBar) {
         createTitleBar(title);
-    } else if (m_titleLabel) {
+    } else {
         m_titleLabel->setText(title);
     }
     markDirty();
