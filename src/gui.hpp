@@ -98,6 +98,7 @@ public:
     void setTexture(ElementState state, SharedTexture texture);
     void setBorder(ElementState state, SDL_Color color, int width);
     void setBorderRadius(ElementState state, int radius);
+    void setBevel(ElementState state, BevelType type);
     virtual const char* getComponentType() const;
     void markForDeletion();
     void markDirty(bool cascadeToParents = true);
@@ -180,6 +181,14 @@ protected:
 void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color);
 void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color, float thickness);
 void drawRoundedTexturedRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_Texture* texture);
+
+// Jedna ramka fazowana 1px: topLeftColor na górze i lewej, bottomRightColor na dole i prawej.
+// Krawędzie dolna/prawa rysowane ostatnie — nadpisują rogi górny-prawy i dolny-lewy (jak w Win95).
+void drawBevelFrame(SDL_Renderer* renderer, SDL_Rect rect, int thickness, SDL_Color topLeftColor, SDL_Color bottomRightColor);
+
+// Rysuje fazy zapisane w stylu (zewnętrzną i wewnętrzną, po 1px).
+// Ramka zwykła (borderColor/borderWidth) jest wtedy ignorowana.
+void drawStyleBevel(SDL_Renderer* renderer, SDL_Rect rect, const Style& style);
 
 inline void drawTitleBar(SDL_Renderer* renderer, int x, int y, int w, int h) {
     SetDrawColor(renderer, constants::kTitleBarColor);

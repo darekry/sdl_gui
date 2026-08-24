@@ -45,6 +45,9 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
         auto* raw_ptr = element.get();
         registerElement(raw_ptr);
         m_elements.push_back(std::move(element));
+        if (m_windowWidth > 0 && m_windowHeight > 0) {
+            raw_ptr->updateLayout(m_windowWidth, m_windowHeight);
+        }
         return raw_ptr;
     }
     return nullptr;

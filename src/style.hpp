@@ -21,6 +21,13 @@ enum class ElementState {
     Disabled
 };
 
+// Typ fazowanego obramowania 3D w stylu Windows 95/98.
+// Raised = wypukłość (przyciski), Sunken = wklęśnięcie (pola edycji).
+enum class BevelType {
+    Raised,
+    Sunken
+};
+
 // Struktura przechowująca atrybuty wizualne dla pojedynczego stanu elementu.
 // Użycie std::optional pozwala na dziedziczenie niezdefiniowanych właściwości z motywu.
 struct Style {
@@ -32,6 +39,10 @@ struct Style {
     std::optional<int> borderRadius;  // Promień zaokrąglenia rogów (0 = ostre)
     std::optional<int> fontSize;
     std::optional<std::string> fontName;
+    std::optional<SDL_Color> borderColorOuterTopLeft;
+    std::optional<SDL_Color> borderColorOuterBottomRight;
+    std::optional<SDL_Color> borderColorInnerTopLeft;
+    std::optional<SDL_Color> borderColorInnerBottomRight;
 
     void mergeWith(const Style& base) {
         if (!backgroundColor.has_value() && base.backgroundColor.has_value()) {
@@ -45,6 +56,18 @@ struct Style {
         }
         if (!borderColor.has_value() && base.borderColor.has_value()) {
             borderColor = base.borderColor;
+        }
+        if (!borderColorOuterTopLeft.has_value() && base.borderColorOuterTopLeft.has_value()) {
+            borderColorOuterTopLeft = base.borderColorOuterTopLeft;
+        }
+        if (!borderColorOuterBottomRight.has_value() && base.borderColorOuterBottomRight.has_value()) {
+            borderColorOuterBottomRight = base.borderColorOuterBottomRight;
+        }
+        if (!borderColorInnerTopLeft.has_value() && base.borderColorInnerTopLeft.has_value()) {
+            borderColorInnerTopLeft = base.borderColorInnerTopLeft;
+        }
+        if (!borderColorInnerBottomRight.has_value() && base.borderColorInnerBottomRight.has_value()) {
+            borderColorInnerBottomRight = base.borderColorInnerBottomRight;
         }
         if (!borderWidth.has_value() && base.borderWidth.has_value()) {
             borderWidth = base.borderWidth;
@@ -72,6 +95,18 @@ struct Style {
 
         if (borderColor.has_value() != other.borderColor.has_value()) { return false; }
         if (borderColor && !(*borderColor == *other.borderColor)) { return false; }
+
+        if (borderColorOuterTopLeft.has_value() != other.borderColorOuterTopLeft.has_value()) { return false; }
+        if (borderColorOuterTopLeft && !(*borderColorOuterTopLeft == *other.borderColorOuterTopLeft)) { return false; }
+
+        if (borderColorOuterBottomRight.has_value() != other.borderColorOuterBottomRight.has_value()) { return false; }
+        if (borderColorOuterBottomRight && !(*borderColorOuterBottomRight == *other.borderColorOuterBottomRight)) { return false; }
+
+        if (borderColorInnerTopLeft.has_value() != other.borderColorInnerTopLeft.has_value()) { return false; }
+        if (borderColorInnerTopLeft && !(*borderColorInnerTopLeft == *other.borderColorInnerTopLeft)) { return false; }
+
+        if (borderColorInnerBottomRight.has_value() != other.borderColorInnerBottomRight.has_value()) { return false; }
+        if (borderColorInnerBottomRight && !(*borderColorInnerBottomRight == *other.borderColorInnerBottomRight)) { return false; }
 
         if (borderWidth.has_value() != other.borderWidth.has_value()) { return false; }
         if (borderWidth && *borderWidth != *other.borderWidth) { return false; }

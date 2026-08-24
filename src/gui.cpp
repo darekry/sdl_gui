@@ -264,6 +264,7 @@ GUIElement* GUIElement::addChild(std::unique_ptr<GUIElement> child) {
         raw->m_parent = this;
         raw->invalidateAbsPosCache();
         m_children.push_back(std::move(child));
+        raw->updateLayout(m_width, m_height);
         markDirty();
         return raw;
     }
@@ -631,6 +632,50 @@ void GUIElement::setBorderRadius(ElementState state, int radius) {
     markDirty();
 }
 
+void GUIElement::setBevel(ElementState state, BevelType type) {
+    size_t idx = stateIndex(state);
+    if (!m_localStyles[idx].has_value()) {
+        m_localStyles[idx] = Style();
+    }
+    Style& style = *m_localStyles[idx];
+    if (type == BevelType::Raised) {
+        style.borderColorOuterTopLeft     = constants::kWin95Highlight;
+        style.borderColorOuterBottomRight = constants::kWin95DarkShadow;
+        style.borderColorInnerTopLeft     = constants::kWin95Light;
+        style.borderColorInnerBottomRight = constants::kWin95Shadow;
+    } else {
+        style.borderColorOuterTopLeft     = constants::kWin95Shadow;
+        style.borderColorOuterBottomRight = constants::kWin95Highlight;
+        style.borderColorInnerTopLeft     = constants::kWin95DarkShadow;
+        style.borderColorInnerBottomRight = constants::kWin95Light;
+    }
+    markDirty();
+}
+
+void drawBevelFrame(SDL_Renderer* renderer, SDL_Rect rect, int thickness, SDL_Color topLeftColor, SDL_Color bottomRightColor) {
+    SetDrawColor(renderer, topLeftColor);
+    RenderFillRect(renderer, SDL_Rect{rect.x, rect.y, rect.w, thickness});
+    RenderFillRect(renderer, SDL_Rect{rect.x, rect.y + thickness, thickness, rect.h - 2 * thickness});
+    SetDrawColor(renderer, bottomRightColor);
+    RenderFillRect(renderer, SDL_Rect{rect.x + rect.w - thickness, rect.y, thickness, rect.h});
+    RenderFillRect(renderer, SDL_Rect{rect.x, rect.y + rect.h - thickness, rect.w, thickness});
+}
+
+void drawStyleBevel(SDL_Renderer* renderer, SDL_Rect rect, const Style& style) {
+    constexpr int kBevelThickness = 1;
+    if (style.borderColorOuterTopLeft && style.borderColorOuterBottomRight && rect.w >= 2 * kBevelThickness &&
+        rect.h >= 2 * kBevelThickness) {
+        drawBevelFrame(renderer, rect, kBevelThickness, *style.borderColorOuterTopLeft, *style.borderColorOuterBottomRight);
+    }
+
+    SDL_Rect inner{rect.x + kBevelThickness, rect.y + kBevelThickness, rect.w - 2 * kBevelThickness,
+                   rect.h - 2 * kBevelThickness};
+    if (style.borderColorInnerTopLeft && style.borderColorInnerBottomRight && inner.w >= 2 * kBevelThickness &&
+        inner.h >= 2 * kBevelThickness) {
+        drawBevelFrame(renderer, inner, kBevelThickness, *style.borderColorInnerTopLeft, *style.borderColorInnerBottomRight);
+    }
+}
+
 void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
     const Style& style = getComposedStyle(m_state);
     int radius = style.borderRadius.value_or(0);
@@ -646,7 +691,11 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
         drawRoundedTexturedRect(renderer, texRect, fradius, style.texture.value().get());
     }
 
-    if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
+    // Faza 3D (bevel) ma priorytet nad zwykłą ramką; rysowana jest ostro — Win95 nie ma zaokrągleń.
+    if (style.borderColorOuterTopLeft || style.borderColorOuterBottomRight || style.borderColorInnerTopLeft ||
+        style.borderColorInnerBottomRight) {
+        drawStyleBevel(renderer, SDL_Rect{0, 0, m_width, m_height}, style);
+    } else if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
         drawRoundedRectBorder(renderer, frect, fradius, ColorToFColor(*style.borderColor), static_cast<float>(*style.borderWidth));
     }
 }
@@ -683,6 +732,10 @@ uint64_t GUIElement::buildRenderCacheKey() const {
     if (st.borderWidth) {
         mix(static_cast<uint64_t>(*st.borderWidth));
     }
+    mixColor(st.borderColorOuterTopLeft);
+    mixColor(st.borderColorOuterBottomRight);
+    mixColor(st.borderColorInnerTopLeft);
+    mixColor(st.borderColorInnerBottomRight);
     mix(st.borderRadius.has_value() ? 1ULL : 0ULL);
     if (st.borderRadius) {
         mix(static_cast<uint64_t>(*st.borderRadius));

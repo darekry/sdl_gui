@@ -191,3 +191,51 @@ TEST_CASE("Anchor - children propagate with parent size", "[anchor][layout]") {
     REQUIRE(childPanel->getX() == 175);
     REQUIRE(childPanel->getY() == 135);
 }
+
+TEST_CASE("Anchor - applied immediately on add, without resize", "[anchor][layout]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setWindowSize(800, 600);
+
+    SECTION("top-level element is anchored by addElement") {
+        auto panel = std::make_unique<Panel>(manager, 0, 0, 100, 50);
+        panel->setAnchor(Anchor::center());
+        Panel* raw = panel.get();
+        manager.addElement(std::move(panel));
+
+        REQUIRE(raw->getX() == 350);
+        REQUIRE(raw->getY() == 275);
+    }
+
+    SECTION("anchored child is applied by addChild") {
+        auto parent = std::make_unique<Panel>(manager, 0, 0, 400, 300);
+        Panel* parentRaw = parent.get();
+        manager.addElement(std::move(parent));
+
+        auto child = std::make_unique<Panel>(manager, 0, 0, 50, 30);
+        child->setAnchor(Anchor::bottomRight(10));
+        Panel* childRaw = child.get();
+        parentRaw->addChild(std::move(child));
+
+        REQUIRE(childRaw->getX() == 400 - 10 - 50);
+        REQUIRE(childRaw->getY() == 300 - 10 - 30);
+    }
+
+    SECTION("anchored subtree of a dialog added after startup") {
+        auto dialog = std::make_unique<Panel>(manager, 0, 0, 520, 380);
+        dialog->setAnchor(Anchor::center());
+        auto button = std::make_unique<Panel>(manager, 0, 0, 76, 28);
+        button->setAnchor(Anchor{-1, -1, 12, 34});
+        Panel* buttonRaw = button.get();
+        dialog->addChild(std::move(button));
+        Panel* dialogRaw = dialog.get();
+        manager.addElement(std::move(dialog));
+
+        const int dialogX = (800 - 520) / 2;
+        const int dialogY = (600 - 380) / 2;
+        REQUIRE(dialogRaw->getX() == dialogX);
+        REQUIRE(dialogRaw->getY() == dialogY);
+        REQUIRE(buttonRaw->getX() == 520 - 12 - 76);
+        REQUIRE(buttonRaw->getY() == 380 - 34 - 28);
+    }
+}

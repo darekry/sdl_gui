@@ -1,6 +1,21 @@
 #include "../lib/catch_amalgamated.hpp"
 #include "../src/style.hpp"
 
+#include "test_helper.hpp"
+#include "../src/gui.hpp"
+#include "../src/gui_manager.hpp"
+#include "../src/panel.hpp"
+#include "../src/constants.hpp"
+
+namespace {
+class BevelProbe : public GUIElement {
+public:
+    explicit BevelProbe(GUIManager& manager)
+        : GUIElement(manager, 0, 0, 40, 24) {}
+    using GUIElement::getComposedStyle;
+};
+}
+
 TEST_CASE("Style - default state", "[style]") {
     Style s;
     SECTION("all fields are empty by default") {
@@ -12,6 +27,10 @@ TEST_CASE("Style - default state", "[style]") {
         REQUIRE_FALSE(s.borderRadius.has_value());
         REQUIRE_FALSE(s.fontSize.has_value());
         REQUIRE_FALSE(s.fontName.has_value());
+        REQUIRE_FALSE(s.borderColorOuterTopLeft.has_value());
+        REQUIRE_FALSE(s.borderColorOuterBottomRight.has_value());
+        REQUIRE_FALSE(s.borderColorInnerTopLeft.has_value());
+        REQUIRE_FALSE(s.borderColorInnerBottomRight.has_value());
     }
 }
 
@@ -51,6 +70,32 @@ TEST_CASE("Style - mergeWith", "[style]") {
 
         REQUIRE(s.borderRadius == 8);
         REQUIRE_FALSE(s.borderColor.has_value());
+    }
+
+    SECTION("fills missing bevel colors from base") {
+        Style base;
+        base.borderColorOuterTopLeft = SDL_Color{255, 255, 255, 255};
+        base.borderColorInnerBottomRight = SDL_Color{128, 128, 128, 255};
+
+        Style s;
+        s.borderColorOuterBottomRight = SDL_Color{0, 0, 0, 255};
+        s.mergeWith(base);
+
+        REQUIRE(s.borderColorOuterTopLeft == SDL_Color{255, 255, 255, 255});
+        REQUIRE(s.borderColorInnerBottomRight == SDL_Color{128, 128, 128, 255});
+        REQUIRE(s.borderColorOuterBottomRight == SDL_Color{0, 0, 0, 255});
+        REQUIRE_FALSE(s.borderColorInnerTopLeft.has_value());
+    }
+
+    SECTION("does not override existing bevel colors") {
+        Style base;
+        base.borderColorInnerTopLeft = SDL_Color{1, 2, 3, 4};
+
+        Style s;
+        s.borderColorInnerTopLeft = SDL_Color{9, 9, 9, 9};
+        s.mergeWith(base);
+
+        REQUIRE(s.borderColorInnerTopLeft == SDL_Color{9, 9, 9, 9});
     }
 }
 
@@ -120,6 +165,27 @@ TEST_CASE("Style - equality", "[style]") {
         REQUIRE(a != b);
     }
 
+    SECTION("different bevel colors are not equal") {
+        Style a;
+        Style b;
+        a.borderColorInnerTopLeft = SDL_Color{1, 2, 3, 4};
+        b.borderColorInnerTopLeft = SDL_Color{5, 6, 7, 8};
+        REQUIRE(a != b);
+
+        a.borderColorOuterBottomRight = SDL_Color{1, 1, 1, 1};
+        REQUIRE(a != b);
+
+        b.borderColorOuterBottomRight = SDL_Color{2, 2, 2, 2};
+        REQUIRE(a != b);
+    }
+
+    SECTION("presence vs absence of bevel color differs") {
+        Style a;
+        Style b;
+        b.borderColorOuterTopLeft = SDL_Color{255, 255, 255, 255};
+        REQUIRE(a != b);
+    }
+
     SECTION("texture equality compares pointers") {
         auto noop = [](SDL_Texture*) {};
         Style a;
@@ -154,5 +220,61 @@ TEST_CASE("Style - element states", "[style]") {
         REQUIRE(ElementState::Normal != ElementState::Hover);
         REQUIRE(ElementState::Hover != ElementState::Pressed);
         REQUIRE(ElementState::Pressed != ElementState::Disabled);
+    }
+}
+
+TEST_CASE("GUIElement - setBevel", "[style][bevel]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("raised bevel uses Win95 palette") {
+        BevelProbe probe(manager);
+        probe.setBevel(ElementState::Normal, BevelType::Raised);
+
+        const Style s = probe.getComposedStyle(ElementState::Normal);
+        REQUIRE(s.borderColorOuterTopLeft == constants::kWin95Highlight);
+        REQUIRE(s.borderColorOuterBottomRight == constants::kWin95DarkShadow);
+        REQUIRE(s.borderColorInnerTopLeft == constants::kWin95Light);
+        REQUIRE(s.borderColorInnerBottomRight == constants::kWin95Shadow);
+    }
+
+    SECTION("sunken bevel inverts edges") {
+        BevelProbe probe(manager);
+        probe.setBevel(ElementState::Normal, BevelType::Sunken);
+
+        const Style s = probe.getComposedStyle(ElementState::Normal);
+        REQUIRE(s.borderColorOuterTopLeft == constants::kWin95Shadow);
+        REQUIRE(s.borderColorOuterBottomRight == constants::kWin95Highlight);
+        REQUIRE(s.borderColorInnerTopLeft == constants::kWin95DarkShadow);
+        REQUIRE(s.borderColorInnerBottomRight == constants::kWin95Light);
+    }
+
+    SECTION("bevels are independent per state") {
+        BevelProbe probe(manager);
+        probe.setBevel(ElementState::Normal, BevelType::Raised);
+        probe.setBevel(ElementState::Pressed, BevelType::Sunken);
+
+        REQUIRE(probe.getComposedStyle(ElementState::Normal).borderColorOuterTopLeft == constants::kWin95Highlight);
+        REQUIRE(probe.getComposedStyle(ElementState::Pressed).borderColorOuterTopLeft == constants::kWin95Shadow);
+        // Stany bez lokalnego stylu dziedziczą z Normal (fallback w getComposedStyle)
+        REQUIRE(probe.getComposedStyle(ElementState::Disabled).borderColorOuterTopLeft == constants::kWin95Highlight);
+    }
+
+    SECTION("renders in every state without crashing") {
+        auto panel = std::make_unique<Panel>(manager, 10, 10, 60, 30);
+        panel->setBackgroundColor(ElementState::Normal, constants::kWin95Face);
+        panel->setBevel(ElementState::Normal, BevelType::Raised);
+        panel->setBevel(ElementState::Hover, BevelType::Raised);
+        panel->setBevel(ElementState::Pressed, BevelType::Sunken);
+        panel->setBevel(ElementState::Disabled, BevelType::Sunken);
+
+        Panel* raw = panel.get();
+        manager.addElement(std::move(panel));
+
+        for (auto state : {ElementState::Normal, ElementState::Hover, ElementState::Pressed, ElementState::Disabled}) {
+            raw->setState(state);
+            manager.render();
+        }
+        SUCCEED();
     }
 }

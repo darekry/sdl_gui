@@ -9,4 +9,11 @@ namespace constants {
     constexpr SDL_Color kTitleBarColor     {200, 200, 200, 255};
     constexpr SDL_Color kTitleBarLineColor {150, 150, 150, 255};
     constexpr int      kTooltipDelayMs     = 500;
+
+    // Systemowe kolory 3D Windows 95/98
+    constexpr SDL_Color kWin95Face       {192, 192, 192, 255};
+    constexpr SDL_Color kWin95Light      {223, 223, 223, 255};
+    constexpr SDL_Color kWin95Highlight  {255, 255, 255, 255};
+    constexpr SDL_Color kWin95Shadow     {128, 128, 128, 255};
+    constexpr SDL_Color kWin95DarkShadow {0,   0,   0,   255};
 }
