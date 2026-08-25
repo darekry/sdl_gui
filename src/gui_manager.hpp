@@ -101,6 +101,7 @@ public:
     
     void showTooltip(GUIElement* target, const std::string& text);
     void hideTooltip();
+    [[nodiscard]] GUIElement* getActiveTooltip() const { return tooltipElement.get(); }
 
     void setTheme(Theme theme);
     Theme& getTheme();

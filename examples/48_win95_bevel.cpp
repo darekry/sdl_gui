@@ -15,20 +15,6 @@
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-void applyWin95Button(Button& button) {
-    for (auto state : {ElementState::Normal, ElementState::Hover}) {
-        button.setBackgroundColor(state, constants::kWin95Face);
-        button.setBevel(state, BevelType::Raised);
-    }
-    button.setBackgroundColor(ElementState::Pressed, constants::kWin95Face);
-    button.setBevel(ElementState::Pressed, BevelType::Sunken);
-}
-
-void applyWin95Sunken(GUIElement& element) {
-    element.setBackgroundColor(ElementState::Normal, constants::kWin95Face);
-    element.setBevel(ElementState::Normal, BevelType::Sunken);
-}
-
 std::unique_ptr<Panel> buildWin95Dialog(GUIManager& guiManager) {
     auto dialog = std::make_unique<Panel>(guiManager, 0, 0, 520, 380);
     dialog->setBackgroundColor(ElementState::Normal, constants::kWin95Face);
@@ -49,7 +35,6 @@ std::unique_ptr<Panel> buildWin95Dialog(GUIManager& guiManager) {
     titleBar->addChild(std::move(titleText));
 
     auto closeButton = std::make_unique<Button>(guiManager, 0, 0, 20, 16, "x");
-    applyWin95Button(*closeButton);
     closeButton->setAnchor(Anchor::topRight(5));
     closeButton->setOnClickCallback([dialogRef](GUIElement*) {
         if (dialogRef) {
@@ -70,7 +55,8 @@ std::unique_ptr<Panel> buildWin95Dialog(GUIManager& guiManager) {
     auto sunkenLabel = std::make_unique<Label>(guiManager, 20, 94, "Sunken:", 14);
     dialog->addChild(std::move(sunkenLabel));
     auto sunkenPanel = std::make_unique<Panel>(guiManager, 84, 86, 140, 34);
-    applyWin95Sunken(*sunkenPanel);
+    sunkenPanel->setBackgroundColor(ElementState::Normal, constants::kWin95Face);
+    sunkenPanel->setBevel(ElementState::Normal, BevelType::Sunken);
     dialog->addChild(std::move(sunkenPanel));
 
     auto inputLabel = std::make_unique<Label>(guiManager, 20, 140, "Nazwa pliku:", 14);
@@ -78,30 +64,24 @@ std::unique_ptr<Panel> buildWin95Dialog(GUIManager& guiManager) {
     auto textInput = std::make_unique<TextInput>(guiManager, 20, 162, 480, 30);
     textInput->setText("C:\\WINDOWS\\SYSTEM32");
     textInput->setAnchor(Anchor::horizontalStretch(20, 20));
-    for (auto state : {ElementState::Normal, ElementState::Hover, ElementState::Pressed}) {
-        textInput->setBackgroundColor(state, {255, 255, 255, 255});
-        textInput->setBevel(state, BevelType::Sunken);
-    }
     dialog->addChild(std::move(textInput));
 
     auto progress = std::make_unique<ProgressBar>(guiManager, 20, 206, 300, 24);
     progress->setRange(0, 100);
     progress->setValue(65.0f);
-    applyWin95Sunken(*progress);
     dialog->addChild(std::move(progress));
 
     auto okButton = std::make_unique<Button>(guiManager, 0, 0, 76, 28, "OK");
-    applyWin95Button(*okButton);
     okButton->setAnchor(Anchor{-1, -1, 12, 34});
     dialog->addChild(std::move(okButton));
 
     auto cancelButton = std::make_unique<Button>(guiManager, 0, 0, 76, 28, "Anuluj");
-    applyWin95Button(*cancelButton);
     cancelButton->setAnchor(Anchor{-1, -1, 100, 34});
     dialog->addChild(std::move(cancelButton));
 
     auto statusBar = std::make_unique<Panel>(guiManager, 2, 354, 516, 24);
-    applyWin95Sunken(*statusBar);
+    statusBar->setBackgroundColor(ElementState::Normal, constants::kWin95Face);
+    statusBar->setBevel(ElementState::Normal, BevelType::Sunken);
     statusBar->setAnchor(Anchor::bottomBar(2, 2, 2));
     auto statusText = std::make_unique<Label>(guiManager, 6, 4, "Gotowe", 13);
     statusBar->addChild(std::move(statusText));
@@ -116,7 +96,7 @@ int main(int, char**) {
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        guiManager.setTheme(Theme::createDefaultTheme());
+        guiManager.setTheme(Theme::createWindows95Theme());
 
         int windowWidth = SCREEN_WIDTH;
         int windowHeight = SCREEN_HEIGHT;
@@ -131,7 +111,6 @@ int main(int, char**) {
         guiManager.addElement(std::move(hintLabel));
 
         auto showButton = std::make_unique<Button>(guiManager, 16, 34, 140, 28, "Pokaż okno");
-        applyWin95Button(*showButton);
         showButton->setAnchor(Anchor{16, 34, -1, -1});
         showButton->setOnClickCallback([&guiManager](GUIElement*) {
             guiManager.addElement(buildWin95Dialog(guiManager));

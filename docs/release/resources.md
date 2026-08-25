@@ -98,15 +98,17 @@ Style getStyle(std::string_view type) const;
 void setDefaultStyle(Style style);
 const Style& getDefaultStyle() const;
 static Theme createDefaultTheme();   // deleguje do ThemePresets::createWin9xTheme()
+static Theme createWindows95Theme(); // deleguje do ThemePresets::createWindows95Theme()
 ```
 
 ### ThemePresets
 
-Cztery gotowe motywy (funkcje `inline` w namespace `ThemePresets`):
+Pięć gotowych motywów (funkcje `inline` w namespace `ThemePresets`):
 
 | Funkcja | Opis |
 |---------|------|
 | `ThemePresets::createWin9xTheme()` | Klasyczny Windows 95/98: szare tło, ostre krawędzie, białe inputy |
+| `ThemePresets::createWindows95Theme()` | Autentyczny Win95 z fazami 3D (bevel): przyciski Raised, pola edycji Sunken |
 | `ThemePresets::createLightTheme()` | Jasny, nowoczesny, z niebieskim akcentem |
 | `ThemePresets::createDarkTheme()` | Ciemny (dark mode) |
 | `ThemePresets::createHighContrastTheme()` | Wysoki kontrast: czarne tło, żółte akcenty, większe fonty |

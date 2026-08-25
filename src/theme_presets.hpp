@@ -2,8 +2,15 @@
 
 #include "theme.hpp"
 #include "constants.hpp"
+#include "gui.hpp" // applyBevelToStyle
 
 namespace ThemePresets {
+
+// Kolorystyka Win95 z fazą 3D wpiętą w Style.
+inline Style withBevel(Style style, BevelType type) {
+    applyBevelToStyle(style, type);
+    return style;
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // Windows 9x (klasyczny wygląd Win95/98)
@@ -246,6 +253,174 @@ inline Theme createWin9xTheme() {
         s.borderRadius = 0;
         s.borderColor = kBtnShadow;
         theme.setStyle("Canvas", ElementState::Normal, s);
+    }
+
+    return theme;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// Windows 95/98 — autentyczny look z fazami 3D (bevel).
+// Przyciski wypukłe (Raised), pola edycji wklęśnięte (Sunken).
+// ═══════════════════════════════════════════════════════════════════
+
+inline Theme createWindows95Theme() {
+    Theme theme;
+
+    constexpr SDL_Color kWindowText    {0, 0, 0, 255};
+    constexpr SDL_Color kWhite         {255, 255, 255, 255};
+    constexpr SDL_Color kHighlightText {255, 255, 255, 255};
+    constexpr SDL_Color kNavy          {0, 0, 128, 255};
+    constexpr SDL_Color kDisabledText  {128, 128, 128, 255};
+
+    Style defaultStyle;
+    defaultStyle.backgroundColor = constants::kWin95Face;
+    defaultStyle.textColor = kWindowText;
+    defaultStyle.borderRadius = 0;
+    defaultStyle.borderWidth = 0;
+    defaultStyle.fontSize = 14;
+    defaultStyle.fontName = constants::kDefaultFontPath;
+    theme.setDefaultStyle(defaultStyle);
+
+    // Button: Raised w spoczynku, Sunken po wciśnięciu
+    {
+        Style s;
+        s.backgroundColor = constants::kWin95Face;
+        s.borderRadius = 0;
+        theme.setStyle("Button", ElementState::Normal, withBevel(s, BevelType::Raised));
+
+        Style h = s;
+        h.backgroundColor = constants::kWin95Light;
+        theme.setStyle("Button", ElementState::Hover, withBevel(h, BevelType::Raised));
+
+        Style p = s;
+        theme.setStyle("Button", ElementState::Pressed, withBevel(p, BevelType::Sunken));
+
+        Style d = s;
+        d.textColor = kDisabledText;
+        theme.setStyle("Button", ElementState::Disabled, withBevel(d, BevelType::Raised));
+    }
+
+    // Panel: płaskie tło okna (ramki okien ustawia użytkownik)
+    {
+        Style s;
+        s.backgroundColor = constants::kWin95Face;
+        s.borderRadius = 0;
+        theme.setStyle("Panel", ElementState::Normal, s);
+    }
+
+    // Pola edycji i listy: białe tło + Sunken
+    auto sunkenField = [](SDL_Color bg) {
+        Style s;
+        s.backgroundColor = bg;
+        s.borderRadius = 0;
+        return withBevel(s, BevelType::Sunken);
+    };
+
+    theme.setStyle("TextInput", ElementState::Normal, sunkenField(kWhite));
+    theme.setStyle("TextInput", ElementState::Hover, sunkenField(kWhite));
+    {
+        Style d = sunkenField(constants::kWin95Face);
+        d.borderColorOuterTopLeft.reset();
+        d.borderColorOuterBottomRight.reset();
+        d.borderColorInnerTopLeft.reset();
+        d.borderColorInnerBottomRight.reset();
+        d.textColor = kDisabledText;
+        theme.setStyle("TextInput", ElementState::Disabled, d);
+    }
+
+    theme.setStyle("TextArea", ElementState::Normal, sunkenField(kWhite));
+    theme.setStyle("TextArea", ElementState::Hover, sunkenField(kWhite));
+    {
+        Style d = sunkenField(constants::kWin95Face);
+        d.borderColorOuterTopLeft.reset();
+        d.borderColorOuterBottomRight.reset();
+        d.borderColorInnerTopLeft.reset();
+        d.borderColorInnerBottomRight.reset();
+        d.textColor = kDisabledText;
+        theme.setStyle("TextArea", ElementState::Disabled, d);
+    }
+
+    // ListView / ComboBox / Canvas: białe + Sunken
+    theme.setStyle("ListView", ElementState::Normal, sunkenField(kWhite));
+    theme.setStyle("ComboBox", ElementState::Normal, sunkenField(kWhite));
+    theme.setStyle("Canvas", ElementState::Normal, sunkenField(kWhite));
+
+    // StringGrid: biały + Sunken; borderColor zostaje jako kolor linii siatki
+    {
+        Style s = sunkenField(kWhite);
+        s.borderColor = constants::kWin95Shadow;
+        theme.setStyle("StringGrid", ElementState::Normal, s);
+    }
+
+    // ProgressBar: białe tło + Sunken; borderColor = kolor wypełnienia (navy)
+    {
+        Style s = sunkenField(kWhite);
+        s.borderColor = kNavy;
+        theme.setStyle("ProgressBar", ElementState::Normal, s);
+    }
+
+    // Slider: track rysowany przez widget; borderColor = kolor suwaka
+    {
+        Style s;
+        s.backgroundColor = constants::kWin95Face;
+        s.borderColor = constants::kWin95Shadow;
+        s.borderRadius = 0;
+        theme.setStyle("Slider", ElementState::Normal, s);
+    }
+
+    {
+        Style s;
+        s.backgroundColor = constants::kWin95Face;
+        s.borderColor = constants::kWin95Shadow;
+        s.borderRadius = 0;
+        theme.setStyle("RangeSlider", ElementState::Normal, s);
+    }
+
+    // Checkbox / RadioButton: tylko tekst (boxy rysuje widget)
+    {
+        Style s;
+        s.textColor = kWindowText;
+        s.fontSize = 14;
+        theme.setStyle("Checkbox", ElementState::Normal, s);
+
+        Style r = s;
+        theme.setStyle("RadioButton", ElementState::Normal, r);
+    }
+
+    // Label: przezroczysty
+    {
+        Style s;
+        s.textColor = kWindowText;
+        s.backgroundColor = SDL_Color{0, 0, 0, 0};
+        s.fontSize = 14;
+        theme.setStyle("Label", ElementState::Normal, s);
+    }
+
+    // TabControl / ScrollArea / AnimatedImage: płaskie tło
+    {
+        Style s;
+        s.backgroundColor = constants::kWin95Face;
+        s.borderRadius = 0;
+        theme.setStyle("TabControl", ElementState::Normal, s);
+        theme.setStyle("ScrollArea", ElementState::Normal, s);
+        theme.setStyle("AnimatedImage", ElementState::Normal, s);
+    }
+
+    // ContextMenu: białe z cieniem, zaznaczenie navy
+    {
+        Style s;
+        s.backgroundColor = kWhite;
+        s.textColor = kWindowText;
+        s.borderColor = constants::kWin95Shadow;
+        s.borderWidth = 1;
+        s.borderRadius = 0;
+        theme.setStyle("ContextMenu", ElementState::Normal, s);
+
+        Style h = s;
+        h.backgroundColor = kNavy;
+        h.textColor = kHighlightText;
+        theme.setStyle("ContextMenu", ElementState::Hover, h);
     }
 
     return theme;

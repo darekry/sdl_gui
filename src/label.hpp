@@ -21,6 +21,8 @@ public:
 
 private:
     void recalculateSize();
+    void updateLines();
     std::string m_text;
+    std::vector<std::string> m_lines;
     int m_font_size;
 };

@@ -102,3 +102,4 @@ int main(int, char**) {
 - Rozmiar labela wynika z tekstu — `setSize()` ma sens tylko wtedy, gdy tekst się nie zmienia lub gdy element ma anchor.
 - Tekst jest cache'owany jako tekstura i odświeżany tylko przy zmianie (treść/kolor/rozmiar fontu) — zmiana stylu przez bezpośrednią modyfikację `Style` wymaga `markDirty()`.
 - `font_size` podaje się tylko w konstruktorze; do zmiany rozmiaru fontu w trakcie działania utwórz nowy Label.
+- **Wiele linii**: znak `\n` w tekście łamie linię. Szerokość elementu to szerokość najszerszej linii, wysokość to liczba linii × wysokość fontu (`TTF_GetFontHeight`). Puste linie (`"\n\n"`) i wiodący/kończący `\n` liczą się jako linie; sekwencja `\r\n` jest traktowana jak pojedyncze złamanie. Każda linia rysowana jest w naturalnym rozmiarze, wyrównana do lewej krawędzi; tekst jednolinijkowy zachowuje dotychczasowe zachowanie (rozciągnięcie do rozmiaru elementu po ręcznym `setSize()`).

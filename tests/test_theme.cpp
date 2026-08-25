@@ -180,3 +180,69 @@ TEST_CASE("Theme functionality", "[theme]") {
         REQUIRE(pressedBtn.backgroundColor->r < normalBtn.backgroundColor->r);
     }
 }
+
+TEST_CASE("Windows95 theme", "[theme][bevel]") {
+    Theme theme = Theme::createWindows95Theme();
+
+    SECTION("Button Normal has raised bevel") {
+        Style btnNormal = theme.getStyle("Button", ElementState::Normal);
+        REQUIRE(btnNormal.borderColorOuterTopLeft == SDL_Color{255, 255, 255, 255});
+        REQUIRE(btnNormal.borderColorOuterBottomRight == SDL_Color{0, 0, 0, 255});
+        REQUIRE(btnNormal.borderColorInnerTopLeft == SDL_Color{223, 223, 223, 255});
+        REQUIRE(btnNormal.borderColorInnerBottomRight == SDL_Color{128, 128, 128, 255});
+        REQUIRE(btnNormal.backgroundColor == SDL_Color{192, 192, 192, 255});
+    }
+
+    SECTION("Button Pressed has sunken bevel") {
+        Style btnPressed = theme.getStyle("Button", ElementState::Pressed);
+        REQUIRE(btnPressed.borderColorOuterTopLeft == SDL_Color{128, 128, 128, 255});
+        REQUIRE(btnPressed.borderColorOuterBottomRight == SDL_Color{255, 255, 255, 255});
+        REQUIRE(btnPressed.borderColorInnerTopLeft == SDL_Color{0, 0, 0, 255});
+        REQUIRE(btnPressed.borderColorInnerBottomRight == SDL_Color{223, 223, 223, 255});
+    }
+
+    SECTION("TextInput Normal has sunken bevel and white background") {
+        Style input = theme.getStyle("TextInput", ElementState::Normal);
+        REQUIRE(input.backgroundColor == SDL_Color{255, 255, 255, 255});
+        REQUIRE(input.borderColorOuterTopLeft == SDL_Color{128, 128, 128, 255});
+        REQUIRE(input.borderColorInnerTopLeft == SDL_Color{0, 0, 0, 255});
+    }
+
+    SECTION("TextInput Disabled drops bevel") {
+        Style disabled = theme.getStyle("TextInput", ElementState::Disabled);
+        REQUIRE_FALSE(disabled.borderColorOuterTopLeft.has_value());
+        REQUIRE_FALSE(disabled.borderColorInnerTopLeft.has_value());
+        REQUIRE(disabled.textColor == SDL_Color{128, 128, 128, 255});
+    }
+
+    SECTION("ProgressBar uses navy fill on sunken white field") {
+        Style progress = theme.getStyle("ProgressBar", ElementState::Normal);
+        REQUIRE(progress.backgroundColor == SDL_Color{255, 255, 255, 255});
+        REQUIRE(progress.borderColor == SDL_Color{0, 0, 128, 255});
+        REQUIRE(progress.borderColorInnerTopLeft == SDL_Color{0, 0, 0, 255});
+    }
+
+    SECTION("StringGrid keeps borderColor as grid line color") {
+        Style grid = theme.getStyle("StringGrid", ElementState::Normal);
+        REQUIRE(grid.borderColor == SDL_Color{128, 128, 128, 255});
+        REQUIRE(grid.borderColorOuterTopLeft.has_value());
+    }
+
+    SECTION("Panel stays flat - no bevel leakage") {
+        Style panel = theme.getStyle("Panel", ElementState::Normal);
+        REQUIRE_FALSE(panel.borderColorOuterTopLeft.has_value());
+        REQUIRE_FALSE(panel.borderColorInnerBottomRight.has_value());
+    }
+
+    SECTION("Unknown type falls back to default without bevel") {
+        Style unknown = theme.getStyle("MysteryWidget");
+        REQUIRE(unknown.backgroundColor == SDL_Color{192, 192, 192, 255});
+        REQUIRE_FALSE(unknown.borderColorOuterTopLeft.has_value());
+    }
+
+    SECTION("Hover state falls back to defined styles") {
+        Style sliderHover = theme.getStyle("Slider", ElementState::Hover);
+        REQUIRE(sliderHover.backgroundColor == SDL_Color{192, 192, 192, 255});
+        REQUIRE(sliderHover.borderColor == SDL_Color{128, 128, 128, 255});
+    }
+}

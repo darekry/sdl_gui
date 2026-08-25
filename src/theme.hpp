@@ -19,6 +19,7 @@ public:
     const Style& getDefaultStyle() const;
     
     static Theme createDefaultTheme();
+    static Theme createWindows95Theme();
 
 private:
     static constexpr size_t stateIdx(ElementState s) { return static_cast<size_t>(s); }

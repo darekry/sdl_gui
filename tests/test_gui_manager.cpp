@@ -8,6 +8,7 @@
 #include "../src/text_input.hpp"
 #include "../src/theme.hpp"
 #include "../src/style.hpp"
+#include "../src/constants.hpp"
 
 TEST_CASE("GUIManager Element Management", "[gui_manager][elements]") {
     TestHelper helper;
@@ -566,6 +567,35 @@ TEST_CASE("GUIManager Tooltip", "[gui_manager][tooltip]") {
         manager.hideTooltip();
         manager.showTooltip(ptr2, "Second tooltip");
         manager.hideTooltip();
+    }
+
+    SECTION("Multi-line tooltip panel fits all lines") {
+        auto font = manager.getFontManager().loadFont(constants::kDefaultFontPath, constants::kTooltipFontSize);
+        REQUIRE(font != nullptr);
+        int lineHeight = TTF_GetFontHeight(font.get());
+
+        auto button = std::make_unique<Button>(manager, 10, 10, 100, 40, "Test");
+        Button* btn = button.get();
+        manager.addElement(std::move(button));
+
+        Label widestRef(manager, 0, 0, "Second much longer line", constants::kTooltipFontSize);
+        manager.showTooltip(btn, "First\nSecond much longer line\nThird");
+
+        GUIElement* tip = manager.getActiveTooltip();
+        REQUIRE(tip != nullptr);
+        REQUIRE(tip->getWidth() == widestRef.getWidth() + 2 * constants::kTooltipPadding);
+        REQUIRE(tip->getHeight() == 3 * lineHeight + 2 * constants::kTooltipPadding);
+
+        manager.render();
+
+        SECTION("Single-line tooltip shrinks back") {
+            Label singleRef(manager, 0, 0, "Short", constants::kTooltipFontSize);
+            manager.showTooltip(btn, "Short");
+            tip = manager.getActiveTooltip();
+            REQUIRE(tip != nullptr);
+            REQUIRE(tip->getWidth() == singleRef.getWidth() + 2 * constants::kTooltipPadding);
+            REQUIRE(tip->getHeight() == singleRef.getHeight() + 2 * constants::kTooltipPadding);
+        }
     }
 }
 

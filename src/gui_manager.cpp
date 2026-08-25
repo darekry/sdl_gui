@@ -9,8 +9,6 @@
 #include "std.hpp"
 
 static constexpr int DEFAULT_FONT_SIZE = 24;
-static constexpr int TOOLTIP_FONT_SIZE = 14;
-static constexpr int TOOLTIP_PADDING = 5;
 static constexpr size_t kRenderCachePruneThreshold = 256;
 static const SDL_Color TOOLTIP_BG_COLOR = {.r=255, .g=255, .b=225, .a=255};
 
@@ -227,33 +225,29 @@ void GUIManager::cleanup() {
 void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
     if (!target) return;
 
-    const int fontSize = TOOLTIP_FONT_SIZE;
-    const int padding = TOOLTIP_PADDING;
+    const int fontSize = constants::kTooltipFontSize;
+    const int padding = constants::kTooltipPadding;
 
-    int textWidth = 0;
-    int textHeight = 0;
-    m_fontManager.getTextSize(text, constants::kDefaultFontPath, fontSize, &textWidth, &textHeight);
-    
     auto targetPos = target->getAbsolutePosition();
     int posX = targetPos.x;
     int posY = targetPos.y + target->getHeight();
-    int panelWidth = textWidth + (2 * padding);
-    int panelHeight = textHeight + (2 * padding);
 
     if (!m_tooltipPanel) {
-        m_tooltipPanel = std::make_unique<Panel>(*this, posX, posY, panelWidth, panelHeight);
+        m_tooltipPanel = std::make_unique<Panel>(*this, posX, posY, 0, 0);
         m_tooltipPanel->setBackgroundColor(ElementState::Normal, TOOLTIP_BG_COLOR);
         m_tooltipPanel->setBorder(ElementState::Normal, {0, 0, 0, 255}, 1);
-        
+
         auto label = std::make_unique<Label>(*this, padding, padding, "", fontSize);
         m_tooltipLabel = label.get();
         m_tooltipPanel->addChild(std::move(label));
     }
-    
-    m_tooltipPanel->setPosition(posX, posY);
-    m_tooltipPanel->setSize(panelWidth, panelHeight);
 
     m_tooltipLabel->setText(text);
+    int panelWidth = m_tooltipLabel->getWidth() + (2 * padding);
+    int panelHeight = m_tooltipLabel->getHeight() + (2 * padding);
+
+    m_tooltipPanel->setPosition(posX, posY);
+    m_tooltipPanel->setSize(panelWidth, panelHeight);
 
     m_tooltipPanel->setVisible(true);
     tooltipElement = std::move(m_tooltipPanel);

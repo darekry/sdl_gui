@@ -3,6 +3,7 @@
 #include "test_helper.hpp"
 #include "../src/label.hpp"
 #include "../src/gui_manager.hpp"
+#include "../src/constants.hpp"
 
 TEST_CASE("Label text handling", "[label]") {
     TestHelper helper;
@@ -204,6 +205,94 @@ TEST_CASE("Label special characters", "[label]") {
         Label label(manager, 0, 0, "Hello 世界! @#$ 123", 16);
         REQUIRE(label.getWidth() > 0);
         REQUIRE(label.getHeight() > 0);
+    }
+}
+
+TEST_CASE("Label multi-line support", "[label]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("Two lines are taller than a single line") {
+        Label single(manager, 0, 0, "Line1", 16);
+        Label multi(manager, 0, 0, "Line1\nLine2", 16);
+        REQUIRE(multi.getHeight() > single.getHeight());
+        REQUIRE(multi.getWidth() > 0);
+    }
+
+    SECTION("Height equals line count times font height") {
+        auto font = manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
+        REQUIRE(font != nullptr);
+        int lineHeight = TTF_GetFontHeight(font.get());
+
+        Label twoLines(manager, 0, 0, "Line1\nLine2", 16);
+        REQUIRE(twoLines.getHeight() == 2 * lineHeight);
+
+        Label threeLines(manager, 0, 0, "Line1\nLine2\nLine3", 16);
+        REQUIRE(threeLines.getHeight() == 3 * lineHeight);
+    }
+
+    SECTION("Width equals widest line") {
+        Label wideRef(manager, 0, 0, "TheLongestLine", 16);
+        Label multi(manager, 0, 0, "Short\nTheLongestLine\nTiny", 16);
+        REQUIRE(multi.getWidth() == wideRef.getWidth());
+    }
+
+    SECTION("Empty lines count toward height") {
+        auto font = manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
+        REQUIRE(font != nullptr);
+        int lineHeight = TTF_GetFontHeight(font.get());
+
+        Label label(manager, 0, 0, "AA\n\nAA", 16);
+        REQUIRE(label.getHeight() == 3 * lineHeight);
+
+        Label singleRef(manager, 0, 0, "AA", 16);
+        REQUIRE(label.getWidth() == singleRef.getWidth());
+    }
+
+    SECTION("Trailing newline adds empty last line") {
+        auto font = manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
+        REQUIRE(font != nullptr);
+        int lineHeight = TTF_GetFontHeight(font.get());
+
+        Label label(manager, 0, 0, "Text\n", 16);
+        REQUIRE(label.getHeight() == 2 * lineHeight);
+    }
+
+    SECTION("Leading newline adds empty first line") {
+        auto font = manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
+        REQUIRE(font != nullptr);
+        int lineHeight = TTF_GetFontHeight(font.get());
+
+        Label label(manager, 0, 0, "\nText", 16);
+        REQUIRE(label.getHeight() == 2 * lineHeight);
+    }
+
+    SECTION("CRLF is treated as a single line break") {
+        Label lf(manager, 0, 0, "Line1\nLine2", 16);
+        Label crlf(manager, 0, 0, "Line1\r\nLine2", 16);
+        REQUIRE(crlf.getHeight() == lf.getHeight());
+        REQUIRE(crlf.getWidth() == lf.getWidth());
+    }
+
+    SECTION("setText switches between single-line and multi-line") {
+        Label label(manager, 0, 0, "One", 16);
+        int singleHeight = label.getHeight();
+        int singleWidth = label.getWidth();
+
+        label.setText("One\nTwo");
+        REQUIRE(label.getHeight() > singleHeight);
+
+        label.setText("One");
+        REQUIRE(label.getHeight() == singleHeight);
+        REQUIRE(label.getWidth() == singleWidth);
+    }
+
+    SECTION("Multi-line label renders without crash") {
+        auto label = std::make_unique<Label>(manager, 10, 10, "First\nSecond\nThird", 16);
+        Label* labelPtr = label.get();
+        manager.addElement(std::move(label));
+        manager.render();
+        REQUIRE(labelPtr->getHeight() > 0);
     }
 }
 

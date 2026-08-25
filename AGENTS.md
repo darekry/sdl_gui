@@ -27,7 +27,7 @@ SDL GUI to lekka biblioteka GUI oparta na SDL3. Cel: ułatwić tworzenie narzęd
 | Warstwa | Elementy |
 |---------|----------|
 | **Core** | GUIManager (kontekst, renderowanie), GUIElement (hierarchia + cache tekstur), TextEditable (selekcja, clipboard) |
-| **Widgety (23)** | Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, StringGrid, ListView, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu, Cursor, ArcContainer, ProgressBar, ScrollArea, ShaderPanel, RangeSlider, Splitter |
+| **Widgety (22)** | Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, RangeSlider, StringGrid, ListView, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu, Cursor, ArcContainer, ProgressBar, ScrollArea, ShaderPanel |
 | **Composite** | DialogBox, MessageBox, FileDialog (`src/composite/`) |
 | **Editor** | EditorWindow, EditorState, PreviewWindow, LayoutImporter, LayoutExporter (`src/editor/`) |
 | **Ekrany/okna** | ScreenManager (gry), WindowManager (wiele okien systemowych) |
@@ -42,8 +42,8 @@ SDL GUI to lekka biblioteka GUI oparta na SDL3. Cel: ułatwić tworzenie narzęd
 src/           — implementacja (C++23, moduły)
 src/composite/ — gotowe dialogi
 src/editor/    — edytor wizualny GUI
-examples/      — 39 przykładów (numbered 00–40)
-tests/         — 32 plików testowych (Catch2)
+examples/      — 49 przykładów (00–48); examples/c/ — 10 przykładów C
+tests/         — 43 binarki testowe (Catch2)
 docs/          — dokumentacja (EN/PL)
 lib/           — Catch2 amalgamated, tinyxml2
 ```
@@ -263,14 +263,14 @@ Zasoby muszą być dostępne przez `pkg-config sdl3 sdl3-image sdl3-ttf`. `PKG_C
 - **Framework**: Catch2 (amalgamated: `lib/catch_amalgamated.hpp`)
 - **Helper**: `tests/test_helper.hpp/cpp` — headless SDL init (okno tworzone jako `SDL_WINDOW_HIDDEN`), `createMouseEvent()`, `createKeyboardEvent()`
 - **Uruchamianie**: `./nob test` uruchamia binarki testowe **równolegle** (dynamiczna kolejka, domyślnie `min(16, nprocs)` zadań; `NOB_TEST_JOBS=<n>` zmienia limit). Output każdego testu trafia do `output/test_logs/<nazwa>.log` — przy porażce wypisywany jest ogon logu. Okna SDL w testach są ukrywane przez zmienną `SDL_GUI_HIDDEN=1` (ustawianą przez runnera; respektują ją `SDLApp`, `Window` i `WindowManager`).
-- **Widgety testowane (23)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor, ArcContainer, ProgressBar, ScrollArea, ShaderPanel (CPU), TextEditable (bazowa klasa przez podklasę testową), Style
+- **Widgety testowane (22)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, RangeSlider, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor, ArcContainer, ProgressBar, ScrollArea, ShaderPanel (CPU)
 - **Menedżery (4)**: FontManager, TextureManager, TimerManager, AnimationManager
-- **Systemy (6)**: GUIElement, GUIManager, Theme, Easing, UTF8, Anchor (presety, kodowanie 0-1/px, stretch, resize)
+- **Systemy (11)**: GUIElement, GUIManager, Theme, Easing, UTF8, Anchor (presety, kodowanie 0-1/px, stretch, resize), Style, TextEditable (bazowa klasa przez podklasę testową), RenderCache, RenderPixel (pikselowa walidacja renderowania), Performance
 - **Screen/Window (2)**: ScreenManager, WindowManager
-- **Parsery (3)**: JsonParser, SGMLParser, LayoutParser (fixture'y w `tests/data/` — `layout.json`, `layout.xml`, `widgets.json`, `bad.*`)
-- **C API (1)**: test_sdl_gui_c_api (50 przypadków, Phase 0+1+2+3, 415 asercji; + pixel test potwierdzający renderowanie kursora — wymaga zmapowanego okna, więc przy `SDL_GUI_HIDDEN` jawnie woła `SDL_ShowWindow`)
+- **Parsery (3)**: JsonParser, SGMLParser, LayoutParser (fixture'y w `tests/data/` — `layout.json`, `layout.xml`, `widgets.json`, `win95_bevel.json/xml`, `bad.*`)
+- **C API (1)**: test_sdl_gui_c_api (Phase 0+1+2+3; + pixel test renderowania kursora — pozycja myszy ze syntetycznego motion eventu, bez warpowania wskaźnika)
 
-Testy integracyjne: 47 przykładów w `examples/` do manualnej weryfikacji wizualnej (w tym 9 przykładów C i 1 demo C/C++).
+Testy integracyjne: 49 przykładów (`examples/`, 00–48) + 10 przykładów C (`examples/c/`) do manualnej weryfikacji wizualnej.
 
 ## Powtarzalne zadania
 
@@ -326,7 +326,28 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
-Starsza historia zmian (przed 2026-07-31): [CHANGELOG.md](CHANGELOG.md).
+### Label wieloliniowy — `\n` łamie linię (2026-08-25)
+- **Nowość**: `Label` obsługuje wiele linii — tekst zawierający `\n` dzielony jest na linie (`updateLines()` → `m_lines`); szerokość elementu = najszersza linia, wysokość = liczba linii × `TTF_GetFontHeight()` (konwencja z TextArea). Rysowanie: jedna cache'owana tekstura per linia (`createTextureFromText`), każda w naturalnym rozmiarze, lewe wyrównanie; puste linie tylko przesuwają yOffset. `\r\n` traktowane jak pojedynczy break. Tekst jednolinijkowy bez zmian (stara ścieżka: `TTF_GetStringSize`, rozciągnięcie do rozmiaru elementu przy ręcznym `setSize`). Render-cache key bez zmian (hash całego tekstu).
+- **Testy**: nowe case'y w test_label.cpp ("Label multi-line support": wysokość = n×font height, szerokość najszerszej linii, puste/wiodące/kończące `\n`, CRLF, przełączanie single↔multi przez setText, render smoke).
+- Efekt: 43/43 testów przechodzi, 48 przykładów się buduje.
+- Zmienione pliki: src/label.hpp, src/label.cpp, tests/test_label.cpp, docs/release/widgets/Label.md
+
+### Bugfix: tooltip za mały dla tekstu wieloliniowego (2026-08-25)
+- **Problem**: `GUIManager::showTooltip()` wymiarował panel przez `FontManager::getTextSize` (jedna linia, `TTF_GetStringSize`) — przy tekście z `\n` panel był za niski/wąski i linie wystawały poza tło (przykład 11, tooltip checkboxa). Sam Label renderował już wieloliniowo poprawnie.
+- **Fix**: panel wymiarowany z faktycznych wymiarów `m_tooltipLabel` po `setText()` (jedno źródło prawdy, zero duplikacji logiki pomiaru). Stałe `TOOLTIP_FONT_SIZE`/`TOOLTIP_PADDING` przeniesione do `constants::kTooltipFontSize/kTooltipPadding`; nowy publiczny getter `GUIManager::getActiveTooltip()`.
+- **Testy**: test_gui_manager.cpp — "Multi-line tooltip panel fits all lines" (szerokość = najszersza linia + 2×padding, wysokość = 3×font height + 2×padding) + sekcja "Single-line tooltip shrinks back".
+- Efekt: 43/43 testów przechodzi, 48 przykładów się buduje.
+- Zmienione pliki: src/gui_manager.cpp, src/gui_manager.hpp, src/constants.hpp, tests/test_gui_manager.cpp, docs/release/core.md, docs/release/managers.md
+
+Starsza historia zmian (do 2026-08-02): [CHANGELOG.md](CHANGELOG.md).
+
+### Theme::createWindows95Theme() + audyt bevel w widgetach (2026-08-25)
+- **Nowość**: `Theme::createWindows95Theme()` (deleguje do `ThemePresets::createWindows95Theme()`) — autentyczny Win95/98 na systemie faz 3D: Button Raised w Normal/Hover/Disabled i Sunken w Pressed; TextInput/TextArea/ListView/ComboBox/Canvas/StringGrid białe + Sunken; ProgressBar biały + Sunken z navy wypełnieniem (`borderColor` = kolor fill w widgetcie); Slider/RangeSlider `borderColor` = kolor suwaka; ContextMenu biało-granatowe; Panel/TabControl/ScrollArea płaskie. Helper `ThemePresets::withBevel(Style, BevelType)` owija `applyBevelToStyle`. Disabled pola edycji gubią bevel (szary tekst). Bevel NIE przecieka: typy bez fazy mają czyste `optional` (Panel flat, unknown type → default bez bevel).
+- **Audyt custom-draw**: tylko `RadioButton` rysował ramkę ręcznie — dostał gałąź `drawStyleBevel` przed fallbackiem na `RenderRect` (semantyka texture-jako-indykator zachowana, celowo bez `drawBackgroundAndBorder`, bo base traktuje `style.texture` jako tło). Pozostałe: Checkbox/ComboBox/TextInput/TextArea/StringGrid wołają `drawBackgroundAndBorder` wprost; Slider/RangeSlider/ProgressBar/DialogBox przez `Panel::draw`; ScrollArea/TabControl dziedziczą Panel — wspierają bevel automatycznie. Label/Cursor/AnimatedImage/Canvas/ShaderPanel bez ramek z definicji.
+- **Przykład 48**: przepisany na `createWindows95Theme()` — usunięte ręczne helpery `applyWin95Button`/`applyWin95Sunken` (dialog/status bar trzymają lokalny bevel jako ramy okna).
+- **Testy/docs**: nowe case'y w test_theme.cpp ("Windows95 theme": kolory faz Raised/Sunken, Disabled drop bevel, ProgressBar navy, StringGrid gridlines, brak przecieku do Panel/unknown); dokumentacja (core.md, resources.md, patterns.md).
+- Efekt: 43/43 testów przechodzi (5 pełnych przebiegów), 48 przykładów się buduje.
+- Zmienione pliki: src/theme.hpp, src/theme.cpp, src/theme_presets.hpp, src/radio_button.cpp, examples/48_win95_bevel.cpp, tests/test_theme.cpp, docs/release/core.md, docs/release/resources.md, docs/release/patterns.md
 
 ### Bugfix: flaky test_sdl_gui_c_api — Cursor śledzi pozycję myszy z eventów (2026-08-24)
 - **Problem**: test "Cursor renders pixels" wymuszał `SDL_WarpMouseInWindow` + polling `SDL_GetMouseState`; po migracji dev-maszyny na Wayland warp przestał działać (kompozytor nie pozwala aplikacjom przesuwać wskaźnika) → deterministyczny fail `0 == 50` (wcześniej losowy flake). `Cursor::renderOverlay` pollował `SDL_GetMouseState()` w renderze, niezależnie od systemu eventów.
@@ -351,7 +372,7 @@ Starsza historia zmian (przed 2026-07-31): [CHANGELOG.md](CHANGELOG.md).
 - **Parsery**: `LayoutParser::parseStyle` obsługuje shorthand `"bevel": "Raised"|"Sunken"` (JSON attr / XML attr) + 4 jawne kolory `borderColorOuter/InnerTopLeft/BottomRight` (nadpisują shorthand). `getComposedStyle()` upublicznione (testy/debug). Fixture: `tests/data/win95_bevel.json` (layout przykładu 48 — ładuje go `./output/30_json_parser tests/data/win95_bevel.json`), `tests/data/win95_bevel.xml`.
 - Efekt: 43/43 testów przechodzi; nowe case'y w test_style.cpp (mergeWith, równość, setBevel per stan, render smoke) i test_layout_parser.cpp (bevel JSON+XML).
 - Zmienione pliki: src/constants.hpp, src/style.hpp, src/gui.hpp, src/gui.cpp, src/layout_parser.cpp, tests/test_style.cpp, tests/test_layout_parser.cpp, examples/48_win95_bevel.cpp
-- Następne kroki (niezrealizowane): Theme::createWindows95Theme(), audyt widgetów z własnym draw() (Checkbox, Slider, ScrollArea…), pressed content offset 1px dla Buttona.
+- Następne kroki: ~~Theme::createWindows95Theme()~~, ~~audyt widgetów z własnym draw()~~ (zrealizowane 2026-08-25, patrz wyżej). Pozostało: pressed content offset 1px dla Buttona.
 
 ### Cleanup: usunięcie redundantnych null-checków i martwej obsługi błędów (2026-08-22)
 - **Niezmienniki udokumentowane w kodzie**: `m_children`/`m_elements`/`m_windows` nigdy nie zawierają nulli (filtrowane przed push); `getTimerManager()` zawsze nie-null (ctor); wartości `PreviewWindow::m_widgetMap` nigdy null; `ScrollArea::m_viewport/m_content`, członkowie FileDialog/DialogBox przypisani tylko w ctorach.
@@ -359,22 +380,6 @@ Starsza historia zmian (przed 2026-07-31): [CHANGELOG.md](CHANGELOG.md).
 - Zachowano: straż na granicach publicznego API (`addElement`, `detachElement`, `register/unregisterElement`, `isElementAlive`, parametry renderer), obsługę błędów SDL/fontów/IO, walidację wejścia parserów.
 - Efekt: 42/43 testów przechodzi (1 porażka = pre-existing flake środowiskowy warp myszy w test_sdl_gui_c_api, pada też na czystym drzewie), wszystkie przykłady się budują.
 - Zmienione pliki: src/gui.cpp, src/gui_manager.cpp, src/scroll_area.cpp, src/tab_control.cpp, src/window_manager.cpp, src/string_grid.cpp, src/animated_image.cpp, src/composite/dialog_box.cpp, src/composite/file_dialog.cpp, src/editor/editor_window.cpp, src/editor/preview_window.cpp, src/layout_parser.cpp
-
-### Bugfix: TextArea nie uczestniczył w systemie keyboard focus — martwa edycja (2026-08-02)
-- 
-### Bugfix: TextArea pominięty w opt-out współdzielonego render cache (2026-08-02)
-
-
-### Testy anchorów + 2 realne bugi w systemie Anchor (2026-08-02)
-- **Nowy test**: `tests/test_anchor.cpp` (4 case'y, 47 asercji) —
-
-### Test runner równoległy + ukryte okna + brakujące testy (2026-08-02)
-- **Problem**: `./nob test` uruchamiał 33 binarki sekwencyjnie (~160 s; każdy test ~2-4 s startu SDL/ASAN) i zalewał konsolę logami.
-
-### C API Phase 3 — RangeSlider, Cursor, ShaderPanel + kontekst GPU (2026-08-02)
-
-
-### Shared render cache — dedup per (style, state, size) (2026-08-02)
 
 ---
 

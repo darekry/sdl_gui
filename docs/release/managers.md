@@ -75,8 +75,9 @@ Kolejność jest krytyczna: `processEvent` → `update` → `cleanup` → `rende
 
 | Metoda | Opis |
 |--------|------|
-| `void showTooltip(GUIElement* target, const std::string& text);` | Pokazuje tooltip nad elementem |
+| `void showTooltip(GUIElement* target, const std::string& text);` | Pokazuje tooltip nad elementem (obsługuje `\n` — panel dopasowuje się do najszerszej linii i liczby linii) |
 | `void hideTooltip();` | Ukrywa aktywny tooltip |
+| `GUIElement* getActiveTooltip() const;` | Aktywny tooltip (element panelu) albo `nullptr`, gdy ukryty |
 | `void setTheme(Theme theme);` | Ustawia motyw (kopiowany) |
 | `Theme& getTheme();` | Bieżący motyw |
 | `void setCursor(std::unique_ptr<Cursor> new_cursor);` | Ustawia własny kursor (widget `Cursor`); przekazanie `nullptr` przywraca domyślny |

@@ -276,6 +276,7 @@ void setResizeCallback(ResizeCallback callback);   // std::function<void(int, in
 void getWindowSize(int& width, int& height) const;
 void showTooltip(GUIElement* target, const std::string& text);
 void hideTooltip();
+GUIElement* getActiveTooltip() const;               // aktywny tooltip (panel) albo nullptr
 GUIElement* findElementAt(int x, int y);
 SDL_Renderer* getRenderer() const;
 SDL_GPUDevice* getGPUDevice() const;
@@ -302,8 +303,9 @@ bool isElementAlive(GUIElement* element) const;
 ### Theme i ThemePresets
 
 - `Theme::createDefaultTheme()` — domyślny motyw (klasyczny, w stylu Win9x).
-- `ThemePresets::createWin9xTheme()`, `createLightTheme()`, `createDarkTheme()`,
-  `createHighContrastTheme()` — gotowe motywy (patrz [managers.md](managers.md)).
+- `Theme::createWindows95Theme()` — motyw z fazami 3D (bevel) w stylu Win95/98.
+- `ThemePresets::createWin9xTheme()`, `createWindows95Theme()`, `createLightTheme()`,
+  `createDarkTheme()`, `createHighContrastTheme()` — gotowe motywy (patrz [managers.md](managers.md)).
 
 ### SDLApp i GUIContext
 

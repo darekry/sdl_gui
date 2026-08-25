@@ -63,7 +63,7 @@ const char* RadioButton::getComponentType() const {
 }
 void RadioButton::draw(SDL_Renderer* renderer) {
     const auto& style = getComposedStyle(m_state);
-    
+
     if (style.backgroundColor) {
         const auto& c = style.backgroundColor.value();
         SetDrawColor(renderer, c);
@@ -71,7 +71,12 @@ void RadioButton::draw(SDL_Renderer* renderer) {
         RenderFillRect(renderer, bgRect);
     }
 
-    if (style.borderColor) {
+    // Faza 3D (bevel) ma priorytet nad zwykłą ramką — jak w GUIElement::drawBackgroundAndBorder.
+    bool hasBevel = style.borderColorOuterTopLeft.has_value() || style.borderColorOuterBottomRight.has_value() ||
+                    style.borderColorInnerTopLeft.has_value() || style.borderColorInnerBottomRight.has_value();
+    if (hasBevel) {
+        drawStyleBevel(renderer, SDL_Rect{0, 0, m_width, m_height}, style);
+    } else if (style.borderColor) {
         const auto& c = style.borderColor.value();
         SetDrawColor(renderer, c);
         SDL_Rect borderRect = {0, 0, m_width, m_height};
