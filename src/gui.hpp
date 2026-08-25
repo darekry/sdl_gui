@@ -99,6 +99,7 @@ public:
     void setBorder(ElementState state, SDL_Color color, int width);
     void setBorderRadius(ElementState state, int radius);
     void setBevel(ElementState state, BevelType type);
+    Style getComposedStyle(ElementState state) const;
     virtual const char* getComponentType() const;
     void markForDeletion();
     void markDirty(bool cascadeToParents = true);
@@ -141,6 +142,10 @@ protected:
     
     virtual void draw(SDL_Renderer* renderer) { drawBackgroundAndBorder(renderer); }
 
+    // Hook wywoływany przez setSize() gdy wymiary faktycznie się zmieniły.
+    // Widgety z układem wewnętrznym zależnym od rozmiaru (np. centrowanie dzieci) nadpisują go.
+    virtual void onSizeChanged([[maybe_unused]] int oldWidth, [[maybe_unused]] int oldHeight) {}
+
     // Współdzielony cache renderowania (TextureManager::renderCache).
     // Domyślnie true: draw() zależy tylko od skomponowanego stylu + stanu + rozmiaru.
     // Widgety, których draw() czyta stan wewnętrzny (checkbox, slider, tekst...),
@@ -155,8 +160,6 @@ protected:
     virtual bool wantsDirectRender() const { return false; }
     virtual void drawDirect([[maybe_unused]] SDL_Renderer* renderer) { /* domyślnie brak */ }
     void drawBackgroundAndBorder(SDL_Renderer* renderer);
-
-        Style getComposedStyle(ElementState state) const;
 
     GUIManager& m_manager;
     bool m_isHovered = false;
@@ -189,6 +192,10 @@ void drawBevelFrame(SDL_Renderer* renderer, SDL_Rect rect, int thickness, SDL_Co
 // Rysuje fazy zapisane w stylu (zewnętrzną i wewnętrzną, po 1px).
 // Ramka zwykła (borderColor/borderWidth) jest wtedy ignorowana.
 void drawStyleBevel(SDL_Renderer* renderer, SDL_Rect rect, const Style& style);
+
+// Wypełnia 4 kolory krawędzi w stylu paletą systemową Windows 95/98.
+// Używane przez GUIElement::setBevel i parsery layoutów (shorthand "bevel").
+void applyBevelToStyle(Style& style, BevelType type);
 
 inline void drawTitleBar(SDL_Renderer* renderer, int x, int y, int w, int h) {
     SetDrawColor(renderer, constants::kTitleBarColor);

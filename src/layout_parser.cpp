@@ -404,6 +404,17 @@ void LayoutParser::parseStyle(void* styleNode, GUIElement* element)
     if (hasNode(styleNode, "backgroundColor")) { auto c = parseColor(getString(styleNode, "backgroundColor")); if (c) style.backgroundColor = c; }
     if (hasNode(styleNode, "textColor")) { auto c = parseColor(getString(styleNode, "textColor")); if (c) style.textColor = c; }
     if (hasNode(styleNode, "borderColor")) { auto c = parseColor(getString(styleNode, "borderColor")); if (c) style.borderColor = c; }
+    if (hasNode(styleNode, "bevel"))
+    {
+        std::string bevelStr = getString(styleNode, "bevel");
+        if (bevelStr == "Raised") applyBevelToStyle(style, BevelType::Raised);
+        else if (bevelStr == "Sunken") applyBevelToStyle(style, BevelType::Sunken);
+        else LOG_WARNING("LayoutParser", "Unknown bevel type: {} (expected Raised or Sunken)", bevelStr);
+    }
+    if (hasNode(styleNode, "borderColorOuterTopLeft")) { auto c = parseColor(getString(styleNode, "borderColorOuterTopLeft")); if (c) style.borderColorOuterTopLeft = c; }
+    if (hasNode(styleNode, "borderColorOuterBottomRight")) { auto c = parseColor(getString(styleNode, "borderColorOuterBottomRight")); if (c) style.borderColorOuterBottomRight = c; }
+    if (hasNode(styleNode, "borderColorInnerTopLeft")) { auto c = parseColor(getString(styleNode, "borderColorInnerTopLeft")); if (c) style.borderColorInnerTopLeft = c; }
+    if (hasNode(styleNode, "borderColorInnerBottomRight")) { auto c = parseColor(getString(styleNode, "borderColorInnerBottomRight")); if (c) style.borderColorInnerBottomRight = c; }
     if (hasNode(styleNode, "borderWidth")) style.borderWidth = getInt(styleNode, "borderWidth", 0);
     if (hasNode(styleNode, "borderRadius")) style.borderRadius = getInt(styleNode, "borderRadius", 0);
     if (hasNode(styleNode, "fontSize")) style.fontSize = getInt(styleNode, "fontSize", 0);

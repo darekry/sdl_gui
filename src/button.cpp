@@ -12,8 +12,20 @@ Button::Button(GUIManager& manager, int x, int y, int width, int height, std::st
         int label_width, label_height;
         label_elem->getSize(label_width, label_height);
         label_elem->setPosition((width - label_width) / 2, (height - label_height) / 2);
+        m_label = label_elem.get();
         addChild(std::move(label_elem));
     }
+}
+
+void Button::onSizeChanged(int oldWidth, int oldHeight) {
+    (void)oldWidth;
+    (void)oldHeight;
+    if (!m_label) {
+        return;
+    }
+    int label_width, label_height;
+    m_label->getSize(label_width, label_height);
+    m_label->setPosition((m_width - label_width) / 2, (m_height - label_height) / 2);
 }
 
 void Button::setOnClickCallback(OnClickCallback callback) {

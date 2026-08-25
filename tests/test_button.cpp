@@ -325,6 +325,21 @@ TEST_CASE("Button label text", "[button]") {
         REQUIRE(btn->getWidth() == 100);
         REQUIRE(btn->getHeight() == 40);
     }
+
+    SECTION("label re-centers when size changes after creation") {
+        auto button = std::make_unique<Button>(manager, 0, 0, 10, 10, "ABC");
+        Button* btn = button.get();
+        manager.addElement(std::move(button));
+
+        btn->setSize(200, 60);
+
+        REQUIRE(btn->getChildren().size() == 1);
+        GUIElement* label = btn->getChildren()[0].get();
+        int labelWidth = 0, labelHeight = 0;
+        label->getSize(labelWidth, labelHeight);
+        REQUIRE(label->getX() == (200 - labelWidth) / 2);
+        REQUIRE(label->getY() == (60 - labelHeight) / 2);
+    }
 }
 
 TEST_CASE("Button callback types", "[button]") {

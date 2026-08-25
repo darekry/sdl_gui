@@ -14,6 +14,7 @@ int main(int argc, char * argv[])
 
     SDLApp app("XML Parser Example", 800, 600);
     GUIManager guiManager(app.getRenderer());
+    guiManager.setWindowSize(800, 600);
     SGMLParser parser(guiManager);
 
     std::string layout_file = argv[1];
@@ -37,7 +38,14 @@ int main(int argc, char * argv[])
             {
                 running = false;
             }
-            guiManager.processEvent(event);
+            else if (event.type == SDL_EVENT_WINDOW_RESIZED)
+            {
+                guiManager.handleResize(event.window.data1, event.window.data2);
+            }
+            else
+            {
+                guiManager.processEvent(event);
+            }
         }
         guiManager.update();
         guiManager.cleanup();

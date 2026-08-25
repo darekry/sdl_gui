@@ -5,7 +5,10 @@
 #include "../src/sgml_parser.hpp"
 #include "../src/gui_manager.hpp"
 #include "../src/panel.hpp"
+#include "../src/button.hpp"
+#include "../src/label.hpp"
 #include "../src/checkbox.hpp"
+#include "../src/constants.hpp"
 #include "../src/radio_button.hpp"
 #include "../src/combobox.hpp"
 #include "../src/list_view.hpp"
@@ -126,5 +129,78 @@ TEST_CASE("LayoutParser - radio group options", "[layout_parser][widgets]") {
     SECTION("radio group parses options array") {
         auto root = parser.loadLayout("tests/data/widgets.json");
         REQUIRE(root != nullptr);
+    }
+}
+
+TEST_CASE("LayoutParser - bevel styles", "[layout_parser][bevel]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("json: bevel shorthand fills Win95 palette") {
+        JsonParser parser(manager);
+        auto root = parser.loadLayout("tests/data/win95_bevel.json");
+        REQUIRE(root != nullptr);
+
+        const auto& desktopChildren = root->getChildren();
+        REQUIRE(desktopChildren.size() == 3);
+
+        auto* dialog = dynamic_cast<Panel*>(desktopChildren[2].get());
+        REQUIRE(dialog != nullptr);
+        REQUIRE(std::string(dialog->getID()) == "dialog");
+
+        const Style dialogStyle = dialog->getComposedStyle(ElementState::Normal);
+        REQUIRE(dialogStyle.borderColorOuterTopLeft == constants::kWin95Highlight);
+        REQUIRE(dialogStyle.borderColorOuterBottomRight == constants::kWin95DarkShadow);
+        REQUIRE(dialogStyle.borderColorInnerTopLeft == constants::kWin95Light);
+        REQUIRE(dialogStyle.borderColorInnerBottomRight == constants::kWin95Shadow);
+
+        const auto& dialogChildren = dialog->getChildren();
+        REQUIRE(dialogChildren.size() == 11);
+
+        auto* textInput = dynamic_cast<TextInput*>(dialogChildren[6].get());
+        REQUIRE(textInput != nullptr);
+        const Style inputPressed = textInput->getComposedStyle(ElementState::Pressed);
+        REQUIRE(inputPressed.backgroundColor == SDL_Color{255, 255, 255, 255});
+        REQUIRE(inputPressed.borderColorOuterTopLeft == constants::kWin95Shadow);
+        REQUIRE(inputPressed.borderColorInnerTopLeft == constants::kWin95DarkShadow);
+
+        auto* okButton = dynamic_cast<Button*>(dialogChildren[8].get());
+        REQUIRE(okButton != nullptr);
+        const Style okPressed = okButton->getComposedStyle(ElementState::Pressed);
+        REQUIRE(okPressed.borderColorOuterTopLeft == constants::kWin95Shadow);
+        REQUIRE(okPressed.borderColorOuterBottomRight == constants::kWin95Highlight);
+
+        SECTION("button label re-centered after parser setSize") {
+            REQUIRE(okButton->getChildren().size() == 1);
+            auto* label = dynamic_cast<Label*>(okButton->getChildren()[0].get());
+            REQUIRE(label != nullptr);
+            int labelWidth = 0, labelHeight = 0;
+            label->getSize(labelWidth, labelHeight);
+            REQUIRE(label->getX() == (76 - labelWidth) / 2);
+            REQUIRE(label->getY() == (28 - labelHeight) / 2);
+        }
+
+        SECTION("dialog centered by anchor applied during parse") {
+            REQUIRE(dialog->getX() == (640 - 520) / 2);
+            REQUIRE(dialog->getY() == (480 - 380) / 2);
+        }
+    }
+
+    SECTION("xml: bevel shorthand with explicit color override") {
+        SGMLParser parser(manager);
+        auto root = parser.loadLayout("tests/data/win95_bevel.xml");
+        REQUIRE(root != nullptr);
+
+        const Style rootStyle = root->getComposedStyle(ElementState::Normal);
+        REQUIRE(rootStyle.borderColorOuterTopLeft == constants::kWin95Highlight);
+        REQUIRE(rootStyle.borderColorOuterBottomRight == constants::kWin95DarkShadow);
+
+        const auto& children = root->getChildren();
+        REQUIRE(children.size() == 1);
+        const Style wellStyle = children[0]->getComposedStyle(ElementState::Normal);
+        REQUIRE(wellStyle.borderColorOuterTopLeft == SDL_Color{17, 17, 17, 255});
+        REQUIRE(wellStyle.borderColorOuterBottomRight == constants::kWin95Highlight);
+        REQUIRE(wellStyle.borderColorInnerTopLeft == constants::kWin95DarkShadow);
+        REQUIRE(wellStyle.borderColorInnerBottomRight == constants::kWin95Light);
     }
 }

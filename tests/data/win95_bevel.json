@@ -1,0 +1,235 @@
+{
+  "root": {
+    "type": "Panel",
+    "id": "desktop",
+    "x": 0,
+    "y": 0,
+    "width": 640,
+    "height": 480,
+    "styles": [
+      {"state": "Normal", "backgroundColor": "#008080"}
+    ],
+    "children": [
+      {
+        "type": "Label",
+        "id": "hint",
+        "x": 16,
+        "y": 8,
+        "text": "Przeciagnij okno za tlo, kliknij przyciski — faza odwraca sie w stanie Pressed",
+        "fontSize": 14,
+        "anchorLeft": 16,
+        "anchorTop": 8,
+        "styles": [
+          {"state": "Normal", "textColor": "#FFFFFF"}
+        ]
+      },
+      {
+        "type": "Button",
+        "id": "show_dialog",
+        "x": 16,
+        "y": 34,
+        "width": 140,
+        "height": 28,
+        "text": "Pokaż okno",
+        "anchorLeft": 16,
+        "anchorTop": 34,
+        "styles": [
+          {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
+          {"state": "Hover", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
+          {"state": "Pressed", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+        ]
+      },
+      {
+        "type": "Panel",
+        "id": "dialog",
+        "x": 60,
+        "y": 50,
+        "width": 520,
+        "height": 380,
+        "draggable": true,
+        "anchorLeft": 0.5,
+        "anchorTop": 0.5,
+        "styles": [
+          {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"}
+        ],
+        "children": [
+          {
+            "type": "Panel",
+            "id": "titlebar",
+            "x": 2,
+            "y": 2,
+            "width": 516,
+            "height": 26,
+            "anchorLeft": 2,
+            "anchorTop": 2,
+            "anchorRight": 2,
+            "styles": [
+              {"state": "Normal", "backgroundColor": "#000080"}
+            ],
+            "children": [
+              {
+                "type": "Label",
+                "id": "title_text",
+                "x": 6,
+                "y": 5,
+                "text": "Bevel.exe",
+                "fontSize": 14,
+                "styles": [
+                  {"state": "Normal", "textColor": "#FFFFFF"}
+                ]
+              },
+              {
+                "type": "Button",
+                "id": "close_btn",
+                "x": 494,
+                "y": 5,
+                "width": 20,
+                "height": 16,
+                "text": "x",
+                "anchorTop": 5,
+                "anchorRight": 5,
+                "styles": [
+                  {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
+                  {"state": "Hover", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
+                  {"state": "Pressed", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+                ]
+              }
+            ]
+          },
+          {
+            "type": "Label",
+            "id": "raised_label",
+            "x": 20,
+            "y": 48,
+            "text": "Raised:",
+            "fontSize": 14
+          },
+          {
+            "type": "Panel",
+            "id": "raised_panel",
+            "x": 84,
+            "y": 40,
+            "width": 140,
+            "height": 34,
+            "styles": [
+              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"}
+            ]
+          },
+          {
+            "type": "Label",
+            "id": "sunken_label",
+            "x": 20,
+            "y": 94,
+            "text": "Sunken:",
+            "fontSize": 14
+          },
+          {
+            "type": "Panel",
+            "id": "sunken_panel",
+            "x": 84,
+            "y": 86,
+            "width": 140,
+            "height": 34,
+            "styles": [
+              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+            ]
+          },
+          {
+            "type": "Label",
+            "id": "filename_label",
+            "x": 20,
+            "y": 140,
+            "text": "Nazwa pliku:",
+            "fontSize": 14
+          },
+          {
+            "type": "TextInput",
+            "id": "filename_input",
+            "x": 20,
+            "y": 162,
+            "width": 480,
+            "height": 30,
+            "text": "C:\\WINDOWS\\SYSTEM32",
+            "anchorLeft": 20,
+            "anchorRight": 20,
+            "styles": [
+              {"state": "Normal", "backgroundColor": "#FFFFFF", "bevel": "Sunken"},
+              {"state": "Hover", "backgroundColor": "#FFFFFF", "bevel": "Sunken"},
+              {"state": "Pressed", "backgroundColor": "#FFFFFF", "bevel": "Sunken"}
+            ]
+          },
+          {
+            "type": "ProgressBar",
+            "id": "progress",
+            "x": 20,
+            "y": 206,
+            "width": 300,
+            "height": 24,
+            "min": 0,
+            "max": 100,
+            "value": 65,
+            "styles": [
+              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+            ]
+          },
+          {
+            "type": "Button",
+            "id": "ok_btn",
+            "x": 432,
+            "y": 318,
+            "width": 76,
+            "height": 28,
+            "text": "OK",
+            "anchorRight": 12,
+            "anchorBottom": 34,
+            "styles": [
+              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
+              {"state": "Hover", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
+              {"state": "Pressed", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+            ]
+          },
+          {
+            "type": "Button",
+            "id": "cancel_btn",
+            "x": 344,
+            "y": 318,
+            "width": 76,
+            "height": 28,
+            "text": "Anuluj",
+            "anchorRight": 100,
+            "anchorBottom": 34,
+            "styles": [
+              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
+              {"state": "Hover", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
+              {"state": "Pressed", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+            ]
+          },
+          {
+            "type": "Panel",
+            "id": "statusbar",
+            "x": 2,
+            "y": 354,
+            "width": 516,
+            "height": 24,
+            "anchorLeft": 2,
+            "anchorRight": 2,
+            "anchorBottom": 2,
+            "styles": [
+              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+            ],
+            "children": [
+              {
+                "type": "Label",
+                "id": "status_text",
+                "x": 6,
+                "y": 4,
+                "text": "Gotowe",
+                "fontSize": 13
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

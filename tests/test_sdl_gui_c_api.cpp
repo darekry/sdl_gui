@@ -1709,7 +1709,6 @@ TEST_CASE("C API - Cursor renders pixels", "[c_api][cursor][pixel]") {
     /* End-to-end: texture load → renderOverlay → visible pixels. */
     sdlgui_t gui = sdlgui_create("Test", 320, 240, 0);
     REQUIRE(gui != nullptr);
-    SDL_Delay(10); /* let the window get mapped */
 
     sdlgui_element_t cur = sdlgui_cursor_create(gui);
     REQUIRE(cur != nullptr);
@@ -1719,25 +1718,15 @@ TEST_CASE("C API - Cursor renders pixels", "[c_api][cursor][pixel]") {
     sdlgui_cursor_set_texture(cur, SDLGUI_CURSOR_NORMAL, "assets/button1.png", 0, 0);
     sdlgui_cursor_set_scale(cur, 0.5f);
 
-    SDL_Window* win = sdlgui_get_window(gui);
-    REQUIRE(win != nullptr);
-
-    /* ./nob test sets SDL_GUI_HIDDEN so windows don't flash; the mouse warp
-       below requires a mapped window, so show it explicitly. */
-    if (getenv("SDL_GUI_HIDDEN")) {
-        SDL_ShowWindow(win);
-    }
-
+    /* Cursor reads its position from mouse-motion events (with a live-state
+       fallback). Warp is unreliable on Wayland (the compositor forbids pointer
+       moves), so inject a synthetic event instead — no window mapping needed. */
     const int mx = 50, my = 50;
-    SDL_WarpMouseInWindow(win, (float)mx, (float)my);
-
-    float gx = -1.0f, gy = -1.0f;
-    for (int i = 0; i < 100 && (int)gx != mx; ++i) {
-        SDL_PumpEvents();
-        SDL_GetMouseState(&gx, &gy);
-        if ((int)gx != mx) SDL_Delay(2);
-    }
-    REQUIRE((int)gx == mx); /* warp took effect */
+    SDL_Event motion{};
+    motion.type = SDL_EVENT_MOUSE_MOTION;
+    motion.motion.x = (float)mx;
+    motion.motion.y = (float)my;
+    sdlgui_process_event(gui, &motion);
 
     SDL_Renderer* ren = sdlgui_get_renderer(gui);
     SDL_SetRenderDrawColor(ren, 40, 42, 54, 255);

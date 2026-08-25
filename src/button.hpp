@@ -23,8 +23,10 @@ public:
     const char* getComponentType() const override;
 
 protected:
+    void onSizeChanged(int oldWidth, int oldHeight) override;
 
 private:
     OnClickCallback m_onClick;
     OnMouseOverCallback m_onMouseOver;
+    class Label* m_label = nullptr;
 };

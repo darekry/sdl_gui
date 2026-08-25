@@ -70,6 +70,7 @@ bool GUIManager::processEvent(const SDL_Event& event) {
     if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
         if (m_mouseCaptureElement) {
             // Jeśli element przechwycił mysz, wysyłaj zdarzenia tylko do niego
+            if (cursor) cursor->handleEvent(event); /* overlay kursora śledzi pozycję także podczas capture */
             return m_mouseCaptureElement->handleEvent(event);
         }
     }

@@ -74,5 +74,8 @@ private:
     int m_offsetX = 0;
     int m_offsetY = 0;
     float m_scale = 1.0f;
+    int m_mouseX = 0;
+    int m_mouseY = 0;
+    bool m_hasMousePos = false;
     std::function<void(CursorState)> m_onStateChanged;
 };

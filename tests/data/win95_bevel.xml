@@ -1,0 +1,8 @@
+<Layout>
+  <Panel id="win95_root" x="0" y="0" width="400" height="300">
+    <Style state="Normal" backgroundColor="#C0C0C0" bevel="Raised" />
+    <Panel id="well" x="10" y="10" width="100" height="30">
+      <Style state="Normal" backgroundColor="#C0C0C0" bevel="Sunken" borderColorOuterTopLeft="#111111" />
+    </Panel>
+  </Panel>
+</Layout>

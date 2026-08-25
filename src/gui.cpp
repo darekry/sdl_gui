@@ -191,8 +191,13 @@ void GUIElement::setPosition(int x, int y) {
 }
 
 void GUIElement::setSize(int width, int height) {
+    int oldWidth = m_width;
+    int oldHeight = m_height;
     m_width = width;
     m_height = height;
+    if (oldWidth != width || oldHeight != height) {
+        onSizeChanged(oldWidth, oldHeight);
+    }
     markDirty();
 }
 
@@ -632,12 +637,7 @@ void GUIElement::setBorderRadius(ElementState state, int radius) {
     markDirty();
 }
 
-void GUIElement::setBevel(ElementState state, BevelType type) {
-    size_t idx = stateIndex(state);
-    if (!m_localStyles[idx].has_value()) {
-        m_localStyles[idx] = Style();
-    }
-    Style& style = *m_localStyles[idx];
+void applyBevelToStyle(Style& style, BevelType type) {
     if (type == BevelType::Raised) {
         style.borderColorOuterTopLeft     = constants::kWin95Highlight;
         style.borderColorOuterBottomRight = constants::kWin95DarkShadow;
@@ -649,6 +649,14 @@ void GUIElement::setBevel(ElementState state, BevelType type) {
         style.borderColorInnerTopLeft     = constants::kWin95DarkShadow;
         style.borderColorInnerBottomRight = constants::kWin95Light;
     }
+}
+
+void GUIElement::setBevel(ElementState state, BevelType type) {
+    size_t idx = stateIndex(state);
+    if (!m_localStyles[idx].has_value()) {
+        m_localStyles[idx] = Style();
+    }
+    applyBevelToStyle(*m_localStyles[idx], type);
     markDirty();
 }
 

@@ -106,7 +106,12 @@ void Cursor::setOnStateChanged(std::function<void(CursorState)> callback) {
     m_onStateChanged = std::move(callback);
 }
 
-bool Cursor::handleEvent(const SDL_Event& /*event*/) {
+bool Cursor::handleEvent(const SDL_Event& event) {
+    if (event.type == SDL_EVENT_MOUSE_MOTION) {
+        m_mouseX = static_cast<int>(event.motion.x);
+        m_mouseY = static_cast<int>(event.motion.y);
+        m_hasMousePos = true;
+    }
     return false;
 }
 
@@ -131,9 +136,14 @@ void Cursor::renderOverlay(SDL_Renderer* renderer) {
         return;
     }
 
-    int mouseX = 0;
-    int mouseY = 0;
-    {  float _mx,_my; SDL_GetMouseState(&_mx, &_my); mouseX = static_cast<int>(_mx); mouseY = static_cast<int>(_my); }
+    int mouseX = m_mouseX;
+    int mouseY = m_mouseY;
+    if (!m_hasMousePos) {  /* brak eventów → fallback na stan systemowy */
+        float _mx, _my;
+        SDL_GetMouseState(&_mx, &_my);
+        mouseX = static_cast<int>(_mx);
+        mouseY = static_cast<int>(_my);
+    }
 
     auto& opt = m_cursors[static_cast<size_t>(m_currentState)];
     if (!opt) {
