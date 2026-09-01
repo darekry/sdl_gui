@@ -2,7 +2,7 @@
 
 #include "std.hpp"
 
-// Bezpieczne parsowanie liczb z stringów (używane przez importer i preview)
+// Safe integer parsing from strings (used by importer and preview)
 inline int safeParseInt(const std::string& value, int defaultVal) {
     if (value.empty()) return defaultVal;
     try {

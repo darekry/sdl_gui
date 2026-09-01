@@ -101,7 +101,7 @@ bool Slider::handleEvent(const SDL_Event& e) {
             return true;
         }
     } else if (e.type == SDL_EVENT_MOUSE_WHEEL && m_isHovered) {
-        // Obsługa kółka myszy - zmiana wartości gdy slider jest hoverowany
+        // Mouse wheel handling - change value while slider is hovered
         int delta = static_cast<int>(e.wheel.y) * m_wheelStep;
         if (delta != 0) {
             setValue(m_currentValue + delta);
@@ -131,7 +131,7 @@ void Slider::draw(SDL_Renderer* renderer) {
     
     const auto& style = getComposedStyle(m_state);
     
-    // Rysowanie na buforze, więc pozycje są względne (0,0)
+    // Drawing to the cache buffer, so positions are relative to (0,0)
     SDL_Color trackColor;
     if (style.backgroundColor) {
         trackColor = *style.backgroundColor;

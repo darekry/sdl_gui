@@ -5,9 +5,9 @@
 
 #include "std.hpp"
 
-// Typ dla współdzielonego wskaźnika na czcionkę
+// Type for the shared font pointer
 using SharedFont = std::shared_ptr<TTF_Font>;
-// Klucz dla mapy cache'u czcionek (ścieżka + rozmiar)
+// Key for the font cache map (path + size)
 using FontKey = std::pair<std::string, int>;
 
 // Hash function for text width cache key (font_ptr, text)
@@ -19,23 +19,23 @@ struct TextWidthKeyHash {
     }
 };
 
-// Komparator dla klucza cache'u czcionek, umożliwiający transparentne wyszukiwanie
+// Comparator for the font cache key, enabling transparent lookup
 struct FontCacheKeyCompare {
     using is_transparent = void;
 
-    // Porównanie dwóch pełnych kluczy
+    // Compare two full keys
     bool operator()(const FontKey& lhs, const FontKey& rhs) const {
         return lhs < rhs;
     }
 
-    // Porównanie pełnego klucza z parą (string_view, int)
+    // Compare a full key with a (string_view, int) pair
     bool operator()(const FontKey& lhs, const std::pair<std::string_view, int>& rhs) const {
         if (lhs.first < rhs.first) return true;
         if (rhs.first < lhs.first) return false;
         return lhs.second < rhs.second;
     }
 
-    // Porównanie pary (string_view, int) z pełnym kluczem
+    // Compare a (string_view, int) pair with a full key
     bool operator()(const std::pair<std::string_view, int>& lhs, const FontKey& rhs) const {
         if (lhs.first < rhs.first) return true;
         if (rhs.first < lhs.first) return false;
@@ -52,10 +52,8 @@ struct FontCacheKeyCompare {
  */
 class FontManager {
 public:
-    // Konstruktor
     FontManager();
 
-    // Destruktor
     ~FontManager();
     
     /**
@@ -64,24 +62,21 @@ public:
      */
     bool isInitialized() const { return m_initialized; }
 
-    // Metoda do ładowania czcionki. Zwraca SharedFont.
-    // Jeśli czcionka o danej ścieżce i rozmiarze została już załadowana, zwraca istniejący SharedFont.
+    // Loads a font. Returns SharedFont.
+    // If a font with the same path and size is already loaded, returns the existing SharedFont.
     SharedFont loadFont(std::string_view path, int size);
 
-    // Metoda do ładowania czcionki z pamięci (dla embedded assets)
+    // Loads a font from memory (for embedded assets)
     SharedFont loadFontFromMemory(const uint8_t* data, size_t size, int fontSize, std::string_view key);
 
-    // Metoda do ładowania domyślnej czcionki
     void loadDefaultFont(std::string_view path, int size);
     
-    // Metoda do pobierania domyślnej czcionki
     SharedFont getDefaultFont() const;
 
-    // Metoda do pobierania surowego wskaźnika do czcionki (dla wydajności).
-    // UWAGA: Ta metoda nie zarządza pamięcią, jedynie zwraca wskaźnik.
+    // Returns a raw font pointer (for performance).
+    // NOTE: This method does not manage memory; it only returns the pointer.
     TTF_Font* getFont(std::string_view path, int size);
 
-    // Metoda do obliczania rozmiaru tekstu
     void getTextSize(std::string_view text, std::string_view fontPath, int fontSize, int* width, int* height);
 
     // Get cached text width, or compute and cache it
@@ -89,8 +84,8 @@ public:
     void clearTextWidthCache();
 
 private:
-    std::map<FontKey, SharedFont, FontCacheKeyCompare> m_fontCache; // Mapa przechowująca załadowane czcionki
-    SharedFont m_defaultFont; // Domyślna czcionka
+    std::map<FontKey, SharedFont, FontCacheKeyCompare> m_fontCache; // Map storing loaded fonts
+    SharedFont m_defaultFont; // Default font
     bool m_initialized = false; // SDL_ttf initialization status
 
     // Cache for text widths: (font_ptr, text) -> width

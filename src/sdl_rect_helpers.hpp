@@ -86,10 +86,10 @@ inline int TextureHeight(SDL_Texture* texture) {
     return static_cast<int>(h);
 }
 
-// RAII: przełącza render target na teksturę i przywraca target/viewport/clip w destruktorze.
-// Uwaga: SDL_GetRenderClipRect zwraca true nawet gdy clip jest wyłączony (flaga sukcesu) —
-// stan clipa trzeba czytać przez SDL_RenderClipEnabled, inaczej przywrócenie clip=0,0,0x0
-// przycina całą resztę renderowania do niczego.
+// RAII: switches the render target to a texture and restores target/viewport/clip in the destructor.
+// Note: SDL_GetRenderClipRect returns true even when clipping is disabled (success flag) —
+// the clip state must be read via SDL_RenderClipEnabled, otherwise restoring clip=0,0,0x0
+// clips all subsequent rendering to nothing.
 class ScopedRenderTarget {
 public:
     ScopedRenderTarget(SDL_Renderer* renderer, SDL_Texture* texture)
@@ -119,7 +119,7 @@ private:
     bool m_hadClip = false;
 };
 
-// Wyśrodkowanie prostokąta w kontenerze (wspólna logika dialogów i menu)
+// Centers a rect within a container (shared by dialogs and menus)
 inline SDL_Point CenterRect(int containerW, int containerH, int w, int h) {
     return {(containerW - w) / 2, (containerH - h) / 2};
 }

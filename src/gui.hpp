@@ -20,7 +20,7 @@ private:
     std::string tooltip;
     uint32_t tooltipTimerId = 0;
 public:
-    int m_x, m_y; // Pola publiczne zgodnie z życzeniem
+    int m_x, m_y; // Public fields as requested
     int m_width, m_height;
     bool m_enabled = true;
     bool m_visible = true;
@@ -142,23 +142,23 @@ protected:
     
     virtual void draw(SDL_Renderer* renderer) { drawBackgroundAndBorder(renderer); }
 
-    // Hook wywoływany przez setSize() gdy wymiary faktycznie się zmieniły.
-    // Widgety z układem wewnętrznym zależnym od rozmiaru (np. centrowanie dzieci) nadpisują go.
+    // Hook called by setSize() when the dimensions actually changed.
+    // Widgets whose internal layout depends on size (e.g. centering children) override it.
     virtual void onSizeChanged([[maybe_unused]] int oldWidth, [[maybe_unused]] int oldHeight) {}
 
-    // Współdzielony cache renderowania (TextureManager::renderCache).
-    // Domyślnie true: draw() zależy tylko od skomponowanego stylu + stanu + rozmiaru.
-    // Widgety, których draw() czyta stan wewnętrzny (checkbox, slider, tekst...),
-    // muszą zwrócić false albo dołączyć ten stan przez getRenderCacheKeySuffix().
+    // Shared render cache (TextureManager::renderCache).
+    // Default true: draw() depends only on the composed style + state + size.
+    // Widgets whose draw() reads internal state (checkbox, slider, text...),
+    // must return false or include that state via getRenderCacheKeySuffix().
     virtual bool canShareRenderCache() const { return true; }
     virtual uint64_t getRenderCacheKeySuffix() const { return 0; }
     uint64_t buildRenderCacheKey() const;
     void renderToCache();
 
-    // Rozszerzenie: możliwość rysowania bezpośrednio (bez buforowania).
-    // Domyślnie elementy nie korzystają z drawDirect — zwracają false w wantsDirectRender().
+    // Extension: direct drawing (without caching).
+    // By default elements don't use drawDirect — they return false in wantsDirectRender().
     virtual bool wantsDirectRender() const { return false; }
-    virtual void drawDirect([[maybe_unused]] SDL_Renderer* renderer) { /* domyślnie brak */ }
+    virtual void drawDirect([[maybe_unused]] SDL_Renderer* renderer) { /* no-op by default */ }
     void drawBackgroundAndBorder(SDL_Renderer* renderer);
 
     GUIManager& m_manager;
@@ -185,16 +185,16 @@ void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius,
 void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color, float thickness);
 void drawRoundedTexturedRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_Texture* texture);
 
-// Jedna ramka fazowana 1px: topLeftColor na górze i lewej, bottomRightColor na dole i prawej.
-// Krawędzie dolna/prawa rysowane ostatnie — nadpisują rogi górny-prawy i dolny-lewy (jak w Win95).
+// One 1px bevel frame: topLeftColor on top and left, bottomRightColor on bottom and right.
+// Bottom/right edges are drawn last — they overwrite the top-right and bottom-left corners (as in Win95).
 void drawBevelFrame(SDL_Renderer* renderer, SDL_Rect rect, int thickness, SDL_Color topLeftColor, SDL_Color bottomRightColor);
 
-// Rysuje fazy zapisane w stylu (zewnętrzną i wewnętrzną, po 1px).
-// Ramka zwykła (borderColor/borderWidth) jest wtedy ignorowana.
+// Draws the bevels stored in the style (outer and inner, 1px each).
+// A plain border (borderColor/borderWidth) is then ignored.
 void drawStyleBevel(SDL_Renderer* renderer, SDL_Rect rect, const Style& style);
 
-// Wypełnia 4 kolory krawędzi w stylu paletą systemową Windows 95/98.
-// Używane przez GUIElement::setBevel i parsery layoutów (shorthand "bevel").
+// Fills the 4 edge colors in the style with the Windows 95/98 system palette.
+// Used by GUIElement::setBevel and the layout parsers ("bevel" shorthand).
 void applyBevelToStyle(Style& style, BevelType type);
 
 inline void drawTitleBar(SDL_Renderer* renderer, int x, int y, int w, int h) {

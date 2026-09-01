@@ -12,7 +12,7 @@ TextArea::TextArea(GUIManager& manager, int x, int y, int w, int h, std::string_
     m_manager.getFontManager().loadFont(m_font_path.c_str(), m_font_size);
     m_needs_texture_update = true;
     m_text_offset_x = 0;
-    m_lines.push_back("");  // Zainicjalizuj z pustą linią, aby uniknąć SIGSEGV w update_text_offset()
+    m_lines.push_back("");  // Initialize with an empty line to avoid SIGSEGV in update_text_offset()
     setCanGetKeyboardFocus(true);
 }
 

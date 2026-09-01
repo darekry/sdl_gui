@@ -16,7 +16,7 @@ int main(int, char**) {
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        // --- Przycisk z podpowiedzią ---
+        // --- Button with tooltip ---
         auto button = std::make_unique<Button>(guiManager, 50, 50, 200, 80);
         auto label = std::make_unique<Label>(guiManager, 0,0, "Najedź na mnie", 20);
         label->setPosition((button->getWidth() - label->getWidth()) / 2, (button->getHeight() - label->getHeight())/2);
@@ -26,12 +26,12 @@ int main(int, char**) {
             []([[maybe_unused]] GUIElement* elem) { LOG_INFO("Tooltip", "Przycisk kliknięty!"); });
         guiManager.addElement(std::move(button));
 
-        // --- Checkbox z podpowiedzią ---
+        // --- Checkbox with tooltip ---
         auto checkbox = std::make_unique<Checkbox>(guiManager, 300, 50, 40, 40);
         checkbox->setTooltip("Zaznacz lub odznacz tę opcję.\nObsługuje\nwiele linii!");
         guiManager.addElement(std::move(checkbox));
         
-        // --- Suwak z podpowiedzią ---
+        // --- Slider with tooltip ---
         auto slider = std::make_unique<Slider>(guiManager, 50, 200, 300, 30, 0, 100, 50, Orientation::Horizontal);
         slider->setTooltip("Użyj tego suwaka, aby zmienić wartość.");
         guiManager.addElement(std::move(slider));
@@ -47,10 +47,10 @@ int main(int, char**) {
                 guiManager.processEvent(e);
             }
 
-            // Aktualizacja timery (wymagane dla tooltipów!)
+            // Update timers (required for tooltips!)
             guiManager.update();
 
-            // Aktualizacja stanu i bezpieczne usuwanie elementów (ważne dla tooltipów!)
+            // Update state and safely remove elements (important for tooltips!)
             guiManager.cleanup();
 
             SDL_SetRenderDrawColor(renderer, 240, 240, 240, 255);

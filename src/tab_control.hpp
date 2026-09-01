@@ -8,13 +8,13 @@ class TabControl : public Panel {
 public:
     TabControl(GUIManager & manager, int x, int y, int width, int height, int tabButtonHeight = 30);
 
-    // Dodaje nową zakładkę i zwraca wskaźnik do jej panelu zawartości
+    // Adds a new tab and returns a pointer to its content panel
     Panel* addTab(std::string_view title,  int width = 100, int height =-1);
 
-    // Ustawia aktywną zakładkę na podstawie wskaźnika na jej przycisk
+    // Sets the active tab based on a pointer to its button
     void setActiveTab(Button* tabButton);
 
-    // Ustawia aktywną zakładkę po indeksie (0-based)
+    // Sets the active tab by index (0-based)
     void setActiveTab(int index);
 
     const char* getComponentType() const override;
@@ -22,7 +22,7 @@ public:
 protected:
 
 private:
-    void reorderTabs();  // Prywatna metoda do aktualizacji pozycji przycisków
+    void reorderTabs();  // Updates button positions
 
     std::vector<Button*> m_tabButtons;
     std::vector<Panel*> m_tabPanels;

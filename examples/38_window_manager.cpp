@@ -1,17 +1,17 @@
 /**
  * @file 38_window_manager.cpp
- * @brief Demonstracja WindowManager - wiele okien systemowych
+ * @brief Demonstrates WindowManager - multiple system windows
  * 
- * Ten przykład pokazuje:
- * - MainWindow - główne okno aplikacji
- * - SettingsWindow - okno ustawień (osobne okno systemowe)
- * - FormWindow - okno z formularzem
+ * This example shows:
+ * - MainWindow - main application window
+ * - SettingsWindow - settings window (separate system window)
+ * - FormWindow - window with a form
  * 
- * Architektura:
- * 1. WindowManager zarządza wieloma oknami SDL
- * 2. Każde Window ma własny SDL_Window, SDL_Renderer i GUIManager
- * 3. Zdarzenia są automatycznie routowane do odpowiednego okna (SDL_WINDOWID)
- * 4. Okna mogą być przesuwane/minimalizowane przez użytkownika
+ * Architecture:
+ * 1. WindowManager manages multiple SDL windows
+ * 2. Each Window has its own SDL_Window, SDL_Renderer and GUIManager
+ * 3. Events are automatically routed to the correct window (SDL_WINDOWID)
+ * 4. Windows can be moved/minimized by the user
  */
 
 #include "window_manager.hpp"

@@ -12,13 +12,11 @@ int main() {
         SDLApp app("Przykład - Animacje", 800, 600);
         GUIManager gui(app.getRenderer());
 
-        // 1. Tworzenie panelu do animowania
         auto panel = std::make_unique<Panel>(gui, 50, 200, 100, 100);
         panel->setBackgroundColor(ElementState::Normal, {200, 100, 100, 255});
         auto* animatable_panel = gui.addElement(std::move(panel));
         auto panelRef = gui.makeRef(animatable_panel);
 
-        // 2. Tworzenie przycisku uruchamiającego animację
         auto button = std::make_unique<Button>(gui, 350, 50, 100, 40, "Animuj!");
         button->setOnClickCallback([&gui, panelRef](GUIElement*) {
             if (!panelRef) return;
@@ -55,7 +53,6 @@ int main() {
         });
         gui.addElement(std::move(button));
 
-        // Główna pętla aplikacji
         bool quit = false;
         SDL_Event e;
         while (!quit) {

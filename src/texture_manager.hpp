@@ -3,7 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include "font_manager.hpp" // Potrzebne do stworzenia domyślnej tekstury
+#include "font_manager.hpp" // Needed to create the default texture
 
 #include "std.hpp"
 
@@ -25,10 +25,8 @@ using SharedTexture = std::shared_ptr<SDL_Texture>;
  */
 class TextureManager {
 public:
-    // Konstruktor
     explicit TextureManager(SDL_Renderer* renderer);
 
-    // Destruktor
     ~TextureManager();
     
     /**
@@ -37,45 +35,40 @@ public:
      */
     bool isInitialized() const { return m_initialized; }
 
-    // Metoda do ładowania tekstury. Zwraca SharedTexture.
-    // Jeśli tekstura o danej ścieżce została już załadowana, zwraca istniejący SharedTexture.
+    // Loads a texture. Returns SharedTexture.
+    // If a texture at the given path is already loaded, returns the existing SharedTexture.
     SharedTexture loadTexture(std::string_view path);
 
-    // Metoda do tworzenia tekstury z tekstu.
     SharedTexture createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color);
     
-    // Metoda do tworzenia tekstury z tekstu z stabilnym kluczem (font_path + font_size).
+    // Creates a text texture with a stable cache key (font_path + font_size).
     SharedTexture createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color);
 
-    // Metoda do ładowania tekstury z pamięci (dla embedded assets)
+    // Loads a texture from memory (for embedded assets)
     SharedTexture loadTextureFromMemory(const uint8_t* data, size_t size, std::string_view key);
 
-    // Metoda do renderowania elementu do współdzielonej, niezmiennej tekstury cache.
-    // Jeśli tekstura o danym kluczu już istnieje, zwraca ją BEZ ponownego rysowania.
-    // Wpis jest niezmienny - nigdy nie jest nadpisywany, usuwany przez pruneUnused()
-    // gdy przestaje być używany. Klucz musi jednoznacznie opisywać wszystkie dane
-    // wejściowe draw() (typ, rozmiar, stan, styl, stan wewnętrzny widgetu).
+    // Renders an element into a shared, immutable cache texture.
+    // If a texture with the given key already exists, returns it WITHOUT re-rendering.
+    // The entry is immutable - never overwritten, removed by pruneUnused()
+    // when it stops being used. The key must uniquely describe all draw()
+    // inputs (type, size, state, style, widget internal state).
     SharedTexture renderCache(uint64_t key, int width, int height,
                               const std::function<void(SDL_Renderer*)>& draw);
 
-    // Metoda do dodawania istniejącej tekstury i przejmowania nad nią własności
+    // Adds an existing texture and takes ownership of it
     SharedTexture addTexture(std::string_view key, SDL_Texture* texture);
     SharedTexture addTexture(std::string_view key, SharedTexture texture);
 
-    // Metoda do pobierania tekstury po kluczu
     SharedTexture getTexture(std::string_view key) const;
     
-    // Metoda do sprawdzania, czy tekstura o danym kluczu istnieje
     bool hasTexture(std::string_view key) const;
 
-    // Metoda do zapytania rozmiaru tekstury (ładuje teksturę jeśli nie jest załadowana)
-    // Zwraca true oraz ustawia width/height jeśli tekstura jest dostępna; w przeciwnym razie false.
+    // Queries a texture's size (loads the texture if not already loaded)
+    // Returns true and sets width/height if the texture is available; otherwise false.
     bool queryTexture(std::string_view key, int& width, int& height);
     
-    // Metoda do tworzenia domyślnej tekstury
     void createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, std::string_view text);
     
-    // Metoda do pobierania domyślnej tekstury
     SharedTexture getDefaultTexture() const;
 
     // Cleanup methods
@@ -88,6 +81,6 @@ private:
     SDL_Renderer* m_renderer;
     std::unordered_map<std::string, SharedTexture, StringHash, std::equal_to<>> m_textureCache;
     std::unordered_map<uint64_t, SharedTexture> m_renderCache;
-    SharedTexture m_defaultTexture; // Domyślna tekstura
+    SharedTexture m_defaultTexture;
     bool m_initialized = false; // SDL_image initialization status
 };

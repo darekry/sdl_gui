@@ -2,18 +2,18 @@
  * @file 43_gamepad_controller.cpp
  * @brief Controller/gamepad UI — D-pad grid navigation, button hints, gamepad events
  *
- * Demonstruje wzorce dla interfejsów obsługiwanych kontrolerem:
- * - Nawigacja D-padem (lub lewym analogiem) po siatce elementów
- * - Przyciski akcji A/B/X/Y z wizualnymi podpowiedziami
- * - Podświetlenie fokusa (focus highlight) na aktywnym elemencie
- * - Fallback: klawisze strzałek + Enter/Esc na desktopie
- * - Auto-detekcja i otwieranie gamepada (hot-plug)
+ * Demonstrates patterns for controller-driven interfaces:
+ * - D-pad (or left stick) navigation across a grid of elements
+ * - A/B/X/Y action buttons with visual hints
+ * - Focus highlight on the active element
+ * - Fallback: arrow keys + Enter/Esc on desktop
+ * - Auto-detection and hot-plug of the gamepad
  *
- * Sterowanie:
- *   Gamepad D-pad / Lewa gałka → poruszanie po siatce
- *   Gamepad A (South) → wybór / aktywacja
- *   Gamepad B (East)  → powrót / anulowanie
- *   Klawiatura: strzałki + Enter + Esc (fallback)
+ * Controls:
+ *   Gamepad D-pad / Left stick → move across the grid
+ *   Gamepad A (South) → select / activate
+ *   Gamepad B (East)  → back / cancel
+ *   Keyboard: arrow keys + Enter + Esc (fallback)
  */
 
 #include "panel.hpp"
@@ -27,7 +27,7 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-// --- Siatka elementów ---
+// --- Grid of elements ---
 const int GRID_COLS = 3;
 const int GRID_ROWS = 2;
 const int CARD_W = 180;
@@ -36,7 +36,7 @@ const int CARD_GAP = 20;
 const int GRID_START_X = (SCREEN_WIDTH - (CARD_W * GRID_COLS + CARD_GAP * (GRID_COLS - 1))) / 2;
 const int GRID_START_Y = 100;
 
-// --- Struktura karty (widget + dane) ---
+// --- Card structure (widget + data) ---
 struct Card {
     Panel* panel = nullptr;
     Label* nameLabel = nullptr;
@@ -46,19 +46,19 @@ struct Card {
     int col = 0;
 };
 
-// --- Kolory podpowiedzi przycisków ---
+// --- Button hint colors ---
 struct ButtonHintColors {
-    SDL_Color bg    = {220, 60, 60, 255};    // A — czerwony (południe)
+    SDL_Color bg    = {220, 60, 60, 255};    // A — red (South)
     SDL_Color text  = {255, 255, 255, 255};
 };
 const ButtonHintColors kBtnColors[4] = {
-    {{220, 60,  60,  255}},  // A — czerwony  (South)
-    {{220, 150, 30,  255}},  // B — pomarańczowy (East)
-    {{50,  100, 220, 255}},  // X — niebieski (West)
-    {{180, 130, 30,  255}},  // Y — złoty   (North)
+    {{220, 60,  60,  255}},  // A — red (South)
+    {{220, 150, 30,  255}},  // B — orange (East)
+    {{50,  100, 220, 255}},  // X — blue (West)
+    {{180, 130, 30,  255}},  // Y — gold (North)
 };
 
-// --- Ustaw fokus na kartę ---
+// --- Set focus on a card ---
 static void focusCard(GUIManager& mgr, Card* card, Card*& currentFocus,
                       Label*& focusLabel) {
     if (currentFocus && currentFocus->panel) {
@@ -72,12 +72,12 @@ static void focusCard(GUIManager& mgr, Card* card, Card*& currentFocus,
     }
 }
 
-// --- Znajdź sąsiednią kartę w siatce ---
+// --- Find the neighboring card in the grid ---
 static Card* findNeighbor(Card* current, int dr, int dc, std::vector<Card>& cards) {
     if (!current) return nullptr;
     int targetR = current->row + dr;
     int targetC = current->col + dc;
-    // Zawijanie (wrap-around)
+    // Wrap-around
     if (targetR < 0) targetR = GRID_ROWS - 1;
     if (targetR >= GRID_ROWS) targetR = 0;
     if (targetC < 0) targetC = GRID_COLS - 1;
@@ -97,7 +97,7 @@ int main(int, char**) {
         guiManager.setTheme(Theme::createDefaultTheme());
         guiManager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-        // === Tytuł ===
+        // === Title ===
         auto title = std::make_unique<Label>(guiManager, SCREEN_WIDTH / 2 - 180, 20,
                                              "CHARACTER SELECT", 28);
         title->setTextColor(ElementState::Normal, {220, 220, 230, 255});
@@ -108,7 +108,7 @@ int main(int, char**) {
         subtitle->setTextColor(ElementState::Normal, {140, 140, 160, 255});
         guiManager.addElement(std::move(subtitle));
 
-        // === Siatka kart (2×3) ===
+        // === Card grid (2×3) ===
         std::vector<Card> cards;
         const char* cardNames[] = {"WARRIOR", "MAGE", "ROGUE", "PALADIN", "RANGER", "NECRO"};
         const char* cardDescs[] = {"Melee tank", "Spellcaster", "Stealth DPS",
@@ -132,9 +132,9 @@ int main(int, char**) {
                 auto descLabel = std::make_unique<Label>(guiManager, 16, 60, cardDescs[idx], 14);
                 descLabel->setTextColor(ElementState::Normal, {160, 160, 180, 255});
 
-                // Info o przycisku
+                // Button info
                 auto ctrlInfo = std::make_unique<Label>(guiManager, 16, 110,
-                    "Press  \x41\x20 to select", 12);  // U+A0 (nbsp) dla odstępu
+                    "Press  \x41\x20 to select", 12);  // U+A0 (nbsp) for spacing
                 ctrlInfo->setTextColor(ElementState::Normal, {120, 120, 140, 255});
 
                 Panel* panelPtr = cardPanel.get();
@@ -150,7 +150,7 @@ int main(int, char**) {
             }
         }
 
-        // === Panel podpowiedzi przycisków (prawy dolny róg) ===
+        // === Button hint panel (bottom-right corner) ===
         auto hintPanel = std::make_unique<Panel>(guiManager, SCREEN_WIDTH - 200, SCREEN_HEIGHT - 180,
                                                  180, 160);
         hintPanel->setBackgroundColor(ElementState::Normal, {30, 32, 40, 220});
@@ -175,27 +175,27 @@ int main(int, char**) {
         }
         guiManager.addElement(std::move(hintPanel));
 
-        // === Etykieta stanu (lewy dolny róg) ===
+        // === Status label (bottom-left corner) ===
         auto statusLabel = std::make_unique<Label>(guiManager, 20, SCREEN_HEIGHT - 40,
             "Status: Ready — Press A or Enter to select a character", 14);
         statusLabel->setTextColor(ElementState::Normal, {160, 200, 160, 255});
         Label* statusPtr = statusLabel.get();
         guiManager.addElement(std::move(statusLabel));
 
-        // === Etykieta fokusa ===
+        // === Focus label ===
         auto focusLabel = std::make_unique<Label>(guiManager, 20, SCREEN_HEIGHT - 70,
             "Focus: none", 14);
         focusLabel->setTextColor(ElementState::Normal, {120, 180, 255, 255});
         Label* focusPtr = focusLabel.get();
         guiManager.addElement(std::move(focusLabel));
 
-        // --- Stan ---
+        // --- State ---
         Card* currentFocus = nullptr;
         SDL_Gamepad* gamepad = nullptr;
         bool quit = false;
         SDL_Event e;
 
-        // Ustaw początkowy fokus
+        // Set initial focus
         focusCard(guiManager, &cards[0], currentFocus, focusPtr);
 
         while (!quit) {
@@ -221,7 +221,7 @@ int main(int, char**) {
                     }
                 }
 
-                // --- Nawigacja gamepadem (D-pad + lewa gałka) ---
+                // --- Gamepad navigation (D-pad + left stick) ---
                 else if (e.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
                     Card* neighbor = nullptr;
                     switch (e.gbutton.button) {
@@ -257,15 +257,15 @@ int main(int, char**) {
                     }
                 }
 
-                // --- Lewa gałka analogowa jako alternatywa dla D-pada ---
+                // --- Left analog stick as an alternative to the D-pad ---
                 else if (e.type == SDL_EVENT_GAMEPAD_AXIS_MOTION) {
-                    // Deadzone: ignoruj małe ruchy
+                    // Deadzone: ignore small movements
                     const int16_t deadzone = 8000;
-                    static bool axisNavLock = false; // Zapobiega wielokrotnemu wyzwalaniu
+                    static bool axisNavLock = false; // Prevents repeated triggering
 
                     if (e.gaxis.axis == SDL_GAMEPAD_AXIS_LEFTX || e.gaxis.axis == SDL_GAMEPAD_AXIS_LEFTY) {
                         if (axisNavLock) {
-                            // Czekaj aż gałka wróci do deadzone
+                            // Wait until the stick returns to the deadzone
                             int16_t lx = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTX);
                             int16_t ly = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTY);
                             if (std::abs(lx) < deadzone / 2 && std::abs(ly) < deadzone / 2) {
@@ -292,7 +292,7 @@ int main(int, char**) {
                     }
                 }
 
-                // --- Fallback: klawisze strzałek + Enter/Esc ---
+                // --- Fallback: arrow keys + Enter/Esc ---
                 else if (e.type == SDL_EVENT_KEY_DOWN) {
                     Card* neighbor = nullptr;
                     switch (e.key.key) {
@@ -324,7 +324,7 @@ int main(int, char**) {
                     }
                 }
 
-                // Standardowe przetwarzanie GUI
+                // Standard GUI processing
                 guiManager.processEvent(e);
             }
 

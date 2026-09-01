@@ -2,7 +2,7 @@
 #include "button.hpp"
 #include "panel.hpp"
 #include "gui.hpp"
-#include "label.hpp" // Dodano
+#include "label.hpp"
 
 
 class ComboBox : public GUIElement {

@@ -2,7 +2,6 @@
 #include <SDL3/SDL_rect.h>
 #include "gui_manager.hpp"
 
-// Implementacja klasy Panel
 Panel::Panel(GUIManager& manager, int x, int y, int width, int height)
     : GUIElement(manager, x, y, width, height) {
 }
@@ -21,14 +20,14 @@ bool Panel::handleEvent(const SDL_Event& event) {
         return false;
     }
 
-    // Przekaż zdarzenie do dzieci. Jeśli któreś je obsłuży, nie rób nic więcej.
+    // Forward the event to children. If one handles it, do nothing more.
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
         if ((*it)->handleEvent(event)) {
             return true;
         }
     }
 
-    // Logika przeciągania - aktywowana tylko jeśli żadne dziecko nie obsłużyło zdarzenia
+    // Drag logic - only active if no child handled the event
     if (m_is_draggable) {
         if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT && contains(event.button.x, event.button.y)) {
             m_is_dragging = true;
@@ -40,7 +39,7 @@ bool Panel::handleEvent(const SDL_Event& event) {
         }
     }
     
-    // Obsługa przeciągania - sprawdzana PRZED hover, aby uniknąć lagów
+    // Drag handling - checked BEFORE hover to avoid lag
     if (m_is_dragging && event.type == SDL_EVENT_MOUSE_MOTION) {
         int parentX = m_parent ? m_parent->getAbsolutePosition().x : 0;
         int parentY = m_parent ? m_parent->getAbsolutePosition().y : 0;
@@ -54,7 +53,7 @@ bool Panel::handleEvent(const SDL_Event& event) {
         return true;
     }
 
-    // Hover check - tylko gdy NIE przeciągamy
+    // Hover check - only when NOT dragging
     if (!m_is_dragging && event.type == SDL_EVENT_MOUSE_MOTION) {
         int mouseX = static_cast<int>(event.motion.x);
         int mouseY = static_cast<int>(event.motion.y);

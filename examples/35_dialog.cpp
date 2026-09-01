@@ -1,14 +1,14 @@
 /**
  * @file 35_dialog.cpp
- * @brief Demonstracja DialogBox i MessageBox - złożonych komponentów GUI
+ * @brief Demonstrates DialogBox and MessageBox - composite GUI components
  * 
- * Ten przykład pokazuje:
- * - DialogBox::createConfirm() - dialog potwierdzający (Tak/Nie)
- * - DialogBox::createAlert() - dialog alertu (OK)
- * - DialogBox::createWithTitle() - dialog z własnym tytułem
- * - MessageBox::showInfo() - szybki komunikat informacyjny
- * - MessageBox::showError() - komunikat błędu
- * - MessageBox::showQuestion() - dialog pytania
+ * This example shows:
+ * - DialogBox::createConfirm() - confirmation dialog (Yes/No)
+ * - DialogBox::createAlert() - alert dialog (OK)
+ * - DialogBox::createWithTitle() - dialog with custom title
+ * - MessageBox::showInfo() - quick info message
+ * - MessageBox::showError() - error message
+ * - MessageBox::showQuestion() - question dialog
  */
 
 #include "gui_manager.hpp"
@@ -30,7 +30,6 @@ int main(int, char**) {
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        // Panel główny z przyciskami testowymi
         auto mainPanel = std::make_unique<Panel>(guiManager, 50, 50, 700, 500);
         Style panelStyle;
         panelStyle.backgroundColor = {250, 250, 250, 255};
@@ -38,14 +37,13 @@ int main(int, char**) {
         panelStyle.borderWidth = 1;
         mainPanel->setStyle(ElementState::Normal, panelStyle);
 
-        // Label tytułowy
         auto titleLabel = std::make_unique<Label>(guiManager, 20, 20, "Test DialogBox i MessageBox", 28);
         titleLabel->setPosition(250, 20);
         mainPanel->addChild(std::move(titleLabel));
 
         // === DialogBox Examples ===
 
-        // Przycisk 1: Confirm Dialog
+        // Button 1: Confirm Dialog
         auto btnConfirm = std::make_unique<Button>(guiManager, 50, 80, 200, 40, "Confirm Dialog");
         btnConfirm->setOnClickCallback([&guiManager](GUIElement*) {
             DialogBox::createConfirm(
@@ -64,7 +62,7 @@ int main(int, char**) {
         });
         mainPanel->addChild(std::move(btnConfirm));
 
-        // Przycisk 2: Alert Dialog
+        // Button 2: Alert Dialog
         auto btnAlert = std::make_unique<Button>(guiManager, 260, 80, 200, 40, "Alert Dialog");
         btnAlert->setOnClickCallback([&guiManager](GUIElement*) {
             DialogBox::createAlert(
@@ -78,7 +76,7 @@ int main(int, char**) {
         });
         mainPanel->addChild(std::move(btnAlert));
 
-        // Przycisk 3: Dialog with Title
+        // Button 3: Dialog with Title
         auto btnWithTitle = std::make_unique<Button>(guiManager, 470, 80, 200, 40, "Dialog with Title");
         btnWithTitle->setOnClickCallback([&guiManager](GUIElement*) {
             DialogBox::createWithTitle(
@@ -100,7 +98,7 @@ int main(int, char**) {
 
         // === MessageBox Examples ===
 
-        // Przycisk 4: MessageBox Info
+        // Button 4: MessageBox Info
         auto btnInfo = std::make_unique<Button>(guiManager, 50, 140, 200, 40, "MessageBox Info");
         btnInfo->setOnClickCallback([&guiManager](GUIElement*) {
             MessageBox::showInfo(guiManager, "Plik został zapisany pomyślnie.", []() {
@@ -109,7 +107,7 @@ int main(int, char**) {
         });
         mainPanel->addChild(std::move(btnInfo));
 
-        // Przycisk 5: MessageBox Error
+        // Button 5: MessageBox Error
         auto btnError = std::make_unique<Button>(guiManager, 260, 140, 200, 40, "MessageBox Error");
         btnError->setOnClickCallback([&guiManager](GUIElement*) {
             MessageBox::showError(guiManager, "Błąd: Nie można otworzyć pliku. Sprawdź czy plik istnieje.", []() {
@@ -118,7 +116,7 @@ int main(int, char**) {
         });
         mainPanel->addChild(std::move(btnError));
 
-        // Przycisk 6: MessageBox Warning
+        // Button 6: MessageBox Warning
         auto btnWarning = std::make_unique<Button>(guiManager, 470, 140, 200, 40, "MessageBox Warning");
         btnWarning->setOnClickCallback([&guiManager](GUIElement*) {
             MessageBox::showWarning(guiManager, "Ostrzeżenie: Niewystarczająca ilość pamięci.", []() {
@@ -127,7 +125,7 @@ int main(int, char**) {
         });
         mainPanel->addChild(std::move(btnWarning));
 
-        // Przycisk 7: MessageBox Question
+        // Button 7: MessageBox Question
         auto btnQuestion = std::make_unique<Button>(guiManager, 50, 200, 200, 40, "MessageBox Question");
         btnQuestion->setOnClickCallback([&guiManager](GUIElement*) {
             MessageBox::showQuestion(
@@ -139,7 +137,7 @@ int main(int, char**) {
         });
         mainPanel->addChild(std::move(btnQuestion));
 
-        // Przycisk 8: Custom Dialog
+        // Button 8: Custom Dialog
         auto btnCustom = std::make_unique<Button>(guiManager, 260, 200, 200, 40, "Custom Dialog");
         btnCustom->setOnClickCallback([&guiManager](GUIElement*) {
             MessageBox::showCustom(
@@ -153,12 +151,10 @@ int main(int, char**) {
         });
         mainPanel->addChild(std::move(btnCustom));
 
-        // Label informacyjny
         auto infoLabel = std::make_unique<Label>(guiManager, 50, 280, 
             "Kliknij przyciski aby zobaczyć różne typy dialogów.\nESC zamyka dialog bez wyboru.", 18);
         mainPanel->addChild(std::move(infoLabel));
 
-        // Drugi label
         auto dragLabel = std::make_unique<Label>(guiManager, 50, 340,
             "Dialogi są draggable - możesz przesuwać je myszką.", 18);
         mainPanel->addChild(std::move(dragLabel));

@@ -3,7 +3,6 @@
 
 
 
-// --- Implementacja TabControl ---
 
 TabControl::TabControl(GUIManager& manager, int x, int y, int width, int height, int tabButtonHeight)
     : Panel(manager, x, y, width, height), m_tabButtonHeight(tabButtonHeight) {
@@ -47,7 +46,7 @@ void TabControl::setActiveTab(Button* tabButton) {
         return;
     }
 
-    // Deaktywuj poprzednią zakładkę
+    // Deactivate the previous tab
     for (size_t i = 0; i < m_tabButtons.size(); ++i) {
         if (m_tabButtons[i] == m_activeTabButton) {
             m_tabPanels[i]->setVisible(false);
@@ -57,7 +56,7 @@ void TabControl::setActiveTab(Button* tabButton) {
 
     m_activeTabButton = tabButton;
 
-    // Aktywuj nową zakładkę
+    // Activate the new tab
     for (size_t i = 0; i < m_tabButtons.size(); ++i) {
         if (m_tabButtons[i] == m_activeTabButton) {
             m_tabPanels[i]->setVisible(true);

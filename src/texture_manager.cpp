@@ -11,12 +11,12 @@ TextureManager::TextureManager(SDL_Renderer* renderer) : m_renderer(renderer) {
 }
 
 TextureManager::~TextureManager() {
-    // SDL_image Quit nie jest konieczne tutaj, ponieważ powinno być wywołane raz na koniec działania aplikacji
+    // SDL_image Quit is not needed here, since it should be called once at the end of the application's lifetime
     //
 }
 
 SharedTexture TextureManager::loadTexture(std::string_view path) {
-    // Używamy find, aby uniknąć tworzenia std::string, jeśli to możliwe
+    // Use find to avoid creating a std::string if possible
     auto it = m_textureCache.find(path);
     if (it != m_textureCache.end()) {
         return it->second;
@@ -242,7 +242,7 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
         return;
     }
 
-    // Utwórz powierzchnię tła
+    // Create the background surface
     auto* bgSurface = SDL_CreateSurface(100, 30, SDL_PIXELFORMAT_RGBA8888);
     if (!bgSurface) {
         LOG_DEBUG("TextureManager ERROR: Could not create background surface for default texture.");
@@ -251,13 +251,13 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
     const SDL_PixelFormatDetails* fmt = SDL_GetPixelFormatDetails(bgSurface->format);
     if (fmt) {
         SDL_FillSurfaceRect(bgSurface, NULL, SDL_MapRGB(fmt, NULL, 200, 200, 200));
-    } // Szare tło
+    } // Gray background
 
     // Create text string ONCE for SDL call
     std::string textStr(text);
     
-    // Utwórz teksturę z tekstem
-    auto textColor = SDL_Color{ 0, 0, 0, 255 }; // Czarny
+    // Create the text surface
+    auto textColor = SDL_Color{ 0, 0, 0, 255 }; // Black
     auto* textSurface = TTF_RenderText_Blended(defaultFont.get(), textStr.c_str(), textStr.length(), textColor);
     if (!textSurface) {
         LOG_DEBUG("TextureManager ERROR: Unable to render text for default texture. SDL_ttf Error: %s", SDL_GetError());
@@ -265,12 +265,12 @@ void TextureManager::createDefaultTexture(SDL_Renderer* renderer, FontManager& f
         return;
     }
 
-    // Blituj tekst na tło
+    // Blit the text onto the background
     auto textRect = SDL_Rect{ (bgSurface->w - textSurface->w) / 2, (bgSurface->h - textSurface->h) / 2, textSurface->w, textSurface->h };
     SDL_BlitSurface(textSurface, NULL, bgSurface, &textRect);
     SDL_DestroySurface(textSurface);
 
-    // Utwórz finalną teksturę
+    // Create the final texture
     auto* finalTexture = SDL_CreateTextureFromSurface(renderer, bgSurface);
     SDL_DestroySurface(bgSurface);
 

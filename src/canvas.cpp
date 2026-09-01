@@ -11,7 +11,7 @@ namespace {
 
 Canvas::Canvas(GUIManager& manager, int x, int y, int width, int height)
     : GUIElement(manager, x, y, width, height) {
-    // Utwórz początkową teksturę i wyczyść na biało
+    // Create the initial texture and clear to white
     ensureTexture(m_manager.getRenderer());
     clear();
 }
@@ -48,7 +48,7 @@ void Canvas::recreateTexture(SDL_Renderer* renderer, int w, int h) {
     m_texW = w;
     m_texH = h;
 
-    // Wyczyść na biało
+    // Clear to white
     {
         ScopedRenderTarget targetScope(renderer, m_canvasTex.get());
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -80,18 +80,18 @@ SDL_Point Canvas::windowToLocal(int wx, int wy) const {
 void Canvas::putBrush(SDL_Renderer* renderer, int x, int y) {
     if (!renderer || !m_canvasTex) return;
 
-    // Prostokąt pędzla wycentrowany w (x, y)
+    // Brush rectangle centered at (x, y)
     const int half = BRUSH_SIZE / 2;
     int rx = x - half;
     int ry = y - half;
     int rw = BRUSH_SIZE;
     int rh = BRUSH_SIZE;
 
-    // Przytnij do granic tekstury
+    // Clip to texture bounds
     int maxX = m_texW - 1;
     int maxY = m_texH - 1;
 
-    // Oblicz wymiary po przycięciu
+    // Compute dimensions after clipping
     if (rx < 0) { rw += rx; rx = 0; }
     if (ry < 0) { rh += ry; ry = 0; }
     if (rx + rw - 1 > maxX) { rw = maxX - rx + 1; }
@@ -106,13 +106,13 @@ void Canvas::putBrush(SDL_Renderer* renderer, int x, int y) {
 void Canvas::drawSegment(SDL_Renderer* renderer, SDL_Point a, SDL_Point b) {
     if (!renderer || !m_canvasTex) return;
 
-    // Ustaw rysowanie na teksturę płótna
+    // Set the canvas texture as the render target
     SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
     SDL_SetRenderTarget(renderer, m_canvasTex.get());
 
     SetDrawColor(renderer, m_penColor);
 
-    // Proste próbkowanie punktów na odcinku i stemplowanie pędzla
+    // Sample points along the segment and stamp the brush
     int dx = b.x - a.x;
     int dy = b.y - a.y;
     int steps = std::max(std::abs(dx), std::abs(dy));
@@ -155,14 +155,14 @@ bool Canvas::handleEvent(const SDL_Event& e) {
             local.y = iclamp(local.y, 0, std::max(0, m_texH - 1));
             m_drawing = true;
             m_last = local;
-            // Narysuj punkt startowy
+            // Draw the starting point
             SDL_Texture* oldTarget = SDL_GetRenderTarget(renderer);
             SDL_SetRenderTarget(renderer, m_canvasTex.get());
             SetDrawColor(renderer, m_penColor);
             putBrush(renderer, local.x, local.y);
             SDL_SetRenderTarget(renderer, oldTarget);
 
-            // Przechwyć mysz, by kontynuować rysowanie podczas przeciągania
+            // Capture the mouse to keep drawing while dragging
             m_manager.captureMouse(this);
             return true;
         }
@@ -184,7 +184,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
         }
     }
 
-    // Dla pozostałych zdarzeń deleguj do bazowej logiki (hover/tooltip itp.)
+    // For other events delegate to base logic (hover/tooltip etc.)
     return GUIElement::handleEvent(e);
 }
 
@@ -193,7 +193,7 @@ const char* Canvas::getComponentType() const {
 }
 
 void Canvas::draw([[maybe_unused]] SDL_Renderer* renderer) {
-    // Nieużywane, bo wantsDirectRender() == true, rysujemy w drawDirect
+    // Unused because wantsDirectRender() == true; drawing happens in drawDirect
 }
 
 void Canvas::drawDirect(SDL_Renderer* renderer) {

@@ -8,12 +8,10 @@
 struct SDL_Texture;
 using SharedTexture = std::shared_ptr<SDL_Texture>;
 
-// Operator porównania dla SDL_Color
 inline bool operator==(const SDL_Color& a, const SDL_Color& b) {
     return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
 }
 
-// Definiuje stany, w jakich może znaleźć się element interfejsu.
 enum class ElementState {
     Normal,
     Hover,
@@ -21,22 +19,22 @@ enum class ElementState {
     Disabled
 };
 
-// Typ fazowanego obramowania 3D w stylu Windows 95/98.
-// Raised = wypukłość (przyciski), Sunken = wklęśnięcie (pola edycji).
+// Windows 95/98 style 3D bevel border type.
+// Raised = raised (buttons), Sunken = sunken (edit fields).
 enum class BevelType {
     Raised,
     Sunken
 };
 
-// Struktura przechowująca atrybuty wizualne dla pojedynczego stanu elementu.
-// Użycie std::optional pozwala na dziedziczenie niezdefiniowanych właściwości z motywu.
+// Holds the visual attributes for a single element state.
+// std::optional allows undefined properties to be inherited from the theme.
 struct Style {
     std::optional<SDL_Color> backgroundColor;
     std::optional<SDL_Color> textColor;
     std::optional<SharedTexture> texture;
     std::optional<SDL_Color> borderColor;
     std::optional<int> borderWidth;
-    std::optional<int> borderRadius;  // Promień zaokrąglenia rogów (0 = ostre)
+    std::optional<int> borderRadius;  // Corner rounding radius (0 = sharp)
     std::optional<int> fontSize;
     std::optional<std::string> fontName;
     std::optional<SDL_Color> borderColorOuterTopLeft;

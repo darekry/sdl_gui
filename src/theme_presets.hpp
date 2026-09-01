@@ -6,14 +6,14 @@
 
 namespace ThemePresets {
 
-// Kolorystyka Win95 z fazą 3D wpiętą w Style.
+// Win95 color scheme with the 3D bevel baked into the Style.
 inline Style withBevel(Style style, BevelType type) {
     applyBevelToStyle(style, type);
     return style;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Windows 9x (klasyczny wygląd Win95/98)
+// Windows 9x (classic Win95/98 look)
 // ═══════════════════════════════════════════════════════════════════
 
 inline Theme createWin9xTheme() {
@@ -260,8 +260,8 @@ inline Theme createWin9xTheme() {
 
 
 // ═══════════════════════════════════════════════════════════════════
-// Windows 95/98 — autentyczny look z fazami 3D (bevel).
-// Przyciski wypukłe (Raised), pola edycji wklęśnięte (Sunken).
+// Windows 95/98 — authentic look with 3D bevels.
+// Raised buttons, sunken edit fields.
 // ═══════════════════════════════════════════════════════════════════
 
 inline Theme createWindows95Theme() {
@@ -282,7 +282,7 @@ inline Theme createWindows95Theme() {
     defaultStyle.fontName = constants::kDefaultFontPath;
     theme.setDefaultStyle(defaultStyle);
 
-    // Button: Raised w spoczynku, Sunken po wciśnięciu
+    // Button: Raised at rest, Sunken when pressed
     {
         Style s;
         s.backgroundColor = constants::kWin95Face;
@@ -301,7 +301,7 @@ inline Theme createWindows95Theme() {
         theme.setStyle("Button", ElementState::Disabled, withBevel(d, BevelType::Raised));
     }
 
-    // Panel: płaskie tło okna (ramki okien ustawia użytkownik)
+    // Panel: flat window background (window borders are set by the user)
     {
         Style s;
         s.backgroundColor = constants::kWin95Face;
@@ -309,7 +309,7 @@ inline Theme createWindows95Theme() {
         theme.setStyle("Panel", ElementState::Normal, s);
     }
 
-    // Pola edycji i listy: białe tło + Sunken
+    // Edit fields and lists: white background + Sunken
     auto sunkenField = [](SDL_Color bg) {
         Style s;
         s.backgroundColor = bg;
@@ -341,26 +341,26 @@ inline Theme createWindows95Theme() {
         theme.setStyle("TextArea", ElementState::Disabled, d);
     }
 
-    // ListView / ComboBox / Canvas: białe + Sunken
+    // ListView / ComboBox / Canvas: white + Sunken
     theme.setStyle("ListView", ElementState::Normal, sunkenField(kWhite));
     theme.setStyle("ComboBox", ElementState::Normal, sunkenField(kWhite));
     theme.setStyle("Canvas", ElementState::Normal, sunkenField(kWhite));
 
-    // StringGrid: biały + Sunken; borderColor zostaje jako kolor linii siatki
+    // StringGrid: white + Sunken; borderColor remains the grid line color
     {
         Style s = sunkenField(kWhite);
         s.borderColor = constants::kWin95Shadow;
         theme.setStyle("StringGrid", ElementState::Normal, s);
     }
 
-    // ProgressBar: białe tło + Sunken; borderColor = kolor wypełnienia (navy)
+    // ProgressBar: white background + Sunken; borderColor = fill color (navy)
     {
         Style s = sunkenField(kWhite);
         s.borderColor = kNavy;
         theme.setStyle("ProgressBar", ElementState::Normal, s);
     }
 
-    // Slider: track rysowany przez widget; borderColor = kolor suwaka
+    // Slider: track drawn by the widget; borderColor = thumb color
     {
         Style s;
         s.backgroundColor = constants::kWin95Face;
@@ -377,7 +377,7 @@ inline Theme createWindows95Theme() {
         theme.setStyle("RangeSlider", ElementState::Normal, s);
     }
 
-    // Checkbox / RadioButton: tylko tekst (boxy rysuje widget)
+    // Checkbox / RadioButton: text only (boxes drawn by the widget)
     {
         Style s;
         s.textColor = kWindowText;
@@ -388,7 +388,7 @@ inline Theme createWindows95Theme() {
         theme.setStyle("RadioButton", ElementState::Normal, r);
     }
 
-    // Label: przezroczysty
+    // Label: transparent
     {
         Style s;
         s.textColor = kWindowText;
@@ -397,7 +397,7 @@ inline Theme createWindows95Theme() {
         theme.setStyle("Label", ElementState::Normal, s);
     }
 
-    // TabControl / ScrollArea / AnimatedImage: płaskie tło
+    // TabControl / ScrollArea / AnimatedImage: flat background
     {
         Style s;
         s.backgroundColor = constants::kWin95Face;
@@ -407,7 +407,7 @@ inline Theme createWindows95Theme() {
         theme.setStyle("AnimatedImage", ElementState::Normal, s);
     }
 
-    // ContextMenu: białe z cieniem, zaznaczenie navy
+    // ContextMenu: white with shadow, navy selection
     {
         Style s;
         s.backgroundColor = kWhite;
@@ -428,7 +428,7 @@ inline Theme createWindows95Theme() {
 
 
 // ═══════════════════════════════════════════════════════════════════
-// Jasny (nowoczesny, czysty)
+// Light (modern, clean)
 // ═══════════════════════════════════════════════════════════════════
 
 inline Theme createLightTheme() {
@@ -677,7 +677,7 @@ inline Theme createLightTheme() {
 
 
 // ═══════════════════════════════════════════════════════════════════
-// Ciemny (dark mode)
+// Dark (dark mode)
 // ═══════════════════════════════════════════════════════════════════
 
 inline Theme createDarkTheme() {
@@ -926,7 +926,7 @@ inline Theme createDarkTheme() {
 
 
 // ═══════════════════════════════════════════════════════════════════
-// Wysoki kontrast (dostępność)
+// High contrast (accessibility)
 // ═══════════════════════════════════════════════════════════════════
 
 inline Theme createHighContrastTheme() {

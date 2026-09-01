@@ -2,13 +2,13 @@
  * @file 42_mobile_touch.cpp
  * @brief Touch-optimized mobile UI — finger-sized widgets, virtual numpad, swipe
  *
- * Demonstruje wzorce dla interfejsów dotykowych (telefon/tablet):
- * - Widgety o minimalnym rozmiarze 44px (Apple HIG)
- * - Wirtualna klawiatura numeryczna (PIN / dial pad)
- * - Obsługa gestów przesunięcia (swipe)
- * - Duży slider dotykowy
- * - Konwersja zdarzeń palca → zdarzenia myszy dla istniejących widgetów
- * - Na desktopie sterowanie myszą działa jako fallback
+ * Demonstrates patterns for touch interfaces (phone/tablet):
+ * - Widgets with a minimum size of 44px (Apple HIG)
+ * - Virtual numeric keypad (PIN / dial pad)
+ * - Swipe gesture handling
+ * - Large touch slider
+ * - Finger-to-mouse event conversion for existing widgets
+ * - On desktop, mouse control works as a fallback
  */
 
 #include "panel.hpp"
@@ -23,20 +23,20 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
-// --- Wymiary ekranu telefonu (iPhone-like aspect) ---
+// --- Phone screen dimensions (iPhone-like aspect) ---
 const int PHONE_W = 360;
 const int PHONE_H = 640;
 const int PHONE_X = (SCREEN_WIDTH - PHONE_W) / 2;
 const int PHONE_Y = (SCREEN_HEIGHT - PHONE_H) / 2;
 
-// --- Minimalny rozmiar celu dotykowego (Apple HIG: 44pt) ---
+// --- Minimum touch target size (Apple HIG: 44pt) ---
 const int TOUCH_TARGET = 48;
 const int NUMPAD_COLS = 3;
 const int NUMPAD_ROWS = 4;
 const int NUMPAD_PAD = 6;
 const int NUMPAD_BTN = (TOUCH_TARGET * 3 + NUMPAD_PAD * 4) / NUMPAD_COLS;
 
-// --- Stan swipe ---
+// --- Swipe state ---
 struct SwipeState {
     bool   active = false;
     float  start_x = 0.0f;
@@ -45,13 +45,13 @@ struct SwipeState {
     float  current_y = 0.0f;
 };
 
-// --- Konwersja współrzędnych finger (0..1) na piksele okna ---
+// --- Convert finger coordinates (0..1) to window pixels ---
 static SDL_Point fingerToPixel(const SDL_TouchFingerEvent& f, int win_w, int win_h) {
     return {static_cast<int>(f.x * static_cast<float>(win_w)),
             static_cast<int>(f.y * static_cast<float>(win_h))};
 }
 
-// --- Przetłumacz zdarzenie palca na zdarzenia myszy i wyślij do GUIManager ---
+// --- Translate a finger event into mouse events and send them to GUIManager ---
 static void dispatchFingerAsMouse(GUIManager& mgr, const SDL_Event& finger_event,
                                   int win_w, int win_h) {
     const auto& f = finger_event.tfinger;
@@ -88,14 +88,14 @@ int main(int, char**) {
         guiManager.setTheme(Theme::createDefaultTheme());
         guiManager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-        // === Ramka telefonu ===
+        // === Phone frame ===
         auto phone = std::make_unique<Panel>(guiManager, PHONE_X - 12, PHONE_Y - 12,
                                              PHONE_W + 24, PHONE_H + 24);
         phone->setBackgroundColor(ElementState::Normal, {30, 30, 35, 255});
         phone->setBorderRadius(ElementState::Normal, 24);
         guiManager.addElement(std::move(phone));
 
-        // === Ekran telefonu ===
+        // === Phone screen ===
         auto screen = std::make_unique<Panel>(guiManager, PHONE_X, PHONE_Y, PHONE_W, PHONE_H);
         screen->setBackgroundColor(ElementState::Normal, {245, 245, 250, 255});
         screen->setBorderRadius(ElementState::Normal, 12);
@@ -125,11 +125,11 @@ int main(int, char**) {
         swipeArea->addChild(std::move(swipeDirLabel));
         Panel* swipeAreaPtr = swipeArea.get();
 
-        // Swipe start → podświetlenie na zielono
+        // Swipe start → highlight in green
         swipeArea->setBackgroundColor(ElementState::Pressed, {180, 255, 180, 255});
         screenPtr->addChild(std::move(swipeArea));
 
-        // === Pole wyświetlania numeru ===
+        // === Number display field ===
         auto displayBg = std::make_unique<Panel>(guiManager, 20, 118, PHONE_W - 40, 56);
         displayBg->setBackgroundColor(ElementState::Normal, {255, 255, 255, 255});
         displayBg->setBorder(ElementState::Normal, {200, 200, 210, 255}, 1);
@@ -141,7 +141,7 @@ int main(int, char**) {
         displayBg->addChild(std::move(displayLabel));
         screenPtr->addChild(std::move(displayBg));
 
-        // === Klawiatura numeryczna 3×4 ===
+        // === 3×4 numeric keypad ===
         const char* keys[] = {"1","2","3","4","5","6","7","8","9","*","0","#"};
         const int numpadY = 190;
         const int btnSize = TOUCH_TARGET;
@@ -155,7 +155,7 @@ int main(int, char**) {
                 int by = numpadY + r * (btnSize + NUMPAD_PAD);
 
                 auto btn = std::make_unique<Button>(guiManager, bx, by, btnSize, btnSize, keys[idx]);
-                btn->setBorderRadius(ElementState::Normal, btnSize / 2);  // Okrągłe
+                btn->setBorderRadius(ElementState::Normal, btnSize / 2);  // Round
                 btn->setBorder(ElementState::Normal, {180, 180, 200, 255}, 1);
                 btn->setBackgroundColor(ElementState::Normal, {255, 255, 255, 255});
                 btn->setBackgroundColor(ElementState::Hover, {220, 230, 255, 255});
@@ -172,7 +172,7 @@ int main(int, char**) {
             }
         }
 
-        // === Przycisk czyszczenia ===
+        // === Clear button ===
         auto clearBtn = std::make_unique<Button>(guiManager, PHONE_W - btnSize - 20, numpadY,
                                                  btnSize, btnSize, "C");
         clearBtn->setBorderRadius(ElementState::Normal, btnSize / 2);
@@ -184,14 +184,14 @@ int main(int, char**) {
         });
         screenPtr->addChild(std::move(clearBtn));
 
-        // === Duży suwak dotykowy (np. jasność/głośność) ===
+        // === Large touch slider (e.g. brightness/volume) ===
         auto sliderLabel = std::make_unique<Label>(guiManager, 20, PHONE_H - 90, "Brightness", 14);
         sliderLabel->setTextColor(ElementState::Normal, {80, 80, 100, 255});
         screenPtr->addChild(std::move(sliderLabel));
 
         auto slider = std::make_unique<Slider>(guiManager, 20, PHONE_H - 70,
                                                PHONE_W - 40, 36, 0, 100, 70, Orientation::Horizontal);
-        slider->setBorderRadius(ElementState::Normal, 18); // Duży, łatwy do trafienia
+        slider->setBorderRadius(ElementState::Normal, 18); // Large, easy to hit
         Slider* sliderPtr = slider.get();
 
         auto sliderValLabel = std::make_unique<Label>(guiManager, PHONE_W - 50, PHONE_H - 90, "70", 14);
@@ -205,10 +205,10 @@ int main(int, char**) {
         screenPtr->addChild(std::move(sliderValLabel));
         screenPtr->addChild(std::move(slider));
 
-        // --- Stan swipe ---
+        // --- Swipe state ---
         SwipeState swipe{};
 
-        // --- Pętla główna ---
+        // --- Main loop ---
         bool quit = false;
         SDL_Event e;
 
@@ -219,13 +219,13 @@ int main(int, char**) {
                     continue;
                 }
 
-                // Obsługa zdarzeń dotykowych (finger events)
+                // Handle touch events (finger events)
                 if (e.type == SDL_EVENT_FINGER_DOWN || e.type == SDL_EVENT_FINGER_UP ||
                     e.type == SDL_EVENT_FINGER_MOTION) {
 
                     SDL_Point px = fingerToPixel(e.tfinger, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-                    // --- Wykrywanie swipe w obszarze swipeArea ---
+                    // --- Detect swipe inside the swipeArea ---
                     if (e.type == SDL_EVENT_FINGER_DOWN) {
                         SDL_Point local = screenPtr->toLocalCoords(px.x, px.y);
                         if (local.x >= 0 && local.x < PHONE_W && local.y >= 28 && local.y < 108) {
@@ -252,10 +252,10 @@ int main(int, char**) {
                         swipe.active = false;
                     }
 
-                    // Tłumaczenie finger → mouse dla widgetów
+                    // Translate finger → mouse for widgets
                     dispatchFingerAsMouse(guiManager, e, SCREEN_WIDTH, SCREEN_HEIGHT);
                 }
-                // Klawisz Backspace czyści wyświetlacz
+                // Backspace clears the display
                 else if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_BACKSPACE) {
                     displayPtr->setText(displayPtr->getText().substr(
                         0, displayPtr->getText().size() - 1));

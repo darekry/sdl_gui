@@ -2,8 +2,8 @@
 #include "tab_control.hpp"
 #include "checkbox.hpp"
 #include "text_input.hpp"
-#include "button.hpp" // Dodano
-#include "label.hpp" // Dodano
+#include "button.hpp"
+#include "label.hpp"
 #include "sdl_app.hpp"
 
 #include "std.hpp"
@@ -17,10 +17,8 @@ int main(int, char**) {
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        // Tworzenie TabControl
         auto tabControl = std::make_unique<TabControl>(guiManager, 50, 50, 700, 500);
         
-        // Dodawanie zakładek
         Panel* tab1Panel = tabControl->addTab("Tab 1");
         Panel* tab2Panel = tabControl->addTab("Tab 2");
         Panel* tab3Panel = tabControl->addTab("Tab 3");
@@ -29,7 +27,6 @@ int main(int, char**) {
         tab2Panel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = std::nullopt, .borderColor={{0, 255, 0, 128}}, .borderWidth=5, .borderRadius = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
         tab3Panel->setStyle(ElementState::Normal, {.backgroundColor = std::nullopt, .textColor = std::nullopt, .texture = std::nullopt, .borderColor={{0, 0, 255, 128}}, .borderWidth=5, .borderRadius = std::nullopt, .fontSize = std::nullopt, .fontName = std::nullopt});
 
-        // Dodawanie zawartości do zakładek
         auto button1 = std::make_unique<Button>(guiManager, 50, 50, 150, 50);
         auto label1 = std::make_unique<Label>(guiManager, 0, 0, "Click Me", 24);
         label1->setPosition((button1->getWidth() - label1->getWidth())/2, (button1->getHeight() - label1->getHeight())/2);

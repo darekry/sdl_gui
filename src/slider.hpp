@@ -53,9 +53,9 @@ private:
     int m_currentValue;
     OnChangeCallback m_onChange;
     bool m_isDragging = false;
-    int m_wheelStep = 1; // Wartość zmiany przy przewijaniu kółkiem myszy
+    int m_wheelStep = 1; // Value change per mouse wheel scroll step
 
-    // Pola do zarządzania wewnętrznym układem
+    // Internal layout fields
     int m_trackSize;
     int m_trackOffsetX = 0;
     int m_trackOffsetY = 0;

@@ -5,7 +5,6 @@
 
 #include "std.hpp"
 
-// Konstruktor
 StringGrid::StringGrid(GUIManager& manager, int x, int y, int width, int height,
                        size_t initialRows, size_t initialCols)
     : Panel(manager, x, y, width, height) {
@@ -16,7 +15,7 @@ StringGrid::StringGrid(GUIManager& manager, int x, int y, int width, int height,
     setClipChildren(true);
 }
 
-// Zarządzanie danymi
+// Data management
 void StringGrid::setRowCount(size_t rows) {
     m_data.resize(rows);
     for (auto& row : m_data) {
@@ -78,10 +77,10 @@ void StringGrid::sortByColumn(size_t col, SortDirection dir) {
         return;
     }
     
-    // Sprawdzamy czy istnieje niestandardowy komparator dla tej kolumny
+    // Check if a custom comparator exists for this column
     bool hasCustom = m_customComparators.find(col) != m_customComparators.end();
     
-    // Sortujemy dane
+    // Sort the data
     std::sort(m_data.begin(), m_data.end(),
         [col, dir, hasCustom, this](const auto& rowA, const auto& rowB) {
             // Handle rows with different sizes - maintain consistent ordering
@@ -105,17 +104,17 @@ void StringGrid::sortByColumn(size_t col, SortDirection dir) {
             const auto& cellA = rowA[col];
             const auto& cellB = rowB[col];
             
-            // Używamy niestandardowego komparatora jeśli istnieje
+            // Use the custom comparator if present
             if (hasCustom) {
                 const auto& comparator = m_customComparators.at(col);
                 if (dir == SortDirection::Ascending) {
                     return comparator(cellA, cellB);
                 } else {
-                    return comparator(cellB, cellA);  // Odwracamy kolejność dla malejącego
+                    return comparator(cellB, cellA);  // Reverse order for descending
                 }
             }
             
-            // Domyślna logika: próbujemy porównać jako liczby
+            // Default logic: try comparing as numbers
             try {
                 double numA = std::stod(cellA);
                 double numB = std::stod(cellB);
@@ -125,7 +124,7 @@ void StringGrid::sortByColumn(size_t col, SortDirection dir) {
                     return numA > numB;
                 }
             } catch (...) {
-                // Jeśli nie są liczbami, porównujemy jako tekst
+                // If they are not numbers, compare as text
                 if (dir == SortDirection::Ascending) {
                     return cellA < cellB;
                 } else {
@@ -135,7 +134,7 @@ void StringGrid::sortByColumn(size_t col, SortDirection dir) {
         });
 }
 
-// Zarządzanie niestandardowymi komparatorami
+// Custom comparator management
 void StringGrid::setCustomComparator(size_t col, CompareFunc func) {
     m_customComparators[col] = std::move(func);
 }
@@ -152,7 +151,7 @@ bool StringGrid::hasCustomComparator(size_t col) const {
     return m_customComparators.find(col) != m_customComparators.end();
 }
 
-// Geometria kolumn
+// Column geometry
 void StringGrid::setColumnWidth(size_t col, int width) {
     if (col < m_columnWidths.size()) {
         m_columnWidths[col] = std::max(20, width);
@@ -173,7 +172,7 @@ void StringGrid::setRowHeaderWidth(int width) {
     m_rowHeaderWidth = std::max(20, width);
 }
 
-// Nagłówki
+// Headers
 void StringGrid::setColumnHeader(size_t col, std::string_view text) {
     if (col < m_columnHeaders.size()) {
         m_columnHeaders[col] = text;
@@ -188,7 +187,7 @@ void StringGrid::setShowColumnHeaders(bool show) {
     m_showColumnHeaders = show;
 }
 
-// Zaznaczanie
+// Selection
 void StringGrid::setSelectedCell(size_t row, size_t col) {
     if (row < m_data.size() && col < m_columnWidths.size()) {
         m_selectedCell = {row, col};
@@ -231,7 +230,7 @@ std::optional<SelectionRange> StringGrid::getSelectionRange() const {
     return std::nullopt;
 }
 
-// Edycja
+// Editing
 void StringGrid::setEditable(bool editable) {
     m_editable = editable;
     if (!m_editable && m_isEditing) {
@@ -290,7 +289,7 @@ bool StringGrid::isEditing() const {
     return m_isEditing;
 }
 
-// Kontrola sliderów
+// Slider control
 void StringGrid::setHorizontalScrollEnabled(bool enabled) {
     m_hScrollEnabled = enabled;
     if (m_hSlider) {
@@ -321,7 +320,7 @@ bool StringGrid::isVerticalScrollEnabled() const {
     return m_vScrollEnabled;
 }
 
-// Settery dla kolorów specjalnych
+// Setters for special colors
 void StringGrid::setSelectionColor(SDL_Color color) {
     m_selectionColor = color;
 }
@@ -330,7 +329,7 @@ void StringGrid::setSelectedCellBorderColor(SDL_Color color) {
     m_selectedCellBorderColor = color;
 }
 
-// Gettery dla kolorów specjalnych
+// Getters for special colors
 SDL_Color StringGrid::getSelectionColor() const {
     return m_selectionColor;
 }
@@ -339,7 +338,7 @@ SDL_Color StringGrid::getSelectedCellBorderColor() const {
     return m_selectedCellBorderColor;
 }
 
-// Callbacki
+// Callbacks
 void StringGrid::setOnCellClick(CellCallback callback) {
     m_onCellClick = std::move(callback);
 }
@@ -356,7 +355,7 @@ void StringGrid::setOnSelectionChange(SelectionCallback callback) {
     m_onSelectionChange = std::move(callback);
 }
 
-// Nadpisane metody GUIElement
+// GUIElement overrides
 const char* StringGrid::getComponentType() const {
     return "StringGrid";
 }
@@ -380,7 +379,7 @@ bool StringGrid::handleMouseButtonDown(const SDL_Event& e) {
     int cellAreaX = getCellAreaX();
     int cellAreaY = getCellAreaY();
     
-    // Sprawdź czy kliknięcie było w nagłówku kolumny
+    // Check if the click was on a column header
     if (m_showColumnHeaders && localY < m_headerHeight && localX >= cellAreaX) {
         handleHeaderClick(localX, localY);
         return true;
@@ -466,7 +465,7 @@ bool StringGrid::handleMouseWheel(const SDL_Event& e) {
 }
 
 bool StringGrid::handleKeyboard(const SDL_Event& e) {
-    // Obsługa Ctrl+C - kopiowanie zaznaczenia do schowka
+    // Handle Ctrl+C - copy selection to clipboard
     if (e.key.key == SDLK_C && (SDL_GetModState() & SDL_KMOD_CTRL)) {
         copySelectionToClipboard();
         return true;
@@ -536,7 +535,7 @@ void StringGrid::copySelectionToClipboard() {
     
     std::string clipboardText;
     
-    // Określamy zakres do skopiowania
+    // Determine the range to copy
     SelectionRange range;
     if (m_selectionStart && m_selectionEnd) {
         range = SelectionRange{m_selectionStart.value(), m_selectionEnd.value()}.normalized();
@@ -544,18 +543,18 @@ void StringGrid::copySelectionToClipboard() {
         range = {m_selectedCell.value(), m_selectedCell.value()};
     }
     
-    // Budujemy tekst do schowka
+    // Build the clipboard text
     for (size_t row = range.start.row; row <= range.end.row; ++row) {
         for (size_t col = range.start.col; col <= range.end.col; ++col) {
             if (col < m_data[row].size()) {
                 clipboardText += m_data[row][col];
             }
             if (col < range.end.col) {
-                clipboardText += "\t";  // Tabulacja jako separator kolumn
+                clipboardText += "\t";  // Tab as column separator
             }
         }
         if (row < range.end.row) {
-            clipboardText += "\n";  // Nowa linia jako separator wierszy
+            clipboardText += "\n";  // Newline as row separator
         }
     }
     
@@ -569,17 +568,17 @@ void StringGrid::handleHeaderClick(int localX, int localY) {
     
     int cellAreaX = getCellAreaX();
     
-    // Sprawdzamy czy kliknięcie było w obszarze nagłówków kolumn
+    // Check if the click was in the column headers area
     if (localY < 0 || localY >= m_headerHeight || localX < cellAreaX) {
         return;
     }
     
-    // Znajdujemy kolumnę
+    // Find the column
     int x = cellAreaX - m_hScrollOffset;
     for (size_t col = 0; col < m_columnWidths.size(); ++col) {
         int colWidth = m_columnWidths[col];
         if (localX >= x && localX < x + colWidth) {
-            // Cykl sortowania: None -> Ascending -> Descending -> None
+            // Sort cycle: None -> Ascending -> Descending -> None
             if (m_sortColumn == col) {
                 switch (m_sortDirection) {
                     case SortDirection::None:
@@ -598,7 +597,7 @@ void StringGrid::handleHeaderClick(int localX, int localY) {
                 m_sortDirection = SortDirection::Ascending;
             }
             
-            // Wykonujemy sortowanie
+            // Perform the sort
             if (m_sortDirection != SortDirection::None) {
                 sortByColumn(m_sortColumn, m_sortDirection);
             }
@@ -608,7 +607,7 @@ void StringGrid::handleHeaderClick(int localX, int localY) {
     }
 }
 
-// Obsługa zdarzeń
+// Event handling
 bool StringGrid::handleEvent(const SDL_Event& e) {
     if (!m_enabled || !m_visible) {
         return false;
@@ -671,7 +670,7 @@ bool StringGrid::handleEvent(const SDL_Event& e) {
     return Panel::handleEvent(e);
 }
 
-// Renderowanie bezpośrednie
+// Direct rendering
 void StringGrid::drawDirect(SDL_Renderer* renderer) {
     Style style = getComposedStyle(m_state);
     
@@ -741,7 +740,7 @@ void StringGrid::drawCells(SDL_Renderer* renderer, int offsetX, int offsetY,
     }
 }
 
-// Metody pomocnicze
+// Helper methods
 void StringGrid::setupSliders() {
     int sliderX = m_width - m_sliderWidth;
     int sliderY = m_showColumnHeaders ? m_headerHeight : 0;
@@ -986,7 +985,7 @@ void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,
 void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
                                    SDL_Color headerBackgroundColor, SDL_Color headerTextColor,
                                    SDL_Color gridLineColor, TTF_Font* font) {
-    // Podświetlenie aktywnej kolumny sortowania
+    // Highlight the active sort column
     if (m_sortDirection != SortDirection::None && m_sortColumn < m_columnWidths.size()) {
         int activeX = getCellAreaX() - m_hScrollOffset;
         for (size_t c = 0; c < m_sortColumn; ++c) {

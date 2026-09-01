@@ -207,8 +207,6 @@ void ComboBox::createDropdownButtons() {
 
     for (size_t i = 0; i < m_options.size(); ++i) {
         auto option_button = std::make_unique<Button>(m_manager, 0, i * item_h, getWidth(), item_h, m_options[i]);
-       // tu trzeba dodajć nowe child, na razie zakomentowane i zostawione puste
-       //  option_button->setLabel(m_options[i], 16);
         option_button->setVisible(true);
         option_button->setOnClickCallback([this, i](GUIElement*){
             selectItem(static_cast<int>(i));

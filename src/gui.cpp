@@ -169,7 +169,6 @@ void drawRoundedRectBorder(SDL_Renderer* renderer, SDL_FRect rect, float radius,
 }
 
 
-// Implementacja klasy GUIElement
 GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)
     : m_x(x), m_y(y), m_width(width), m_height(height), m_manager(manager), m_parent(nullptr) {
     m_manager.registerElement(this);
@@ -379,7 +378,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
     SDL_Rect clipped_rect;
 
     if (!SDL_GetRectIntersection(&element_rect, &parent_clip_rect, &clipped_rect)) {
-        return; // Element jest całkowicie poza obszarem przycinania
+        return; // Element is completely outside the clip area
     }
 
     if (wantsDirectRender()) {
@@ -548,7 +547,7 @@ void GUIElement::stopTimer(uint32_t timerId) {
     m_manager.getTimerManager()->removeTimer(timerId);
 }
 
-// --- Implementacja nowego API do stylizacji ---
+// --- New styling API implementation ---
 
 const char* GUIElement::getComponentType() const {
     return "GUIElement";
@@ -699,7 +698,7 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
         drawRoundedTexturedRect(renderer, texRect, fradius, style.texture.value().get());
     }
 
-    // Faza 3D (bevel) ma priorytet nad zwykłą ramką; rysowana jest ostro — Win95 nie ma zaokrągleń.
+    // The 3D bevel takes priority over a plain border; it is drawn sharp — Win95 has no rounded corners.
     if (style.borderColorOuterTopLeft || style.borderColorOuterBottomRight || style.borderColorInnerTopLeft ||
         style.borderColorInnerBottomRight) {
         drawStyleBevel(renderer, SDL_Rect{0, 0, m_width, m_height}, style);

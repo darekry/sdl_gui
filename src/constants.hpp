@@ -12,7 +12,7 @@ namespace constants {
     constexpr int      kTooltipFontSize    = 14;
     constexpr int      kTooltipPadding     = 5;
 
-    // Systemowe kolory 3D Windows 95/98
+    // Windows 95/98 system 3D colors
     constexpr SDL_Color kWin95Face       {192, 192, 192, 255};
     constexpr SDL_Color kWin95Light      {223, 223, 223, 255};
     constexpr SDL_Color kWin95Highlight  {255, 255, 255, 255};

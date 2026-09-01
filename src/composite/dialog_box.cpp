@@ -4,7 +4,7 @@
 #include "std.hpp"
 
 // ============================================================================
-// Statyczne metody factory
+// Static factory methods
 // ============================================================================
 
 std::unique_ptr<DialogBox> DialogBox::createConfirm(
@@ -16,7 +16,7 @@ std::unique_ptr<DialogBox> DialogBox::createConfirm(
     int width,
     int height
 ) {
-    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
     constexpr int kScreenH = 600;
     auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
@@ -28,10 +28,10 @@ std::unique_ptr<DialogBox> DialogBox::createConfirm(
         nullptr
     ));
 
-    // Konwersja callback bool -> int index
+    // Convert callback from bool to int index
     if (callback) {
         dialog->m_callback = [callback](int buttonIndex) {
-            callback(buttonIndex == 0);  // 0 = Tak, 1 = Nie
+            callback(buttonIndex == 0);  // 0 = Yes, 1 = No
         };
     }
 
@@ -46,7 +46,7 @@ std::unique_ptr<DialogBox> DialogBox::createAlert(
     int width,
     int height
 ) {
-    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
     constexpr int kScreenH = 600;
     auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
@@ -69,7 +69,7 @@ std::unique_ptr<DialogBox> DialogBox::createCustom(
     int width,
     int height
 ) {
-    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
     constexpr int kScreenH = 600;
     auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
@@ -90,7 +90,7 @@ std::unique_ptr<DialogBox> DialogBox::createWithTitle(
     int width,
     int height
 ) {
-    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
     constexpr int kScreenH = 600;
     auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
@@ -106,7 +106,7 @@ std::unique_ptr<DialogBox> DialogBox::createWithTitle(
 }
 
 // ============================================================================
-// Konstruktor
+// Constructor
 // ============================================================================
 
 DialogBox::DialogBox(
@@ -121,32 +121,32 @@ DialogBox::DialogBox(
     , m_callback(callback)
     , m_message(message)
 {
-    // Styl dialogu - Windows-like
+    // Dialog style - Windows-like
     Style dialogStyle;
-    dialogStyle.backgroundColor = {240, 240, 240, 255};  // Jasny szary
+    dialogStyle.backgroundColor = {240, 240, 240, 255};  // Light gray
     dialogStyle.borderColor = {100, 100, 100, 255};
     dialogStyle.borderWidth = 2;
     dialogStyle.borderRadius = 0;
     setStyle(ElementState::Normal, dialogStyle);
     
-    setClipChildren(false);  // Nie przycinaj dzieci
+    setClipChildren(false);  // Don't clip children
     
-    // Centrowanie na ekranie - draggable
+    // Centered on screen - draggable
     setDraggable(true);
 
-    // Stwórz label z komunikatem
+    // Create the message label
     int messageY = m_hasTitleBar ? m_titleBarHeight + 10 : 20;
     auto messageLabel = std::make_unique<Label>(manager, 10, messageY, message);
     m_messageLabel = messageLabel.get();
     addChild(std::move(messageLabel));
 
-    // Stwórz przyciski
+    // Create the buttons
     int buttonHeight = 35;
     int buttonSpacing = 10;
     int totalButtonsWidth = 0;
     std::vector<int> buttonWidths;
 
-    // Oblicz szerokości przycisków
+    // Calculate button widths
     for (const auto& label : buttonLabels) {
         int btnWidth = std::max(80, static_cast<int>(label.length() * 12 + 20));
         buttonWidths.push_back(btnWidth);
@@ -154,7 +154,7 @@ DialogBox::DialogBox(
     }
     totalButtonsWidth += buttonSpacing * static_cast<int>(buttonLabels.size() - 1);
 
-    // Pozycja przycisków
+    // Button position
     int startX = (width - totalButtonsWidth) / 2;
     int buttonY = height - buttonHeight - 15;
 
@@ -163,7 +163,7 @@ DialogBox::DialogBox(
             manager, startX, buttonY, buttonWidths[i], buttonHeight, buttonLabels[i]
         );
         
-        // Styl przycisków
+        // Button style
         Style btnStyle;
         btnStyle.backgroundColor = {220, 220, 220, 255};
         btnStyle.borderColor = {150, 150, 150, 255};
@@ -180,7 +180,7 @@ DialogBox::DialogBox(
         pressedStyle.backgroundColor = {200, 200, 200, 255};
         button->setStyle(ElementState::Pressed, pressedStyle);
 
-        // Callback dla przycisku
+        // Button callback
         int buttonIndex = static_cast<int>(i);
         button->setOnClickCallback([this, buttonIndex](GUIElement*) {
             m_lastClickedButton = buttonIndex;
@@ -198,24 +198,24 @@ DialogBox::DialogBox(
 }
 
 // ============================================================================
-// Implementacja metod
+// Method implementations
 // ============================================================================
 
 void DialogBox::createTitleBar(std::string_view title) {
     m_hasTitleBar = true;
     
-    // Tytuł label
+    // Title label
     auto titleLabel = std::make_unique<Label>(m_manager, 10, 5, title);
     m_titleLabel = titleLabel.get();
     
-    // Styl tytułu
+    // Title style
     Style titleStyle;
     titleStyle.textColor = {0, 0, 0, 255};
     titleLabel->setStyle(ElementState::Normal, titleStyle);
     
     addChild(std::move(titleLabel));
     
-    // Przesuń message label
+    // Move the message label
     m_messageLabel->setPosition(10, m_titleBarHeight + 10);
 }
 
@@ -265,19 +265,19 @@ void DialogBox::draw(SDL_Renderer* renderer) {
         drawTitleBar(renderer, m_x, m_y, m_width, m_titleBarHeight);
     }
     
-    // Rysuj panel (tło i border)
+    // Draw the panel (background and border)
     Panel::draw(renderer);
 }
 
 bool DialogBox::handleEvent(const SDL_Event& e) {
     if (!m_isOpen || !m_visible) return false;
     
-    // Obsłuż dzieci (przyciski, label)
+    // Handle children (buttons, label)
     if (Panel::handleEvent(e)) return true;
     
-    // ESC zamknięcie dialogu
+    // ESC closes the dialog
     if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
-        m_lastClickedButton = -1;  // Anulowano
+        m_lastClickedButton = -1;  // Cancelled
         if (m_callback) {
             m_callback(-1);
         }

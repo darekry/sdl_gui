@@ -4,7 +4,7 @@
 
 #include "std.hpp"
 
-// Wyciąga wartość "key": value z fragmentu JSON (obsługuje uciekane cudzysłowy w stringach)
+// Extracts the "key": value from a JSON fragment (handles escaped quotes in strings)
 static std::string extractKeyVal(const std::string& objContent, const std::string& key) {
     size_t keyPos = objContent.find('"' + key + '"');
     if (keyPos == std::string::npos) return "";

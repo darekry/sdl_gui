@@ -1,17 +1,17 @@
 /**
  * @file 37_screen_manager.cpp
- * @brief Demonstracja ScreenManager - przełączanie ekranów w jednym oknie
+ * @brief Demonstrates ScreenManager - switching screens within a single window
  * 
- * Ten przykład pokazuje:
- * - MenuScreen - ekran główny z wyborem trybów gry
- * - GameScreen - ekran "rozgrywki" z kontrolkami
- * - PauseScreen - overlay ekranu pauzy (pushScreen/popScreen)
+ * This example shows:
+ * - MenuScreen - main screen with game mode selection
+ * - GameScreen - "gameplay" screen with controls
+ * - PauseScreen - pause screen overlay (pushScreen/popScreen)
  * 
- * Architektura:
- * 1. ScreenManager zarządza ekranami w jednym oknie
- * 2. Każdy ekran (Screen) ma onEnter/onExit lifecycle
- * 3. PushScreen tworzy overlay (np. pauza nad grą)
- * 4. PopScreen wraca do poprzedniego ekranu
+ * Architecture:
+ * 1. ScreenManager manages screens in a single window
+ * 2. Each screen (Screen) has onEnter/onExit lifecycle
+ * 3. PushScreen creates an overlay (e.g. pause over the game)
+ * 4. PopScreen returns to the previous screen
  */
 
 #include "gui_manager.hpp"

@@ -4,7 +4,7 @@
 #include "../src/font_manager.hpp"
 #include "../src/gui_manager.hpp"
 
-// Ścieżki do istniejących plików czcionek w projekcie
+// Paths to existing font files in the project
 static constexpr const char* VALID_FONT_PATH = "assets/fonts/DejaVuSans.ttf";
 static constexpr const char* VALID_FONT_MONO_PATH = "assets/fonts/DejaVuSansMono.ttf";
 static constexpr const char* GENERIC_FONT_PATH = "assets/fonts/font.ttf";
@@ -51,7 +51,6 @@ TEST_CASE("FontManager - loading existing fonts", "[font_manager]") {
         
         REQUIRE(font1 != nullptr);
         REQUIRE(font2 != nullptr);
-        // Różne pliki czcionek powinny dać różne obiekty
         REQUIRE(font1.get() != font2.get());
     }
 
@@ -82,7 +81,6 @@ TEST_CASE("FontManager - caching mechanism", "[font_manager]") {
         
         REQUIRE(font1 != nullptr);
         REQUIRE(font2 != nullptr);
-        // Różne rozmiary powinny dać różne obiekty czcionek
         REQUIRE(font1.get() != font2.get());
     }
 
@@ -131,7 +129,6 @@ TEST_CASE("FontManager - different font sizes", "[font_manager]") {
         REQUIRE(font32 != nullptr);
         REQUIRE(font48 != nullptr);
         
-        // Wszystkie powinny być różne
         REQUIRE(font12.get() != font16.get());
         REQUIRE(font16.get() != font24.get());
         REQUIRE(font24.get() != font32.get());
@@ -203,7 +200,6 @@ TEST_CASE("FontManager - getTextSize", "[font_manager]") {
     }
 
     SECTION("getTextSize handles null output parameters gracefully") {
-        // Nie powinno crashować przy null wskaźnikach
         REQUIRE_NOTHROW(fontManager.getTextSize("test", VALID_FONT_PATH, 16, nullptr, nullptr));
         REQUIRE_NOTHROW(fontManager.getTextSize("test", VALID_FONT_PATH, 16, nullptr, nullptr));
     }
@@ -216,7 +212,6 @@ TEST_CASE("FontManager - getTextSize", "[font_manager]") {
         fontManager.getTextSize("Hello World!", VALID_FONT_PATH, 16, &width2, &height2);
         
         REQUIRE(width2 > width1);
-        // Wysokość powinna być taka sama dla tej samej czcionki
         REQUIRE(height1 == height2);
     }
 
@@ -237,7 +232,6 @@ TEST_CASE("FontManager - getTextSize", "[font_manager]") {
         
         fontManager.getTextSize("", VALID_FONT_PATH, 16, &width, &height);
         
-        // Pusty tekst powinien mieć zerową szerokość, ale może mieć niezerową wysokość
         REQUIRE(width >= 0);
         REQUIRE(height >= 0);
     }
@@ -276,10 +270,8 @@ TEST_CASE("FontManager - getTextSize", "[font_manager]") {
         int width = 0;
         int height = 0;
         
-        // Pierwsze wywołanie - ładuje czcionkę
         fontManager.getTextSize("Test", VALID_FONT_PATH, 16, &width, &height);
         
-        // Drugie wywołanie - powinno użyć cache'u
         fontManager.getTextSize("Another test", VALID_FONT_PATH, 16, &width, &height);
         
         REQUIRE(width > 0);
@@ -301,15 +293,15 @@ TEST_CASE("FontManager - SharedFont lifetime", "[font_manager]") {
             rawPtr = font.get();
         }
         
-        // Po wyjściu z zakresu, SharedFont w cache'u nadal trzyma zasób
+        // After leaving scope, the cached SharedFont still holds the resource
         auto cachedFont = fontManager.loadFont(VALID_FONT_PATH, 16);
         REQUIRE(cachedFont.get() == rawPtr);
     }
 
     SECTION("Multiple SharedFont copies reference same font") {
         auto font1 = fontManager.loadFont(VALID_FONT_PATH, 16);
-        auto font2 = font1;  // Kopiowanie shared_ptr
-        auto font3 = font1;  // Kolejna kopia
+        auto font2 = font1;
+        auto font3 = font1;
         
         REQUIRE(font1.get() == font2.get());
         REQUIRE(font2.get() == font3.get());
@@ -322,18 +314,18 @@ TEST_CASE("FontManager - edge cases", "[font_manager]") {
     FontManager& fontManager = manager.getFontManager();
 
     SECTION("Loading font with size 0") {
-        // SDL_ttf może zaakceptować rozmiar 0, ale to zależy od implementacji
+        // SDL_ttf may accept size 0, but it depends on the implementation
         auto font = fontManager.loadFont(VALID_FONT_PATH, 0);
-        // Nie sprawdzamy czy jest null czy nie - zależy od SDL_ttf
-        // Sprawdzamy tylko że nie crashuje
+        // We don't check whether it's null or not - it depends on SDL_ttf
+        // We only check that it doesn't crash
     }
 
     SECTION("Loading font with negative size") {
-        // UWAGA: SDL_ttf akceptuje ujemne rozmiary (traktuje jako bezwzględne)
-        // To jest zachowanie SDL_ttf, nie błąd FontManager
+        // NOTE: SDL_ttf accepts negative sizes (treats them as absolute values)
+        // This is SDL_ttf behavior, not a FontManager bug
         auto font = fontManager.loadFont(VALID_FONT_PATH, -1);
-        // Nie sprawdzamy czy jest null - SDL_ttf akceptuje ujemne rozmiary
-        // Sprawdzamy tylko że nie crashuje
+        // We don't check for null - SDL_ttf accepts negative sizes
+        // We only check that it doesn't crash
     }
 
     SECTION("Empty path") {
@@ -342,9 +334,9 @@ TEST_CASE("FontManager - edge cases", "[font_manager]") {
     }
 
     SECTION("Path with spaces") {
-        // Test czy menedżer obsługuje ścieżki ze spacjami (jeśli istnieją)
+        // Test whether the manager handles paths with spaces (if they exist)
         auto font = fontManager.loadFont("path with spaces/font.ttf", 16);
-        REQUIRE(font == nullptr);  // Nie istnieje, ale nie powinno crashować
+        REQUIRE(font == nullptr);  // Doesn't exist, but shouldn't crash
     }
 }
 
@@ -354,11 +346,9 @@ TEST_CASE("FontManager - performance and stress", "[font_manager]") {
     FontManager& fontManager = manager.getFontManager();
 
     SECTION("Many cache lookups are efficient") {
-        // Załaduj czcionkę raz
         auto font = fontManager.loadFont(VALID_FONT_PATH, 16);
         REQUIRE(font != nullptr);
         
-        // Wiele zapytań o tę samą czcionkę
         for (int i = 0; i < 100; ++i) {
             auto cachedFont = fontManager.loadFont(VALID_FONT_PATH, 16);
             REQUIRE(cachedFont.get() == font.get());
@@ -366,7 +356,6 @@ TEST_CASE("FontManager - performance and stress", "[font_manager]") {
     }
 
     SECTION("Loading many different sizes") {
-        // Test wydajnościowy - ładowanie wielu rozmiarów
         for (int size = 8; size <= 48; size += 2) {
             auto font = fontManager.loadFont(VALID_FONT_PATH, size);
             REQUIRE(font != nullptr);

@@ -3,7 +3,6 @@
 #include "radio_group.hpp"
 
 namespace {
-    // Funkcja pomocnicza do rysowania wypełnionego okręgu
     void drawFilledCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {
         for (int y = -radius; y <= radius; y++) {
             for (int x = -radius; x <= radius; x++) {
@@ -26,7 +25,7 @@ bool RadioButton::isSelected() const {
 void RadioButton::setSelected(bool selected) {
     if (m_isSelected != selected) {
         m_isSelected = selected;
-        markDirty(); // Oznacz jako "brudny" do przerysowania
+        markDirty();
         if (m_onChange) {
             m_onChange(this, m_isSelected);
         }
@@ -71,7 +70,7 @@ void RadioButton::draw(SDL_Renderer* renderer) {
         RenderFillRect(renderer, bgRect);
     }
 
-    // Faza 3D (bevel) ma priorytet nad zwykłą ramką — jak w GUIElement::drawBackgroundAndBorder.
+    // 3D bevel takes priority over the plain border — same as GUIElement::drawBackgroundAndBorder.
     bool hasBevel = style.borderColorOuterTopLeft.has_value() || style.borderColorOuterBottomRight.has_value() ||
                     style.borderColorInnerTopLeft.has_value() || style.borderColorInnerBottomRight.has_value();
     if (hasBevel) {

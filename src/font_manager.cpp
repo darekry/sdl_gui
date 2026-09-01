@@ -5,26 +5,26 @@
 
 
 FontManager::FontManager() {
-    // Inicjalizacja SDL_ttf, jeśli nie została jeszcze zainicjowana
+    // Initialize SDL_ttf if not already initialized
     if (!TTF_Init()) {
         LOG_ERROR("FontManager", "SDL_ttf could not initialize! SDL_ttf Error: {}", SDL_GetError());
         m_initialized = false;
-        // Obiekt będzie działać w ograniczonym trybie - nie będzie mógł ładować czcionek
+        // The object will operate in a limited mode - it won't be able to load fonts
     } else {
         m_initialized = true;
     }
 }
 
 FontManager::~FontManager() {
-    // TTF_Quit nie jest konieczne tutaj, ponieważ powinno być wywołane raz na koniec działania aplikacji
+    // TTF_Quit is not needed here; it should be called once when the application ends
     // TTF_Quit();
 }
 SharedFont FontManager::loadFont(std::string_view path, int size) {
-    // Tworzymy klucz jako std::pair do wyszukiwania
+    // Build the key as a std::pair for lookup
     auto key_sv = std::make_pair(path, size);
     
-    // Używamy find z kluczem std::pair<std::string_view, int>, co jest możliwe dzięki transparentnemu komparatorowi.
-    // To pozwala uniknąć tworzenia std::string.
+    // Use find with a std::pair<std::string_view, int> key, made possible by the transparent comparator.
+    // This avoids creating a std::string.
     auto it = m_fontCache.find(key_sv);
 
     if (it != m_fontCache.end()) {

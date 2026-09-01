@@ -1,7 +1,6 @@
 #include "button.hpp"
 #include "gui_manager.hpp"
 
-// Implementacja klasy Button
 #include "label.hpp"
 
 Button::Button(GUIManager& manager, int x, int y, int width, int height, std::string_view label)

@@ -7,7 +7,7 @@
 namespace fs = std::filesystem;
 
 // ============================================================================
-// Statyczne metody factory
+// Static factory methods
 // ============================================================================
 
 FileDialog* FileDialog::createOpen(
@@ -19,7 +19,7 @@ FileDialog* FileDialog::createOpen(
 ) {
     int width = 640;
     int height = 450;
-    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
     constexpr int kScreenH = 600;
     auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
@@ -53,7 +53,7 @@ FileDialog* FileDialog::createSave(
 ) {
     int width = 640;
     int height = 450;
-    constexpr int kScreenW = 800;  // TODO: Pobrać rzeczywiste wymiary ekranu z GUIManager
+    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
     constexpr int kScreenH = 600;
     auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
 
@@ -79,7 +79,7 @@ FileDialog* FileDialog::createSave(
 }
 
 // ============================================================================
-// Konstruktor
+// Constructor
 // ============================================================================
 
 FileDialog::FileDialog(
@@ -95,7 +95,7 @@ FileDialog::FileDialog(
     setClipChildren(false);
     setDraggable(true);
 
-    // Styl
+    // Style
     Style dialogStyle;
     dialogStyle.backgroundColor = {240, 240, 240, 255};
     dialogStyle.borderColor = {100, 100, 100, 255};
@@ -240,7 +240,7 @@ FileDialog::FileDialog(
 }
 
 // ============================================================================
-// Nawigacja
+// Navigation
 // ============================================================================
 
 void FileDialog::setCurrentPath(std::string_view path) {

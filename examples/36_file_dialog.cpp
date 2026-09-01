@@ -1,11 +1,11 @@
 /**
  * @file 36_file_dialog.cpp
- * @brief Demonstracja FileDialog - złożonego komponentu wyboru plików
+ * @brief Demonstrates FileDialog - composite file selection component
  *
- * Pokazuje:
- * - FileDialog::createOpen() - dialog otwierania pliku
- * - FileDialog::createSave() - dialog zapisywania pliku
- * - Nawigację po katalogach, filtrowanie plików
+ * Shows:
+ * - FileDialog::createOpen() - open file dialog
+ * - FileDialog::createSave() - save file dialog
+ * - Directory navigation, file filtering
  */
 
 #include "gui_manager.hpp"
@@ -42,7 +42,7 @@ int main(int, char**) {
         auto statusLabelRef = guiManager.makeRef(statusLabel.get());
         mainPanel->addChild(std::move(statusLabel));
 
-        // Przycisk: Open File Dialog
+        // Button: Open File Dialog
         auto btnOpen = std::make_unique<Button>(guiManager, 100, 100, 200, 40, "Open File...");
         btnOpen->setOnClickCallback([&guiManager, statusLabelRef](GUIElement*) {
             FileDialog::createOpen(
@@ -58,7 +58,7 @@ int main(int, char**) {
         });
         mainPanel->addChild(std::move(btnOpen));
 
-        // Przycisk: Save File Dialog
+        // Button: Save File Dialog
         auto btnSave = std::make_unique<Button>(guiManager, 320, 100, 200, 40, "Save File...");
         btnSave->setOnClickCallback([&guiManager, statusLabelRef](GUIElement*) {
             FileDialog::createSave(
@@ -74,7 +74,7 @@ int main(int, char**) {
         });
         mainPanel->addChild(std::move(btnSave));
 
-        // Przycisk: Open with filter
+        // Button: Open with filter
         auto btnFiltered = std::make_unique<Button>(guiManager, 540, 100, 200, 40, "Open *.cpp...");
         btnFiltered->setOnClickCallback([&guiManager, statusLabelRef](GUIElement*) {
             FileDialog::createOpen(

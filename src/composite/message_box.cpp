@@ -3,15 +3,15 @@
 #include "std.hpp"
 
 int MessageBox::calculateWidth(std::string_view message, int minWidth, int maxWidth) {
-    // Prosta heurystyka: ~10px per znak
+    // Simple heuristic: ~10px per character
     int estimatedWidth = static_cast<int>(message.length() * 10) + 40;
     return std::clamp(estimatedWidth, minWidth, maxWidth);
 }
 
 int MessageBox::calculateHeight(std::string_view message, int minHeight, int maxHeight) {
-    // ~20px per linia (zakładamy ~50 znaków per linia)
+    // ~20px per line (assuming ~50 characters per line)
     int lines = static_cast<int>(message.length() / 50) + 1;
-    int estimatedHeight = lines * 20 + 80;  // +80 dla przycisków i padding
+    int estimatedHeight = lines * 20 + 80;  // +80 for buttons and padding
     return std::clamp(estimatedHeight, minHeight, maxHeight);
 }
 
@@ -32,7 +32,7 @@ GUIElement* MessageBox::showInfo(
         width, height
     );
     
-    // Styl informacyjny - jasny niebieski
+    // Info style - light blue
     Style style;
     style.backgroundColor = {230, 240, 250, 255};
     style.borderColor = {100, 150, 200, 255};
@@ -59,7 +59,7 @@ GUIElement* MessageBox::showError(
         width, height
     );
     
-    // Styl błędu - czerwony
+    // Error style - red
     Style style;
     style.backgroundColor = {255, 235, 235, 255};
     style.borderColor = {200, 100, 100, 255};
@@ -86,7 +86,7 @@ GUIElement* MessageBox::showWarning(
         width, height
     );
     
-    // Styl ostrzeżenia - żółty/pomarańczowy
+    // Warning style - yellow/orange
     Style style;
     style.backgroundColor = {255, 250, 230, 255};
     style.borderColor = {200, 150, 50, 255};
@@ -120,7 +120,7 @@ GUIElement* MessageBox::showQuestion(
         width, height
     );
     
-    // Styl pytania - neutralny
+    // Question style - neutral
     dialog->setTitle("Pytanie");
     
     return manager.addElement(std::move(dialog));
@@ -146,7 +146,7 @@ GUIElement* MessageBox::showCustom(
         width, height
     );
     
-    // TODO: Dodać obsługę ikon w przyszłości
+    // TODO: Add icon support in the future
     (void)icon;  // Placeholder
     
     return manager.addElement(std::move(dialog));

@@ -256,7 +256,7 @@ TEST_CASE("GUIElement - setBevel", "[style][bevel]") {
 
         REQUIRE(probe.getComposedStyle(ElementState::Normal).borderColorOuterTopLeft == constants::kWin95Highlight);
         REQUIRE(probe.getComposedStyle(ElementState::Pressed).borderColorOuterTopLeft == constants::kWin95Shadow);
-        // Stany bez lokalnego stylu dziedziczą z Normal (fallback w getComposedStyle)
+        // States without a local style inherit from Normal (fallback in getComposedStyle)
         REQUIRE(probe.getComposedStyle(ElementState::Disabled).borderColorOuterTopLeft == constants::kWin95Highlight);
     }
 

@@ -5,7 +5,7 @@ class RadioGroup;
 
 class RadioButton : public GUIElement {
 public:
-    RadioButton(GUIManager& manager, int x, int y, int w, int h); // Uproszczony konstruktor
+    RadioButton(GUIManager& manager, int x, int y, int w, int h);
     ~RadioButton() = default;
 
     bool isSelected() const;

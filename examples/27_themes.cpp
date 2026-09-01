@@ -29,7 +29,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         
         auto button = std::make_unique<Button>(manager, 20, 60, 150, 40, "Themed Button");
         Style button_hover_style;
-        button_hover_style.backgroundColor = {0, 100, 185, 255}; // Jasny motyw - hover
+        button_hover_style.backgroundColor = {0, 100, 185, 255};
         button->setStyle(ElementState::Hover, button_hover_style);
         main_panel->addChild(std::move(button));
 

@@ -8,22 +8,22 @@
 
 /**
  * @file message_box.hpp
- * @brief MessageBox - statyczna klasa pomocnicza dla szybkich alertów
+ * @brief MessageBox - static helper class for quick alerts
  * 
- * MessageBox dostarcza proste, statyczne metody do pokazywania komunikatów
- * bez konieczności tworzenia pełnego DialogBox.
+ * MessageBox provides simple, static methods to show messages
+ * without the need to create a full DialogBox.
  * 
- * Przykład użycia:
+ * Usage example:
  * @code
  * MessageBox::showInfo(manager, "Plik został zapisany.");
  * MessageBox::showError(manager, "Błąd: Nie można otworzyć pliku.");
- * MessageBox::showWarning(manager, "Czy chcesz kontynuować?", []() { // akcja });
+ * MessageBox::showWarning(manager, "Czy chcesz kontynuować?", []() { // action });
  * @endcode
  */
 
 class MessageBox {
 public:
-    /// Typy komunikatów
+    /// Message types
     enum class IconType {
         None,
         Info,
@@ -33,11 +33,11 @@ public:
     };
 
     /**
-     * @brief Pokazuje komunikat informacyjny
+     * @brief Shows an informational message
      * @param manager GUIManager
-     * @param message Treść komunikatu
-     * @param callback Callback po kliknięciu OK (opcjonalny)
-     * @return Pointer do dodanego elementu (dla ewentualnej manipulacji)
+     * @param message Message content
+     * @param callback Callback after OK is clicked (optional)
+     * @return Pointer to the added element (for possible manipulation)
      */
     static GUIElement* showInfo(
         GUIManager& manager,
@@ -46,11 +46,11 @@ public:
     );
 
     /**
-     * @brief Pokazuje komunikat błędu
+     * @brief Shows an error message
      * @param manager GUIManager
-     * @param message Treść komunikatu
-     * @param callback Callback po kliknięciu OK (opcjonalny)
-     * @return Pointer do dodanego elementu
+     * @param message Message content
+     * @param callback Callback after OK is clicked (optional)
+     * @return Pointer to the added element
      */
     static GUIElement* showError(
         GUIManager& manager,
@@ -59,11 +59,11 @@ public:
     );
 
     /**
-     * @brief Pokazuje komunikat ostrzeżenia
+     * @brief Shows a warning message
      * @param manager GUIManager
-     * @param message Treść komunikatu
-     * @param callback Callback po kliknięciu OK (opcjonalny)
-     * @return Pointer do dodanego elementu
+     * @param message Message content
+     * @param callback Callback after OK is clicked (optional)
+     * @return Pointer to the added element
      */
     static GUIElement* showWarning(
         GUIManager& manager,
@@ -72,12 +72,12 @@ public:
     );
 
     /**
-     * @brief Pokazuje dialog potwierdzenia
+     * @brief Shows a confirmation dialog
      * @param manager GUIManager
-     * @param message Treść komunikatu
-     * @param onYes Callback gdy użytkownik kliknie "Tak"
-     * @param onNo Callback gdy użytkownik kliknie "Nie" (opcjonalny)
-     * @return Pointer do dodanego elementu
+     * @param message Message content
+     * @param onYes Callback when the user clicks "Yes"
+     * @param onNo Callback when the user clicks "No" (optional)
+     * @return Pointer to the added element
      */
     static GUIElement* showQuestion(
         GUIManager& manager,
@@ -87,14 +87,14 @@ public:
     );
 
     /**
-     * @brief Pokazuje własny komunikat
+     * @brief Shows a custom message
      * @param manager GUIManager
-     * @param title Tytuł okna
-     * @param message Treść komunikatu
-     * @param buttonText Tekst przycisku
-     * @param icon Typ ikony (dla przyszłej implementacji)
-     * @param callback Callback po kliknięciu
-     * @return Pointer do dodanego elementu
+     * @param title Window title
+     * @param message Message content
+     * @param buttonText Button text
+     * @param icon Icon type (for future implementation)
+     * @param callback Callback after click
+     * @return Pointer to the added element
      */
     static GUIElement* showCustom(
         GUIManager& manager,
@@ -106,9 +106,9 @@ public:
     );
 
 private:
-    /// Oblicz szerokość dialogu na podstawie tekstu
+    /// Calculates the dialog width based on the text
     static int calculateWidth(std::string_view message, int minWidth = 300, int maxWidth = 600);
     
-    /// Oblicz wysokość dialogu na podstawie tekstu
+    /// Calculates the dialog height based on the text
     static int calculateHeight(std::string_view message, int minHeight = 100, int maxHeight = 300);
 };

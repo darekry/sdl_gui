@@ -1,24 +1,20 @@
 #pragma once
 #include "gui.hpp"
 
-// Klasa przycisku dziedzicząca po GUIElement
 class Button : public GUIElement {
 public:
-    // Konstruktor
-    // Button(GUIManager& manager, int x, int y, int width, int height);
      Button(GUIManager& manager, int x, int y, int width, int height, std::string_view label = "");
-    // Destruktor
     ~Button() = default;
 
-    // Typy callbacków dla zdarzeń
+    // Callback types for events
     using OnClickCallback = std::function<void(GUIElement*)>;
     using OnMouseOverCallback = std::function<void(GUIElement*)>;
 
-    // Metody do przypisywania callbacków
+    // Methods for assigning callbacks
     void setOnClickCallback(OnClickCallback callback);
     void setOnMouseOverCallback(OnMouseOverCallback callback);
     
-    // Przesłonięte metody
+    // Overridden methods
     bool handleEvent(const SDL_Event& e) override;
     const char* getComponentType() const override;
 

@@ -64,29 +64,29 @@ std::unique_ptr<GUIElement> GUIManager::detachElement(GUIElement* element) {
 }
 
 bool GUIManager::processEvent(const SDL_Event& event) {
-    // 1. Zdarzenia myszy
+    // 1. Mouse events
     if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
         if (m_mouseCaptureElement) {
-            // Jeśli element przechwycił mysz, wysyłaj zdarzenia tylko do niego
-            if (cursor) cursor->handleEvent(event); /* overlay kursora śledzi pozycję także podczas capture */
+            // If an element captured the mouse, send events only to it
+            if (cursor) cursor->handleEvent(event); /* cursor overlay tracks position even during capture */
             return m_mouseCaptureElement->handleEvent(event);
         }
     }
-    // 2. Zdarzenia klawiatury
+    // 2. Keyboard events
     else if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP || event.type == SDL_EVENT_TEXT_INPUT) {
         if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_TAB) {
             focusNextElement(!(event.key.mod & SDL_KMOD_SHIFT));
             return true;
         }
         if (m_keyboardFocusElement) {
-            // Jeśli element ma fokus klawiatury, wysyłaj zdarzenia tylko do niego
+            // If an element has keyboard focus, send events only to it
             return m_keyboardFocusElement->handleEvent(event);
         }
-        // Jeśli żaden element nie ma fokusu, zdarzenia klawiatury są ignorowane przez GUI
+        // If no element has focus, keyboard events are ignored by the GUI
         return false;
     }
 
-    // 3. Standardowa propagacja dla zdarzeń nieprzechwyconych
+    // 3. Standard propagation for unhandled events
     if (tooltipElement && tooltipElement->isVisible() && tooltipElement->handleEvent(event)) {
         return true;
     }
@@ -97,13 +97,13 @@ bool GUIManager::processEvent(const SDL_Event& event) {
         }
     }
 
-    // Specjalna obsługa kliknięcia poza elementami z focusem
+    // Special handling for clicks outside focused elements
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && m_keyboardFocusElement) {
         bool click_on_focusable = false;
         for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it) {
             if ((*it)->contains(event.button.x, event.button.y)) {
-                // To jest uproszczenie, idealnie byłoby sprawdzić, czy kliknięty element
-                // faktycznie może otrzymać fokus.
+                // This is a simplification; ideally we would check whether the clicked element
+                // can actually receive focus.
                 click_on_focusable = true;
                 break;
             }
@@ -121,7 +121,7 @@ bool GUIManager::processEvent(const SDL_Event& event) {
 }
 
 void GUIManager::update() {
-    // Zaktualizuj timery i animacje
+    // Update timers and animations
     timerManager->update();
     animation_manager->update();
 

@@ -18,7 +18,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager guiManager(renderer);
 
-        // --- Etykieta statusu ---
+        // --- Status label ---
         auto statusLabel = std::make_unique<Label>(guiManager, 20, 20, "Selected: None");
         auto statusLabelRef = guiManager.makeRef(statusLabel.get());
         guiManager.addElement(std::move(statusLabel));
@@ -27,21 +27,18 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         auto grid = std::make_unique<StringGrid>(guiManager, 20, 60, 660, 480, 10, 5);
         auto gridRef = guiManager.makeRef(grid.get());
 
-        // Ustawienie nagłówków kolumn
         grid->setColumnHeader(0, "ID");
         grid->setColumnHeader(1, "Name");
         grid->setColumnHeader(2, "Value");
         grid->setColumnHeader(3, "Status");
         grid->setColumnHeader(4, "Notes");
 
-        // Ustawienie szerokości kolumn
         grid->setColumnWidth(0, 50);
         grid->setColumnWidth(1, 150);
         grid->setColumnWidth(2, 100);
         grid->setColumnWidth(3, 100);
         grid->setColumnWidth(4, 200);
 
-        // Wypełnienie danymi testowymi
         for (size_t row = 0; row < 10; ++row) {
             grid->setCellText(row, 0, std::to_string(row + 1));
             grid->setCellText(row, 1, "Item " + std::to_string(row + 1));
@@ -50,7 +47,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
             grid->setCellText(row, 4, "Notes for row " + std::to_string(row + 1));
         }
 
-        // Callback: kliknięcie komórki
         grid->setOnCellClick([statusLabelRef](StringGrid*, CellCoord cell) {
             if (cell.isValid() && statusLabelRef) {
                 std::string msg = "Clicked: Row " + std::to_string(cell.row + 1) + 
@@ -59,7 +55,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
             }
         });
 
-        // Callback: podwójne kliknięcie (edycja)
         grid->setOnCellDoubleClick([statusLabelRef](StringGrid*, CellCoord cell) {
             if (cell.isValid() && statusLabelRef) {
                 std::string msg = "Double-clicked: Row " + std::to_string(cell.row + 1) + 
@@ -68,7 +63,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
             }
         });
 
-        // Callback: edycja zakończona
         grid->setOnCellEdit([statusLabelRef](StringGrid* grid, CellCoord cell, std::string newText) {
             if (cell.isValid() && statusLabelRef) {
                 std::string msg = "Edited: Row " + std::to_string(cell.row + 1) + 
@@ -79,7 +73,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
             }
         });
 
-        // Callback: zmiana zaznaczenia
         grid->setOnSelectionChange([statusLabelRef](StringGrid*, SelectionRange range) {
             if (range.isValid() && statusLabelRef) {
                 auto norm = range.normalized();
@@ -91,7 +84,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
             }
         });
 
-        // --- Przycisk "Add Row" ---
+        // --- "Add Row" button ---
         auto addButton = std::make_unique<Button>(guiManager, 700, 60, 180, 40, "Add Row");
         addButton->setOnClickCallback([gridRef, statusLabelRef](GUIElement*) {
             if (!gridRef || !statusLabelRef) return;
@@ -106,7 +99,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         });
         guiManager.addElement(std::move(addButton));
 
-        // --- Przycisk "Clear" ---
+        // --- "Clear" button ---
         auto clearButton = std::make_unique<Button>(guiManager, 700, 110, 180, 40, "Clear");
         clearButton->setOnClickCallback([gridRef, statusLabelRef](GUIElement*) {
             if (!gridRef || !statusLabelRef) return;
@@ -115,7 +108,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         });
         guiManager.addElement(std::move(clearButton));
 
-        // --- Przycisk "Reset Data" ---
+        // --- "Reset Data" button ---
         auto resetButton = std::make_unique<Button>(guiManager, 700, 160, 180, 40, "Reset Data");
         resetButton->setOnClickCallback([gridRef, statusLabelRef](GUIElement*) {
             if (!gridRef || !statusLabelRef) return;
@@ -131,7 +124,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
         });
         guiManager.addElement(std::move(resetButton));
 
-        // --- Instrukcje ---
+        // --- Instructions ---
         auto instructionsLabel = std::make_unique<Label>(guiManager, 700, 220, 
             "Instructions: Click to select, Double-click to edit, Drag to select range");
         guiManager.addElement(std::move(instructionsLabel));

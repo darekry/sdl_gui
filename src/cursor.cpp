@@ -138,7 +138,7 @@ void Cursor::renderOverlay(SDL_Renderer* renderer) {
 
     int mouseX = m_mouseX;
     int mouseY = m_mouseY;
-    if (!m_hasMousePos) {  /* brak eventów → fallback na stan systemowy */
+    if (!m_hasMousePos) {  /* no events yet -> fall back to system state */
         float _mx, _my;
         SDL_GetMouseState(&_mx, &_my);
         mouseX = static_cast<int>(_mx);

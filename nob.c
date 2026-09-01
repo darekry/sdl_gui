@@ -18,7 +18,7 @@
 #define STD_MODULE_SRC "/usr/lib/llvm-20/share/libc++/v1/std.cppm"
 #define STD_COMPAT_MODULE_SRC "/usr/lib/llvm-20/share/libc++/v1/std.compat.cppm"
 
-// ========== PREKOMPILOWANE FLAGI ==========
+// ========== PRECOMPILED FLAGS ==========
 
 static const char * common_flags[] = {
     "-Wall",
@@ -68,7 +68,7 @@ static const char * release_flags[] = {
     "-DNDEBUG",
 };
 
-// Globalne prekompilowane komendy (initialized once)
+// Global precompiled commands (initialized once)
 static Nob_Cmd g_common = {0};
 static Nob_Cmd g_debug = {0};
 static Nob_Cmd g_release = {0};
@@ -900,10 +900,10 @@ static bool run_tests(const char *filter) {
 
 // ========== RELEASE ==========
 
-// Wszystkie publiczne nagłówki łączone w jeden sdl_gui.hpp.
-// Kolejność ma znaczenie (zależności). Pliki wspierające (std.hpp, logger.hpp,
-// constants.hpp, sdl_rect_helpers.hpp, tinyxml2.h) są INLINE'owane, dzięki czemu
-// dist/ jest w pełni samowystarczalne — użytkownik nie potrzebuje src/ ani lib/.
+// All public headers are merged into a single sdl_gui.hpp.
+// Order matters (dependencies). Supporting files (std.hpp, logger.hpp,
+// constants.hpp, sdl_rect_helpers.hpp, tinyxml2.h) are INLINEd, so that
+// dist/ is fully self-contained — the user doesn't need src/ or lib/.
 static const char * hpp_order[] = {
     "src/std.hpp",
     "lib/tinyxml2.h",
@@ -1039,9 +1039,9 @@ static const char * includes_to_remove[] = {
     "#include \"file_dialog.hpp\"",
 };
 
-// Pliki wspierające, których systemowe include'y muszą zostać w połączonym
-// nagłówku (std.hpp to de facto lista include'ów; tinyxml2.h/logger.hpp itd.
-// potrzebują swoich zależności, a użytkownik nie ma dostępu do src/ ani lib/).
+// Supporting files whose system includes must remain in the merged
+// header (std.hpp is de facto a list of includes; tinyxml2.h/logger.hpp etc.
+// need their dependencies, and the user has no access to src/ or lib/).
 static bool is_support_header(const char *path) {
     return strstr(path, "tinyxml2.h") != NULL
         || strstr(path, "std.hpp") != NULL
@@ -1050,10 +1050,10 @@ static bool is_support_header(const char *path) {
         || strstr(path, "sdl_rect_helpers.hpp") != NULL;
 }
 
-// std.hpp ma dwie gałęzie: #ifdef __clangd__ (tradycyjne include'y) i #else
-// (import std.compat, wymaga -fmodule-file). W release NIE usuwamy gałęzi
-// modułowej — usuwamy całą konstrukcję warunkową i zostawiamy tylko includy,
-// żeby nagłówek działał u użytkownika bez prekompilowanych modułów.
+// std.hpp has two branches: #ifdef __clangd__ (traditional includes) and #else
+// (import std.compat, requires -fmodule-file). In release we do NOT remove the
+// module branch — we remove the whole conditional construct and keep only the
+// includes, so that the header works for the user without precompiled modules.
 static bool line_is_std_header_guard(const char *line) {
     if (strstr(line, "__clangd__") != NULL) return true;
     if (strcmp(line, "#else") == 0) return true;
@@ -1090,12 +1090,12 @@ static bool build_combined_header(void) {
     
     Nob_String_Builder sb = {0};
     nob_sb_append_cstr(&sb, "// Auto-generated header. Do not edit.\n#pragma once\n\n");
-    nob_sb_append_cstr(&sb, "// System headers (biblioteka wymaga: SDL3, SDL3_image, SDL3_ttf)\n");
+    nob_sb_append_cstr(&sb, "// System headers (library requires: SDL3, SDL3_image, SDL3_ttf)\n");
     nob_sb_append_cstr(&sb, "#include <SDL3/SDL.h>\n#include <SDL3/SDL_gpu.h>\n");
     nob_sb_append_cstr(&sb, "#include <SDL3_image/SDL_image.h>\n#include <SDL3_ttf/SDL_ttf.h>\n");
     nob_sb_append_cstr(&sb, "#include <dirent.h>\n\n");
-    nob_sb_append_cstr(&sb, "// ===== SDL GUI - kompletne publiczne API (jeden nagłówek) =====\n\n");
-    nob_sb_append_cstr(&sb, "// Kompilacja: clang++ -std=c++23 -stdlib=libc++\n\n");
+    nob_sb_append_cstr(&sb, "// ===== SDL GUI - complete public API (single header) =====\n\n");
+    nob_sb_append_cstr(&sb, "// Compilation: clang++ -std=c++23 -stdlib=libc++\n\n");
     
     for (size_t i = 0; i < NOB_ARRAY_LEN(hpp_order); i++) {
         Nob_String_Builder file = {0};
@@ -1130,7 +1130,7 @@ static bool build_combined_header(void) {
     return true;
 }
 
-// Release: kompiluj tylko .pic.o (używane dla .a i .so)
+// Release: compile only .pic.o (used for .a and .so)
 static bool build_release(void) {
     nob_mkdir_if_not_exists(OUTPUT_DIR);
     nob_mkdir_if_not_exists(OUTPUT_DIR "/release");
@@ -1325,8 +1325,8 @@ static bool build_release(void) {
             nob_cmd_append(&cmd,
                 nob_temp_sprintf("-fmodule-file=std=%s", std_pcm_path(true)),
                 nob_temp_sprintf("-fmodule-file=std.compat=%s", std_compat_pcm_path(true)));
-            // Tylko -I dist: dowodzi, że sdl_gui.hpp jest samowystarczalny
-            // (użytkownik nie potrzebuje src/ ani lib/).
+            // Only -I dist: proves that sdl_gui.hpp is self-contained
+            // (the user doesn't need src/ or lib/).
             nob_cmd_append(&cmd, "-I" DIST_DIR);
             nob_cmd_append(&cmd, "-o", standalone_exe, standalone_src, DIST_DIR "/libsdl_gui.a");
             cmd_add_sdl3(&cmd);

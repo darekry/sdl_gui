@@ -2,7 +2,6 @@
 #include <SDL3_ttf/SDL_ttf.h>
 #include <SDL3/SDL.h>
 
-// Niestandardowy deleter dla TTF_Font
 struct TTFFontDeleter {
     void operator()(TTF_Font* font) const {
         if (font) {
@@ -11,7 +10,6 @@ struct TTFFontDeleter {
     }
 };
 
-// Niestandardowy deleter dla SDL_Texture
 struct SDLTextureDeleter {
     void operator()(SDL_Texture* texture) const {
         if (texture) {

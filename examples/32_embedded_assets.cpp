@@ -33,7 +33,7 @@ int main(int, char**) {
 
         registerEmbeddedAssets(guiManager);
 
-        // Przycisk 1: tekstura z embeddowanych assetow — ladowana przez sciezke jak z pliku
+        // Button 1: texture from embedded assets — loaded via path just like from a file
         auto btn1 = std::make_unique<Button>(guiManager, 50, 50, 200, 50, "Embedded Texture");
 
         SharedTexture embeddedTex = guiManager.getTextureManager().loadTexture("assets/button1.png");
@@ -55,7 +55,7 @@ int main(int, char**) {
         });
         guiManager.addElement(std::move(btn1));
 
-        // Przycisk 2: embedded tekstura tla + embedded font (domyslny "assets/fonts/font.ttf")
+        // Button 2: embedded background texture + embedded font (default "assets/fonts/font.ttf")
         auto btn2 = std::make_unique<Button>(guiManager, 300, 50, 200, 50, "Embedded Font");
 
         SharedTexture bgTex = guiManager.getTextureManager().loadTexture("assets/button_bg.png");
@@ -72,13 +72,13 @@ int main(int, char**) {
         });
         guiManager.addElement(std::move(btn2));
 
-        // Etykieta: statystyki bezposrednio z g_embeddedAssets[]
+        // Label: stats taken directly from g_embeddedAssets[]
         std::string infoText = "Embedded assets: " + std::to_string(g_embeddedAssetCount);
         auto infoLabel = std::make_unique<Label>(guiManager, 50, 150, infoText, 18);
         infoLabel->setTextColor(ElementState::Normal, {200, 200, 200, 255});
         guiManager.addElement(std::move(infoLabel));
 
-        // Etykieta z nazwami i rozmiarami embeddowanych assetow
+        // Label with names and sizes of embedded assets
         std::string directText;
         for (size_t i = 0; i < g_embeddedAssetCount; i++) {
             auto& a = g_embeddedAssets[i];
@@ -92,7 +92,7 @@ int main(int, char**) {
         directLabel->setTextColor(ElementState::Normal, {150, 150, 150, 255});
         guiManager.addElement(std::move(directLabel));
 
-        // Dostep do surowych danych przez pointer (bezposrednio z ELFa)
+        // Access to raw data via pointer (directly from the ELF)
         std::string pointerInfo;
         for (size_t i = 0; i < g_embeddedAssetCount; i++) {
             auto& a = g_embeddedAssets[i];

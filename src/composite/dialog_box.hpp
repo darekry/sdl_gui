@@ -9,41 +9,41 @@
 
 /**
  * @file dialog_box.hpp
- * @brief DialogBox - złożony komponent okna dialogowego
+ * @brief DialogBox - composite dialog window component
  * 
- * DialogBox to gotowy do użycia komponent wyższego poziomu, 
- * który składa się z Panel (tło/ramka), Label (tytuł/przekaz) i Buttonów (akcje).
+ * DialogBox is a ready-to-use higher-level component
+ * composed of a Panel (background/border), a Label (title/message) and Buttons (actions).
  * 
- * Przykład użycia:
+ * Usage example:
  * @code
  * auto dialog = DialogBox::createConfirm(manager, "Czy na pewno?", "Tak", "Nie",
- *     [](bool confirmed) { if (confirmed) { // akcja } });
+ *     [](bool confirmed) { if (confirmed) { // action } });
  * manager.addElement(std::move(dialog));
  * @endcode
  */
 
 class DialogBox : public Panel {
 public:
-    /// Typy okna dialogowego
+    /// Dialog window types
     enum class DialogType {
-        Confirm,    ///< Dialog z dwoma przyciskami (Tak/Nie lub podobne)
-        Alert,      ///< Dialog z jednym przyciskiem (OK)
-        Custom      ///< Dialog z własnymi przyciskami
+        Confirm,    ///< Dialog with two buttons (Yes/No or similar)
+        Alert,      ///< Dialog with one button (OK)
+        Custom      ///< Dialog with custom buttons
     };
 
-    /// Callback wywoływany po kliknięciu przycisku
+    /// Callback invoked after a button is clicked
     using DialogCallback = std::function<void(int buttonIndex)>;
 
     /**
-     * @brief Tworzy dialog potwierdzający (Tak/Nie)
+     * @brief Creates a confirmation dialog (Yes/No)
      * @param manager GUIManager
-     * @param message Treść komunikatu
-     * @param yesLabel Tekst przycisku "Tak" (domyślnie "Tak")
-     * @param noLabel Tekst przycisku "Nie" (domyślnie "Nie")
-     * @param callback Funkcja wywoływana po kliknięciu (true = Tak, false = Nie)
-     * @param width Szerokość okna (domyślnie 400)
-     * @param height Wysokość okna (domyślnie 150)
-     * @return unique_ptr do DialogBox
+     * @param message Message content
+     * @param yesLabel Text of the "Yes" button (default "Tak")
+     * @param noLabel Text of the "No" button (default "Nie")
+     * @param callback Function invoked on click (true = Yes, false = No)
+     * @param width Window width (default 400)
+     * @param height Window height (default 150)
+     * @return unique_ptr to the DialogBox
      */
     static std::unique_ptr<DialogBox> createConfirm(
         GUIManager& manager,
@@ -56,14 +56,14 @@ public:
     );
 
     /**
-     * @brief Tworzy dialog alertu (OK)
+     * @brief Creates an alert dialog (OK)
      * @param manager GUIManager
-     * @param message Treść komunikatu
-     * @param okLabel Tekst przycisku (domyślnie "OK")
-     * @param callback Funkcja wywoływana po kliknięciu OK
-     * @param width Szerokość okna (domyślnie 350)
-     * @param height Wysokość okna (domyślnie 120)
-     * @return unique_ptr do DialogBox
+     * @param message Message content
+     * @param okLabel Button text (default "OK")
+     * @param callback Function invoked after OK is clicked
+     * @param width Window width (default 350)
+     * @param height Window height (default 120)
+     * @return unique_ptr to the DialogBox
      */
     static std::unique_ptr<DialogBox> createAlert(
         GUIManager& manager,
@@ -75,14 +75,14 @@ public:
     );
 
     /**
-     * @brief Tworzy dialog z własnymi przyciskami
+     * @brief Creates a dialog with custom buttons
      * @param manager GUIManager
-     * @param message Treść komunikatu
-     * @param buttonLabels Lista tekstów przycisków
-     * @param callback Funkcja wywoływana po kliknięciu (indeks przycisku)
-     * @param width Szerokość okna
-     * @param height Wysokość okna
-     * @return unique_ptr do DialogBox
+     * @param message Message content
+     * @param buttonLabels List of button labels
+     * @param callback Function invoked on click (button index)
+     * @param width Window width
+     * @param height Window height
+     * @return unique_ptr to the DialogBox
      */
     static std::unique_ptr<DialogBox> createCustom(
         GUIManager& manager,
@@ -94,15 +94,15 @@ public:
     );
 
     /**
-     * @brief Tworzy dialog z tytułem
+     * @brief Creates a dialog with a title
      * @param manager GUIManager
-     * @param title Tytuł okna
-     * @param message Treść komunikatu
-     * @param buttonLabels Lista tekstów przycisków
-     * @param callback Funkcja wywoływana po kliknięciu
-     * @param width Szerokość okna
-     * @param height Wysokość okna
-     * @return unique_ptr do DialogBox
+     * @param title Window title
+     * @param message Message content
+     * @param buttonLabels List of button labels
+     * @param callback Function invoked on click
+     * @param width Window width
+     * @param height Window height
+     * @return unique_ptr to the DialogBox
      */
     static std::unique_ptr<DialogBox> createWithTitle(
         GUIManager& manager,
@@ -114,27 +114,23 @@ public:
         int height = 180
     );
 
-    // Konstruktor (używaj statycznych metod create*)
+    // Constructor (use the static create* methods)
     DialogBox(GUIManager& manager, int x, int y, int width, int height,
               std::string_view message, const std::vector<std::string>& buttonLabels,
               DialogType type, DialogCallback callback = nullptr);
 
-    /// Ustawia treść komunikatu
     void setMessage(std::string_view message);
 
-    /// Ustawia tytuł okna
     void setTitle(std::string_view title);
 
-    /// Zamyka dialog (usuwa element)
+    /// Closes the dialog (removes the element)
     void close();
 
-    /// Czy dialog jest otwarty
     bool isOpen() const { return m_isOpen; }
 
-    /// Zwraca typ dialogu
     DialogType getDialogType() const { return m_type; }
 
-    /// Zwraca indeks klikniętego przycisku (-1 jeśli brak)
+    /// Returns the index of the clicked button (-1 if none)
     int getLastClickedButton() const { return m_lastClickedButton; }
 
     const char* getComponentType() const override;
@@ -159,7 +155,7 @@ private:
     bool m_isOpen = true;
     int m_lastClickedButton = -1;
     
-    // Tytuł bar
+    // Title bar
     bool m_hasTitleBar = false;
     int m_titleBarHeight = 30;
 };
