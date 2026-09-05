@@ -25,6 +25,16 @@ public:
     void clearSelection();
     void setSelection(size_t start, size_t end);
 
+    // Clipboard API (byte-index based, matching TextArea cursor semantics)
+    bool copyToClipboard();
+    bool cutToClipboard();
+    bool pasteFromClipboard();
+    void selectAll();
+
+    // Default right-click context menu (Cut/Copy/Paste/Select All, shared instance in GUIManager)
+    void setContextMenuEnabled(bool enabled) { m_contextMenuEnabled = enabled; }
+    [[nodiscard]] bool isContextMenuEnabled() const { return m_contextMenuEnabled; }
+
     bool handleEvent(const SDL_Event& e) override;
     void renderOverlay(SDL_Renderer* renderer) override;
     [[nodiscard]] const char* getComponentType() const override;
@@ -41,6 +51,9 @@ private:
     size_t getLineFromPosition(size_t pos) const;
     size_t getPositionFromLineAndColumn(size_t line, size_t column) const;
     size_t getColumnFromPosition(size_t pos) const;
+
+    // Builds Cut/Copy/Paste/Select All items and shows the shared context menu
+    void showContextMenu(float x, float y);
 
     std::string m_text;
     std::vector<std::string> m_lines;
@@ -63,4 +76,5 @@ private:
     size_t m_dragStartPos = 0;
 
     std::function<void(TextArea*)> m_onTextChanged;
+    bool m_contextMenuEnabled = true;
 };

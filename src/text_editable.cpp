@@ -1,5 +1,6 @@
 #include "text_editable.hpp"
 #include "gui_manager.hpp"
+#include "context_menu.hpp"
 #include "utf8_utils.hpp"
 
 TextEditable::TextEditable(GUIManager& manager, int x, int y, int w, int h)
@@ -29,6 +30,56 @@ const std::string& TextEditable::getText() const {
 
 void TextEditable::setOnTextChanged(const std::function<void(TextEditable*)>& callback) {
     m_onTextChanged = callback;
+}
+
+bool TextEditable::copyToClipboard() {
+    return handleClipboardCopy();
+}
+
+bool TextEditable::cutToClipboard() {
+    return handleClipboardCut();
+}
+
+bool TextEditable::pasteFromClipboard() {
+    return handleClipboardPaste();
+}
+
+void TextEditable::selectAll() {
+    size_t totalChars = utf8::charCount(m_text);
+    setSelection(0, totalChars);
+    m_cursorPos = totalChars;
+    updateTextOffset();
+    refreshTextTexture();
+    markNeedsUpdate();
+    markDirty();
+}
+
+void TextEditable::showContextMenu(float x, float y) {
+    if (!m_contextMenuEnabled) {
+        return;
+    }
+
+    // Alive-guarded actions: the shared menu can outlive this widget.
+    TextEditable* self = this;
+    GUIManager& mgr = m_manager;
+
+    std::vector<ContextMenuItem> items;
+    items.emplace_back("Cut", [self, &mgr]() {
+        if (mgr.isElementAlive(self)) self->cutToClipboard();
+    }, hasSelection());
+    items.emplace_back("Copy", [self, &mgr]() {
+        if (mgr.isElementAlive(self)) self->copyToClipboard();
+    }, hasSelection());
+    items.emplace_back(true);
+    items.emplace_back("Paste", [self, &mgr]() {
+        if (mgr.isElementAlive(self)) self->pasteFromClipboard();
+    }, SDL_HasClipboardText());
+    items.emplace_back(true);
+    items.emplace_back("Select All", [self, &mgr]() {
+        if (mgr.isElementAlive(self)) self->selectAll();
+    }, !m_text.empty());
+
+    mgr.showContextMenu(items, x, y);
 }
 
 void TextEditable::onFocusGained() {

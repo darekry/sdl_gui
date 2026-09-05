@@ -313,7 +313,21 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
     }
 
     processButtonEvent(e);
- 
+
+    // Right click: fire the callback and consume the event so that
+    // ancestors along the DFS path do not fire their own callbacks too.
+    if (processRightClick(e)) {
+        return true;
+    }
+
+    return false;
+}
+
+bool GUIElement::processRightClick(const SDL_Event& e) {
+    if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_RIGHT && contains(e.button.x, e.button.y) && m_onRightClick) {
+        m_onRightClick(this, e.button.x, e.button.y);
+        return true;
+    }
     return false;
 }
 

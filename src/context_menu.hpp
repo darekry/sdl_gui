@@ -31,6 +31,12 @@ public:
     void hide();
     bool isVisible() const { return m_visible; }
 
+    // Introspection (tests/debug): number of items including separators.
+    [[nodiscard]] size_t getItemCount() const { return m_items.size(); }
+    [[nodiscard]] bool isItemEnabled(size_t index) const {
+        return index < m_items.size() && !m_items[index].separator && m_items[index].enabled;
+    }
+
     // Override methods
     bool handleEvent(const SDL_Event& event) override;
     const char* getComponentType() const override;

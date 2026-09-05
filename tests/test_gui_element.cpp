@@ -582,3 +582,79 @@ TEST_CASE("GUIElement Component Type", "[gui_element][type]") {
         REQUIRE(std::string(panel.getComponentType()) == "Panel");
     }
 }
+
+TEST_CASE("GUIElement Right Click", "[gui_element][right_click]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    TestableElement element(manager, 100, 100, 50, 40);
+
+    SECTION("callback fires with click position and consumes the event") {
+        int calls = 0;
+        float rx = -1.0f, ry = -1.0f;
+        element.setOnRightClickCallback([&](GUIElement* e, float x, float y) {
+            ++calls;
+            rx = x;
+            ry = y;
+            REQUIRE(e == &element);
+        });
+
+        bool consumed = element.handleEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 120, 110));
+
+        REQUIRE(consumed);
+        REQUIRE(calls == 1);
+        REQUIRE(rx == 120.0f);
+        REQUIRE(ry == 110.0f);
+    }
+
+    SECTION("without callback the event is not consumed") {
+        REQUIRE_FALSE(element.handleEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 120, 110)));
+    }
+
+    SECTION("RMB outside the element does not fire") {
+        int calls = 0;
+        element.setOnRightClickCallback([&](GUIElement*, float, float) { ++calls; });
+
+        REQUIRE_FALSE(element.handleEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 10, 10)));
+        REQUIRE(calls == 0);
+    }
+
+    SECTION("LMB does not fire the right-click callback") {
+        int calls = 0;
+        element.setOnRightClickCallback([&](GUIElement*, float, float) { ++calls; });
+
+        element.handleEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 120, 110));
+        element.handleEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 120, 110));
+
+        REQUIRE(calls == 0);
+    }
+
+    SECTION("disabled element does not fire") {
+        int calls = 0;
+        element.setOnRightClickCallback([&](GUIElement*, float, float) { ++calls; });
+        element.setEnabled(false);
+
+        element.handleEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 120, 110));
+
+        REQUIRE(calls == 0);
+    }
+
+    SECTION("nearest element with callback wins (child consumed, parent skipped)") {
+        TestableElement parent(manager, 200, 200, 100, 100);
+        auto child = std::make_unique<TestableElement>(manager, 10, 10, 30, 30);
+        TestableElement* childPtr = child.get();
+        parent.addChild(std::move(child));
+
+        int parentCalls = 0, childCalls = 0;
+        parent.setOnRightClickCallback([&](GUIElement*, float, float) { ++parentCalls; });
+        childPtr->setOnRightClickCallback([&](GUIElement*, float, float) { ++childCalls; });
+
+        // Click inside the child (child coords are relative to parent)
+        REQUIRE(childPtr->handleEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 215, 215)));
+        REQUIRE(childCalls == 1);
+        REQUIRE(parentCalls == 0);
+
+        // Click inside the parent but outside the child: parent fires
+        REQUIRE(parent.handleEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 280, 280)));
+        REQUIRE(parentCalls == 1);
+    }
+}

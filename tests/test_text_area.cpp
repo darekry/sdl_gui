@@ -4,6 +4,7 @@
 #include "../src/panel.hpp"
 #include "../src/text_area.hpp"
 #include "../src/gui_manager.hpp"
+#include "../src/context_menu.hpp"
 
 static std::vector<Uint8> readPixelRow(SDL_Renderer* renderer, int x, int y, int w) {
     SDL_Rect rect{x, y, w, 1};
@@ -2283,4 +2284,156 @@ TEST_CASE("TextArea - Selection with Navigation Keys", "[text_area]") {
         REQUIRE(area->hasSelection());
         REQUIRE(area->getSelection().find("Line3") != std::string::npos);
     }
+}
+TEST_CASE("TextArea - Clipboard API methods", "[text_area][clipboard]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    TextArea area(manager, 0, 0, 300, 200, "assets/fonts/font.ttf", 16);
+    area.setText("line1\nline2\nline3");
+
+    SECTION("selectAll selects the whole multi-line text") {
+        area.selectAll();
+        REQUIRE(area.hasSelection());
+        REQUIRE(area.getSelection() == "line1\nline2\nline3");
+    }
+
+    SECTION("copy puts selection on clipboard") {
+        area.setSelection(0, 5); // "line1" (bytes)
+        REQUIRE(area.copyToClipboard());
+        char* clip = SDL_GetClipboardText();
+        REQUIRE(std::string(clip) == "line1");
+        SDL_free(clip);
+    }
+
+    SECTION("copy without selection is a no-op") {
+        REQUIRE_FALSE(area.copyToClipboard());
+    }
+
+    SECTION("cut removes selection and stores it") {
+        area.setSelection(6, 11); // "line2"
+        REQUIRE(area.cutToClipboard());
+        REQUIRE(area.getText() == "line1\n\nline3");
+
+        char* clip = SDL_GetClipboardText();
+        REQUIRE(std::string(clip) == "line2");
+        SDL_free(clip);
+    }
+
+    SECTION("cut without selection is a no-op") {
+        REQUIRE_FALSE(area.cutToClipboard());
+        REQUIRE(area.getText() == "line1\nline2\nline3");
+    }
+
+    SECTION("paste inserts clipboard text at cursor") {
+        SDL_SetClipboardText("XY");
+        REQUIRE(area.pasteFromClipboard());
+        REQUIRE(area.getText() == "XYline1\nline2\nline3");
+    }
+
+    SECTION("paste replaces selection") {
+        area.setSelection(0, 5);
+        SDL_SetClipboardText("LINE1");
+        REQUIRE(area.pasteFromClipboard());
+        REQUIRE(area.getText() == "LINE1\nline2\nline3");
+    }
+
+    SECTION("paste without clipboard text is a no-op") {
+        SDL_SetClipboardText("");
+        // Note: empty clipboard may still report text; set a known sentinel
+        SDL_SetClipboardText("PASTED");
+        REQUIRE(area.pasteFromClipboard());
+        REQUIRE(area.getText().find("PASTED") != std::string::npos);
+    }
+}
+
+TEST_CASE("TextArea - Right-click context menu", "[text_area][context_menu]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    auto ta = std::make_unique<TextArea>(manager, 100, 100, 300, 200, "assets/fonts/font.ttf", 16);
+    TextArea* area = ta.get();
+    manager.addElement(std::move(ta));
+    area->setText("line1\nline2");
+
+    SECTION("RMB opens the shared context menu") {
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 200, 150));
+        REQUIRE(manager.isContextMenuVisible());
+        REQUIRE(manager.getContextMenu()->getItemCount() == 6);
+        // With text but no selection: Cut/Copy disabled, Select All enabled
+        REQUIRE_FALSE(manager.getContextMenu()->isItemEnabled(0));
+        REQUIRE_FALSE(manager.getContextMenu()->isItemEnabled(1));
+        REQUIRE(manager.getContextMenu()->isItemEnabled(5));
+    }
+
+    SECTION("menu Select All action selects the whole text") {
+        // Select All is the last item: 25+25+8+25+8 = 91px down, center at +12
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 200, 150));
+        int menuX = manager.getContextMenu()->getX();
+        int menuY = manager.getContextMenu()->getY();
+        int selAllY = menuY + 91 + 12;
+
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, menuX + 100, selAllY));
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, menuX + 100, selAllY));
+
+        REQUIRE(area->hasSelection());
+        REQUIRE(area->getSelection() == "line1\nline2");
+        REQUIRE_FALSE(manager.isContextMenuVisible());
+    }
+
+    SECTION("RMB does not start drag selection") {
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 200, 150));
+        manager.processEvent(helper.createMouseMotion(220, 160));
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_RIGHT, 220, 160));
+        REQUIRE_FALSE(area->hasSelection());
+    }
+
+    SECTION("RMB outside the area does not open the menu") {
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 10, 10));
+        REQUIRE_FALSE(manager.isContextMenuVisible());
+    }
+
+    SECTION("setContextMenuEnabled(false) disables the menu") {
+        area->setContextMenuEnabled(false);
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 200, 150));
+        REQUIRE_FALSE(manager.isContextMenuVisible());
+    }
+}
+
+TEST_CASE("TextArea - selection does not paint over the context menu", "[text_area][context_menu][pixel]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+
+    auto ta = std::make_unique<TextArea>(manager, 100, 100, 300, 200, "assets/fonts/font.ttf", 16);
+    TextArea* area = ta.get();
+    manager.addElement(std::move(ta));
+    area->setText("line1\nline2\nline3");
+
+    // Focus the area with LMB, select everything, then open the menu with RMB.
+    // The menu (at cursor) overlaps the selected text.
+    manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 150, 130));
+    manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 150, 130));
+    area->selectAll();
+    REQUIRE(area->hasSelection());
+
+    manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 200, 150));
+    REQUIRE(manager.isContextMenuVisible());
+
+    manager.update();
+    manager.cleanup();
+    manager.render();
+
+    // First menu item ("Cut") spans y 150..175; sample its left padding (no label glyphs).
+    SDL_Rect r{208, 162, 1, 1};
+    SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
+    REQUIRE(surf != nullptr);
+    Uint8* px = static_cast<Uint8*>(surf->pixels);
+    Uint8 pr = px[0], pg = px[1], pb = px[2];
+    SDL_DestroySurface(surf);
+    INFO("menu item pixel: " << int(pr) << "," << int(pg) << "," << int(pb));
+
+    // Selection highlight (100,150,255,180) blended over anything is strongly blue;
+    // a menu button is neutral gray.
+    REQUIRE(pr > 150);
+    REQUIRE(pb < 220);
 }

@@ -3,6 +3,7 @@
 #include "test_helper.hpp"
 #include "../src/text_input.hpp"
 #include "../src/gui_manager.hpp"
+#include "../src/context_menu.hpp"
 
 TEST_CASE("TextInput - Initial State", "[text_input]") {
     TestHelper helper;
@@ -1350,5 +1351,106 @@ TEST_CASE("TextInput - Home/End Keys", "[text_input]") {
         
         manager.processEvent(helper.createTextInputEvent("D"));
         REQUIRE(input->getText() == "ABCD");
+    }
+}
+TEST_CASE("TextInput - Right-click context menu", "[text_input][context_menu]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    auto input = std::make_unique<TextInput>(manager, 100, 100, 200, 30);
+    TextInput* ti = input.get();
+    manager.addElement(std::move(input));
+
+    SECTION("RMB opens the shared context menu at the cursor") {
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 150, 115));
+        REQUIRE(manager.isContextMenuVisible());
+        REQUIRE(manager.getContextMenu() != nullptr);
+        // Cut, Copy, separator, Paste, separator, Select All
+        REQUIRE(manager.getContextMenu()->getItemCount() == 6);
+    }
+
+    SECTION("menu items reflect selection and clipboard state") {
+        ti->setText(std::string("hello"));
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 150, 115));
+        REQUIRE(manager.isContextMenuVisible());
+        // No selection: Cut and Copy disabled, Select All enabled
+        REQUIRE_FALSE(manager.getContextMenu()->isItemEnabled(0)); // Cut
+        REQUIRE_FALSE(manager.getContextMenu()->isItemEnabled(1)); // Copy
+        REQUIRE(manager.getContextMenu()->isItemEnabled(5));       // Select All
+
+        // With selection: Cut and Copy enabled
+        ti->setSelection(0, 5);
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 150, 115));
+        REQUIRE(manager.getContextMenu()->isItemEnabled(0));
+        REQUIRE(manager.getContextMenu()->isItemEnabled(1));
+    }
+
+    SECTION("menu Copy action copies the selection") {
+        ti->setText(std::string("hello world"));
+        ti->setSelection(0, 5);
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 150, 115));
+        REQUIRE(manager.isContextMenuVisible());
+
+        // Copy is the second item: center of item 2 (itemHeight=25, separator=8)
+        // Menu layout: Cut(25) Copy(25) sep(8) Paste(25) sep(8) SelectAll(25)
+        int menuX = manager.getContextMenu()->getX();
+        int menuY = manager.getContextMenu()->getY();
+        int copyY = menuY + 25 + 12;
+
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, menuX + 100, copyY));
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, menuX + 100, copyY));
+
+        char* clip = SDL_GetClipboardText();
+        REQUIRE(clip != nullptr);
+        REQUIRE(std::string(clip) == "hello");
+        SDL_free(clip);
+        REQUIRE_FALSE(manager.isContextMenuVisible()); // action closes the menu
+    }
+
+    SECTION("RMB does not start drag selection") {
+        ti->setText(std::string("hello world"));
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 150, 115));
+        manager.processEvent(helper.createMouseMotion(170, 115));
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_RIGHT, 170, 115));
+        REQUIRE_FALSE(ti->hasSelection());
+    }
+
+    SECTION("RMB outside the field does not open the menu") {
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 10, 10));
+        REQUIRE_FALSE(manager.isContextMenuVisible());
+    }
+
+    SECTION("setContextMenuEnabled(false) disables the menu") {
+        REQUIRE(ti->isContextMenuEnabled());
+        ti->setContextMenuEnabled(false);
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 150, 115));
+        REQUIRE_FALSE(manager.isContextMenuVisible());
+    }
+
+    SECTION("closeContextMenu hides the menu") {
+        manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_RIGHT, 150, 115));
+        REQUIRE(manager.isContextMenuVisible());
+        manager.closeContextMenu();
+        REQUIRE_FALSE(manager.isContextMenuVisible());
+    }
+
+    SECTION("public clipboard wrappers match keyboard shortcut behavior") {
+        ti->setText(std::string("hello"));
+        ti->setSelection(1, 4);
+        REQUIRE(ti->copyToClipboard());
+        char* clip = SDL_GetClipboardText();
+        REQUIRE(std::string(clip) == "ell");
+        SDL_free(clip);
+
+        REQUIRE(ti->cutToClipboard());
+        REQUIRE(ti->getText() == "ho");
+
+        SDL_SetClipboardText("XYZ");
+        REQUIRE(ti->pasteFromClipboard());
+        REQUIRE(ti->getText() == "hXYZo");
+
+        ti->selectAll();
+        REQUIRE(ti->hasSelection());
+        REQUIRE(ti->getSelection() == "hXYZo");
     }
 }

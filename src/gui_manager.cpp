@@ -4,6 +4,7 @@
 #include "timer_manager.hpp"
 #include "panel.hpp"
 #include "label.hpp"
+#include "context_menu.hpp"
 
 #include "constants.hpp"
 #include "std.hpp"
@@ -259,6 +260,34 @@ void GUIManager::hideTooltip() {
         m_tooltipPanel.reset(static_cast<Panel*>(raw));
         m_tooltipPanel->setVisible(false);
     }
+}
+
+void GUIManager::showContextMenu(const std::vector<ContextMenuItem>& items, float x, float y) {
+    if (!m_contextMenu) {
+        auto menu = std::make_unique<ContextMenu>(*this);
+        m_contextMenu = static_cast<ContextMenu*>(addElement(std::move(menu)));
+        if (!m_contextMenu) return;
+    }
+
+    m_contextMenu->clearItems();
+    for (const auto& item : items) {
+        if (item.separator) {
+            m_contextMenu->addSeparator();
+        } else {
+            m_contextMenu->addItem(item.text, item.action, item.enabled);
+        }
+    }
+    m_contextMenu->showAt(static_cast<int>(x), static_cast<int>(y));
+}
+
+void GUIManager::closeContextMenu() {
+    if (m_contextMenu) {
+        m_contextMenu->hide();
+    }
+}
+
+bool GUIManager::isContextMenuVisible() const {
+    return m_contextMenu && m_contextMenu->isVisible();
 }
 
 

@@ -13,6 +13,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         SDLApp app("ContextMenu Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
         GUIManager manager(renderer);
+        manager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);  // real size for ContextMenu clamping
 
         // Create a button that will trigger the context menu
         auto triggerButton = std::make_unique<Button>(manager, 350, 250, 100, 50, "Right Click Me");
@@ -41,11 +42,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
             LOG_INFO("ContextMenu", "Properties action triggered!");
         });
 
-        // Set up right-click handler for the button
-        triggerButtonPtr->setOnClickCallback([contextMenuRef](GUIElement* element) {
+        // Set up right-click handler for the button (RMB position decides where the menu opens)
+        triggerButtonPtr->setOnRightClickCallback([contextMenuRef](GUIElement* element, float x, float y) {
             if (!contextMenuRef) return;
-            auto pos = element->getAbsolutePosition();
-            contextMenuRef->showAt(pos.x, pos.y + element->getHeight());
+            (void)element;
+            contextMenuRef->showAt(static_cast<int>(x), static_cast<int>(y));
         });
 
         // Add elements to manager

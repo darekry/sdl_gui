@@ -1,5 +1,6 @@
 #include "text_area.hpp"
 #include "text_editable.hpp"
+#include "context_menu.hpp"
 #include "texture_manager.hpp"
 #include "utf8_utils.hpp"
 #include "constants.hpp"
@@ -108,6 +109,82 @@ void TextArea::setSelection(size_t start, size_t end) {
     m_hasSelection = (m_selectionStart != m_selectionEnd);
 }
 
+bool TextArea::copyToClipboard() {
+    if (!hasSelection()) return false;
+    SDL_SetClipboardText(getSelection().c_str());
+    return true;
+}
+
+bool TextArea::cutToClipboard() {
+    if (!copyToClipboard()) return false;
+    size_t start = std::min(m_selectionStart, m_selectionEnd);
+    size_t end = std::max(m_selectionStart, m_selectionEnd);
+    m_text.erase(start, end - start);
+    m_cursorPos = start;
+    clearSelection();
+    m_needs_texture_update = true;
+    update_text_offset();
+    markDirty();
+    if (m_onTextChanged) { m_onTextChanged(this); }
+    return true;
+}
+
+bool TextArea::pasteFromClipboard() {
+    if (!SDL_HasClipboardText()) return false;
+    char* clipboard = SDL_GetClipboardText();
+    if (!clipboard) return false;
+    if (hasSelection()) {
+        size_t start = std::min(m_selectionStart, m_selectionEnd);
+        m_text.erase(start, m_selectionEnd - m_selectionStart);
+        m_cursorPos = start;
+        clearSelection();
+    }
+    m_text.insert(m_cursorPos, clipboard);
+    m_cursorPos += strlen(clipboard);
+    m_needs_texture_update = true;
+    update_text_offset();
+    markDirty();
+    if (m_onTextChanged) { m_onTextChanged(this); }
+    SDL_free(clipboard);
+    return true;
+}
+
+void TextArea::selectAll() {
+    setSelection(0, m_text.length());
+    m_cursorPos = m_text.length();
+    m_needs_texture_update = true;
+    update_text_offset();
+    markDirty();
+}
+
+void TextArea::showContextMenu(float x, float y) {
+    if (!m_contextMenuEnabled) {
+        return;
+    }
+
+    // Alive-guarded actions: the shared menu can outlive this widget.
+    TextArea* self = this;
+    GUIManager& mgr = m_manager;
+
+    std::vector<ContextMenuItem> items;
+    items.emplace_back("Cut", [self, &mgr]() {
+        if (mgr.isElementAlive(self)) self->cutToClipboard();
+    }, hasSelection());
+    items.emplace_back("Copy", [self, &mgr]() {
+        if (mgr.isElementAlive(self)) self->copyToClipboard();
+    }, hasSelection());
+    items.emplace_back(true);
+    items.emplace_back("Paste", [self, &mgr]() {
+        if (mgr.isElementAlive(self)) self->pasteFromClipboard();
+    }, SDL_HasClipboardText());
+    items.emplace_back(true);
+    items.emplace_back("Select All", [self, &mgr]() {
+        if (mgr.isElementAlive(self)) self->selectAll();
+    }, !m_text.empty());
+
+    mgr.showContextMenu(items, x, y);
+}
+
 void TextArea::draw(SDL_Renderer* renderer) {
     drawBackgroundAndBorder(renderer);
 
@@ -147,6 +224,12 @@ bool TextArea::handleEvent(const SDL_Event& e) {
     
     // Mouse button down - start potential drag or position cursor
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && contains(e.button.x, e.button.y)) {
+        // Right button: default text editing context menu instead of starting a drag
+        if (e.button.button == SDL_BUTTON_RIGHT) {
+            showContextMenu(e.button.x, e.button.y);
+            return true;
+        }
+
         setState(ElementState::Hover);
         m_isHovered = true;
         m_manager.setKeyboardFocus(this);

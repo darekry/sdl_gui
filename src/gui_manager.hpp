@@ -19,6 +19,8 @@ class GUIElement;
 class Theme;
 class Panel;
 class Label;
+class ContextMenu;
+struct ContextMenuItem;
 
 template<typename T>
 class ElementRef;
@@ -103,6 +105,14 @@ public:
     void hideTooltip();
     [[nodiscard]] GUIElement* getActiveTooltip() const { return tooltipElement.get(); }
 
+    // Shared right-click context menu (one instance, reused; items rebuilt on each show).
+    // Used for the default Cut/Copy/Paste/Select All menu in text fields and for custom menus.
+    // Item actions must guard against widget destruction (e.g. via isElementAlive).
+    void showContextMenu(const std::vector<ContextMenuItem>& items, float x, float y);
+    void closeContextMenu();
+    [[nodiscard]] bool isContextMenuVisible() const;
+    [[nodiscard]] ContextMenu* getContextMenu() const { return m_contextMenu; }
+
     void setTheme(Theme theme);
     Theme& getTheme();
 
@@ -130,6 +140,7 @@ private:
     std::vector<std::unique_ptr<GUIElement>> m_elements;
     std::unique_ptr<GUIElement> tooltipElement;
     std::unique_ptr<Cursor> cursor;
+    ContextMenu* m_contextMenu = nullptr;  // owned by m_elements, created lazily
     
     // Cached tooltip components (reuse to avoid allocations)
     std::unique_ptr<Panel> m_tooltipPanel;

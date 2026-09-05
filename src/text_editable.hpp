@@ -24,7 +24,17 @@ public:
     
     // Callbacks
     void setOnTextChanged(const std::function<void(TextEditable*)>& callback);
-    
+
+    // Public clipboard API (keyboard shortcuts and the default context menu both use it)
+    virtual bool copyToClipboard();
+    virtual bool cutToClipboard();
+    virtual bool pasteFromClipboard();
+    virtual void selectAll();
+
+    // Default right-click context menu (Cut/Copy/Paste/Select All, shared instance in GUIManager)
+    void setContextMenuEnabled(bool enabled) { m_contextMenuEnabled = enabled; }
+    [[nodiscard]] bool isContextMenuEnabled() const { return m_contextMenuEnabled; }
+
     // Focus handling
     void onFocusGained() override;
     void onFocusLost() override;
@@ -54,11 +64,17 @@ protected:
     
     // Callback
     std::function<void(TextEditable*)> m_onTextChanged;
+
+    // Default context menu toggle
+    bool m_contextMenuEnabled = true;
     
     // Helper methods for subclasses
     void updateCursorBlink();
     void resetCursorBlink();
-    
+
+    // Builds the standard Cut/Copy/Paste/Select All items and shows the shared
+    // context menu at the given window position (no-op when disabled).
+    void showContextMenu(float x, float y);
     // Clipboard operations (called from handleEvent)
     bool handleClipboardCopy();
     bool handleClipboardPaste();

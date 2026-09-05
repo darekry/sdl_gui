@@ -78,7 +78,12 @@ public:
     virtual bool handleEvent(const SDL_Event& e);
     void processHoverTooltip(bool currentlyHovered);
     void processButtonEvent(const SDL_Event& e);
-    void render(SDL_Renderer* renderer);
+
+    // Right mouse button (context menu trigger).
+    // Called with the element and the click position in window coordinates.
+    // The element consumes the RMB press, so ancestors do not fire their own callbacks.
+    using OnRightClickCallback = std::function<void(GUIElement*, float x, float y)>;
+    void setOnRightClickCallback(OnRightClickCallback callback) { m_onRightClick = std::move(callback); }    void render(SDL_Renderer* renderer);
     
     virtual bool isOverlay() const { return false; }
     virtual void renderOverlay(SDL_Renderer* renderer);
@@ -127,6 +132,10 @@ public:
 
 protected:
     void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
+
+    // Fires m_onRightClick for an RMB press inside this element.
+    // Returns true when the event was consumed (callback present and fired).
+    bool processRightClick(const SDL_Event& e);
  
     uint32_t startTimer(uint32_t delay, bool singleShot, std::function<void(GUIElement*)> callback);
     void stopTimer(uint32_t timerId);
@@ -164,6 +173,7 @@ protected:
     GUIManager& m_manager;
     bool m_isHovered = false;
     bool m_isMarkedForDeletion = false;
+    OnRightClickCallback m_onRightClick;
     GUIElement* m_parent;
     mutable SDL_Point m_cachedAbsPos = {0, 0};
     mutable bool m_absPosValid = false;

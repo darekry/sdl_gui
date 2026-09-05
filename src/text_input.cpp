@@ -201,6 +201,12 @@ bool TextInput::handleEvent(const SDL_Event& e) {
 
     // Mouse button down - start drag
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && contains(e.button.x, e.button.y)) {
+        // Right button: default text editing context menu instead of starting a drag
+        if (e.button.button == SDL_BUTTON_RIGHT) {
+            showContextMenu(e.button.x, e.button.y);
+            return true;
+        }
+
         m_manager.setKeyboardFocus(this);
         
         auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);

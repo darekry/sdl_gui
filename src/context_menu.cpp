@@ -49,6 +49,17 @@ void ContextMenu::showAt(int x, int y) {
 }
 
 void ContextMenu::hide() {
+    // The clicked item grabbed keyboard focus on BUTTON_DOWN. If focus is still
+    // inside this menu, release it — otherwise GUIManager::render keeps painting
+    // the item through the focus-overlay pass even though the menu is hidden
+    // (ghost button with a focus outline, gone only after clicking elsewhere).
+    GUIElement* focused = m_manager.getKeyboardFocus();
+    for (GUIElement* e = focused; e != nullptr; e = e->getParent()) {
+        if (e == this) {
+            m_manager.setKeyboardFocus(nullptr);
+            break;
+        }
+    }
     setVisible(false);
     m_panel->setVisible(false);
     markDirty();
@@ -124,12 +135,19 @@ void ContextMenu::createMenuButtons() {
 }
 
 void ContextMenu::positionMenu(int x, int y) {
-    // Get window dimensions for boundary checking
-    int windowWidth = 800;  // Default, could be made configurable
-    int windowHeight = 600; // Default, could be made configurable
+    // Get actual window dimensions for boundary checking
+    // (fall back to sensible defaults when the window size was never reported)
+    int windowWidth = 800;
+    int windowHeight = 600;
+    m_manager.getWindowSize(windowWidth, windowHeight);
+    if (windowWidth <= 0) windowWidth = 800;
+    if (windowHeight <= 0) windowHeight = 600;
 
     int menuWidth = 200;
-    int menuHeight = static_cast<int>(m_items.size()) * m_itemHeight;
+    int menuHeight = 0;
+    for (const auto& item : m_items) {
+        menuHeight += item.separator ? m_separatorHeight : m_itemHeight;
+    }
 
     // Adjust position to stay within window bounds
     if (x + menuWidth > windowWidth) {

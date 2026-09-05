@@ -100,7 +100,10 @@ bool Button::handleEvent(const SDL_Event& e) {
     }
 
     processButtonEvent(e);
-    
+    if (processRightClick(e)) {
+        return true;
+    }
+
     return false;
 }
 
