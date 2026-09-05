@@ -13,9 +13,9 @@ public:
     void setOnTextChanged(const std::function<void(TextInput*)>& callback);
     void setOnEnterPressed(const std::function<void(TextInput*)>& callback);
     
-    // Locked state (TextInput-specific)
-    void setLocked(bool locked);
-    bool isLocked() const;
+    // Locked state (override shared TextEditable implementation)
+    void setLocked(bool locked) override;
+    bool isLocked() const override;
 
     bool handleEvent(const SDL_Event& e) override;
     const char* getComponentType() const override;
@@ -30,7 +30,6 @@ protected:
     void markNeedsUpdate() override;
 
 private:
-    bool m_locked = false;
     SharedTexture m_textTexture;
     int m_text_offset_x = 0;
     

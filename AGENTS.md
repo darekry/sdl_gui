@@ -326,6 +326,13 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
+### Unifikacja TextArea z TextEditable — jeden model tekstu char-index (2026-09-05)
+- **Refaktor**: `TextArea : public TextEditable` (wcześniej `: GUIElement` z równoległym API byte-index). Usunięte duplikaty: tekst/selekcja/schowek/focus/blink/menu/locked — wszystko dziedziczone; zostały tylko linie/wrap/scroll/nawigacja góra/dół. `setLocked/isLocked` i `setContextMenuEnabled` przeniesione do bazy (`TextInput::setLocked` deleguje do `TextEditable::setLocked`). Wszystkie pozycje w **znakach UTF-8** (fix: `erase/insert/strlen/m_cursorPos++/--`, mieszane `length()+1` z `charToByteIndex`, `substr` w `getSelection`).
+- **Edge-case'y zlikwidowane**: pisanie wymaga fokusu (było `m_isHovered || hasFocus` — hover wystarczał); drag działa poza bounds (`hasKeyboardFocus` zamiast `m_isHovered`, jak w TextInput); `recalculateLines` zawija **wszystkie paragrafy** (wcześniej tylko ostatni), zachowuje wielokrotne spacje i łamie zbyt długie słowa po znakach; `\r\n` jak pojedynczy break; strzałki na granicach zwracają `false` (jak TextInput); Ctrl+C/V/X/A przez wspólne `handleClipboard*`/`selectAll`.
+- **Przykłady**: bez zmian kodu (API kompatybilne — `setText/setOnTextChanged/setWordWrap/setLocked` zachowane), 48/48 się buduje.
+- Efekt: 44/44 testów przechodzi (nowe case'y UTF-8 char-index w test_text_area.cpp).
+- Zmienione pliki: src/text_editable.hpp, src/text_editable.cpp, src/text_input.hpp, src/text_input.cpp, src/text_area.hpp, src/text_area.cpp, tests/test_text_area.cpp, docs/release/widgets/TextArea.md, docs/release/widgets/TextEditable.md
+
 ### RMB callback + domyślne menu kontekstowe pól tekstowych (2026-09-05)
 - **Nowość**: `GUIElement::setOnRightClickCallback(fn(element, x, y))` — callback prawego przycisku z pozycją kliknięcia (współrzędne okna); RMB jest konsumowane, więc przodkowie nie odpalają swoich callbacków. Widgety nadpisujące `handleEvent` (Button, TextInput, TextArea) wołają chroniony helper `processRightClick(e)`.
 - **Domyślne menu kontekstowe**: `GUIManager::showContextMenu(items, x, y)` — jedno leniwie tworzone `ContextMenu` współdzielone (przebudowa itemów przy każdym pokazaniu). TextInput i TextArea: RMB **nie startuje już drag-selekcji**, tylko otwiera menu Wytnij/Kopiuj/Wklej/Zaznacz wszystko z enabled-state zależnym od selekcji i clipboardu; per-widget `setContextMenuEnabled(false)` wyłącza. `TextEditable` dostaje publiczne `copyToClipboard/cutToClipboard/pasteFromClipboard/selectAll` (virtual); TextArea **nie dziedziczy po TextEditable** (byte-index zamiast char-index) — ma równoległe własne API. Akcje menu guardują żywotność widgetu przez `isElementAlive` (menu może przeżyć widget).

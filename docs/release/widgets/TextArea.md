@@ -6,13 +6,15 @@ notatek i dzienników zdarzeń.
 
 ## Przeznaczenie
 
-TextArea jest **osobną klasą** dziedziczącą bezpośrednio po `GUIElement` — nie
-dziedziczy po `TextEditable`, dlatego metody selekcji i `setOnTextChanged` ma
-**własne duplikaty** o tych samych sygnaturach co w `TextEditable`. Wymaga
-podania ścieżki fontu i rozmiaru w konstruktorze (font ładowany przez
-`FontManager`). Enter wstawia nową linię, strzałki góra/dół przechodzą między
-wierszami, kółko myszy przewija zawartość. Domyślnie włączone jest zawijanie
-wierszy (`setWordWrap(true)`).
+TextArea **dziedziczy po `TextEditable`**, więc tekst, kursor, selekcję,
+schowek, blokadę (`setLocked`), menu kontekstowe (RMB) i fokus klawiatury ma
+wspólne z `TextInput` — wszystkie pozycje to **indeksy w znakach UTF-8, nie
+bajtach**. Własna jest tylko warstwa wielolinijkowa: podział na linie,
+zawijanie wierszy (`setWordWrap`), przewijanie kółkiem i nawigacja
+góra/d podłogą między wierszami. Wymaga podania ścieżki fontu i rozmiaru w
+konstruktorze (font ładowany przez `FontManager`). Enter wstawia nową linię,
+strzałki góra/dół przechodzą między wierszami, kółko myszy przewija zawartość.
+Domyślnie włączone jest zawijanie wierszy (`setWordWrap(true)`).
 
 ## Tworzenie
 
@@ -28,21 +30,32 @@ manager.addElement(std::move(area));
 
 ## Najważniejsze metody
 
+Metody własne (wielolinijkowe):
+
 | Metoda | Opis |
 |--------|------|
-| `void setText(std::string_view text)` | Ustawia treść (widok na tekst) |
+| `void setText(std::string_view text)` | Ustawia treść (nadpisuje wersję z `TextEditable`, odświeża podział na linie) |
 | `void setText(std::string&& text)` | Ustawia treść (przeniesienie) |
 | `void setText(const char* text)` | Ustawia treść (łańcuch C) |
-| `const std::string& getText() const` | Zwraca aktualną treść |
 | `void setWordWrap(bool enabled)` | Włącza/wyłącza zawijanie wierszy do szerokości pola |
 | `bool getWordWrap() const` | Czy zawijanie jest włączone |
-| `void setOnTextChanged(const std::function<void(TextArea*)>& callback)` | Rejestruje callback zmiany treści (argument to `TextArea*`) |
-| `void setLocked(bool locked)` | Blokuje edycję (tryb tylko do odczytu) |
+| `void setOnTextChanged(const std::function<void(TextArea*)>& callback)` | Rejestruje callback zmiany treści (argument to `TextArea*`; przesłania wersję z `TextEditable`) |
+| `void setLocked(bool locked)` | Blokuje edycję — nadpisuje wersję z `TextEditable` (dodatkowo chowa kursor/hover) |
 | `bool isLocked() const` | Czy pole jest zablokowane |
-| `bool hasSelection() const` | Czy istnieje zaznaczenie (własna implementacja) |
-| `std::string getSelection() const` | Zaznaczony fragment (własna implementacja) |
-| `void clearSelection()` | Czyści zaznaczenie (własna implementacja) |
-| `void setSelection(size_t start, size_t end)` | Zaznacza zakres — indeksy w znakach, nie bajtach (własna implementacja) |
+
+Odziedziczone z `TextEditable` (wspólne z `TextInput` — tekst, kursor,
+selekcja, schowek, menu RMB, fokus):
+
+| Metoda | Opis |
+|--------|------|
+| `const std::string& getText() const` | Zwraca aktualną treść |
+| `bool hasSelection() const` | Czy istnieje zaznaczenie |
+| `std::string getSelection() const` | Zaznaczony fragment (indeksy w znakach UTF-8) |
+| `void clearSelection()` | Czyści zaznaczenie |
+| `void setSelection(size_t start, size_t end)` | Zaznacza zakres (indeksy w znakach UTF-8) |
+| `bool copyToClipboard()` / `cutToClipboard()` / `pasteFromClipboard()` | Operacje schowka |
+| `void selectAll()` | Zaznacza cały tekst |
+| `void setContextMenuEnabled(bool enabled)` | Włącza/wyłącza domyślne menu RMB |
 
 ## Callbacki / zdarzenia
 
@@ -131,16 +144,18 @@ int main(int, char**) {
 - **Font jest wymagany w konstruktorze** — `font_path` musi wskazywać istniejący
   plik TTF (np. `"assets/fonts/font.ttf"`), a `font_size` to rozmiar w pikselach.
   Jeśli font się nie załaduje, obszar się nie rysuje.
-- **Edytowalność zależy od hovera/kliknięcia, nie od systemu fokusu** — TextArea
-  nie korzysta z `GUIManager`-owego fokusu klawiatury (nie jest domyślnie
-  osiągalny przez Tab). Po kliknięciu wewnątrz włączany jest SDL text input;
-  zdarzenia klawiatury są obsługiwane, gdy kursor myszy znajduje się nad
-  obszarem. Kliknięcie poza obszarem wyłącza text input i chowa kursor.
+- **Edycja wymaga fokusu klawiatury** (jak w `TextInput`): kliknięcie ustawia
+  fokus, Tab przechodzi między polami, utrata fokusu (klik poza obszarem)
+  chowa kursor i wyłącza SDL text input. Sam hover nie wystarcza do pisania.
 - **Enter wstawia nową linię** (w przeciwieństwie do `TextInput`) — callbacku
   "Enter wciśnięty" nie ma; nowa linia jest tylko zmianą treści.
-- **Selekcja jest własnym API**, a nie odziedziczonym — sygnatury są identyczne
-  jak w `TextEditable`, ale to osobne metody klasy. `setSelection` liczy indeksy
-  w znakach UTF-8, nie bajtach.
+- **Selekcja/schowek/blokada/menu RMB są dziedziczone z `TextEditable`** —
+  te same metody i semantyka (indeksy w znakach UTF-8) co w `TextInput`.
+  `setSelection` liczy indeksy w znakach UTF-8, nie bajtach.
+- **Zawijanie obejmuje wszystkie paragrafy** (każdy fragment między `\n`
+  zawijany osobno), wielokrotne spacje wewnątrz wiersza są zachowane, a zbyt
+  długie słowa są twardo łamane po znakach. `\r\n` traktowane jak pojedynczy
+  break.
 - **Kółko myszy przewija** pionowo, gdy hover nad obszarem; przy dłuższym
   tekście sprawdź, czy zawartość mieści się w wysokości pola.
 - `setLocked(true)` wyłącza wpisywanie i zaznaczanie, ale tekst pozostaje

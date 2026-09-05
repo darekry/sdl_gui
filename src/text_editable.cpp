@@ -32,6 +32,18 @@ void TextEditable::setOnTextChanged(const std::function<void(TextEditable*)>& ca
     m_onTextChanged = callback;
 }
 
+void TextEditable::setLocked(bool locked) {
+    m_locked = locked;
+    if (m_locked && hasKeyboardFocus()) {
+        m_manager.setKeyboardFocus(nullptr);
+    }
+    markDirty();
+}
+
+bool TextEditable::isLocked() const {
+    return m_locked;
+}
+
 bool TextEditable::copyToClipboard() {
     return handleClipboardCopy();
 }

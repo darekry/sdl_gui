@@ -2437,3 +2437,72 @@ TEST_CASE("TextArea - selection does not paint over the context menu", "[text_ar
     REQUIRE(pr > 150);
     REQUIRE(pb < 220);
 }
+
+TEST_CASE("TextArea - UTF-8 char-index model (shared with TextEditable)", "[text_area]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("setSelection/getSelection count characters not bytes") {
+        TextArea ta(manager, 0, 0, 300, 100, "assets/fonts/font.ttf", 16);
+        ta.setText("ząb\n😀x");
+        ta.setSelection(0, 2);
+        REQUIRE(ta.getSelection() == "zą");
+        ta.setSelection(4, 6);
+        REQUIRE(ta.getSelection() == "😀x");
+    }
+
+    SECTION("Backspace/Delete handle multi-byte chars") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 300, 200, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        SDL_Event click = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55);
+        area->handleEvent(click);
+        area->render(manager.getRenderer());
+
+        for (const char* c : {"ą", "ę", "X"}) {
+            area->handleEvent(helper.createTextInputEvent(c));
+        }
+        REQUIRE(area->getText() == "ąęX");
+
+        area->handleEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_BACKSPACE));
+        REQUIRE(area->getText() == "ąę");
+        area->handleEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        area->handleEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_LEFT));
+        area->handleEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_DELETE));
+        REQUIRE(area->getText() == "ę");
+    }
+
+    SECTION("Cut/Paste preserve UTF-8") {
+        SDL_SetClipboardText("zą");
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 300, 200, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        manager.addElement(std::move(ta));
+
+        area->handleEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
+        area->render(manager.getRenderer());
+        area->handleEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_V, SDL_KMOD_CTRL));
+        REQUIRE(area->getText() == "zą");
+
+        area->setSelection(0, 1);
+        REQUIRE(area->cutToClipboard());
+        REQUIRE(area->getText() == "ą");
+        area->handleEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_V, SDL_KMOD_CTRL));
+        REQUIRE(area->getText() == "zą");
+    }
+
+    SECTION("TextArea shares TextEditable API via base pointer") {
+        auto ta = std::make_unique<TextArea>(manager, 50, 50, 300, 200, "assets/fonts/font.ttf", 16);
+        TextArea* area = ta.get();
+        TextEditable* base = area;
+        manager.addElement(std::move(ta));
+
+        base->setText("hello");
+        REQUIRE(area->getText() == "hello");
+        base->setSelection(1, 4);
+        REQUIRE(base->getSelection() == "ell");
+        REQUIRE(area->getSelection() == "ell");
+        base->selectAll();
+        REQUIRE(area->hasSelection());
+    }
+}

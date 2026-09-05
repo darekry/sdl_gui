@@ -6,7 +6,7 @@
 
 
 TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
-    : TextEditable(manager, x, y, w, h), m_locked(false), m_text_offset_x(0) {
+    : TextEditable(manager, x, y, w, h), m_text_offset_x(0) {
 }
 
 const char* TextInput::getComponentType() const {
@@ -27,17 +27,11 @@ void TextInput::setOnTextChanged(const std::function<void(TextInput*)>& callback
 }
 
 void TextInput::setLocked(bool isLocked) {
-    m_locked = isLocked;
-    if (m_locked) {
-        if (hasKeyboardFocus()) {
-            m_manager.setKeyboardFocus(nullptr);
-        }
-    }
-    markDirty();
+    TextEditable::setLocked(isLocked);
 }
 
 bool TextInput::isLocked() const {
-    return m_locked;
+    return TextEditable::isLocked();
 }
 
 void TextInput::updateTextOffset() {

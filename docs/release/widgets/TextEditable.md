@@ -1,8 +1,9 @@
 # TextEditable
 
 Abstrakcyjna klasa bazowa dla edytowalnych pól tekstowych (TextInput, TextArea).
-Zawiera wspólną implementację zaznaczania, schowka (clipboard), kursora i
-callbacku `onTextChanged`. Nie tworzy się jej samodzielnie — jest punktem
+Zawiera wspólną implementację tekstu (UTF-8, indeksy w znakach), zaznaczania,
+schowka (clipboard), kursora, blokady (`setLocked`) i domyślnego menu
+kontekstowego, oraz callbacku `onTextChanged`. Nie tworzy się jej samodzielnie — jest punktem
 wyjścia dla konkretnych widgetów tekstowych.
 
 ## Przeznaczenie
@@ -10,11 +11,13 @@ wyjścia dla konkretnych widgetów tekstowych.
 Klasa gromadzi w jednym miejscu całą logikę wspólną dla pól tekstowych:
 przechowywanie tekstu (UTF-8), pozycję kursora z mruganiem, zaznaczenie myszą
 oraz klawiaturą (Shift + strzałki), operacje schowka (Ctrl+C / Ctrl+V / Ctrl+X,
-zaznacz wszystko Ctrl+A) i wywołanie `onTextChanged` przy każdej zmianie treści.
+zaznacz wszystko Ctrl+A), blokadę edycji (`setLocked`), domyślne menu
+kontekstowe (RMB: Wytnij/Kopiuj/Wklej/Zaznacz wszystko) i wywołanie
+`onTextChanged` przy każdej zmianie treści.
 Metody `updateTextOffset()`, `refreshTextTexture()` i `markNeedsUpdate()` są
 czysto wirtualne — konkretna implementacja (jednolinijkowa lub wielolinijkowa)
 decyduje, jak tekst jest przewijany i renderowany. Użyj gotowych pochodnych:
-TextInput (jedna linia) lub TextArea (wiele linii, oddzielna implementacja).
+TextInput (jedna linia) lub TextArea (wiele linii).
 
 ## Tworzenie
 
@@ -41,6 +44,11 @@ manager.addElement(std::move(input));
 | `virtual void setText(std::string_view text)` | Ustawia całą treść pola; nadmiarowy kursor jest przycinany, wywoływany jest `onTextChanged` |
 | `const std::string& getText() const` | Zwraca aktualną treść pola |
 | `void setOnTextChanged(const std::function<void(TextEditable*)>& callback)` | Rejestruje callback wywoływany przy każdej zmianie treści |
+| `virtual void setLocked(bool locked)` | Blokuje edycję (tryb tylko do odczytu, zwalnia fokus) |
+| `virtual bool isLocked() const` | Czy edycja jest zablokowana |
+| `virtual bool copyToClipboard()` / `cutToClipboard()` / `pasteFromClipboard()` | Operacje schowka (używane też przez menu kontekstowe) |
+| `virtual void selectAll()` | Zaznacza cały tekst |
+| `void setContextMenuEnabled(bool enabled)` | Włącza/wyłącza domyślne menu RMB |
 
 Dodatkowo klasa dziedziczy po `GUIElement` i w konstruktorze sama włącza
 `setCanGetKeyboardFocus(true)` — pole jest domyślnie osiągalne przez nawigację

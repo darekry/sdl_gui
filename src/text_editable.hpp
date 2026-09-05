@@ -12,11 +12,11 @@ public:
     TextEditable(GUIManager& manager, int x, int y, int w, int h);
     ~TextEditable() = default;
 
-    // Selection methods (common implementation)
-    bool hasSelection() const;
-    std::string getSelection() const;
-    void clearSelection();
-    void setSelection(size_t start, size_t end);
+    // Selection methods (common implementation, char-index = UTF-8 characters)
+    virtual bool hasSelection() const;
+    virtual std::string getSelection() const;
+    virtual void clearSelection();
+    virtual void setSelection(size_t start, size_t end);
     
     // Text access
     virtual void setText(std::string_view text);
@@ -34,6 +34,10 @@ public:
     // Default right-click context menu (Cut/Copy/Paste/Select All, shared instance in GUIManager)
     void setContextMenuEnabled(bool enabled) { m_contextMenuEnabled = enabled; }
     [[nodiscard]] bool isContextMenuEnabled() const { return m_contextMenuEnabled; }
+
+    // Locked state (read-only). Shared by TextInput and TextArea.
+    virtual void setLocked(bool locked);
+    virtual bool isLocked() const;
 
     // Focus handling
     void onFocusGained() override;
@@ -64,6 +68,9 @@ protected:
     
     // Callback
     std::function<void(TextEditable*)> m_onTextChanged;
+
+    // Locked state
+    bool m_locked = false;
 
     // Default context menu toggle
     bool m_contextMenuEnabled = true;
