@@ -409,7 +409,7 @@ TEST_CASE("C API - Button", "[c_api][button]") {
         auto* raw = (GUIElement*)btn;
         bool found = false;
         for (auto& child : raw->getChildren()) {
-            if (std::string(child->getComponentType()) == "Label") {
+            if (child->getComponentTypeId() == ComponentType::Label) {
                 auto* lbl = (Label*)child.get();
                 REQUIRE(std::string(lbl->getText()) == "Updated");
                 found = true;

@@ -118,8 +118,8 @@ void ListView::setOnRowActivate(RowCallback callback) {
     m_onRowActivate = std::move(callback);
 }
 
-const char* ListView::getComponentType() const {
-    return "ListView";
+ComponentType ListView::getComponentTypeId() const {
+    return ComponentType::ListView;
 }
 
 bool ListView::handleEvent(const SDL_Event& e) {

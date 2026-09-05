@@ -16,7 +16,7 @@ public:
     
     // Overridden methods
     bool handleEvent(const SDL_Event& e) override;
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 protected:
     void onSizeChanged(int oldWidth, int oldHeight) override;

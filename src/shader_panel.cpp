@@ -131,6 +131,6 @@ void ShaderPanel::ensureTempTexture(SDL_Renderer* renderer) {
     }
 }
 
-const char* ShaderPanel::getComponentType() const {
-    return "ShaderPanel";
+ComponentType ShaderPanel::getComponentTypeId() const {
+    return ComponentType::ShaderPanel;
 }

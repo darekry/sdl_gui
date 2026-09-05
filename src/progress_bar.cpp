@@ -57,8 +57,8 @@ void ProgressBar::setRange(float min, float max) {
     }
 }
 
-const char* ProgressBar::getComponentType() const {
-    return "ProgressBar";
+ComponentType ProgressBar::getComponentTypeId() const {
+    return ComponentType::ProgressBar;
 }
 
 void ProgressBar::draw(SDL_Renderer* renderer) {
@@ -69,12 +69,7 @@ void ProgressBar::draw(SDL_Renderer* renderer) {
     float ratio = normalizedValue();
 
     if (ratio > 0.0f) {
-        SDL_Color fillColor;
-        if (style.borderColor) {
-            fillColor = *style.borderColor;
-        } else {
-            fillColor = {0, 120, 215, 255};
-        }
+        const SDL_Color fillColor = effectiveFillColor(style, {0, 120, 215, 255});
 
         int borderW = style.borderWidth.value_or(0);
 

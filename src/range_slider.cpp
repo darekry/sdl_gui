@@ -185,8 +185,8 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
     return false;
 }
 
-const char* RangeSlider::getComponentType() const {
-    return "RangeSlider";
+ComponentType RangeSlider::getComponentTypeId() const {
+    return ComponentType::RangeSlider;
 }
 
 void RangeSlider::setLowerValue(int value) {
@@ -241,12 +241,13 @@ void RangeSlider::draw(SDL_Renderer* renderer) {
     float lowerRatio = (m_maxValue > m_minValue) ? static_cast<float>(m_lowerValue - m_minValue) / static_cast<float>(m_maxValue - m_minValue) : 0.0f;
     float upperRatio = (m_maxValue > m_minValue) ? static_cast<float>(m_upperValue - m_minValue) / static_cast<float>(m_maxValue - m_minValue) : 0.0f;
 
+    const SDL_Color baseThumb = effectiveThumbColor(style);
     SDL_Color lowerThumbColor = (m_activeThumb == ActiveThumb::Lower || m_hoveredThumb == ActiveThumb::Lower)
         ? SDL_Color{180, 180, 180, 255}
-        : style.borderColor.value_or(SDL_Color{100, 100, 100, 255});
+        : baseThumb;
     SDL_Color upperThumbColor = (m_activeThumb == ActiveThumb::Upper || m_hoveredThumb == ActiveThumb::Upper)
         ? SDL_Color{180, 180, 180, 255}
-        : style.borderColor.value_or(SDL_Color{100, 100, 100, 255});
+        : baseThumb;
 
     if (m_orientation == Orientation::Horizontal) {
         int trackSpan = getWidth() - thumbSize;

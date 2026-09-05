@@ -111,8 +111,8 @@ bool Slider::handleEvent(const SDL_Event& e) {
     return false;
 }
 
-const char* Slider::getComponentType() const {
-    return "Slider";
+ComponentType Slider::getComponentTypeId() const {
+    return ComponentType::Slider;
 }
 
 void Slider::setValue(int value) {
@@ -152,7 +152,7 @@ void Slider::draw(SDL_Renderer* renderer) {
     }
     RenderFillRect(renderer, trackRect);
 
-    SDL_Color thumbColor = style.borderColor.value_or(SDL_Color{100, 100, 100, 255});
+    SDL_Color thumbColor = effectiveThumbColor(style);
     SetDrawColor(renderer, thumbColor);
 
     SDL_Rect thumbRect;

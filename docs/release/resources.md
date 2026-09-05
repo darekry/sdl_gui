@@ -31,12 +31,27 @@ struct Style {
     std::optional<int> borderRadius;   // promień zaokrąglenia rogów (0 = ostre)
     std::optional<int> fontSize;
     std::optional<std::string> fontName;
+    std::optional<SDL_Color> borderColorOuterTopLeft;      // bevel Win95
+    std::optional<SDL_Color> borderColorOuterBottomRight;
+    std::optional<SDL_Color> borderColorInnerTopLeft;
+    std::optional<SDL_Color> borderColorInnerBottomRight;
+    std::optional<SDL_Color> thumbColor;  // uchwyt Slider/RangeSlider (fallback: borderColor)
+    std::optional<SDL_Color> fillColor;   // wypełnienie ProgressBar (fallback: borderColor)
 
     void mergeWith(const Style& base);   // uzupełnia puste pola z base
     bool operator==(const Style& other) const;
     bool operator!=(const Style& other) const;
+    bool hasBevel() const;
 };
 ```
+
+Typ widgetu to `ComponentType` (enum, `uint8_t`) zamiast hasha stringa
+w ścieżce renderu — `componentTypeFromString()` mapuje `"Button"…` na ID raz
+(np. w parserze), a `getComposedStyle()` cache'uje scalony styl per stan
+i przelicza go tylko przy zmianie themu (`Theme::epoch()`) lub stylu
+lokalnego. Globalny współdzielony cache tekstur (`TextureManager::renderCache`)
+jest zachowany: identyczne widgety (ten sam typ, rozmiar, stan i styl)
+współdzielą JEDEN wpis / JEDNĄ teksturę (np. 100 kart jednostek w RTS → 1 wpis).
 
 `SDL_Color` to `{r, g, b, a}` (0-255), np. `{45, 48, 58, 255}`.
 
@@ -52,6 +67,9 @@ void setTextColor(ElementState state, SDL_Color color);
 void setTexture(ElementState state, SharedTexture texture);
 void setBorder(ElementState state, SDL_Color color, int width);
 void setBorderRadius(ElementState state, int radius);
+void setBevel(ElementState state, BevelType type);
+void setThumbColor(ElementState state, SDL_Color color);  // uchwyt suwaka
+void setFillColor(ElementState state, SDL_Color color);   // wypełnienie paska
 void setState(ElementState newState);   // wymuszenie stanu
 ElementState getState() const;
 ```
@@ -85,16 +103,18 @@ wymusza przerysowania — wywołaj wtedy `markDirty()`.
 
 ## Theme i ThemePresets
 
-`Theme` to słownik stylów: dla każdego typu widgetu (nazwa z
-`getComponentType()`, np. `"Button"`, `"Panel"`, `"Label"`) i każdego stanu
+`Theme` to tablica stylów `O(1)`: dla każdego typu widgetu (`ComponentType`,
+np. `ComponentType::Button`, `::Panel`, `::Label`) i każdego stanu
 można ustawić styl. Klasy `Style` nie są tu wymagane w całości — brakujące
-pola i tak dziedziczą w kaskadzie.
+pola i tak dziedziczą w kaskadzie. Nazwy string (`"Button"`…) istnieją tylko
+na granicy: pliki layoutu (`componentTypeFromString`) i C-API
+(`componentTypeToString`).
 
 ```cpp
-void setStyle(std::string_view type, ElementState state, Style style);
-Style getStyle(std::string_view type, ElementState state) const;
-void setStyle(std::string_view type, Style style);          // wszystkie stany
-Style getStyle(std::string_view type) const;
+void setStyle(ComponentType type, ElementState state, Style style);
+Style getStyle(ComponentType type, ElementState state) const;
+void setStyle(ComponentType type, Style style);          // wszystkie stany
+Style getStyle(ComponentType type) const;
 void setDefaultStyle(Style style);
 const Style& getDefaultStyle() const;
 static Theme createDefaultTheme();   // deleguje do ThemePresets::createWin9xTheme()

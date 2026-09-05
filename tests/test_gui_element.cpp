@@ -17,7 +17,7 @@ public:
         SDL_RenderFillRect(renderer, &r);
     }
     
-    const char* getComponentType() const override { return "TestableElement"; }
+    ComponentType getComponentTypeId() const override { return ComponentType::Unknown; }
     
     bool isDirty() const { return m_isDirty; }
     
@@ -568,18 +568,18 @@ TEST_CASE("GUIElement findElementAt", "[gui_element][find]") {
     }
 }
 
-TEST_CASE("GUIElement Component Type", "[gui_element][type]") {
+TEST_CASE("GUIElement ComponentType ID", "[gui_element][type]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
     
-    SECTION("getComponentType() returns correct type name") {
+    SECTION("getComponentTypeIdId() returns Unknown for test stubs") {
         TestableElement element(manager, 0, 0, 100, 100);
-        REQUIRE(std::string(element.getComponentType()) == "TestableElement");
+        REQUIRE(element.getComponentTypeId() == ComponentType::Unknown);
     }
     
-    SECTION("Panel component type") {
+    SECTION("Panel component type ID") {
         Panel panel(manager, 0, 0, 100, 100);
-        REQUIRE(std::string(panel.getComponentType()) == "Panel");
+        REQUIRE(panel.getComponentTypeId() == ComponentType::Panel);
     }
 }
 

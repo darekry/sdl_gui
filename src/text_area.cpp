@@ -772,6 +772,6 @@ void TextArea::refreshTextures() {
     }
 }
 
-const char* TextArea::getComponentType() const {
-    return "TextArea";
+ComponentType TextArea::getComponentTypeId() const {
+    return ComponentType::TextArea;
 }

@@ -15,7 +15,7 @@ public:
     void setRadius(int radius);
     void setArcRange(float startAngleDeg, float endAngleDeg);
     
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
     
 protected:
     void draw(SDL_Renderer*) override {}

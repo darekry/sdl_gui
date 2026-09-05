@@ -356,8 +356,8 @@ void StringGrid::setOnSelectionChange(SelectionCallback callback) {
 }
 
 // GUIElement overrides
-const char* StringGrid::getComponentType() const {
-    return "StringGrid";
+ComponentType StringGrid::getComponentTypeId() const {
+    return ComponentType::StringGrid;
 }
 
 bool StringGrid::isOverlay() const {

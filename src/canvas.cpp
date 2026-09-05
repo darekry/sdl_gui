@@ -188,8 +188,8 @@ bool Canvas::handleEvent(const SDL_Event& e) {
     return GUIElement::handleEvent(e);
 }
 
-const char* Canvas::getComponentType() const {
-    return "Canvas";
+ComponentType Canvas::getComponentTypeId() const {
+    return ComponentType::Canvas;
 }
 
 void Canvas::draw([[maybe_unused]] SDL_Renderer* renderer) {

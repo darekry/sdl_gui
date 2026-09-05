@@ -65,7 +65,7 @@ public:
     void close();
     [[nodiscard]] bool isOpen() const { return m_isOpen; }
 
-    [[nodiscard]] const char* getComponentType() const override;
+    [[nodiscard]] ComponentType getComponentTypeId() const override;
     [[nodiscard]] bool isOverlay() const override { return true; }
 
 protected:

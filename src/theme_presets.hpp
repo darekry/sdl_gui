@@ -44,14 +44,14 @@ inline Theme createWin9xTheme() {
         Style s;
         s.borderWidth = 2;
         s.borderRadius = 0;
-        theme.setStyle("Button", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Button, ElementState::Normal, s);
 
         s.backgroundColor = {223, 223, 223, 255};
-        theme.setStyle("Button", ElementState::Hover, s);
+        theme.setStyle(ComponentType::Button, ElementState::Hover, s);
 
         s.backgroundColor = {160, 160, 160, 255};
         s.borderColor = kBtnDarkShadow;
-        theme.setStyle("Button", ElementState::Pressed, s);
+        theme.setStyle(ComponentType::Button, ElementState::Pressed, s);
 
         s = Style{};
         s.backgroundColor = {192, 192, 192, 255};
@@ -59,7 +59,7 @@ inline Theme createWin9xTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = {160, 160, 160, 255};
-        theme.setStyle("Button", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::Button, ElementState::Disabled, s);
     }
 
     // Panel
@@ -68,7 +68,7 @@ inline Theme createWin9xTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.backgroundColor = kWindowBg;
-        theme.setStyle("Panel", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Panel, ElementState::Normal, s);
     }
 
     // TextInput - sunken 3D look
@@ -79,10 +79,10 @@ inline Theme createWin9xTheme() {
         s.borderRadius = 0;
         s.borderColor = kBtnShadow;
         s.textColor = kWindowText;
-        theme.setStyle("TextInput", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Normal, s);
 
         s.borderColor = kHighlight;
-        theme.setStyle("TextInput", ElementState::Hover, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Hover, s);
 
         s = Style{};
         s.backgroundColor = {212, 208, 200, 255};
@@ -90,7 +90,7 @@ inline Theme createWin9xTheme() {
         s.borderRadius = 0;
         s.borderColor = {160, 160, 160, 255};
         s.textColor = kDisabledText;
-        theme.setStyle("TextInput", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Disabled, s);
     }
 
     // TextArea
@@ -101,10 +101,10 @@ inline Theme createWin9xTheme() {
         s.borderRadius = 0;
         s.borderColor = kBtnShadow;
         s.textColor = kWindowText;
-        theme.setStyle("TextArea", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Normal, s);
 
         s.borderColor = kHighlight;
-        theme.setStyle("TextArea", ElementState::Hover, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Hover, s);
 
         s = Style{};
         s.backgroundColor = {212, 208, 200, 255};
@@ -112,7 +112,7 @@ inline Theme createWin9xTheme() {
         s.borderRadius = 0;
         s.borderColor = {160, 160, 160, 255};
         s.textColor = kDisabledText;
-        theme.setStyle("TextArea", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Disabled, s);
     }
 
     // Checkbox
@@ -120,7 +120,7 @@ inline Theme createWin9xTheme() {
         Style s;
         s.textColor = kWindowText;
         s.fontSize = 14;
-        theme.setStyle("Checkbox", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Checkbox, ElementState::Normal, s);
     }
 
     // RadioButton
@@ -128,7 +128,7 @@ inline Theme createWin9xTheme() {
         Style s;
         s.textColor = kWindowText;
         s.fontSize = 14;
-        theme.setStyle("RadioButton", ElementState::Normal, s);
+        theme.setStyle(ComponentType::RadioButton, ElementState::Normal, s);
     }
 
     // Label
@@ -137,7 +137,7 @@ inline Theme createWin9xTheme() {
         s.textColor = kWindowText;
         s.backgroundColor = {0, 0, 0, 0}; // transparent
         s.fontSize = 14;
-        theme.setStyle("Label", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Label, ElementState::Normal, s);
     }
 
     // Slider
@@ -146,7 +146,7 @@ inline Theme createWin9xTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.backgroundColor = kWindowBg;
-        theme.setStyle("Slider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Slider, ElementState::Normal, s);
     }
 
     // RangeSlider
@@ -155,7 +155,7 @@ inline Theme createWin9xTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.backgroundColor = kWindowBg;
-        theme.setStyle("RangeSlider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::RangeSlider, ElementState::Normal, s);
     }
 
     // ProgressBar
@@ -165,7 +165,7 @@ inline Theme createWin9xTheme() {
         s.borderRadius = 0;
         s.backgroundColor = kWhite;
         s.borderColor = {0, 0, 128, 255};
-        theme.setStyle("ProgressBar", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ProgressBar, ElementState::Normal, s);
     }
 
     // StringGrid
@@ -176,7 +176,7 @@ inline Theme createWin9xTheme() {
         s.borderColor = kBtnShadow;
         s.borderWidth = 1;
         s.borderRadius = 0;
-        theme.setStyle("StringGrid", ElementState::Normal, s);
+        theme.setStyle(ComponentType::StringGrid, ElementState::Normal, s);
     }
 
     // ListView
@@ -187,7 +187,7 @@ inline Theme createWin9xTheme() {
         s.borderColor = kBtnShadow;
         s.borderWidth = 2;
         s.borderRadius = 0;
-        theme.setStyle("ListView", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ListView, ElementState::Normal, s);
     }
 
     // ComboBox
@@ -198,10 +198,10 @@ inline Theme createWin9xTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kBtnShadow;
-        theme.setStyle("ComboBox", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ComboBox, ElementState::Normal, s);
 
         s.borderColor = kHighlight;
-        theme.setStyle("ComboBox", ElementState::Hover, s);
+        theme.setStyle(ComponentType::ComboBox, ElementState::Hover, s);
     }
 
     // TabControl
@@ -211,7 +211,7 @@ inline Theme createWin9xTheme() {
         s.borderWidth = 1;
         s.borderRadius = 0;
         s.textColor = kWindowText;
-        theme.setStyle("TabControl", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TabControl, ElementState::Normal, s);
     }
 
     // ContextMenu
@@ -222,11 +222,11 @@ inline Theme createWin9xTheme() {
         s.borderWidth = 1;
         s.borderRadius = 0;
         s.borderColor = kBtnShadow;
-        theme.setStyle("ContextMenu", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Normal, s);
 
         s.backgroundColor = kHighlight;
         s.textColor = kHighlightText;
-        theme.setStyle("ContextMenu", ElementState::Hover, s);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, s);
     }
 
     // ScrollArea
@@ -235,14 +235,14 @@ inline Theme createWin9xTheme() {
         s.backgroundColor = kWindowBg;
         s.borderWidth = 1;
         s.borderRadius = 0;
-        theme.setStyle("ScrollArea", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ScrollArea, ElementState::Normal, s);
     }
 
     // AnimatedImage
     {
         Style s;
         s.backgroundColor = kWindowBg;
-        theme.setStyle("AnimatedImage", ElementState::Normal, s);
+        theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
     }
 
     // Canvas
@@ -252,7 +252,7 @@ inline Theme createWin9xTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kBtnShadow;
-        theme.setStyle("Canvas", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Canvas, ElementState::Normal, s);
     }
 
     return theme;
@@ -287,18 +287,18 @@ inline Theme createWindows95Theme() {
         Style s;
         s.backgroundColor = constants::kWin95Face;
         s.borderRadius = 0;
-        theme.setStyle("Button", ElementState::Normal, withBevel(s, BevelType::Raised));
+        theme.setStyle(ComponentType::Button, ElementState::Normal, withBevel(s, BevelType::Raised));
 
         Style h = s;
         h.backgroundColor = constants::kWin95Light;
-        theme.setStyle("Button", ElementState::Hover, withBevel(h, BevelType::Raised));
+        theme.setStyle(ComponentType::Button, ElementState::Hover, withBevel(h, BevelType::Raised));
 
         Style p = s;
-        theme.setStyle("Button", ElementState::Pressed, withBevel(p, BevelType::Sunken));
+        theme.setStyle(ComponentType::Button, ElementState::Pressed, withBevel(p, BevelType::Sunken));
 
         Style d = s;
         d.textColor = kDisabledText;
-        theme.setStyle("Button", ElementState::Disabled, withBevel(d, BevelType::Raised));
+        theme.setStyle(ComponentType::Button, ElementState::Disabled, withBevel(d, BevelType::Raised));
     }
 
     // Panel: flat window background (window borders are set by the user)
@@ -306,7 +306,7 @@ inline Theme createWindows95Theme() {
         Style s;
         s.backgroundColor = constants::kWin95Face;
         s.borderRadius = 0;
-        theme.setStyle("Panel", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Panel, ElementState::Normal, s);
     }
 
     // Edit fields and lists: white background + Sunken
@@ -317,8 +317,8 @@ inline Theme createWindows95Theme() {
         return withBevel(s, BevelType::Sunken);
     };
 
-    theme.setStyle("TextInput", ElementState::Normal, sunkenField(kWhite));
-    theme.setStyle("TextInput", ElementState::Hover, sunkenField(kWhite));
+    theme.setStyle(ComponentType::TextInput, ElementState::Normal, sunkenField(kWhite));
+    theme.setStyle(ComponentType::TextInput, ElementState::Hover, sunkenField(kWhite));
     {
         Style d = sunkenField(constants::kWin95Face);
         d.borderColorOuterTopLeft.reset();
@@ -326,11 +326,11 @@ inline Theme createWindows95Theme() {
         d.borderColorInnerTopLeft.reset();
         d.borderColorInnerBottomRight.reset();
         d.textColor = kDisabledText;
-        theme.setStyle("TextInput", ElementState::Disabled, d);
+        theme.setStyle(ComponentType::TextInput, ElementState::Disabled, d);
     }
 
-    theme.setStyle("TextArea", ElementState::Normal, sunkenField(kWhite));
-    theme.setStyle("TextArea", ElementState::Hover, sunkenField(kWhite));
+    theme.setStyle(ComponentType::TextArea, ElementState::Normal, sunkenField(kWhite));
+    theme.setStyle(ComponentType::TextArea, ElementState::Hover, sunkenField(kWhite));
     {
         Style d = sunkenField(constants::kWin95Face);
         d.borderColorOuterTopLeft.reset();
@@ -338,26 +338,26 @@ inline Theme createWindows95Theme() {
         d.borderColorInnerTopLeft.reset();
         d.borderColorInnerBottomRight.reset();
         d.textColor = kDisabledText;
-        theme.setStyle("TextArea", ElementState::Disabled, d);
+        theme.setStyle(ComponentType::TextArea, ElementState::Disabled, d);
     }
 
     // ListView / ComboBox / Canvas: white + Sunken
-    theme.setStyle("ListView", ElementState::Normal, sunkenField(kWhite));
-    theme.setStyle("ComboBox", ElementState::Normal, sunkenField(kWhite));
-    theme.setStyle("Canvas", ElementState::Normal, sunkenField(kWhite));
+    theme.setStyle(ComponentType::ListView, ElementState::Normal, sunkenField(kWhite));
+    theme.setStyle(ComponentType::ComboBox, ElementState::Normal, sunkenField(kWhite));
+    theme.setStyle(ComponentType::Canvas, ElementState::Normal, sunkenField(kWhite));
 
     // StringGrid: white + Sunken; borderColor remains the grid line color
     {
         Style s = sunkenField(kWhite);
         s.borderColor = constants::kWin95Shadow;
-        theme.setStyle("StringGrid", ElementState::Normal, s);
+        theme.setStyle(ComponentType::StringGrid, ElementState::Normal, s);
     }
 
     // ProgressBar: white background + Sunken; borderColor = fill color (navy)
     {
         Style s = sunkenField(kWhite);
         s.borderColor = kNavy;
-        theme.setStyle("ProgressBar", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ProgressBar, ElementState::Normal, s);
     }
 
     // Slider: track drawn by the widget; borderColor = thumb color
@@ -366,7 +366,7 @@ inline Theme createWindows95Theme() {
         s.backgroundColor = constants::kWin95Face;
         s.borderColor = constants::kWin95Shadow;
         s.borderRadius = 0;
-        theme.setStyle("Slider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Slider, ElementState::Normal, s);
     }
 
     {
@@ -374,7 +374,7 @@ inline Theme createWindows95Theme() {
         s.backgroundColor = constants::kWin95Face;
         s.borderColor = constants::kWin95Shadow;
         s.borderRadius = 0;
-        theme.setStyle("RangeSlider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::RangeSlider, ElementState::Normal, s);
     }
 
     // Checkbox / RadioButton: text only (boxes drawn by the widget)
@@ -382,10 +382,10 @@ inline Theme createWindows95Theme() {
         Style s;
         s.textColor = kWindowText;
         s.fontSize = 14;
-        theme.setStyle("Checkbox", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Checkbox, ElementState::Normal, s);
 
         Style r = s;
-        theme.setStyle("RadioButton", ElementState::Normal, r);
+        theme.setStyle(ComponentType::RadioButton, ElementState::Normal, r);
     }
 
     // Label: transparent
@@ -394,7 +394,7 @@ inline Theme createWindows95Theme() {
         s.textColor = kWindowText;
         s.backgroundColor = SDL_Color{0, 0, 0, 0};
         s.fontSize = 14;
-        theme.setStyle("Label", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Label, ElementState::Normal, s);
     }
 
     // TabControl / ScrollArea / AnimatedImage: flat background
@@ -402,9 +402,9 @@ inline Theme createWindows95Theme() {
         Style s;
         s.backgroundColor = constants::kWin95Face;
         s.borderRadius = 0;
-        theme.setStyle("TabControl", ElementState::Normal, s);
-        theme.setStyle("ScrollArea", ElementState::Normal, s);
-        theme.setStyle("AnimatedImage", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TabControl, ElementState::Normal, s);
+        theme.setStyle(ComponentType::ScrollArea, ElementState::Normal, s);
+        theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
     }
 
     // ContextMenu: white with shadow, navy selection
@@ -415,12 +415,12 @@ inline Theme createWindows95Theme() {
         s.borderColor = constants::kWin95Shadow;
         s.borderWidth = 1;
         s.borderRadius = 0;
-        theme.setStyle("ContextMenu", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Normal, s);
 
         Style h = s;
         h.backgroundColor = kNavy;
         h.textColor = kHighlightText;
-        theme.setStyle("ContextMenu", ElementState::Hover, h);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, h);
     }
 
     return theme;
@@ -461,15 +461,15 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kAccent;
-        theme.setStyle("Button", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Button, ElementState::Normal, s);
 
         s.backgroundColor = {0, 100, 190, 255};
         s.borderColor = {0, 100, 190, 255};
-        theme.setStyle("Button", ElementState::Hover, s);
+        theme.setStyle(ComponentType::Button, ElementState::Hover, s);
 
         s.backgroundColor = {0, 80, 160, 255};
         s.borderColor = {0, 80, 160, 255};
-        theme.setStyle("Button", ElementState::Pressed, s);
+        theme.setStyle(ComponentType::Button, ElementState::Pressed, s);
 
         s = Style{};
         s.backgroundColor = {200, 200, 200, 255};
@@ -477,7 +477,7 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = {210, 210, 210, 255};
-        theme.setStyle("Button", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::Button, ElementState::Disabled, s);
     }
 
     // Panel
@@ -486,7 +486,7 @@ inline Theme createLightTheme() {
         s.backgroundColor = kPanelBg;
         s.borderWidth = 1;
         s.borderRadius = 8;
-        theme.setStyle("Panel", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Panel, ElementState::Normal, s);
     }
 
     // TextInput
@@ -497,10 +497,10 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("TextInput", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Normal, s);
 
         s.borderColor = kAccent;
-        theme.setStyle("TextInput", ElementState::Hover, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Hover, s);
 
         s = Style{};
         s.backgroundColor = {248, 248, 248, 255};
@@ -508,7 +508,7 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = {225, 225, 225, 255};
-        theme.setStyle("TextInput", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Disabled, s);
     }
 
     // TextArea
@@ -519,10 +519,10 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("TextArea", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Normal, s);
 
         s.borderColor = kAccent;
-        theme.setStyle("TextArea", ElementState::Hover, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Hover, s);
 
         s = Style{};
         s.backgroundColor = {248, 248, 248, 255};
@@ -530,7 +530,7 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = {225, 225, 225, 255};
-        theme.setStyle("TextArea", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Disabled, s);
     }
 
     // Checkbox
@@ -538,7 +538,7 @@ inline Theme createLightTheme() {
         Style s;
         s.textColor = kAccent;
         s.fontSize = 16;
-        theme.setStyle("Checkbox", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Checkbox, ElementState::Normal, s);
     }
 
     // RadioButton
@@ -546,7 +546,7 @@ inline Theme createLightTheme() {
         Style s;
         s.textColor = kAccent;
         s.fontSize = 16;
-        theme.setStyle("RadioButton", ElementState::Normal, s);
+        theme.setStyle(ComponentType::RadioButton, ElementState::Normal, s);
     }
 
     // Label
@@ -554,7 +554,7 @@ inline Theme createLightTheme() {
         Style s;
         s.textColor = kText;
         s.fontSize = 16;
-        theme.setStyle("Label", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Label, ElementState::Normal, s);
     }
 
     // Slider
@@ -563,7 +563,7 @@ inline Theme createLightTheme() {
         s.backgroundColor = kPanelBg;
         s.borderWidth = 1;
         s.borderRadius = 6;
-        theme.setStyle("Slider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Slider, ElementState::Normal, s);
     }
 
     // RangeSlider
@@ -572,7 +572,7 @@ inline Theme createLightTheme() {
         s.backgroundColor = kPanelBg;
         s.borderWidth = 1;
         s.borderRadius = 6;
-        theme.setStyle("RangeSlider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::RangeSlider, ElementState::Normal, s);
     }
 
     // ProgressBar
@@ -582,7 +582,7 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kAccent;
-        theme.setStyle("ProgressBar", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ProgressBar, ElementState::Normal, s);
     }
 
     // StringGrid
@@ -593,7 +593,7 @@ inline Theme createLightTheme() {
         s.borderColor = kBorder;
         s.borderWidth = 1;
         s.borderRadius = 4;
-        theme.setStyle("StringGrid", ElementState::Normal, s);
+        theme.setStyle(ComponentType::StringGrid, ElementState::Normal, s);
     }
 
     // ListView
@@ -604,7 +604,7 @@ inline Theme createLightTheme() {
         s.borderColor = kBorder;
         s.borderWidth = 1;
         s.borderRadius = 6;
-        theme.setStyle("ListView", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ListView, ElementState::Normal, s);
     }
 
     // ComboBox
@@ -615,10 +615,10 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("ComboBox", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ComboBox, ElementState::Normal, s);
 
         s.borderColor = kAccent;
-        theme.setStyle("ComboBox", ElementState::Hover, s);
+        theme.setStyle(ComponentType::ComboBox, ElementState::Hover, s);
     }
 
     // TabControl
@@ -628,7 +628,7 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.textColor = kText;
-        theme.setStyle("TabControl", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TabControl, ElementState::Normal, s);
     }
 
     // ContextMenu
@@ -639,11 +639,11 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("ContextMenu", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Normal, s);
 
         s.backgroundColor = kAccent;
         s.textColor = kWhite;
-        theme.setStyle("ContextMenu", ElementState::Hover, s);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, s);
     }
 
     // ScrollArea
@@ -652,14 +652,14 @@ inline Theme createLightTheme() {
         s.backgroundColor = kPanelBg;
         s.borderWidth = 1;
         s.borderRadius = 6;
-        theme.setStyle("ScrollArea", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ScrollArea, ElementState::Normal, s);
     }
 
     // AnimatedImage
     {
         Style s;
         s.backgroundColor = kBg;
-        theme.setStyle("AnimatedImage", ElementState::Normal, s);
+        theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
     }
 
     // Canvas
@@ -669,7 +669,7 @@ inline Theme createLightTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("Canvas", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Canvas, ElementState::Normal, s);
     }
 
     return theme;
@@ -710,15 +710,15 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kAccent;
-        theme.setStyle("Button", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Button, ElementState::Normal, s);
 
         s.backgroundColor = {80, 155, 245, 255};
         s.borderColor = {80, 155, 245, 255};
-        theme.setStyle("Button", ElementState::Hover, s);
+        theme.setStyle(ComponentType::Button, ElementState::Hover, s);
 
         s.backgroundColor = {40, 120, 220, 255};
         s.borderColor = {40, 120, 220, 255};
-        theme.setStyle("Button", ElementState::Pressed, s);
+        theme.setStyle(ComponentType::Button, ElementState::Pressed, s);
 
         s = Style{};
         s.backgroundColor = {60, 60, 60, 255};
@@ -726,7 +726,7 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = {55, 55, 55, 255};
-        theme.setStyle("Button", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::Button, ElementState::Disabled, s);
     }
 
     // Panel
@@ -735,7 +735,7 @@ inline Theme createDarkTheme() {
         s.backgroundColor = kPanelBg;
         s.borderWidth = 1;
         s.borderRadius = 8;
-        theme.setStyle("Panel", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Panel, ElementState::Normal, s);
     }
 
     // TextInput
@@ -746,10 +746,10 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("TextInput", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Normal, s);
 
         s.borderColor = kAccent;
-        theme.setStyle("TextInput", ElementState::Hover, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Hover, s);
 
         s = Style{};
         s.backgroundColor = {40, 40, 40, 255};
@@ -757,7 +757,7 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = {50, 50, 50, 255};
-        theme.setStyle("TextInput", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Disabled, s);
     }
 
     // TextArea
@@ -768,10 +768,10 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("TextArea", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Normal, s);
 
         s.borderColor = kAccent;
-        theme.setStyle("TextArea", ElementState::Hover, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Hover, s);
 
         s = Style{};
         s.backgroundColor = {40, 40, 40, 255};
@@ -779,7 +779,7 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = {50, 50, 50, 255};
-        theme.setStyle("TextArea", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Disabled, s);
     }
 
     // Checkbox
@@ -787,7 +787,7 @@ inline Theme createDarkTheme() {
         Style s;
         s.textColor = kAccent;
         s.fontSize = 16;
-        theme.setStyle("Checkbox", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Checkbox, ElementState::Normal, s);
     }
 
     // RadioButton
@@ -795,7 +795,7 @@ inline Theme createDarkTheme() {
         Style s;
         s.textColor = kAccent;
         s.fontSize = 16;
-        theme.setStyle("RadioButton", ElementState::Normal, s);
+        theme.setStyle(ComponentType::RadioButton, ElementState::Normal, s);
     }
 
     // Label
@@ -803,7 +803,7 @@ inline Theme createDarkTheme() {
         Style s;
         s.textColor = kText;
         s.fontSize = 16;
-        theme.setStyle("Label", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Label, ElementState::Normal, s);
     }
 
     // Slider
@@ -812,7 +812,7 @@ inline Theme createDarkTheme() {
         s.backgroundColor = kPanelBg;
         s.borderWidth = 1;
         s.borderRadius = 6;
-        theme.setStyle("Slider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Slider, ElementState::Normal, s);
     }
 
     // RangeSlider
@@ -821,7 +821,7 @@ inline Theme createDarkTheme() {
         s.backgroundColor = kPanelBg;
         s.borderWidth = 1;
         s.borderRadius = 6;
-        theme.setStyle("RangeSlider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::RangeSlider, ElementState::Normal, s);
     }
 
     // ProgressBar
@@ -831,7 +831,7 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kAccent;
-        theme.setStyle("ProgressBar", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ProgressBar, ElementState::Normal, s);
     }
 
     // StringGrid
@@ -842,7 +842,7 @@ inline Theme createDarkTheme() {
         s.borderColor = kBorder;
         s.borderWidth = 1;
         s.borderRadius = 4;
-        theme.setStyle("StringGrid", ElementState::Normal, s);
+        theme.setStyle(ComponentType::StringGrid, ElementState::Normal, s);
     }
 
     // ListView
@@ -853,7 +853,7 @@ inline Theme createDarkTheme() {
         s.borderColor = kBorder;
         s.borderWidth = 1;
         s.borderRadius = 6;
-        theme.setStyle("ListView", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ListView, ElementState::Normal, s);
     }
 
     // ComboBox
@@ -864,10 +864,10 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("ComboBox", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ComboBox, ElementState::Normal, s);
 
         s.borderColor = kAccent;
-        theme.setStyle("ComboBox", ElementState::Hover, s);
+        theme.setStyle(ComponentType::ComboBox, ElementState::Hover, s);
     }
 
     // TabControl
@@ -877,7 +877,7 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.textColor = kText;
-        theme.setStyle("TabControl", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TabControl, ElementState::Normal, s);
     }
 
     // ContextMenu
@@ -888,11 +888,11 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("ContextMenu", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Normal, s);
 
         s.backgroundColor = kAccent;
         s.textColor = kWhite;
-        theme.setStyle("ContextMenu", ElementState::Hover, s);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, s);
     }
 
     // ScrollArea
@@ -901,14 +901,14 @@ inline Theme createDarkTheme() {
         s.backgroundColor = kPanelBg;
         s.borderWidth = 1;
         s.borderRadius = 6;
-        theme.setStyle("ScrollArea", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ScrollArea, ElementState::Normal, s);
     }
 
     // AnimatedImage
     {
         Style s;
         s.backgroundColor = kBg;
-        theme.setStyle("AnimatedImage", ElementState::Normal, s);
+        theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
     }
 
     // Canvas
@@ -918,7 +918,7 @@ inline Theme createDarkTheme() {
         s.borderWidth = 1;
         s.borderRadius = 6;
         s.borderColor = kBorder;
-        theme.setStyle("Canvas", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Canvas, ElementState::Normal, s);
     }
 
     return theme;
@@ -955,16 +955,16 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 3;
         s.borderRadius = 0;
         s.borderColor = kYellow;
-        theme.setStyle("Button", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Button, ElementState::Normal, s);
 
         s.backgroundColor = kYellow;
         s.textColor = kBlack;
-        theme.setStyle("Button", ElementState::Hover, s);
+        theme.setStyle(ComponentType::Button, ElementState::Hover, s);
 
         s.backgroundColor = kCyan;
         s.textColor = kBlack;
         s.borderColor = kCyan;
-        theme.setStyle("Button", ElementState::Pressed, s);
+        theme.setStyle(ComponentType::Button, ElementState::Pressed, s);
 
         s = Style{};
         s.backgroundColor = kBlack;
@@ -972,7 +972,7 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = {128, 128, 128, 255};
-        theme.setStyle("Button", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::Button, ElementState::Disabled, s);
     }
 
     // Panel
@@ -982,7 +982,7 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kWhite;
-        theme.setStyle("Panel", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Panel, ElementState::Normal, s);
     }
 
     // TextInput
@@ -993,10 +993,10 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kWhite;
-        theme.setStyle("TextInput", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Normal, s);
 
         s.borderColor = kYellow;
-        theme.setStyle("TextInput", ElementState::Hover, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Hover, s);
 
         s = Style{};
         s.backgroundColor = kBlack;
@@ -1004,7 +1004,7 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = {128, 128, 128, 255};
-        theme.setStyle("TextInput", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::TextInput, ElementState::Disabled, s);
     }
 
     // TextArea
@@ -1015,10 +1015,10 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kWhite;
-        theme.setStyle("TextArea", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Normal, s);
 
         s.borderColor = kYellow;
-        theme.setStyle("TextArea", ElementState::Hover, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Hover, s);
 
         s = Style{};
         s.backgroundColor = kBlack;
@@ -1026,7 +1026,7 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = {128, 128, 128, 255};
-        theme.setStyle("TextArea", ElementState::Disabled, s);
+        theme.setStyle(ComponentType::TextArea, ElementState::Disabled, s);
     }
 
     // Checkbox
@@ -1034,7 +1034,7 @@ inline Theme createHighContrastTheme() {
         Style s;
         s.textColor = kCyan;
         s.fontSize = 18;
-        theme.setStyle("Checkbox", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Checkbox, ElementState::Normal, s);
     }
 
     // RadioButton
@@ -1042,7 +1042,7 @@ inline Theme createHighContrastTheme() {
         Style s;
         s.textColor = kCyan;
         s.fontSize = 18;
-        theme.setStyle("RadioButton", ElementState::Normal, s);
+        theme.setStyle(ComponentType::RadioButton, ElementState::Normal, s);
     }
 
     // Label
@@ -1050,7 +1050,7 @@ inline Theme createHighContrastTheme() {
         Style s;
         s.textColor = kWhite;
         s.fontSize = 18;
-        theme.setStyle("Label", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Label, ElementState::Normal, s);
     }
 
     // Slider
@@ -1060,7 +1060,7 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kWhite;
-        theme.setStyle("Slider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Slider, ElementState::Normal, s);
     }
 
     // RangeSlider
@@ -1070,7 +1070,7 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kWhite;
-        theme.setStyle("RangeSlider", ElementState::Normal, s);
+        theme.setStyle(ComponentType::RangeSlider, ElementState::Normal, s);
     }
 
     // ProgressBar
@@ -1080,7 +1080,7 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kYellow;
-        theme.setStyle("ProgressBar", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ProgressBar, ElementState::Normal, s);
     }
 
     // StringGrid
@@ -1091,7 +1091,7 @@ inline Theme createHighContrastTheme() {
         s.borderColor = kWhite;
         s.borderWidth = 2;
         s.borderRadius = 0;
-        theme.setStyle("StringGrid", ElementState::Normal, s);
+        theme.setStyle(ComponentType::StringGrid, ElementState::Normal, s);
     }
 
     // ListView
@@ -1102,7 +1102,7 @@ inline Theme createHighContrastTheme() {
         s.borderColor = kWhite;
         s.borderWidth = 2;
         s.borderRadius = 0;
-        theme.setStyle("ListView", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ListView, ElementState::Normal, s);
     }
 
     // ComboBox
@@ -1113,10 +1113,10 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kWhite;
-        theme.setStyle("ComboBox", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ComboBox, ElementState::Normal, s);
 
         s.borderColor = kYellow;
-        theme.setStyle("ComboBox", ElementState::Hover, s);
+        theme.setStyle(ComponentType::ComboBox, ElementState::Hover, s);
     }
 
     // TabControl
@@ -1126,7 +1126,7 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.textColor = kWhite;
-        theme.setStyle("TabControl", ElementState::Normal, s);
+        theme.setStyle(ComponentType::TabControl, ElementState::Normal, s);
     }
 
     // ContextMenu
@@ -1137,11 +1137,11 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kWhite;
-        theme.setStyle("ContextMenu", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Normal, s);
 
         s.backgroundColor = kYellow;
         s.textColor = kBlack;
-        theme.setStyle("ContextMenu", ElementState::Hover, s);
+        theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, s);
     }
 
     // ScrollArea
@@ -1150,14 +1150,14 @@ inline Theme createHighContrastTheme() {
         s.backgroundColor = kBlack;
         s.borderWidth = 2;
         s.borderRadius = 0;
-        theme.setStyle("ScrollArea", ElementState::Normal, s);
+        theme.setStyle(ComponentType::ScrollArea, ElementState::Normal, s);
     }
 
     // AnimatedImage
     {
         Style s;
         s.backgroundColor = kBlack;
-        theme.setStyle("AnimatedImage", ElementState::Normal, s);
+        theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
     }
 
     // Canvas
@@ -1167,7 +1167,7 @@ inline Theme createHighContrastTheme() {
         s.borderWidth = 2;
         s.borderRadius = 0;
         s.borderColor = kWhite;
-        theme.setStyle("Canvas", ElementState::Normal, s);
+        theme.setStyle(ComponentType::Canvas, ElementState::Normal, s);
     }
 
     return theme;

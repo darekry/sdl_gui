@@ -40,13 +40,13 @@ TEST_CASE("Checkbox position and dimensions", "[checkbox]") {
     }
 }
 
-TEST_CASE("Checkbox component type", "[checkbox]") {
+TEST_CASE("Checkbox component type ID", "[checkbox]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("getComponentType returns Checkbox") {
+    SECTION("getComponentTypeIdId returns Checkbox") {
         Checkbox cb(manager, 0, 0, 20, 20);
-        REQUIRE(std::string(cb.getComponentType()) == "Checkbox");
+        REQUIRE(cb.getComponentTypeId() == ComponentType::Checkbox);
     }
 }
 

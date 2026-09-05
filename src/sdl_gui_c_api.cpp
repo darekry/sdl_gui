@@ -26,7 +26,6 @@
 
 #include "sdl_gui.h"
 
-#include <cstring>
 #include <cassert>
 
 /* ═══════════════════════════════════════════════════════════
@@ -327,7 +326,8 @@ const char* sdlgui_element_get_id(sdlgui_element_t e) {
 }
 
 const char* sdlgui_element_get_type(sdlgui_element_t e) {
-    return unwrap_elem(e)->getComponentType();
+    // Boundary conversion: ID -> string for C callers.
+    return componentTypeToString(unwrap_elem(e)->getComponentTypeId()).data();
 }
 
 void sdlgui_element_set_anchor(sdlgui_element_t e, sdlgui_anchor_t anchor) {
@@ -462,7 +462,7 @@ void sdlgui_button_set_label(sdlgui_element_t e, const char* label) {
     auto* btn = static_cast<Button*>(unwrap_elem(e));
     Label* lbl = nullptr;
     for (auto& child : btn->getChildren()) {
-        if (std::strcmp(child->getComponentType(), "Label") == 0) {
+        if (child->getComponentTypeId() == ComponentType::Label) {
             lbl = static_cast<Label*>(child.get());
             break;
         }

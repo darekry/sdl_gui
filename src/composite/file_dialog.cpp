@@ -423,6 +423,6 @@ bool FileDialog::handleEvent(const SDL_Event& e) {
     return false;
 }
 
-const char* FileDialog::getComponentType() const {
-    return "FileDialog";
+ComponentType FileDialog::getComponentTypeId() const {
+    return ComponentType::FileDialog;
 }

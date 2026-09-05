@@ -34,7 +34,7 @@ Label* label = manager.create<Label>(10, 10, "Witaj, świecie!", 18);
 | `void setID(std::string_view id)` | Identyfikator (dziedziczone) |
 | `void setAnchor(const Anchor& anchor)` | Responsywne pozycjonowanie (dziedziczone) |
 
-Typ `getComponentType()`: `"Label"`.
+Typ `getComponentTypeId()`: `ComponentType::Label`.
 
 ## Callbacki / zdarzenia
 

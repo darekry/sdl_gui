@@ -74,8 +74,8 @@ bool Panel::handleEvent(const SDL_Event& event) {
     return false;
 }
 
-const char* Panel::getComponentType() const {
-    return "Panel";
+ComponentType Panel::getComponentTypeId() const {
+    return ComponentType::Panel;
 }
 
 void Panel::onMouseCaptureLost() {

@@ -17,7 +17,7 @@ public:
     // Sets the active tab by index (0-based)
     void setActiveTab(int index);
 
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 protected:
 

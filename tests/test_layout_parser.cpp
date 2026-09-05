@@ -36,8 +36,8 @@ TEST_CASE("LayoutParser - shared behavior", "[layout_parser]") {
 
         REQUIRE(jroot != nullptr);
         REQUIRE(sroot != nullptr);
-        REQUIRE(std::string(jroot->getComponentType()) == "Panel");
-        REQUIRE(std::string(sroot->getComponentType()) == "Panel");
+        REQUIRE(jroot->getComponentTypeId() == ComponentType::Panel);
+        REQUIRE(sroot->getComponentTypeId() == ComponentType::Panel);
         REQUIRE(jroot->getChildren().size() == sroot->getChildren().size());
     }
 

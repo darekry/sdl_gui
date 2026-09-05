@@ -28,7 +28,7 @@ public:
     void setOnRowDoubleClick(RowCallback callback);
     void setOnRowActivate(RowCallback callback);
 
-    [[nodiscard]] const char* getComponentType() const override;
+    [[nodiscard]] ComponentType getComponentTypeId() const override;
     bool handleEvent(const SDL_Event& e) override;
 
 private:

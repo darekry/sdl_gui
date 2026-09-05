@@ -124,4 +124,4 @@ int main(int, char**) {
 - `setValue()` clampuje do zakresu i sam wywołuje `markDirty()`. Po bezpośrednim zapisie przez `*getValuePtr()` odświeżenie widoku wymaga ręcznego `markDirty()` — stąd `on_frame` w animacji.
 - Format tekstu to format printf — `%.0f%%` pokazuje liczby całkowite z procentem, `%.1f%%` z jedną cyfrą po przecinku. Format jest stosowany do znormalizowanego procentu (0..100). Tekst znika po `setShowText(false)`.
 - Dla orientacji pionowej ustaw rozmiar `height > width` (np. 24×120), dla poziomej odwrotnie.
-- Kolor wypełnienia pochodzi z `borderColor` stylu (`Theme`/`setBorder`), a kolor tekstu z `textColor`.
+- Kolor wypełnienia pochodzi z `fillColor` stylu (`setFillColor`), z fallbackiem do `borderColor` dla starszych motywów, a kolor tekstu z `textColor`.

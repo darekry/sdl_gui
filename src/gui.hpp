@@ -10,6 +10,7 @@
 #include "style.hpp"
 #include "anchor.hpp"
 #include "constants.hpp"
+#include "component_type.hpp"
 
 #include "logger.hpp"
 
@@ -104,8 +105,16 @@ public:
     void setBorder(ElementState state, SDL_Color color, int width);
     void setBorderRadius(ElementState state, int radius);
     void setBevel(ElementState state, BevelType type);
+    void setThumbColor(ElementState state, SDL_Color color);
+    void setFillColor(ElementState state, SDL_Color color);
     Style getComposedStyle(ElementState state) const;
-    virtual const char* getComponentType() const;
+    // Interned widget type ID. Each widget overrides it; the string name
+    // exists only at the outer boundary (layout files, C-API) via
+    // componentTypeFromString/componentTypeToString.
+    virtual ComponentType getComponentTypeId() const = 0;
+    // Whether the 3D bevel branch applies. Widgets without frames
+    // (Label/Cursor/...) return false so bevel colors are ignored.
+    virtual bool supportsBevel() const { return true; }
     void markForDeletion();
     void markDirty(bool cascadeToParents = true);
     void markDirtyRecursively();
@@ -181,6 +190,16 @@ protected:
         SharedTexture m_cachedTexture;
         uint64_t m_cacheKey = 0;
         std::array<std::optional<Style>, 4> m_localStyles;
+        // Resolved-style cache (StyleResolver phase 1): merged
+        // local+theme+default per state, valid while theme epoch and
+        // local epoch are unchanged. Makes repeated draw()/cache-key
+        // builds O(1) instead of map+merge per call.
+        mutable std::array<Style, 4> m_resolvedCache{};
+        mutable std::array<bool, 4> m_resolvedValid{false, false, false, false};
+        mutable uint64_t m_resolvedThemeEpoch = 0;
+        uint64_t m_localStyleEpoch = 1;
+        mutable uint64_t m_resolvedLocalEpoch = 0;
+        void invalidateResolvedCache();
         static constexpr size_t stateIndex(ElementState state) {
             return static_cast<size_t>(state);
         }
@@ -202,6 +221,16 @@ void drawBevelFrame(SDL_Renderer* renderer, SDL_Rect rect, int thickness, SDL_Co
 // Draws the bevels stored in the style (outer and inner, 1px each).
 // A plain border (borderColor/borderWidth) is then ignored.
 void drawStyleBevel(SDL_Renderer* renderer, SDL_Rect rect, const Style& style);
+
+// Single border renderer for all widgets: bevel (when the widget supports
+// it and the style carries bevel colors) takes priority over the plain
+// border, exactly as drawBackgroundAndBorder always did. Custom-draw widgets
+// (e.g. RadioButton) must call this instead of duplicating the branch.
+void drawResolvedBorder(SDL_Renderer* renderer, SDL_Rect rect, const Style& style, bool withBevel);
+
+// Accent-color helpers with backwards-compat fallback to borderColor.
+SDL_Color effectiveThumbColor(const Style& style, SDL_Color fallback = {100, 100, 100, 255});
+SDL_Color effectiveFillColor(const Style& style, SDL_Color fallback = {100, 100, 100, 255});
 
 // Fills the 4 edge colors in the style with the Windows 95/98 system palette.
 // Used by GUIElement::setBevel and the layout parsers ("bevel" shorthand).

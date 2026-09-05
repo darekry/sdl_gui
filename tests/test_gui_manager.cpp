@@ -342,6 +342,7 @@ TEST_CASE("GUIManager Focus Management", "[gui_manager][focus]") {
             void onFocusGained() override { ++focusGainedCount; }
             void onFocusLost() override { ++focusLostCount; }
             
+            ComponentType getComponentTypeId() const override { return ComponentType::Unknown; }
             void draw(SDL_Renderer*) override {}
         };
         
@@ -382,6 +383,7 @@ TEST_CASE("GUIManager Mouse Capture", "[gui_manager][capture]") {
             void onMouseCaptureGained() override { ++captureGainedCount; }
             void onMouseCaptureLost() override { ++captureLostCount; }
             
+            ComponentType getComponentTypeId() const override { return ComponentType::Unknown; }
             void draw(SDL_Renderer*) override {}
         };
         
@@ -409,6 +411,7 @@ TEST_CASE("GUIManager Mouse Capture", "[gui_manager][capture]") {
             void onMouseCaptureGained() override { ++captureGainedCount; }
             void onMouseCaptureLost() override { ++captureLostCount; }
             
+            ComponentType getComponentTypeId() const override { return ComponentType::Unknown; }
             void draw(SDL_Renderer*) override {}
         };
         
@@ -436,6 +439,7 @@ TEST_CASE("GUIManager Mouse Capture", "[gui_manager][capture]") {
                 return true;
             }
             
+            ComponentType getComponentTypeId() const override { return ComponentType::Unknown; }
             void draw(SDL_Renderer*) override {}
         };
         
@@ -471,17 +475,17 @@ TEST_CASE("GUIManager Theme", "[gui_manager][theme]") {
         Theme customTheme;
         Style btnStyle;
         btnStyle.backgroundColor = SDL_Color{100, 100, 100, 255};
-        customTheme.setStyle("Button", btnStyle);
+        customTheme.setStyle(ComponentType::Button, btnStyle);
         
         manager.setTheme(customTheme);
         
-        REQUIRE(manager.getTheme().getStyle("Button").backgroundColor.has_value());
-        REQUIRE(manager.getTheme().getStyle("Button").backgroundColor->r == 100);
+        REQUIRE(manager.getTheme().getStyle(ComponentType::Button).backgroundColor.has_value());
+        REQUIRE(manager.getTheme().getStyle(ComponentType::Button).backgroundColor->r == 100);
     }
 
     SECTION("getTheme returns current theme") {
         Theme& theme = manager.getTheme();
-        REQUIRE_NOTHROW(theme.getStyle("Button"));
+        REQUIRE_NOTHROW(theme.getStyle(ComponentType::Button));
         REQUIRE_NOTHROW(theme.getDefaultStyle());
     }
 
@@ -696,6 +700,7 @@ TEST_CASE("GUIManager Cleanup", "[gui_manager][cleanup]") {
         public:
             CaptureTestElement(GUIManager& m, int x, int y, int w, int h)
                 : GUIElement(m, x, y, w, h) {}
+            ComponentType getComponentTypeId() const override { return ComponentType::Unknown; }
             void draw(SDL_Renderer*) override {}
         };
         
@@ -729,7 +734,7 @@ TEST_CASE("GUIManager Constructor", "[gui_manager][constructor]") {
     SECTION("GUIManager initializes default theme") {
         GUIManager manager(renderer);
         Theme& theme = manager.getTheme();
-        REQUIRE_NOTHROW(theme.getStyle("Button"));
+        REQUIRE_NOTHROW(theme.getStyle(ComponentType::Button));
         REQUIRE_NOTHROW(theme.getDefaultStyle());
     }
 }

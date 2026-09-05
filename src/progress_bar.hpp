@@ -25,7 +25,7 @@ public:
 
     float* getValuePtr() { return &m_value; }
 
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 protected:
     void draw(SDL_Renderer* renderer) override;

@@ -74,8 +74,8 @@ bool Checkbox::handleEvent(const SDL_Event& e) {
     return false;
 }
 
-const char* Checkbox::getComponentType() const {
-    return "Checkbox";
+ComponentType Checkbox::getComponentTypeId() const {
+    return ComponentType::Checkbox;
 }
 void Checkbox::draw(SDL_Renderer* renderer) {
     drawBackgroundAndBorder(renderer);

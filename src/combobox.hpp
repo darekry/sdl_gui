@@ -25,7 +25,7 @@ public:
     bool isExpanded() const { return m_is_expanded; }
     std::function<void(int, const std::string&)> on_selection_changed;
 
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 protected:
     void draw(SDL_Renderer* renderer) override;

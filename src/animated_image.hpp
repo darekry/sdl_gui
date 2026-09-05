@@ -54,7 +54,7 @@ public:
     // For rendering without cache we implement drawDirect (GUIElement::drawDirect)
     bool wantsDirectRender() const override;
     void drawDirect(SDL_Renderer* renderer) override;
-    const char* getComponentType() const override { return "AnimatedImage"; }
+    ComponentType getComponentTypeId() const override { return ComponentType::AnimatedImage; }
 
     bool canShareRenderCache() const override { return false; }
 private:

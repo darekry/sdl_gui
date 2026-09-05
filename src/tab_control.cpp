@@ -79,6 +79,6 @@ void TabControl::reorderTabs() {
     }
 }
 
-const char* TabControl::getComponentType() const {
-    return "TabControl";
+ComponentType TabControl::getComponentTypeId() const {
+    return ComponentType::TabControl;
 }

@@ -12,6 +12,7 @@ class BevelProbe : public GUIElement {
 public:
     explicit BevelProbe(GUIManager& manager)
         : GUIElement(manager, 0, 0, 40, 24) {}
+    ComponentType getComponentTypeId() const override { return ComponentType::Unknown; }
     using GUIElement::getComposedStyle;
 };
 }
@@ -276,5 +277,58 @@ TEST_CASE("GUIElement - setBevel", "[style][bevel]") {
             manager.render();
         }
         SUCCEED();
+    }
+}
+
+TEST_CASE("RenderCache - identical widgets share one entry (RTS case)", "[style][rendercache]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("100 identical panels produce 1 cache entry") {
+        size_t before = manager.getTextureManager().getRenderCacheSize();
+        for (int i = 0; i < 100; ++i) {
+            auto panel = std::make_unique<Panel>(manager, i * 2, i * 2, 60, 30);
+            panel->setBackgroundColor(ElementState::Normal, SDL_Color{45, 48, 58, 255});
+            manager.addElement(std::move(panel));
+        }
+        manager.render();
+        size_t after = manager.getTextureManager().getRenderCacheSize();
+        REQUIRE(after - before == 1);
+    }
+
+    SECTION("different size or style breaks sharing") {
+        auto a = std::make_unique<Panel>(manager, 0, 0, 60, 30);
+        a->setBackgroundColor(ElementState::Normal, SDL_Color{45, 48, 58, 255});
+        auto b = std::make_unique<Panel>(manager, 100, 100, 60, 30);
+        b->setBackgroundColor(ElementState::Normal, SDL_Color{45, 48, 58, 255});
+        auto c = std::make_unique<Panel>(manager, 200, 200, 80, 30);
+        c->setBackgroundColor(ElementState::Normal, SDL_Color{45, 48, 58, 255});
+        manager.addElement(std::move(a));
+        manager.addElement(std::move(b));
+        manager.addElement(std::move(c));
+        size_t before = manager.getTextureManager().getRenderCacheSize();
+        manager.render();
+        size_t after = manager.getTextureManager().getRenderCacheSize();
+        // a+b share (same key), c differs by size -> 2 new entries
+        REQUIRE(after - before == 2);
+    }
+
+    SECTION("ComponentType ID resolves directly, no strings") {
+        BevelProbe probe(manager);
+        Panel panel(manager, 0, 0, 10, 10);
+        REQUIRE(probe.getComponentTypeId() == ComponentType::Unknown);
+        REQUIRE(panel.getComponentTypeId() == ComponentType::Panel);
+        REQUIRE(componentTypeToString(panel.getComponentTypeId()) == "Panel");
+    }
+
+    SECTION("thumb/fill fall back to borderColor") {
+        Style s;
+        s.borderColor = SDL_Color{11, 22, 33, 255};
+        REQUIRE(effectiveThumbColor(s) == SDL_Color{11, 22, 33, 255});
+        REQUIRE(effectiveFillColor(s) == SDL_Color{11, 22, 33, 255});
+        s.thumbColor = SDL_Color{1, 2, 3, 255};
+        s.fillColor = SDL_Color{4, 5, 6, 255};
+        REQUIRE(effectiveThumbColor(s) == SDL_Color{1, 2, 3, 255});
+        REQUIRE(effectiveFillColor(s) == SDL_Color{4, 5, 6, 255});
     }
 }

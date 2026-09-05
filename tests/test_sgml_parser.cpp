@@ -18,7 +18,7 @@ TEST_CASE("SGMLParser - loadLayout", "[sgml_parser][layout]") {
     SECTION("loads a layout from XML") {
         auto root = parser.loadLayout("tests/data/layout.xml");
         REQUIRE(root != nullptr);
-        REQUIRE(std::string(root->getComponentType()) == "Panel");
+        REQUIRE(root->getComponentTypeId() == ComponentType::Panel);
     }
 
     SECTION("applies id, position and size") {

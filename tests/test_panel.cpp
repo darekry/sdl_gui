@@ -28,12 +28,12 @@ TEST_CASE("Panel constructors initialize position and size correctly", "[panel]"
     }
 }
 
-TEST_CASE("Panel getComponentType returns correct type name", "[panel]") {
+TEST_CASE("Panel getComponentTypeId returns correct type name", "[panel]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
     Panel panel(manager, 0, 0, 100, 100);
-    REQUIRE(std::string(panel.getComponentType()) == "Panel");
+    REQUIRE(panel.getComponentTypeId() == ComponentType::Panel);
 }
 
 TEST_CASE("Panel as container: addChild and getChildren", "[panel]") {

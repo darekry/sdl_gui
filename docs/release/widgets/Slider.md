@@ -136,4 +136,5 @@ int main(int, char**) {
   obszar suwaka nie zmienia wartości (w przeciwieństwie do `RangeSlider`,
   który puszcza uchwyt po wyjściu poza obszar).
 - Suwak przecina tylko tor i uchwyt — styl z `Panel` (tło, obramowanie)
-  widoczny jest wokół nich; kolor uchwytu pochodzi z `borderColor` stylu.
+  widoczny jest wokół nich; kolor uchwytu pochodzi z `thumbColor` stylu
+  (`setThumbColor`), z fallbackiem do `borderColor` dla starszych motywów.

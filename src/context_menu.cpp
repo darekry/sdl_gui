@@ -93,8 +93,8 @@ void ContextMenu::draw([[maybe_unused]] SDL_Renderer* renderer) {
     }
 }
 
-const char* ContextMenu::getComponentType() const {
-    return "ContextMenu";
+ComponentType ContextMenu::getComponentTypeId() const {
+    return ComponentType::ContextMenu;
 }
 
 void ContextMenu::createMenuButtons() {

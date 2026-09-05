@@ -497,13 +497,13 @@ TEST_CASE("RadioGroup - Non-RadioButton Children", "[radio_group]") {
     }
 }
 
-TEST_CASE("RadioGroup - Component Type", "[radio_group]") {
+TEST_CASE("RadioGroup - ComponentType ID", "[radio_group]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("getComponentType returns RadioGroup") {
+    SECTION("getComponentTypeIdId returns RadioGroup") {
         RadioGroup group(manager, 0, 0, 100, 50);
-        REQUIRE(std::string(group.getComponentType()) == "RadioGroup");
+        REQUIRE(group.getComponentTypeId() == ComponentType::RadioGroup);
     }
 
     SECTION("RadioGroup is a Panel subclass") {

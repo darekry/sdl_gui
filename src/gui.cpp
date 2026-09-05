@@ -563,8 +563,9 @@ void GUIElement::stopTimer(uint32_t timerId) {
 
 // --- New styling API implementation ---
 
-const char* GUIElement::getComponentType() const {
-    return "GUIElement";
+void GUIElement::invalidateResolvedCache() {
+    ++m_localStyleEpoch;
+    m_resolvedValid = {false, false, false, false};
 }
 
 void GUIElement::setState(ElementState newState) {
@@ -582,28 +583,36 @@ void GUIElement::setState(ElementState newState) {
 }
 void GUIElement::setStyle(ElementState state, Style style) {
     m_localStyles[stateIndex(state)] = std::move(style);
+    invalidateResolvedCache();
     markDirty();
 }
 Style GUIElement::getComposedStyle(ElementState state) const {
     size_t idx = stateIndex(state);
-    
-    // Start from local style (most specific), fill gaps from theme
+    const uint64_t themeEpoch = m_manager.getTheme().epoch();
+    if (m_resolvedValid[idx] && m_resolvedThemeEpoch == themeEpoch && m_resolvedLocalEpoch == m_localStyleEpoch) {
+        return m_resolvedCache[idx];
+    }
+
+    // Cache miss: merge once via the O(1) ComponentType path, then reuse.
+    const ComponentType typeId = getComponentTypeId();
+    Style result;
     if (m_localStyles[idx].has_value()) {
-        Style result = *m_localStyles[idx];
-        result.mergeWith(m_manager.getTheme().getStyle(getComponentType(), state));
-        return result;
+        result = *m_localStyles[idx];
+        result.mergeWith(m_manager.getTheme().getStyle(typeId, state));
+    } else {
+        size_t normalIdx = stateIndex(ElementState::Normal);
+        if (m_localStyles[normalIdx].has_value()) {
+            result = *m_localStyles[normalIdx];
+            result.mergeWith(m_manager.getTheme().getStyle(typeId, state));
+        } else {
+            result = m_manager.getTheme().getStyle(typeId, state);
+        }
     }
-    
-    // Fallback: try Normal state local style
-    size_t normalIdx = stateIndex(ElementState::Normal);
-    if (m_localStyles[normalIdx].has_value()) {
-        Style result = *m_localStyles[normalIdx];
-        result.mergeWith(m_manager.getTheme().getStyle(getComponentType(), state));
-        return result;
-    }
-    
-    // No local styles: use theme directly
-    return m_manager.getTheme().getStyle(getComponentType(), state);
+    m_resolvedCache[idx] = result;
+    m_resolvedValid[idx] = true;
+    m_resolvedThemeEpoch = themeEpoch;
+    m_resolvedLocalEpoch = m_localStyleEpoch;
+    return result;
 }
 
 void GUIElement::setBackgroundColor(ElementState state, SDL_Color color) {
@@ -612,6 +621,7 @@ void GUIElement::setBackgroundColor(ElementState state, SDL_Color color) {
         m_localStyles[idx] = Style();
     }
     m_localStyles[idx]->backgroundColor = color;
+    invalidateResolvedCache();
     markDirty();
 }
 
@@ -621,6 +631,7 @@ void GUIElement::setTextColor(ElementState state, SDL_Color color) {
         m_localStyles[idx] = Style();
     }
     m_localStyles[idx]->textColor = color;
+    invalidateResolvedCache();
     markDirty();
 }
 
@@ -630,6 +641,7 @@ void GUIElement::setTexture(ElementState state, SharedTexture texture) {
         m_localStyles[idx] = Style();
     }
     m_localStyles[idx]->texture = std::move(texture);
+    invalidateResolvedCache();
     markDirty();
 }
 void GUIElement::setBorder(ElementState state, SDL_Color color, int width) {
@@ -639,6 +651,7 @@ void GUIElement::setBorder(ElementState state, SDL_Color color, int width) {
     }
     m_localStyles[idx]->borderColor = color;
     m_localStyles[idx]->borderWidth = width;
+    invalidateResolvedCache();
     markDirty();
 }
 void GUIElement::setBorderRadius(ElementState state, int radius) {
@@ -647,6 +660,7 @@ void GUIElement::setBorderRadius(ElementState state, int radius) {
         m_localStyles[idx] = Style();
     }
     m_localStyles[idx]->borderRadius = radius;
+    invalidateResolvedCache();
     markDirty();
 }
 
@@ -670,6 +684,27 @@ void GUIElement::setBevel(ElementState state, BevelType type) {
         m_localStyles[idx] = Style();
     }
     applyBevelToStyle(*m_localStyles[idx], type);
+    invalidateResolvedCache();
+    markDirty();
+}
+
+void GUIElement::setThumbColor(ElementState state, SDL_Color color) {
+    size_t idx = stateIndex(state);
+    if (!m_localStyles[idx].has_value()) {
+        m_localStyles[idx] = Style();
+    }
+    m_localStyles[idx]->thumbColor = color;
+    invalidateResolvedCache();
+    markDirty();
+}
+
+void GUIElement::setFillColor(ElementState state, SDL_Color color) {
+    size_t idx = stateIndex(state);
+    if (!m_localStyles[idx].has_value()) {
+        m_localStyles[idx] = Style();
+    }
+    m_localStyles[idx]->fillColor = color;
+    invalidateResolvedCache();
     markDirty();
 }
 
@@ -698,7 +733,7 @@ void drawStyleBevel(SDL_Renderer* renderer, SDL_Rect rect, const Style& style) {
 }
 
 void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
-    const Style& style = getComposedStyle(m_state);
+    const Style style = getComposedStyle(m_state);
     int radius = style.borderRadius.value_or(0);
     SDL_FRect frect = SDLRectToFRect(0, 0, m_width, m_height);
     float fradius = static_cast<float>(radius);
@@ -712,13 +747,32 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
         drawRoundedTexturedRect(renderer, texRect, fradius, style.texture.value().get());
     }
 
+    drawResolvedBorder(renderer, SDL_Rect{0, 0, m_width, m_height}, style, supportsBevel());
+}
+
+void drawResolvedBorder(SDL_Renderer* renderer, SDL_Rect rect, const Style& style, bool withBevel) {
     // The 3D bevel takes priority over a plain border; it is drawn sharp — Win95 has no rounded corners.
-    if (style.borderColorOuterTopLeft || style.borderColorOuterBottomRight || style.borderColorInnerTopLeft ||
-        style.borderColorInnerBottomRight) {
-        drawStyleBevel(renderer, SDL_Rect{0, 0, m_width, m_height}, style);
-    } else if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
-        drawRoundedRectBorder(renderer, frect, fradius, ColorToFColor(*style.borderColor), static_cast<float>(*style.borderWidth));
+    if (withBevel && style.hasBevel()) {
+        drawStyleBevel(renderer, rect, style);
+        return;
     }
+    if (style.borderColor && style.borderWidth && *style.borderWidth > 0) {
+        SDL_FRect frect = SDLRectToFRect(rect.x, rect.y, rect.w, rect.h);
+        drawRoundedRectBorder(renderer, frect, static_cast<float>(style.borderRadius.value_or(0)),
+                              ColorToFColor(*style.borderColor), static_cast<float>(*style.borderWidth));
+    }
+}
+
+SDL_Color effectiveThumbColor(const Style& style, SDL_Color fallback) {
+    if (style.thumbColor) return *style.thumbColor;
+    if (style.borderColor) return *style.borderColor;
+    return fallback;
+}
+
+SDL_Color effectiveFillColor(const Style& style, SDL_Color fallback) {
+    if (style.fillColor) return *style.fillColor;
+    if (style.borderColor) return *style.borderColor;
+    return fallback;
 }
 
 uint64_t GUIElement::buildRenderCacheKey() const {
@@ -736,12 +790,14 @@ uint64_t GUIElement::buildRenderCacheKey() const {
         }
     };
 
-    mix(std::hash<std::string_view>{}(getComponentType()));
+    // Interned type ID: O(1), no string hashing. Identical widgets share
+    // the same key prefix and thus the same global cache entry (1 texture).
+    mix(static_cast<uint64_t>(getComponentTypeId()));
     mix(static_cast<uint64_t>(m_width));
     mix(static_cast<uint64_t>(m_height));
     mix(static_cast<uint64_t>(m_state));
 
-    const Style& st = getComposedStyle(m_state);
+    const Style st = getComposedStyle(m_state);
     mixColor(st.backgroundColor);
     mixColor(st.textColor);
     mix(st.texture.has_value() ? 1ULL : 0ULL);
@@ -769,6 +825,8 @@ uint64_t GUIElement::buildRenderCacheKey() const {
     if (st.fontName) {
         mix(std::hash<std::string_view>{}(*st.fontName));
     }
+    mixColor(st.thumbColor);
+    mixColor(st.fillColor);
 
     mix(getRenderCacheKeySuffix());
     return h;

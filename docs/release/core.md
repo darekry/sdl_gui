@@ -293,7 +293,8 @@ bool isElementAlive(GUIElement* element) const;
 | Typ | Definicja | Uwagi |
 |-----|-----------|-------|
 | `ElementState` | `enum class ElementState { Normal, Hover, Pressed, Disabled }` | Stany wizualne widgetów |
-| `Style` | Struktura pól `std::optional<...>`: `backgroundColor`, `textColor`, `texture`, `borderColor`, `borderWidth`, `borderRadius`, `fontSize`, `fontName` | Brak wartości = dziedziczenie z motywu |
+| `Style` | Struktura pól `std::optional<...>`: `backgroundColor`, `textColor`, `texture`, `borderColor`, `borderWidth`, `borderRadius`, `fontSize`, `fontName`, 4x bevel, `thumbColor`, `fillColor` | Brak wartości = dziedziczenie z motywu |
+| `ComponentType` | `enum class ComponentType : uint8_t` | ID typu widgetu (klucz themu i render-cache; stringi tylko na granicy) |
 | `SDL_Color` | Typ SDL3 `{r, g, b, a}` (0–255) | Porównywalny `operator==` |
 | `SharedTexture` | `std::shared_ptr<SDL_Texture>` | Współdzielona tekstura z automatycznym usuwaniem |
 | `SharedFont` | `std::shared_ptr<TTF_Font>` | Współdzielony font z automatycznym usuwaniem |

@@ -296,14 +296,13 @@ TEST_CASE("Label multi-line support", "[label]") {
     }
 }
 
-TEST_CASE("Label component type", "[label]") {
+TEST_CASE("Label component type ID", "[label]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("getComponentType returns non-null") {
+    SECTION("Label has a component type ID ID") {
         Label label(manager, 0, 0, "Test", 16);
-        const char* type = label.getComponentType();
-        REQUIRE(type != nullptr);
+        REQUIRE(label.getComponentTypeId() == ComponentType::Label);
     }
 }
 

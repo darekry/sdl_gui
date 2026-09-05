@@ -31,7 +31,7 @@ public:
 
     bool handleEvent(const SDL_Event& e) override;
     void renderOverlay(SDL_Renderer* renderer) override;
-    [[nodiscard]] const char* getComponentType() const override;
+    [[nodiscard]] ComponentType getComponentTypeId() const override;
 
 protected:
     void draw(SDL_Renderer* renderer) override;

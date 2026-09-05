@@ -18,7 +18,7 @@ public:
     bool isLocked() const override;
 
     bool handleEvent(const SDL_Event& e) override;
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
     void renderOverlay(SDL_Renderer* renderer) override;
 
 protected:

@@ -11,7 +11,7 @@ public:
     void setPenColor(SDL_Color color);
 
     bool handleEvent(const SDL_Event& e) override;
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 protected:
     void draw([[maybe_unused]] SDL_Renderer* renderer) override;

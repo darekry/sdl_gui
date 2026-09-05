@@ -8,7 +8,7 @@ public:
     bool handleEvent(const SDL_Event& event) override;
     void setDraggable(bool draggable);
 
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 protected:
     void onMouseCaptureLost() override;

@@ -135,8 +135,8 @@ void ComboBox::clearItems() {
     markDirty();
 }
 
-const char* ComboBox::getComponentType() const {
-    return "ComboBox";
+ComponentType ComboBox::getComponentTypeId() const {
+    return ComponentType::ComboBox;
 }
 
 size_t ComboBox::getItemCount() const {

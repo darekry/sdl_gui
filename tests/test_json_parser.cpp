@@ -18,7 +18,7 @@ TEST_CASE("JsonParser - loadLayout", "[json_parser][layout]") {
     SECTION("loads a layout from JSON") {
         auto root = parser.loadLayout("tests/data/layout.json");
         REQUIRE(root != nullptr);
-        REQUIRE(std::string(root->getComponentType()) == "Panel");
+        REQUIRE(root->getComponentTypeId() == ComponentType::Panel);
     }
 
     SECTION("applies id, position and size") {

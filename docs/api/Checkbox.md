@@ -59,6 +59,6 @@ Checkbox można przełączać za pomocą klawiatury:
         *   `e`: Referencja do zdarzenia `SDL_Event`.
     *   **Zwraca**: `true`, jeśli zdarzenie zostało obsłużone; `false` w przeciwnym razie.
 
-*   ### `const char* getComponentType() const override`
+*   ### `ComponentType getComponentTypeId() const override`
     *   **Opis**: Zwraca typ komponentu jako ciąg znaków.
     *   **Zwraca**: Ciąg znaków `"Checkbox"`.

@@ -26,9 +26,9 @@ TEST_CASE("StringGrid - Construction", "[string_grid]") {
         REQUIRE(grid.getColumnCount() == 0);
     }
 
-    SECTION("getComponentType returns StringGrid") {
+    SECTION("getComponentTypeIdId returns StringGrid") {
         StringGrid grid(manager, 10, 10, 400, 300, 3, 3);
-        REQUIRE(std::string(grid.getComponentType()) == "StringGrid");
+        REQUIRE(grid.getComponentTypeId() == ComponentType::StringGrid);
     }
 }
 

@@ -38,7 +38,7 @@ public:
     void setOnStateChanged(std::function<void(CursorState)> callback);
 
     bool handleEvent(const SDL_Event& event) override;
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
     void setVisible(bool visible);
     bool isOverlay() const override { return true; }
     void renderOverlay(SDL_Renderer* renderer) override;

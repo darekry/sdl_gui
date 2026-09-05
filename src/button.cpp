@@ -107,6 +107,6 @@ bool Button::handleEvent(const SDL_Event& e) {
     return false;
 }
 
-const char* Button::getComponentType() const {
-    return "Button";
+ComponentType Button::getComponentTypeId() const {
+    return ComponentType::Button;
 }

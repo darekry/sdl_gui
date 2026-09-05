@@ -24,6 +24,8 @@ public:
     void resetBlink() { resetCursorBlink(); }
     bool isCursorShown() const { return m_showCursor; }
 
+    ComponentType getComponentTypeId() const override { return ComponentType::Unknown; }
+
 protected:
     void updateTextOffset() override {}
     void refreshTextTexture() override {}

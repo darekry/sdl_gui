@@ -34,7 +34,7 @@ manager.addElement(std::move(arc));
 | `void setRadius(int radius)` | Zmienia promień oraz rozmiar i pozycję kontenera |
 | `void setArcRange(float startAngleDeg, float endAngleDeg)` | Zakres kątowy (w stopniach) używany przez `contains` — od jakiego do jakiego kąta kontener „łapie" kliknięcia |
 | `bool contains(int x, int y) const` | Czy punkt (współrzędne okna) leży w pierścieniu kontenera (`radius ± 10`) i w zakresie kątowym; dostępny też przeciążony `bool contains(float x, float y) const` |
-| `const char* getComponentType() const` | Zwraca `"ArcContainer"` |
+| `ComponentType getComponentTypeId() const` | Zwraca `ComponentType::ArcContainer` |
 
 ## Callbacki / zdarzenia
 

@@ -252,15 +252,15 @@ TEST_CASE("TabControl visibility and enabled state", "[tab_control]") {
     }
 }
 
-TEST_CASE("TabControl component type", "[tab_control]") {
+TEST_CASE("TabControl component type ID", "[tab_control]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
     auto tabControl = std::make_unique<TabControl>(manager, 20, 20, 300, 200);
     TabControl* tabs = tabControl.get();
     
-    SECTION("getComponentType returns correct type name") {
-        REQUIRE(std::string(tabs->getComponentType()) == "TabControl");
+    SECTION("getComponentTypeIdId returns correct type name") {
+        REQUIRE(tabs->getComponentTypeId() == ComponentType::TabControl);
     }
     
     manager.addElement(std::move(tabControl));

@@ -13,7 +13,7 @@ public:
     void setOnChange(OnChangeCallback callback);
 
     bool handleEvent(const SDL_Event& e) override;
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 public:
     void draw(SDL_Renderer* renderer) override;

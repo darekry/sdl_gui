@@ -115,8 +115,8 @@ bool Cursor::handleEvent(const SDL_Event& event) {
     return false;
 }
 
-const char* Cursor::getComponentType() const {
-    return "Cursor";
+ComponentType Cursor::getComponentTypeId() const {
+    return ComponentType::Cursor;
 }
 
 void Cursor::setVisible(bool visible) {

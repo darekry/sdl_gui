@@ -56,7 +56,7 @@ cursor->setState(CursorState::Busy);
 // Automatyczna zmiana w pętli zdarzeń
 if (e.type == SDL_MOUSEMOTION) {
     GUIElement* element = gui.findElementAt(e.motion.x, e.motion.y);
-    if (element && element->getComponentType() == "Button") {
+    if (element && element->getComponentTypeId() == ComponentType::Button) {
         cursor->setState(CursorState::Hover);
     } else {
         cursor->setState(CursorState::Normal);

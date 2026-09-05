@@ -25,9 +25,9 @@ TEST_CASE("ArcContainer - construction", "[arc_container]") {
         REQUIRE(arc.getHeight() == 100);
     }
 
-    SECTION("getComponentType returns ArcContainer") {
+    SECTION("getComponentTypeIdId returns ArcContainer") {
         ArcContainer arc(manager, 0, 0, 50);
-        REQUIRE(std::string(arc.getComponentType()) == "ArcContainer");
+        REQUIRE(arc.getComponentTypeId() == ComponentType::ArcContainer);
     }
 }
 

@@ -21,9 +21,9 @@ TEST_CASE("ProgressBar - defaults", "[progress_bar]") {
         REQUIRE(bar.getShowText());
     }
 
-    SECTION("getComponentType returns ProgressBar") {
+    SECTION("getComponentTypeIdId returns ProgressBar") {
         ProgressBar bar(manager, 0, 0, 200, 30);
-        REQUIRE(std::string(bar.getComponentType()) == "ProgressBar");
+        REQUIRE(bar.getComponentTypeId() == ComponentType::ProgressBar);
     }
 }
 

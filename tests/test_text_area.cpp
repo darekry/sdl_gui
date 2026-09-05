@@ -698,13 +698,13 @@ TEST_CASE("TextArea Hidden State", "[text_area]") {
     }
 }
 
-TEST_CASE("TextArea Component Type", "[text_area]") {
+TEST_CASE("TextArea ComponentType ID", "[text_area]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("getComponentType returns TextArea") {
+    SECTION("getComponentTypeIdId returns TextArea") {
         TextArea ta(manager, 0, 0, 200, 100, "assets/fonts/font.ttf", 14);
-        REQUIRE(std::string(ta.getComponentType()) == "TextArea");
+        REQUIRE(ta.getComponentTypeId() == ComponentType::TextArea);
     }
 }
 

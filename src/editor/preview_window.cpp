@@ -262,8 +262,8 @@ CanvasPanel::CanvasPanel(GUIManager& manager, int x, int y, int width, int heigh
     setBorder(ElementState::Normal, SDL_Color{200, 200, 200, 255}, 1);
 }
 
-const char* CanvasPanel::getComponentType() const {
-    return "CanvasPanel";
+ComponentType CanvasPanel::getComponentTypeId() const {
+    return ComponentType::Panel;
 }
 
 void CanvasPanel::drawDirect(SDL_Renderer* renderer) {

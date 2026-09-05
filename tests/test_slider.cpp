@@ -487,12 +487,12 @@ TEST_CASE("Slider - Range", "[slider]") {
     }
 }
 
-TEST_CASE("Slider - Component Type", "[slider]") {
+TEST_CASE("Slider - ComponentType ID", "[slider]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("getComponentType returns Slider") {
+    SECTION("getComponentTypeIdId returns Slider") {
         Slider slider(manager, 0, 0, 200, 40, 0, 100, 50, Orientation::Horizontal);
-        REQUIRE(std::string(slider.getComponentType()) == "Slider");
+        REQUIRE(slider.getComponentTypeId() == ComponentType::Slider);
     }
 }

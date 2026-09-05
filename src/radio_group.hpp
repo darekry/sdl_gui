@@ -20,7 +20,7 @@ public:
     using SelectionChangeCallback = std::function<void(int index, const std::string& text)>;
     void setOnSelectionChange(SelectionChangeCallback callback);
 
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 private:
     int m_nextOptionY = 20;

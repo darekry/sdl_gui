@@ -133,7 +133,7 @@ public:
     /// Returns the index of the clicked button (-1 if none)
     int getLastClickedButton() const { return m_lastClickedButton; }
 
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
     bool isOverlay() const override { return true; }
 

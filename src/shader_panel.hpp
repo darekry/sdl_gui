@@ -18,7 +18,7 @@ public:
     bool wantsDirectRender() const override;
     void drawDirect(SDL_Renderer* renderer) override;
 
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 private:
     void releaseShader();

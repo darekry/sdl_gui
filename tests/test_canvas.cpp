@@ -368,18 +368,18 @@ TEST_CASE("Canvas - Hidden State", "[canvas]") {
     }
 }
 
-TEST_CASE("Canvas - Component Type", "[canvas]") {
+TEST_CASE("Canvas - ComponentType ID", "[canvas]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("getComponentType returns Canvas") {
+    SECTION("getComponentTypeIdId returns Canvas") {
         Canvas canvas(manager, 0, 0, 100, 100);
-        REQUIRE(std::string(canvas.getComponentType()) == "Canvas");
+        REQUIRE(canvas.getComponentTypeId() == ComponentType::Canvas);
     }
 
-    SECTION("getComponentType returns non-null") {
+    SECTION("Canvas has a component type ID ID") {
         Canvas canvas(manager, 0, 0, 100, 100);
-        REQUIRE(canvas.getComponentType() != nullptr);
+        REQUIRE(canvas.getComponentTypeId() == ComponentType::Canvas);
     }
 }
 

@@ -57,8 +57,8 @@ bool RadioButton::handleEvent(const SDL_Event& e) {
     return false;
 }
 
-const char* RadioButton::getComponentType() const {
-    return "RadioButton";
+ComponentType RadioButton::getComponentTypeId() const {
+    return ComponentType::RadioButton;
 }
 void RadioButton::draw(SDL_Renderer* renderer) {
     const auto& style = getComposedStyle(m_state);
@@ -70,17 +70,9 @@ void RadioButton::draw(SDL_Renderer* renderer) {
         RenderFillRect(renderer, bgRect);
     }
 
-    // 3D bevel takes priority over the plain border — same as GUIElement::drawBackgroundAndBorder.
-    bool hasBevel = style.borderColorOuterTopLeft.has_value() || style.borderColorOuterBottomRight.has_value() ||
-                    style.borderColorInnerTopLeft.has_value() || style.borderColorInnerBottomRight.has_value();
-    if (hasBevel) {
-        drawStyleBevel(renderer, SDL_Rect{0, 0, m_width, m_height}, style);
-    } else if (style.borderColor) {
-        const auto& c = style.borderColor.value();
-        SetDrawColor(renderer, c);
-        SDL_Rect borderRect = {0, 0, m_width, m_height};
-        RenderRect(renderer, borderRect);
-    }
+    // Bevel vs plain border: one shared renderer (see drawResolvedBorder).
+    // style.texture stays the selection indicator, not the background.
+    drawResolvedBorder(renderer, SDL_Rect{0, 0, m_width, m_height}, style, supportsBevel());
 
     if (m_isSelected) {
         if (style.texture) {

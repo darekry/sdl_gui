@@ -25,7 +25,7 @@ public:
     int getWheelStep() const { return m_wheelStep; }
 
     bool handleEvent(const SDL_Event& e) override;
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 protected:
     void draw(SDL_Renderer* renderer) override;

@@ -45,6 +45,6 @@ Klasa `Panel` to podstawowy element GUI, który służy jako kontener dla innych
         myPanel.setDraggable(true);
         ```
 
-*   ### `const char* getComponentType() const override`
+*   ### `ComponentType getComponentTypeId() const override`
     *   **Opis**: Zwraca typ komponentu jako ciąg znaków.
     *   **Zwraca**: Ciąg znaków `"Panel"`.

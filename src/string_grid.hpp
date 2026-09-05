@@ -140,7 +140,7 @@ public:
     
     // GUIElement overrides
     bool handleEvent(const SDL_Event& e) override;
-    [[nodiscard]] const char* getComponentType() const override;
+    [[nodiscard]] ComponentType getComponentTypeId() const override;
     
     // Overlay for the cell editor
     [[nodiscard]] bool isOverlay() const override;

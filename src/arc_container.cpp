@@ -95,6 +95,6 @@ void ArcContainer::setArcRange(float startAngleDeg, float endAngleDeg) {
     markDirty();
 }
 
-const char* ArcContainer::getComponentType() const {
-    return "ArcContainer";
+ComponentType ArcContainer::getComponentTypeId() const {
+    return ComponentType::ArcContainer;
 }

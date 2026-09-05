@@ -16,9 +16,9 @@ TEST_CASE("ShaderPanel - construction", "[shader_panel]") {
         REQUIRE(panel.getHeight() == 100);
     }
 
-    SECTION("getComponentType returns ShaderPanel") {
+    SECTION("getComponentTypeIdId returns ShaderPanel") {
         ShaderPanel panel(manager, 0, 0, 100, 50);
-        REQUIRE(std::string(panel.getComponentType()) == "ShaderPanel");
+        REQUIRE(panel.getComponentTypeId() == ComponentType::ShaderPanel);
     }
 
     SECTION("wantsDirectRender is true") {

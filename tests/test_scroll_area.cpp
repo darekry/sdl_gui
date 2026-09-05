@@ -21,7 +21,7 @@ TEST_CASE("ScrollArea - construction", "[scroll_area]") {
 
     SECTION("default scroll state") {
         ScrollArea area(manager, 0, 0, 300, 200);
-        REQUIRE(area.getComponentType() == std::string("ScrollArea"));
+        REQUIRE(area.getComponentTypeId() == ComponentType::ScrollArea);
     }
 
     SECTION("content size defaults to area size") {

@@ -30,9 +30,9 @@ TEST_CASE("ListView - Construction and Empty State", "[list_view]") {
         REQUIRE(listView->getSelectedRow() == std::nullopt);
     }
 
-    SECTION("getComponentType returns ListView") {
+    SECTION("getComponentTypeIdId returns ListView") {
         auto listView = std::make_unique<ListView>(manager, 10, 10, 200, 300);
-        REQUIRE(std::string(listView->getComponentType()) == "ListView");
+        REQUIRE(listView->getComponentTypeId() == ComponentType::ListView);
     }
 }
 

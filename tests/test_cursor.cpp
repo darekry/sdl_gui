@@ -36,9 +36,9 @@ TEST_CASE("Cursor - Construction", "[cursor]") {
         REQUIRE(offsetY == 0);
     }
 
-    SECTION("getComponentType returns Cursor") {
+    SECTION("getComponentTypeIdId returns Cursor") {
         auto cursor = std::make_unique<Cursor>(manager);
-        REQUIRE(std::string(cursor->getComponentType()) == "Cursor");
+        REQUIRE(cursor->getComponentTypeId() == ComponentType::Cursor);
     }
 }
 

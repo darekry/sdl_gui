@@ -326,12 +326,12 @@ TEST_CASE("RangeSlider - Disabled State", "[rangeslider]") {
     }
 }
 
-TEST_CASE("RangeSlider - Component Type", "[rangeslider]") {
+TEST_CASE("RangeSlider - ComponentType ID", "[rangeslider]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("getComponentType returns RangeSlider") {
+    SECTION("getComponentTypeIdId returns RangeSlider") {
         RangeSlider slider(manager, 0, 0, 200, 40, 0, 100, 20, 80, Orientation::Horizontal);
-        REQUIRE(std::string(slider.getComponentType()) == "RangeSlider");
+        REQUIRE(slider.getComponentTypeId() == ComponentType::RangeSlider);
     }
 }

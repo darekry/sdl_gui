@@ -35,7 +35,7 @@ public:
     Button* getIncrementButton();
 
     bool handleEvent(const SDL_Event& e) override;
-    const char* getComponentType() const override;
+    ComponentType getComponentTypeId() const override;
 
 protected:
     void draw(SDL_Renderer* renderer) override;

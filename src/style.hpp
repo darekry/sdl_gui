@@ -41,6 +41,16 @@ struct Style {
     std::optional<SDL_Color> borderColorOuterBottomRight;
     std::optional<SDL_Color> borderColorInnerTopLeft;
     std::optional<SDL_Color> borderColorInnerBottomRight;
+    // Dedicated accent colors. New code should use these instead of
+    // overloading borderColor (Slider/RangeSlider thumb, ProgressBar fill).
+    // When unset, widgets fall back to borderColor for backwards compat.
+    std::optional<SDL_Color> thumbColor;
+    std::optional<SDL_Color> fillColor;
+
+    [[nodiscard]] bool hasBevel() const {
+        return borderColorOuterTopLeft.has_value() || borderColorOuterBottomRight.has_value() ||
+               borderColorInnerTopLeft.has_value() || borderColorInnerBottomRight.has_value();
+    }
 
     void mergeWith(const Style& base) {
         if (!backgroundColor.has_value() && base.backgroundColor.has_value()) {
@@ -78,6 +88,12 @@ struct Style {
         }
         if (!fontName.has_value() && base.fontName.has_value()) {
             fontName = base.fontName;
+        }
+        if (!thumbColor.has_value() && base.thumbColor.has_value()) {
+            thumbColor = base.thumbColor;
+        }
+        if (!fillColor.has_value() && base.fillColor.has_value()) {
+            fillColor = base.fillColor;
         }
     }
 
@@ -117,6 +133,12 @@ struct Style {
 
         if (fontName.has_value() != other.fontName.has_value()) { return false; }
         if (fontName && *fontName != *other.fontName) { return false; }
+
+        if (thumbColor.has_value() != other.thumbColor.has_value()) { return false; }
+        if (thumbColor && !(*thumbColor == *other.thumbColor)) { return false; }
+
+        if (fillColor.has_value() != other.fillColor.has_value()) { return false; }
+        if (fillColor && !(*fillColor == *other.fillColor)) { return false; }
 
         return true;
     }

@@ -9,8 +9,8 @@ TextInput::TextInput(GUIManager& manager, int x, int y, int w, int h)
     : TextEditable(manager, x, y, w, h), m_text_offset_x(0) {
 }
 
-const char* TextInput::getComponentType() const {
-    return "TextInput";
+ComponentType TextInput::getComponentTypeId() const {
+    return ComponentType::TextInput;
 }
 
 void TextInput::setOnEnterPressed(const std::function<void(TextInput*)>& callback) {

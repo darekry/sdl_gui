@@ -21,9 +21,9 @@ TEST_CASE("RadioButton initial state", "[radio_button]") {
         REQUIRE(rb.getHeight() == 50);
     }
 
-    SECTION("component type is RadioButton") {
+    SECTION("component type ID is RadioButton") {
         RadioButton rb(manager, 0, 0, 20, 20);
-        REQUIRE(std::string(rb.getComponentType()) == "RadioButton");
+        REQUIRE(rb.getComponentTypeId() == ComponentType::RadioButton);
     }
 }
 

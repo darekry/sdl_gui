@@ -288,6 +288,6 @@ bool DialogBox::handleEvent(const SDL_Event& e) {
     return false;
 }
 
-const char* DialogBox::getComponentType() const {
-    return "DialogBox";
+ComponentType DialogBox::getComponentTypeId() const {
+    return ComponentType::DialogBox;
 }

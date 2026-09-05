@@ -170,8 +170,7 @@ TEST_CASE("AnimatedImage functionality", "[animated_image]") {
 
     SECTION("Component type is correct") {
         AnimatedImage img(manager, 0, 0, 100, 100);
-        const char* type = img.getComponentType();
-        REQUIRE(type != nullptr);
+        REQUIRE(img.getComponentTypeId() == ComponentType::AnimatedImage);
     }
 
     SECTION("AnimatedImage can be added to manager") {

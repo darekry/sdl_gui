@@ -30,9 +30,9 @@ TEST_CASE("TextInput - Initial State", "[text_input]") {
         REQUIRE(ti.isVisible());
     }
 
-    SECTION("getComponentType returns TextInput") {
+    SECTION("getComponentTypeIdId returns TextInput") {
         TextInput ti(manager, 10, 20, 200, 30);
-        REQUIRE(std::string(ti.getComponentType()) == "TextInput");
+        REQUIRE(ti.getComponentTypeId() == ComponentType::TextInput);
     }
 }
 
