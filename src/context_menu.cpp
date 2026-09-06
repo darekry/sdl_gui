@@ -19,12 +19,22 @@ ContextMenu::ContextMenu(GUIManager& manager)
 void ContextMenu::addItem(std::string_view text, std::function<void()> action, bool enabled) {
     m_items.emplace_back(text, action, enabled);
     m_needsUpdate = true;
+    if (m_visible) {
+        // Eager rebuild in the event path (punkt 6): draw() must not mutate
+        // the hierarchy (clearChildren/addChild/setSize) mid-render.
+        createMenuButtons();
+        m_needsUpdate = false;
+    }
     markDirty();
 }
 
 void ContextMenu::addSeparator() {
     m_items.emplace_back(true); // separator = true
     m_needsUpdate = true;
+    if (m_visible) {
+        createMenuButtons();
+        m_needsUpdate = false;
+    }
     markDirty();
 }
 
@@ -32,6 +42,10 @@ void ContextMenu::clearItems() {
     m_items.clear();
     m_panel->clearChildren();
     m_needsUpdate = true;
+    if (m_visible) {
+        createMenuButtons();
+        m_needsUpdate = false;
+    }
     markDirty();
 }
 
@@ -91,12 +105,9 @@ bool ContextMenu::handleEvent(const SDL_Event& event) {
 }
 
 void ContextMenu::draw([[maybe_unused]] SDL_Renderer* renderer) {
-    // ContextMenu itself doesn't draw anything directly
-    // All rendering is handled by the Panel and its children
-    if (m_needsUpdate && m_visible) {
-        createMenuButtons();
-        m_needsUpdate = false;
-    }
+    // ContextMenu itself doesn't draw anything directly.
+    // All rendering is handled by the Panel and its children; buttons are
+    // (re)built eagerly in addItem()/showAt(), never here (punkt 6).
 }
 
 ComponentType ContextMenu::getComponentTypeId() const {

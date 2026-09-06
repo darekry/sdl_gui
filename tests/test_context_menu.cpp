@@ -183,3 +183,32 @@ TEST_CASE("ContextMenu FocusScope restores pre-show focus (1b)", "[context_menu]
     // FocusScope pop: focus is back on the field, no ghost overlay.
     REQUIRE(manager.getKeyboardFocus() == field);
 }
+
+TEST_CASE("ContextMenu - No draw-path mutation", "[context_menu][render]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    auto menu = std::make_unique<ContextMenu>(manager);
+    ContextMenu* ctx = menu.get();
+    manager.addElement(std::move(menu));
+    ctx->addItem("A");
+    ctx->addItem("B");
+
+    auto panelChildren = [&]() -> size_t {
+        REQUIRE(ctx->getChildren().size() == 1);
+        return ctx->getChildren()[0]->getChildren().size();
+    };
+
+    ctx->showAt(100, 100);
+    REQUIRE(panelChildren() == 2);
+
+    SECTION("addItem while visible rebuilds without render") {
+        ctx->addItem("C");
+        REQUIRE(panelChildren() == 3);
+    }
+
+    SECTION("clearItems while visible empties without render") {
+        ctx->clearItems();
+        REQUIRE(panelChildren() == 0);
+    }
+}

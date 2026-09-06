@@ -11,8 +11,7 @@ ComboBox::ComboBox(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h),
       m_is_expanded(false),
       m_selected_index(-1),
-      m_dropdown_panel(nullptr),
-      m_needs_update(true) {
+      m_dropdown_panel(nullptr) {
     setClipChildren(false);
     markDirty();
 }
@@ -96,11 +95,8 @@ void ComboBox::draw(SDL_Renderer* renderer) {
         points[3] = points[0];
     }
     SDL_RenderLines(renderer, points, 3);
-
-    if (m_is_expanded && m_needs_update) {
-        createDropdownButtons();
-        m_needs_update = false;
-    }
+    // No hierarchy work here (punkt 6): dropdown buttons are built eagerly in
+    // toggleDropdown()/addItem()/clearItems(), never during the render pass.
 }
 
 void ComboBox::addItem(std::string_view item) {
@@ -108,7 +104,9 @@ void ComboBox::addItem(std::string_view item) {
     if (m_selected_index == -1) {
         setSelectedIndex(0);
     }
-    m_needs_update = true;
+    if (m_is_expanded) {
+        createDropdownButtons();
+    }
     markDirty();
 }
 
@@ -117,7 +115,9 @@ void ComboBox::addItem(std::string&& item) {
     if (m_selected_index == -1) {
        setSelectedIndex(0);
     }
-    m_needs_update = true;
+    if (m_is_expanded) {
+        createDropdownButtons();
+    }
     markDirty();
 }
 
@@ -131,7 +131,6 @@ void ComboBox::clearItems() {
     if (m_is_expanded) {
         toggleDropdown();
     }
-    m_needs_update = true;
     markDirty();
 }
 
@@ -181,7 +180,9 @@ void ComboBox::toggleDropdown() {
         dropdown->setVisible(true);
         m_dropdown_panel = dropdown.get();
         m_manager.addElement(std::move(dropdown));
-        m_needs_update = true;
+        // Eager build in the event path (punkt 6): draw() must not mutate
+        // the hierarchy (addChild/setSize/markDirty) mid-render.
+        createDropdownButtons();
     } else {
         if (m_dropdown_panel) {
             m_dropdown_panel->setVisible(false);

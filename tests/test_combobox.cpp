@@ -711,3 +711,42 @@ TEST_CASE("ComboBox - Position and Size", "[combobox]") {
         REQUIRE(cb->getHeight() == kComboHeight);
     }
 }
+TEST_CASE("ComboBox - No draw-path mutation", "[combobox][render]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("dropdown buttons exist right after expand, without render") {
+        auto combo = std::make_unique<ComboBox>(manager, kComboX, kComboY, kComboWidth, kComboHeight);
+        ComboBox* cb = combo.get();
+        manager.addElement(std::move(combo));
+        cb->addItem("Item1");
+        cb->addItem("Item2");
+        cb->addItem("Item3");
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT,
+                                                      kComboX + 5, kComboY + 5));
+        REQUIRE(cb->isExpanded());
+
+        // First item center — must be a Button already, no manager.render() call.
+        GUIElement* hit = manager.findElementAt(kComboX + 5, kComboY + kComboHeight + kItemHeight / 2);
+        REQUIRE(hit != nullptr);
+        REQUIRE(dynamic_cast<Button*>(hit) != nullptr);
+    }
+
+    SECTION("addItem while expanded is visible without render") {
+        auto combo = std::make_unique<ComboBox>(manager, kComboX, kComboY, kComboWidth, kComboHeight);
+        ComboBox* cb = combo.get();
+        manager.addElement(std::move(combo));
+        cb->addItem("Item1");
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT,
+                                                      kComboX + 5, kComboY + 5));
+        REQUIRE(cb->isExpanded());
+
+        cb->addItem("Item2");
+        // Second item center (index 1) — Button without any render.
+        GUIElement* hit = manager.findElementAt(kComboX + 5, kComboY + kComboHeight + kItemHeight + kItemHeight / 2);
+        REQUIRE(hit != nullptr);
+        REQUIRE(dynamic_cast<Button*>(hit) != nullptr);
+    }
+}
