@@ -184,19 +184,36 @@ GUIElement::~GUIElement() {
 }
 
 void GUIElement::setPosition(int x, int y) {
+    if (m_x == x && m_y == y) {
+        return;
+    }
     m_x = x;
     m_y = y;
     invalidateAbsPosCache();
-    markDirty();
+    // Cache jest niezależny od pozycji (blit w miejscu docelowym) — self
+    // nie wymaga przerysowania. Brudzimy tylko rotowanych przodków, którzy
+    // wpiekają dziecko we własną teksturę na lokalnych współrzędnych.
+    markBakedAncestorsDirty();
+}
+
+// Brudzi wyłącznie rotowanych przodków (oni kompozytują ten element we
+// własną teksturę). Nie-rotowani przodkowie renderują dzieci osobno,
+// więc ich cache zostaje ważny.
+void GUIElement::markBakedAncestorsDirty() {
+    for (GUIElement* p = m_parent; p != nullptr; p = p->m_parent) {
+        if (p->m_rotation != 0.0) {
+            p->m_isDirty = true;
+        }
+    }
 }
 
 void GUIElement::setSize(int width, int height) {
-    bool changed = (m_width != width || m_height != height);
+    if (m_width == width && m_height == height) {
+        return; // bez zmian rozmiaru → cache ważny, bez dirty
+    }
     m_width = width;
     m_height = height;
-    if (changed) {
-        layoutChildren();
-    }
+    layoutChildren();
     markDirty();
 }
 
@@ -269,7 +286,9 @@ GUIElement* GUIElement::addChild(std::unique_ptr<GUIElement> child) {
         raw->invalidateAbsPosCache();
         m_children.push_back(std::move(child));
         raw->updateLayout(m_width, m_height);
-        markDirty();
+        // Dodanie dziecka nie zmienia pikseli rodzica (dziecko renderuje
+        // się osobno na wierzch) — bez kaskady do root.
+        markDirty(false);
         return raw;
     }
     return nullptr;
@@ -277,7 +296,7 @@ GUIElement* GUIElement::addChild(std::unique_ptr<GUIElement> child) {
 
 void GUIElement::clearChildren() {
     m_children.clear();
-    markDirty();
+    markDirty(false);
 }
 
 void GUIElement::setTooltip(const std::string& text) {
@@ -536,8 +555,8 @@ void GUIElement::renderToCache() {
 
 void GUIElement::markDirty(bool cascadeToParents) {
     m_isDirty = true;
-    if (cascadeToParents && m_parent) {
-        m_parent->markDirty(true);
+    if (cascadeToParents) {
+        markBakedAncestorsDirty();
     }
 }
 
@@ -573,7 +592,8 @@ void GUIElement::cleanup() {
     const auto removed_count = initial_size - m_children.size();
     if (removed_count > 0) {
         LOG_DEBUG("GUIElement::cleanup(): Removed %zu child elements.", removed_count);
-        markDirty();
+        // Usunięcie dziecka odsłania cache rodzica (nienaruszony) — bez kaskady.
+        markDirty(false);
     }
 }
 

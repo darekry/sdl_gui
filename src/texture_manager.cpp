@@ -19,7 +19,8 @@ SharedTexture TextureManager::loadTexture(std::string_view path) {
     // Use find to avoid creating a std::string if possible
     auto it = m_textureCache.find(path);
     if (it != m_textureCache.end()) {
-        return it->second;
+        touch(it->second);
+        return it->second.texture;
     }
 
     const std::string path_str(path);
@@ -38,9 +39,8 @@ SharedTexture TextureManager::loadTexture(std::string_view path) {
     }
 
     auto sharedNewTexture = SharedTexture(newTexture, SDLTextureDeleter());
-    auto [inserted_it, success] = m_textureCache.emplace(std::move(path_str), sharedNewTexture);
-    
-    return inserted_it->second;
+    return insertEntry(m_textureCache, std::move(path_str), sharedNewTexture,
+                       textureBytes(newTexture));
 }
 
 
@@ -53,7 +53,8 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
     const uint64_t key = textCacheKey(text, static_cast<uint64_t>(reinterpret_cast<uintptr_t>(font.get())), color);
     auto it = m_textCache.find(key);
     if (it != m_textCache.end()) {
-        return it->second;
+        touch(it->second);
+        return it->second.texture;
     }
 
     // Create text string ONCE for the SDL call (cache key is already hashed).
@@ -75,7 +76,7 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
     SDL_SetTextureBlendMode(textTexture, SDL_BLENDMODE_BLEND);
 
     auto sharedTexture = SharedTexture(textTexture, SDLTextureDeleter());
-    m_textCache.emplace(key, sharedTexture);
+    insertEntry(m_textCache, key, sharedTexture, textureBytes(textTexture));
 
     return sharedTexture;
 }
@@ -93,7 +94,8 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, std::
     const uint64_t key = textCacheKey(text, fontId, color);
     auto it = m_textCache.find(key);
     if (it != m_textCache.end()) {
-        return it->second;
+        touch(it->second);
+        return it->second.texture;
     }
 
     // Create strings ONCE - needed for SDL calls (key is already hashed).
@@ -124,7 +126,7 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, std::
     SDL_SetTextureBlendMode(textTexture, SDL_BLENDMODE_BLEND);
 
     auto sharedTexture = SharedTexture(textTexture, SDLTextureDeleter());
-    m_textCache.emplace(key, sharedTexture);
+    insertEntry(m_textCache, key, sharedTexture, textureBytes(textTexture));
     
     return sharedTexture;
 }
@@ -145,7 +147,8 @@ uint64_t TextureManager::textCacheKey(std::string_view text, uint64_t fontId, co
 SharedTexture TextureManager::loadTextureFromMemory(const uint8_t* data, size_t size, std::string_view key) {
     auto it = m_textureCache.find(key);
     if (it != m_textureCache.end()) {
-        return it->second;
+        touch(it->second);
+        return it->second.texture;
     }
 
     SDL_IOStream* io = SDL_IOFromConstMem(data, size);
@@ -169,9 +172,8 @@ SharedTexture TextureManager::loadTextureFromMemory(const uint8_t* data, size_t 
     }
 
     auto sharedNewTexture = SharedTexture(newTexture, SDLTextureDeleter());
-    auto [inserted_it, success] = m_textureCache.emplace(std::string(key), sharedNewTexture);
-
-    return inserted_it->second;
+    return insertEntry(m_textureCache, std::string(key), sharedNewTexture,
+                       textureBytes(newTexture));
 }
 
 SharedTexture TextureManager::renderCache(uint64_t key, int width, int height,
@@ -182,7 +184,8 @@ SharedTexture TextureManager::renderCache(uint64_t key, int width, int height,
 
     auto it = m_renderCache.find(key);
     if (it != m_renderCache.end()) {
-        return it->second;
+        touch(it->second);
+        return it->second.texture;
     }
 
     SharedTexture tex(SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA8888,
@@ -204,44 +207,46 @@ SharedTexture TextureManager::renderCache(uint64_t key, int width, int height,
         }
     }
 
-    m_renderCache.emplace(key, tex);
-    return tex;
+    // Rozmiar znany z góry: tekstura tworzona dokładnie width x height.
+    return insertEntry(m_renderCache, key, tex,
+                       static_cast<size_t>(width) * static_cast<size_t>(height) * 4u);
 }
 
 SharedTexture TextureManager::addTexture(std::string_view key, SDL_Texture* texture) {
     auto it = m_textureCache.find(key);
     if (it != m_textureCache.end()) {
         LOG_DEBUG("TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
-        return it->second;
+        touch(it->second);
+        return it->second.texture;
     }
 
     if (!texture) {
         return nullptr;
     }
     auto shared = SharedTexture(texture, SDLTextureDeleter());
-    auto [inserted_it, success] = m_textureCache.emplace(key, shared);
-    return inserted_it->second;
+    return insertEntry(m_textureCache, std::string(key), shared, textureBytes(texture));
 }
 
 SharedTexture TextureManager::addTexture(std::string_view key, SharedTexture texture) {
     auto it = m_textureCache.find(key);
     if (it != m_textureCache.end()) {
         LOG_DEBUG("TextureManager: Attempted to add texture with existing key '%.*s'. Returning existing texture.", static_cast<int>(key.length()), key.data());
-        return it->second;
+        touch(it->second);
+        return it->second.texture;
     }
 
     if (!texture) {
         return nullptr;
     }
 
-    auto [inserted_it, success] = m_textureCache.emplace(key, texture);
-    return inserted_it->second;
+    return insertEntry(m_textureCache, std::string(key), texture, textureBytes(texture.get()));
 }
 
 SharedTexture TextureManager::getTexture(std::string_view key) const {
     auto it = m_textureCache.find(key);
     if (it != m_textureCache.end()) {
-        return it->second;
+        touch(it->second);
+        return it->second.texture;
     }
     return nullptr;
 }
@@ -322,11 +327,12 @@ bool TextureManager::queryTexture(std::string_view path, int& width, int& height
 }
 
 void TextureManager::pruneUnused() {
-    auto pruneMap = [](auto& map) -> size_t {
+    auto pruneMap = [this](auto& map) -> size_t {
         size_t removed = 0;
         auto it = map.begin();
         while (it != map.end()) {
-            if (it->second.use_count() == 1) {
+            if (it->second.texture.use_count() == 1) {
+                m_bytesUsed -= it->second.bytes;
                 it = map.erase(it);
                 ++removed;
             } else {
@@ -346,6 +352,7 @@ void TextureManager::clearCache() {
     m_textureCache.clear();
     m_renderCache.clear();
     m_textCache.clear();
+    m_bytesUsed = 0;
     if (count > 0) {
         LOG_DEBUG("TextureManager::clearCache(): Cleared %zu textures.", count);
     }
@@ -361,4 +368,87 @@ size_t TextureManager::getRenderCacheSize() const {
 
 size_t TextureManager::getTextCacheSize() const {
     return m_textCache.size();
+}
+
+size_t TextureManager::textureBytes(SDL_Texture* tex) {
+    if (!tex) {
+        return 0;
+    }
+    float w = 0.0f, h = 0.0f;
+    if (!SDL_GetTextureSize(tex, &w, &h)) {
+        return 0;
+    }
+    return static_cast<size_t>(w) * static_cast<size_t>(h) * 4u;
+}
+
+void TextureManager::touch(const CacheEntry& entry) const {
+    entry.lastUse = ++m_lruClock;
+}
+
+template <typename Map, typename Key>
+SharedTexture TextureManager::insertEntry(Map& map, Key&& key, SharedTexture tex, size_t bytes) {
+    auto [it, inserted] = map.emplace(std::forward<Key>(key), CacheEntry{tex, bytes, ++m_lruClock});
+    if (!inserted) {
+        return it->second.texture; // nie powinno się zdarzyć (caller sprawdza hit) — defensywnie
+    }
+    m_bytesUsed += bytes;
+    enforceByteBudget();
+    return tex;
+}
+
+void TextureManager::enforceByteBudget() {
+    // Najstarszy martwy wpis w mapie (use_count == 1 == trzyma go tylko mapa).
+    auto oldestIn = [](auto& map) {
+        typename std::decay_t<decltype(map)>::iterator best = map.end();
+        for (auto it = map.begin(); it != map.end(); ++it) {
+            if (it->second.texture.use_count() == 1 &&
+                (best == map.end() || it->second.lastUse < best->second.lastUse)) {
+                best = it;
+            }
+        }
+        return best;
+    };
+    size_t removed = 0;
+    while (m_bytesUsed > m_byteBudget) {
+        auto texIt = oldestIn(m_textureCache);
+        auto renIt = oldestIn(m_renderCache);
+        auto txtIt = oldestIn(m_textCache);
+        // Zwycięzca: najmniejsze lastUse spośród znalezionych.
+        uint64_t bestUse = UINT64_MAX;
+        int bestMap = 0;
+        if (texIt != m_textureCache.end() && texIt->second.lastUse < bestUse) {
+            bestUse = texIt->second.lastUse;
+            bestMap = 1;
+        }
+        if (renIt != m_renderCache.end() && renIt->second.lastUse < bestUse) {
+            bestUse = renIt->second.lastUse;
+            bestMap = 2;
+        }
+        if (txtIt != m_textCache.end() && txtIt->second.lastUse < bestUse) {
+            bestUse = txtIt->second.lastUse;
+            bestMap = 3;
+        }
+        if (bestMap == 0) {
+            break; // wszystko żywe — budżet chwilowo przekroczony
+        }
+        if (bestMap == 1) {
+            m_bytesUsed -= texIt->second.bytes;
+            m_textureCache.erase(texIt);
+        } else if (bestMap == 2) {
+            m_bytesUsed -= renIt->second.bytes;
+            m_renderCache.erase(renIt);
+        } else {
+            m_bytesUsed -= txtIt->second.bytes;
+            m_textCache.erase(txtIt);
+        }
+        ++removed;
+    }
+    if (removed > 0) {
+        LOG_DEBUG("TextureManager::enforceByteBudget(): Evicted %zu textures (%zu bytes used).", removed, m_bytesUsed);
+    }
+}
+
+void TextureManager::setByteBudget(size_t bytes) {
+    m_byteBudget = bytes;
+    enforceByteBudget();
 }

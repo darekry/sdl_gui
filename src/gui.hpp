@@ -130,6 +130,10 @@ public:
     // (Label/Cursor/...) return false so bevel colors are ignored.
     virtual bool supportsBevel() const { return true; }
     void markForDeletion();
+    // Precyzyjny dirty (punkt 6, plaster 5): cached texture zależy tylko od
+    // własnych inputów draw() — dzieci renderują się osobno na wierzch.
+    // cascade brudzi self + wyłącznie rotowanych przodków (oni wpiekają
+    // dzieci we własną teksturę). Nie-rotowani przodkowie nie są tykani.
     void markDirty(bool cascadeToParents = true);
     void markDirtyRecursively();
     bool isMarkedForDeletion() const;
@@ -161,6 +165,9 @@ public:
 
 protected:
     void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
+
+    // Brudzi wyłącznie rotowanych przodków (precyzyjny dirty, plaster 5).
+    void markBakedAncestorsDirty();
 
     // Reverse child-DFS: first step of the handleEvent() pipeline.
     // Returns true when a child consumed the event.

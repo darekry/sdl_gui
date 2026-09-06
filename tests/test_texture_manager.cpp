@@ -162,3 +162,91 @@ TEST_CASE("TextureManager TextShaper", "[texture_manager][text]") {
         REQUIRE(texManager.getTextCacheSize() == before + 1);
     }
 }
+
+TEST_CASE("TextureManager byte-budget LRU", "[texture_manager][lru]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    TextureManager& texManager = manager.getTextureManager();
+
+    // renderCache(w, h) księguje dokładnie w*h*4 bajtów — determinystyczne.
+    auto noop = [](SDL_Renderer*) {};
+    constexpr uint64_t k1 = 101, k2 = 102, k3 = 103;
+    constexpr size_t kEntry = 50u * 50u * 4u; // 10000
+
+    SECTION("default budget and accounting") {
+        REQUIRE(texManager.getByteBudget() == TextureManager::kDefaultByteBudget);
+        REQUIRE(texManager.getBytesUsed() == 0);
+        auto t1 = texManager.renderCache(k1, 50, 50, noop);
+        auto t2 = texManager.renderCache(k2, 25, 100, noop);
+        REQUIRE(t1);
+        REQUIRE(t2);
+        REQUIRE(texManager.getBytesUsed() == 2 * kEntry);
+    }
+
+    SECTION("overflowing insert evicts oldest dead entry") {
+        texManager.setByteBudget(2 * kEntry + kEntry / 2); // 25000
+        auto t1 = texManager.renderCache(k1, 50, 50, noop);
+        auto t2 = texManager.renderCache(k2, 50, 50, noop);
+        REQUIRE(texManager.getBytesUsed() == 2 * kEntry);
+        t1.reset(); // k1 martwe, k2 żywe
+        auto t3 = texManager.renderCache(k3, 50, 50, noop);
+        REQUIRE(t3);
+        REQUIRE(texManager.getRenderCacheSize() == 2);
+        REQUIRE(texManager.getBytesUsed() == 2 * kEntry);
+        // k1 wyrzucone: ponowne żądanie to miss (nowy wpis), k2 nietknięte.
+        REQUIRE(texManager.getRenderCacheSize() == 2);
+    }
+
+    SECTION("live entries are never evicted (budget may overshoot)") {
+        texManager.setByteBudget(2 * kEntry + kEntry / 2);
+        auto t1 = texManager.renderCache(k1, 50, 50, noop);
+        auto t2 = texManager.renderCache(k2, 50, 50, noop);
+        auto t3 = texManager.renderCache(k3, 50, 50, noop);
+        REQUIRE(t1);
+        REQUIRE(t2);
+        REQUIRE(t3);
+        REQUIRE(texManager.getRenderCacheSize() == 3);
+        REQUIRE(texManager.getBytesUsed() == 3 * kEntry);
+    }
+
+    SECTION("hit refreshes recency: touched dead entry survives") {
+        texManager.setByteBudget(2 * kEntry + kEntry / 2);
+        auto t1 = texManager.renderCache(k1, 50, 50, noop);
+        auto t2 = texManager.renderCache(k2, 50, 50, noop);
+        SDL_Texture* raw1 = t1.get();
+        SDL_Texture* raw2 = t2.get();
+        // Dotknij k1 (hit), potem oba martwe — k2 jest starsze.
+        REQUIRE(texManager.renderCache(k1, 50, 50, noop).get() == raw1);
+        t1.reset();
+        t2.reset();
+        auto t3 = texManager.renderCache(k3, 50, 50, noop);
+        REQUIRE(t3);
+        REQUIRE(texManager.getRenderCacheSize() == 2);
+        // k1 przeżyło (ten sam wskaźnik), k2 wyrzucone (miss → nowy obiekt).
+        REQUIRE(texManager.renderCache(k1, 50, 50, noop).get() == raw1);
+        REQUIRE(texManager.renderCache(k2, 50, 50, noop).get() != raw2);
+    }
+
+    SECTION("shrinking the budget enforces it immediately") {
+        auto t1 = texManager.renderCache(k1, 50, 50, noop);
+        auto t2 = texManager.renderCache(k2, 50, 50, noop);
+        SDL_Texture* raw2 = t2.get();
+        t1.reset();
+        t2.reset();
+        REQUIRE(texManager.getBytesUsed() == 2 * kEntry);
+        texManager.setByteBudget(kEntry);
+        REQUIRE(texManager.getBytesUsed() == kEntry);
+        REQUIRE(texManager.getRenderCacheSize() == 1);
+        // Młodsze k2 przeżyło.
+        REQUIRE(texManager.renderCache(k2, 50, 50, noop).get() == raw2);
+    }
+
+    SECTION("pruneUnused releases bytes of dead entries") {
+        auto t1 = texManager.renderCache(k1, 50, 50, noop);
+        REQUIRE(texManager.getBytesUsed() == kEntry);
+        t1.reset();
+        texManager.pruneUnused();
+        REQUIRE(texManager.getBytesUsed() == 0);
+        REQUIRE(texManager.getRenderCacheSize() == 0);
+    }
+}

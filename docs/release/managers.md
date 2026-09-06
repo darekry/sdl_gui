@@ -187,6 +187,15 @@ bool isInitialized() const;   // czy inicjalizacja SDL_image się powiodła
 | `size_t getCacheSize() const;` | Liczba tekstur w cache'u |
 | `size_t getRenderCacheSize() const;` | Liczba wpisów render-cache |
 | `size_t getTextCacheSize() const;` | Liczba wpisów TextShapera |
+| `void setByteBudget(size_t bytes);` | Limit bajtów na wszystkie trzy cache'e (domyślnie 128 MiB); egzekwowany natychmiast — wyrzuca martwe wpisy od najstarszego użycia |
+| `size_t getByteBudget() const;` | Aktualny limit bajtów |
+| `size_t getBytesUsed() const;` | Bieżące zużycie (suma w×h×4 po wszystkich wpisach) |
+
+Pamięć cache'y jest boundowana bajtami, nie liczbą wpisów: każde wstawienie
+księguje rozmiar tekstury i w razie przekroczenia budżetu wyrzuca martwe wpisy
+według LRU (najstarsze użycie pierwsze). Wpisy trzymane przez widgety nigdy nie
+są wyrzucane — przy samych żywych wpisach budżet może być chwilowo przekroczony.
+`GUIManager::update()` zbiera martwe wpisy, gdy zużycie przekroczy budżet.
 
 ### Zasoby wkompilowane (embedded assets)
 

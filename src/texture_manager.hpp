@@ -25,6 +25,11 @@ using SharedTexture = std::shared_ptr<SDL_Texture>;
  */
 class TextureManager {
 public:
+    // Punkt 6 plaster 4 (byte-budget LRU): domyślny limit pamięci cache'y.
+    // Wystarcza na setki pełnoekranowych tekstur 800x600x4; testy i aplikacje
+    // VRAM-świadome mogą go ścisnąć setByteBudget().
+    static constexpr size_t kDefaultByteBudget = 128u * 1024u * 1024u;
+
     explicit TextureManager(SDL_Renderer* renderer);
 
     ~TextureManager();
@@ -78,17 +83,49 @@ public:
     [[nodiscard]] size_t getRenderCacheSize() const;
     [[nodiscard]] size_t getTextCacheSize() const;
 
+    // Punkt 6 plaster 4: limit bajtów na wszystkie trzy cache'e łącznie.
+    // setByteBudget() egzekwuje nowy limit natychmiast (wyrzuca martwe wpisy
+    // od najstarszego użycia). Wpisy trzymane przez widgety (use_count > 1)
+    // nigdy nie są wyrzucane — przy samych żywych wpisach budżet może być
+    // chwilowo przekroczony.
+    void setByteBudget(size_t bytes);
+    [[nodiscard]] size_t getByteBudget() const { return m_byteBudget; }
+    [[nodiscard]] size_t getBytesUsed() const { return m_bytesUsed; }
+
 private:
+    // Jeden wpis cache'a: współdzielona tekstura + szacunek GPU-bajtów
+    // (w*h*4) + recency LRU. lastUse jest mutable, żeby const getTexture()
+    // mógł odświeżać kolejność bez zmiany sygnatury API.
+    struct CacheEntry {
+        SharedTexture texture;
+        size_t bytes = 0;
+        mutable uint64_t lastUse = 0;
+    };
     // TextShaper key (punkt 6): FNV-1a over text bytes mixed with font
     // identity + color. No std::string allocation on the hot path (the old
     // key built text+"|"+ptr+"|"+rgba per call, i.e. per frame for
     // non-shared widgets like ComboBox/ProgressBar/StringGrid).
     static uint64_t textCacheKey(std::string_view text, uint64_t fontId, const SDL_Color& color);
 
+    // Szacunek GPU-bajtów tekstury (w*h*4); 0 gdy rozmiaru nie da się odczytać.
+    static size_t textureBytes(SDL_Texture* tex);
+    // Odświeża recency wpisu (const, żeby działało też z getTexture()).
+    void touch(const CacheEntry& entry) const;
+    // Wstawia wpis, księguje bajty i egzekwuje budżet. Wołane PO sprawdzeniu
+    // hita przez callerów (wszystkie ścieżki wstawiania w .cpp).
+    template <typename Map, typename Key>
+    SharedTexture insertEntry(Map& map, Key&& key, SharedTexture tex, size_t bytes);
+    // Wyrzuca martwe wpisy (use_count == 1) od najstarszego użycia,
+    // aż m_bytesUsed <= m_byteBudget albo zabraknie martwych wpisów.
+    void enforceByteBudget();
+
     SDL_Renderer* m_renderer;
-    std::unordered_map<std::string, SharedTexture, StringHash, std::equal_to<>> m_textureCache;
-    std::unordered_map<uint64_t, SharedTexture> m_renderCache;
-    std::unordered_map<uint64_t, SharedTexture> m_textCache;
+    std::unordered_map<std::string, CacheEntry, StringHash, std::equal_to<>> m_textureCache;
+    std::unordered_map<uint64_t, CacheEntry> m_renderCache;
+    std::unordered_map<uint64_t, CacheEntry> m_textCache;
     SharedTexture m_defaultTexture;
     bool m_initialized = false; // SDL_image initialization status
+    size_t m_bytesUsed = 0;
+    size_t m_byteBudget = kDefaultByteBudget;
+    mutable uint64_t m_lruClock = 0;
 };

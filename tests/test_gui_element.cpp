@@ -488,11 +488,27 @@ TEST_CASE("GUIElement Dirty Flag", "[gui_element][dirty]") {
         REQUIRE(element.isDirty() == true);
     }
     
-    SECTION("setPosition() marks element dirty") {
+    SECTION("setPosition() does not dirty self (cache is position-independent)") {
         TestableElement element(manager, 0, 0, 100, 100);
         element.resetDirty();
         element.setPosition(50, 50);
-        REQUIRE(element.isDirty() == true);
+        REQUIRE(element.isDirty() == false);
+        REQUIRE(element.getX() == 50);
+        REQUIRE(element.getY() == 50);
+    }
+
+    SECTION("setPosition() with same values is a no-op") {
+        TestableElement element(manager, 10, 20, 100, 100);
+        element.resetDirty();
+        element.setPosition(10, 20);
+        REQUIRE(element.isDirty() == false);
+    }
+
+    SECTION("setSize() with same values does not dirty") {
+        TestableElement element(manager, 0, 0, 100, 100);
+        element.resetDirty();
+        element.setSize(100, 100);
+        REQUIRE(element.isDirty() == false);
     }
     
     SECTION("setSize() marks element dirty") {
@@ -506,18 +522,77 @@ TEST_CASE("GUIElement Dirty Flag", "[gui_element][dirty]") {
         auto parent = std::make_unique<TestableElement>(manager, 0, 0, 200, 200);
         TestableElement* parentPtr = parent.get();
         manager.addElement(std::move(parent));
-        
+
         auto child = std::make_unique<TestableElement>(manager, 10, 10, 50, 50);
         TestableElement* childPtr = child.get();
         parentPtr->addChild(std::move(child));
-        
+
         parentPtr->resetDirty();
         childPtr->resetDirty();
-        
+
         parentPtr->markDirtyRecursively();
-        
+
         REQUIRE(parentPtr->isDirty() == true);
         REQUIRE(childPtr->isDirty() == true);
+    }
+
+    // Precyzyjny dirty (punkt 6, plaster 5): dziecko nie brudzi zwykłych
+    // przodków — tylko rotowani przodkowie wpiekają dzieci we własny cache.
+    auto makeChain = [&]() {
+        auto grandparent = std::make_unique<TestableElement>(manager, 0, 0, 300, 300);
+        TestableElement* gp = grandparent.get();
+        manager.addElement(std::move(grandparent));
+        auto parent = std::make_unique<TestableElement>(manager, 0, 0, 200, 200);
+        TestableElement* p = parent.get();
+        gp->addChild(std::move(parent));
+        auto child = std::make_unique<TestableElement>(manager, 10, 10, 50, 50);
+        TestableElement* c = child.get();
+        p->addChild(std::move(child));
+        gp->resetDirty();
+        p->resetDirty();
+        c->resetDirty();
+        return std::tuple{gp, p, c};
+    };
+
+    SECTION("child markDirty() does not propagate to plain parents") {
+        auto [gp, p, c] = makeChain();
+        c->markDirty();
+        REQUIRE(c->isDirty() == true);
+        REQUIRE(p->isDirty() == false);
+        REQUIRE(gp->isDirty() == false);
+    }
+
+    SECTION("child markDirty() reaches rotated ancestors only") {
+        auto [gp, p, c] = makeChain();
+        p->setRotation(45.0);
+        gp->resetDirty();
+        p->resetDirty();
+        c->resetDirty();
+        c->markDirty();
+        REQUIRE(c->isDirty() == true);
+        REQUIRE(p->isDirty() == true);   // rotowany — wpieka dziecko
+        REQUIRE(gp->isDirty() == false); // zwykły — renderuje osobno
+    }
+
+    SECTION("setPosition() dirties rotated ancestors, not plain ones") {
+        auto [gp, p, c] = makeChain();
+        p->setRotation(45.0);
+        gp->resetDirty();
+        p->resetDirty();
+        c->resetDirty();
+        c->setPosition(20, 20);
+        REQUIRE(c->isDirty() == false);  // własny cache niezależny od pozycji
+        REQUIRE(p->isDirty() == true);
+        REQUIRE(gp->isDirty() == false);
+    }
+
+    SECTION("addChild() does not cascade to grandparent") {
+        auto [gp, p, c] = makeChain();
+        (void)c;
+        auto extra = std::make_unique<TestableElement>(manager, 5, 5, 10, 10);
+        p->addChild(std::move(extra));
+        REQUIRE(p->isDirty() == true);   // self — konserwatywnie
+        REQUIRE(gp->isDirty() == false); // bez kaskady do root
     }
 }
 

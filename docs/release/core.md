@@ -196,6 +196,13 @@ Elementy renderują się do cache'a tekstury; `markDirty()` wymusza ponowne
 przerysowanie. Settery robią to automatycznie, ale **bezpośrednia modyfikacja
 pól `Style` już nie** — patrz [patterns.md](patterns.md#4-style).
 
+Dirty jest precyzyjne: tekstura elementu zależy tylko od jego własnych danych
+(rozmiar, stan, styl), więc `markDirty()` brudzi element i wyłącznie
+**rotowanych przodków** (oni wpiekają dzieci we własną teksturę) — zwykli
+przodkowie renderują dzieci osobno i ich cache zostaje ważny. Z tego samego
+powodu `setPosition()` nie brudzi w ogóle (pozycja nie jest częścią cache'a),
+a `setSize()` o tych samych wymiarach jest no-opem.
+
 ## GUIManager
 
 `GUIManager` to kontekst, w którym żyją wszystkie elementy: przetwarza

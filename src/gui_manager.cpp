@@ -151,7 +151,11 @@ void GUIManager::update() {
     timerManager->update();
     animation_manager->update();
 
-    if (m_textureManager.getRenderCacheSize() > kRenderCachePruneThreshold) {
+    // Punkt 6 plaster 4: pamięć boundowana bajtami (egzekwowane na insert);
+    // update() zbiera martwe wpisy gdy budżet przekroczony. Licznik
+    // render-cache zostaje jako hygiene-backstop na liczbę wpisów.
+    if (m_textureManager.getBytesUsed() > m_textureManager.getByteBudget() ||
+        m_textureManager.getRenderCacheSize() > kRenderCachePruneThreshold) {
         m_textureManager.pruneUnused();
     }
 }
