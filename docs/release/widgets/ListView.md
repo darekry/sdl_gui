@@ -58,9 +58,8 @@ ListView* list = manager.create<ListView>(10, 10, 300, 200);
 int main(int, char**) {
     try {
         SDLApp app("ListView", 800, 600);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{800, 600});
         manager.setTheme(ThemePresets::createDarkTheme());
-        manager.setWindowSize(800, 600);
 
         ListView* list = manager.create<ListView>(10, 10, 300, 250);
         list->addItem("main.cpp");

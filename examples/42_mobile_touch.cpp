@@ -84,10 +84,8 @@ int main(int, char**) {
     try {
         SDLApp app("Mobile Touch UI — Phone Simulator", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
-        guiManager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-
         // === Phone frame ===
         auto phone = std::make_unique<Panel>(guiManager, PHONE_X - 12, PHONE_Y - 12,
                                              PHONE_W + 24, PHONE_H + 24);

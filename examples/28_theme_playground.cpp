@@ -15,7 +15,7 @@ int main(int, char*[]) {
     try {
         SDLApp app("Theme Playground", 800, 500);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager gui(renderer);
+        GUIManager gui(renderer, Viewport{800, 500});
 
         Theme light = ThemePresets::createLightTheme();
         Theme dark = ThemePresets::createDarkTheme();

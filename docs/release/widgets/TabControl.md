@@ -39,9 +39,8 @@ Kliknięcie przycisku zakładki przełącza ją automatycznie — ręczne `setAc
 int main(int, char**) {
     try {
         SDLApp app("TabControl", 800, 600);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{800, 600});
         manager.setTheme(ThemePresets::createDarkTheme());
-        manager.setWindowSize(800, 600);
 
         TabControl* tabs = manager.create<TabControl>(10, 10, 500, 300, 32);
 

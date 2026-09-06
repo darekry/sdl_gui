@@ -86,9 +86,8 @@ GPU z czasem aktualizowanym co klatkę:
 int main(int, char**) {
     try {
         SDLApp app("ShaderPanel", 600, 400, false, GPU_VULKAN);  // GPU renderer!
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{600, 400});
         manager.setTheme(ThemePresets::createDarkTheme());   // KONIECZNE
-        manager.setWindowSize(600, 400);                     // dla anchorów
 
         auto panel = std::make_unique<ShaderPanel>(manager, 40, 40, 520, 280);
 

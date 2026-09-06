@@ -14,7 +14,7 @@ int main(int, char**) {
     try {
         SDLApp app("ScrollArea Example", 600, 500);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager gui(renderer);
+        GUIManager gui(renderer, Viewport{600, 500});
 
         auto mainPanel = std::make_unique<Panel>(gui, 10, 10, 580, 480);
         {

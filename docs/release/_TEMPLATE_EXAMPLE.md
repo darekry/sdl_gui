@@ -9,9 +9,8 @@ int main(int, char**) {
     try {
         // Opcja A: SDLApp + GUIManager (osobno)
         SDLApp app("Tytuł", 800, 600);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{800, 600});
         manager.setTheme(ThemePresets::createDarkTheme());  // KONIECZNE
-        manager.setWindowSize(800, 600);                    // dla anchorów
 
         // ... tworzenie widgetów ...
 

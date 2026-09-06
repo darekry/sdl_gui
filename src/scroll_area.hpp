@@ -23,10 +23,13 @@ public:
 
     bool handleEvent(const SDL_Event& e) override;
     ComponentType getComponentTypeId() const override { return ComponentType::ScrollArea; }
-    void onParentResize(int parentWidth, int parentHeight) override;
+
+protected:
+    // Własna geometria wewnętrzna (viewport + slidery). Nadpisuje bazę
+    // zamiast shadowować ją bezargumentowym updateLayout().
+    void layoutChildren() override;
 
 private:
-    void updateLayout();
     void updateSliderRanges();
 
     Panel* m_viewport = nullptr;

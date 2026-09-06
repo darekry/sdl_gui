@@ -33,7 +33,12 @@ using ResizeCallback = std::function<void(int, int)>;
 
 class GUIManager {
 public:
-    GUIManager(SDL_Renderer* renderer);
+    /**
+     * @brief Viewport (rozmiar okna) wstrzykiwany w konstruktorze — nigdy 0x0.
+     * Niezmiennik NonZero: getWindowSize() zawsze zwraca wymiary > 0, więc
+     * żaden widget nie potrzebuje fallbacku rozmiaru.
+     */
+    explicit GUIManager(SDL_Renderer* renderer, Viewport viewport);
     ~GUIManager();
 
     GUIElement* addElement(std::unique_ptr<GUIElement> element);
@@ -83,14 +88,10 @@ public:
     void setResizeCallback(ResizeCallback callback);
     
     /**
-     * @brief Get current stored window size
+     * @brief Get current stored window size (always > 0, see Viewport).
      */
     void getWindowSize(int& width, int& height) const;
-    
-    /**
-     * @brief Set window size (call once at initialization)
-     */
-    void setWindowSize(int width, int height);
+    [[nodiscard]] Viewport getViewport() const { return Viewport{m_windowWidth, m_windowHeight}; }
 
     SDL_Renderer* getRenderer() const { return m_renderer; }
     SDL_GPUDevice* getGPUDevice() const { return SDL_GetGPURendererDevice(m_renderer); }

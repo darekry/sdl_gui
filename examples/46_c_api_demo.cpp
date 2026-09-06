@@ -29,10 +29,8 @@ int main(int, char**) {
         SDLApp app("C API Demo", 500, 200);
         SDL_Renderer* renderer = app.getRenderer();
 
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{500, 200});
         guiManager.setTheme(Theme::createDefaultTheme());
-        guiManager.setWindowSize(500, 200);
-
         /* Create widgets via C++ API */
         auto btnCpp = std::make_unique<Button>(guiManager, 10, 10, 150, 40, "C++ Button");
         auto* btnCppPtr = btnCpp.get();

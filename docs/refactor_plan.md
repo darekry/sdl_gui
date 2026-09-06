@@ -1,7 +1,8 @@
 # Plan dużego refaktoru SDL GUI
 
-> Status: propozycja (2026-09-05). Punkt 5 (unifikacja TextArea/TextEditable)
-> zrealizowany — patrz `AGENTS.md` → „Unifikacja TextArea z TextEditable".
+> Status: propozycja (2026-09-05). Zrealizowane: punkt 4 (unifikacja
+> TextArea/TextEditable) i punkt 3 (Style/ComponentType/BorderRenderer) —
+> patrz `AGENTS.md` → „Bieżący stan i ostatnie zmiany".
 > Reszta to otwarta lista — bierz po jednym punkcie, każdy kończ zielonymi
 > testami (`./nob test`) i zbudowanymi przykładami (`./nob examples`).
 
@@ -11,7 +12,7 @@
 |---|--------|-----------|
 | 1 | `EventDispatcher` + `FocusManager` + `PointerCapture` | DFS w każdym widgecie, `m_isHovered`-gating, focus-steal, duchy focus-overlay, cursor-forward w gałęzi capture |
 | 2 | `Layout pass (Measure/Arrange)` + `Anchor` jako enum | magiczne floaty (`<0/0-1/>1/==0.5`), `onSizeChanged`, ręczne centrowanie labeli, dummy `(0,0)` w parserze, fallback `800x600` |
-| 3 | `StyleResolver (ComputedStyle)` + `ComponentType: enum` | `unordered_map<string,...>`, hash stringów w renderze, `mergeWith` na gorąco, bevel-`if` per widget, nadużycie `borderColor` jako thumb/fill |
+| 3 | `StyleResolver (ComputedStyle)` + `ComponentType: enum` | ✅ ZROBIONE (2026-09-05) — `unordered_map<string,...>`, hash stringów w renderze, `mergeWith` na gorąco, bevel-`if` per widget, nadużycie `borderColor` jako thumb/fill |
 | 4 | Jeden `TextModel (char-index UTF-8)` | ✅ ZROBIONE — duplikacja TextInput/TextArea, bugi bajtowe |
 | 5 | `Lifetime Handle (SlotMap/generation, weak_ptr)` | `m_liveElements + raw*`, `isElementAlive`-guardy w lambdach, wiszące `c_str()` w C-API, niestabilne indeksy w edytorze |
 | 6 | `WidgetFactory` + `OverlayStack` + `RenderPolicy` | 3 kopie `if type=="Button"`, singleton-menu/tooltip ping-pong, `isOverlay()`, `wantsDirectRender` + 3 poziomy cache |
@@ -105,9 +106,21 @@ na `(0,0)` przed pierwszym resize • labelki na ujemnych coords po `setSize`.
 
 ---
 
-## 3. Style / Theme / Bevel
+## 3. Style / Theme / Bevel — ✅ ZROBIONE (2026-09-05)
 
-### Obecne hacki
+Zrealizowane (szczegóły: wpis w `AGENTS.md` → „StyleResolver faza 1"):
+- `src/component_type.hpp` — `ComponentType:uint8_t` jako **jedyny** klucz typu;
+  stringi tylko na granicy (layout przez `componentTypeFromString`, C-API przez
+  `componentTypeToString`). Usunięty wirtualny `getComponentType()` i stringowa
+  mapa/overloady w `Theme` (tablica `O(1)` + `epoch()`); klucz render-cache na ID.
+- `getComposedStyle()` cache'uje scalony styl per stan (przeliczenie tylko przy
+  zmianie epoki). Globalny współdzielony cache tekstur zachowany (test: 100
+  identycznych paneli → 1 wpis).
+- `drawResolvedBorder()` — jeden kod bevel-vs-plain; `RadioButton` bez kopii
+  brancha. Nowe `thumbColor`/`fillColor` z fallbackiem do `borderColor`
+  (stare motywy działają, `borderColor` nie znaczy już 3 różnych rzeczy).
+
+### Pierwotne hacki (dla historii)
 - `style.hpp:31 12x optional`, `mergeWith 12x if`, `operator== 40 linii`.
   `getComposedStyle()` wołana w `draw()` i 2x w `buildRenderCacheKey()`,
   za każdym razem hash stringa typu + kolory + `fontName`. `texture`
@@ -151,6 +164,11 @@ Szczegóły: wpis w `AGENTS.md` + `docs/release/widgets/TextArea.md`.
 ---
 
 ## 5. Lifetime (`m_liveElements`, focus/capture, C-API stringi, edytor)
+
+> Częściowo zahaczone przy punkcie 3 (2026-09-05): stringowe API typów
+> usunięte (`getComponentType()`, `Theme(string)`, `strcmp(...,"Label")`
+> w C-API). Reszta punktu (SlotMap, WidgetFactory, C-API handle table,
+> diff w edytorze) — otwarta.
 
 ### Obecne hacki
 - `gui_manager.hpp:138 m_liveElements + register/unregister`, surowe

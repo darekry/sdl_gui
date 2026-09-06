@@ -1,5 +1,6 @@
 #include "dialog_box.hpp"
 #include "../gui_manager.hpp"
+#include "../layout.hpp"
 
 #include "std.hpp"
 
@@ -16,9 +17,9 @@ std::unique_ptr<DialogBox> DialogBox::createConfirm(
     int width,
     int height
 ) {
-    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
-    constexpr int kScreenH = 600;
-    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
+    int screenW = 0, screenH = 0;
+    manager.getWindowSize(screenW, screenH);
+    auto [x, y] = CenterRect(screenW, screenH, width, height);
 
     auto dialog = std::unique_ptr<DialogBox>(new DialogBox(
         manager, x, y, width, height,
@@ -46,9 +47,9 @@ std::unique_ptr<DialogBox> DialogBox::createAlert(
     int width,
     int height
 ) {
-    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
-    constexpr int kScreenH = 600;
-    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
+    int screenW = 0, screenH = 0;
+    manager.getWindowSize(screenW, screenH);
+    auto [x, y] = CenterRect(screenW, screenH, width, height);
 
     auto dialog = std::unique_ptr<DialogBox>(new DialogBox(
         manager, x, y, width, height,
@@ -69,9 +70,9 @@ std::unique_ptr<DialogBox> DialogBox::createCustom(
     int width,
     int height
 ) {
-    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
-    constexpr int kScreenH = 600;
-    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
+    int screenW = 0, screenH = 0;
+    manager.getWindowSize(screenW, screenH);
+    auto [x, y] = CenterRect(screenW, screenH, width, height);
 
     return std::unique_ptr<DialogBox>(new DialogBox(
         manager, x, y, width, height,
@@ -90,9 +91,9 @@ std::unique_ptr<DialogBox> DialogBox::createWithTitle(
     int width,
     int height
 ) {
-    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
-    constexpr int kScreenH = 600;
-    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
+    int screenW = 0, screenH = 0;
+    manager.getWindowSize(screenW, screenH);
+    auto [x, y] = CenterRect(screenW, screenH, width, height);
 
     auto dialog = std::unique_ptr<DialogBox>(new DialogBox(
         manager, x, y, width, height,
@@ -140,27 +141,21 @@ DialogBox::DialogBox(
     m_messageLabel = messageLabel.get();
     addChild(std::move(messageLabel));
 
-    // Create the buttons
-    int buttonHeight = 35;
-    int buttonSpacing = 10;
-    int totalButtonsWidth = 0;
+    // Create the buttons (positions via layoutChildren() → StackLayout strip)
+    constexpr int buttonHeight = 35;
+
     std::vector<int> buttonWidths;
+    buttonWidths.reserve(buttonLabels.size());
 
     // Calculate button widths
     for (const auto& label : buttonLabels) {
         int btnWidth = std::max(80, static_cast<int>(label.length() * 12 + 20));
         buttonWidths.push_back(btnWidth);
-        totalButtonsWidth += btnWidth;
     }
-    totalButtonsWidth += buttonSpacing * static_cast<int>(buttonLabels.size() - 1);
-
-    // Button position
-    int startX = (width - totalButtonsWidth) / 2;
-    int buttonY = height - buttonHeight - 15;
 
     for (size_t i = 0; i < buttonLabels.size(); ++i) {
         auto button = std::make_unique<Button>(
-            manager, startX, buttonY, buttonWidths[i], buttonHeight, buttonLabels[i]
+            manager, 0, 0, buttonWidths[i], buttonHeight, buttonLabels[i]
         );
         
         // Button style
@@ -192,9 +187,9 @@ DialogBox::DialogBox(
 
         m_buttons.push_back(button.get());
         addChild(std::move(button));
-
-        startX += buttonWidths[i] + buttonSpacing;
     }
+
+    layoutChildren();
 }
 
 // ============================================================================
@@ -239,25 +234,18 @@ void DialogBox::close() {
     markForDeletion();
 }
 
-void DialogBox::layoutButtons() {
+void DialogBox::layoutChildren() {
+    // Pas przycisków: wycentrowany poziomy strip (StackLayout) na dole dialogu.
+    // Wołane też przy każdym resize — przyciski zawsze wycentrowane.
     if (m_buttons.empty()) return;
-    
-    int buttonHeight = 35;
-    int buttonSpacing = 10;
-    int totalButtonsWidth = 0;
-    
-    for (auto* btn : m_buttons) {
-        totalButtonsWidth += btn->getWidth();
-    }
-    totalButtonsWidth += buttonSpacing * static_cast<int>(m_buttons.size() - 1);
-    
-    int startX = (m_width - totalButtonsWidth) / 2;
-    int buttonY = m_height - buttonHeight - 15;
-    
-    for (auto* btn : m_buttons) {
-        btn->setPosition(startX, buttonY);
-        startX += btn->getWidth() + buttonSpacing;
-    }
+
+    constexpr int buttonHeight = 35;
+    const int buttonY = m_height - buttonHeight - 15;
+
+    std::vector<GUIElement*> items(m_buttons.begin(), m_buttons.end());
+    const StackLayout strip(StackLayout::Direction::Horizontal, 10,
+                            0, 0, 0, 0, StackLayout::Align::Center);
+    strip.arrangeStrip(items, m_width, buttonY);
 }
 
 void DialogBox::draw(SDL_Renderer* renderer) {

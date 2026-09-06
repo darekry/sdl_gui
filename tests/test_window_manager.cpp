@@ -76,10 +76,10 @@ TEST_CASE("WindowManager Window Creation", "[window_manager][create]") {
     }
     
     SECTION("createWindow returns nullptr for invalid size") {
-        // SDL should handle these gracefully, but let's test edge cases
+        // Niezmiennik NonZero Viewport: okno 0x0 deterministycznie daje nullptr
+        // (GUIManager odrzuca zerowy viewport, WindowManager mapuje to na nullptr).
         Window* window = windowManager.createWindow("Zero Size", 0, 0);
-        // SDL may create a minimum sized window or fail
-        // Behavior depends on SDL version
+        REQUIRE(window == nullptr);
     }
 }
 

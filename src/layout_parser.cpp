@@ -1,4 +1,5 @@
 #include "layout_parser.hpp"
+#include "anchor.hpp"
 #include "animated_image.hpp"
 #include "arc_container.hpp"
 #include "button.hpp"
@@ -58,35 +59,43 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
 
     std::unique_ptr<GUIElement> element = nullptr;
 
+    // Docelowy rect od razu w konstruktorze — bez dummy (0,0) + późniejszego
+    // setSize() (to dummy zostawiało labelki Buttona na ujemnych coords).
+    const int x = getInt(node, "x", 0);
+    const int y = getInt(node, "y", 0);
+    const int w = getInt(node, "width", 0);
+    const int h = getInt(node, "height", 0);
+
     if (type == "Panel")
     {
-        auto p = std::make_unique<Panel>(m_guiManager, 0, 0, 0, 0);
+        auto p = std::make_unique<Panel>(m_guiManager, x, y, w, h);
         p->setDraggable(getBool(node, "draggable", false));
         element = std::move(p);
     }
     else if (type == "Button")
     {
-        element = std::make_unique<Button>(m_guiManager, 0, 0, 0, 0, getString(node, "text", ""));
+        element = std::make_unique<Button>(m_guiManager, x, y, w, h, getString(node, "text", ""));
     }
     else if (type == "Label")
     {
-        element = std::make_unique<Label>(m_guiManager, 0, 0, getString(node, "text", ""), getInt(node, "fontSize", -1));
+        // Label sam wymiaruje się z tekstu — pozycja z atrybutów, rozmiar auto.
+        element = std::make_unique<Label>(m_guiManager, x, y, getString(node, "text", ""), getInt(node, "fontSize", -1));
     }
     else if (type == "Checkbox")
     {
-        auto c = std::make_unique<Checkbox>(m_guiManager, 0, 0, 0, 0);
+        auto c = std::make_unique<Checkbox>(m_guiManager, x, y, w, h);
         c->setChecked(getBool(node, "checked", false));
         element = std::move(c);
     }
     else if (type == "RadioButton")
     {
-        auto rb = std::make_unique<RadioButton>(m_guiManager, 0, 0, 0, 0);
+        auto rb = std::make_unique<RadioButton>(m_guiManager, x, y, w, h);
         rb->setSelected(getBool(node, "selected", false));
         element = std::move(rb);
     }
     else if (type == "RadioGroup")
     {
-        auto rg = std::make_unique<RadioGroup>(m_guiManager, 0, 0, 0, 0);
+        auto rg = std::make_unique<RadioGroup>(m_guiManager, x, y, w, h);
         
         // Parse option configuration
         if (hasNode(node, "optionSpacing")) rg->setOptionSpacing(getInt(node, "optionSpacing", 40));
@@ -111,20 +120,20 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     else if (type == "Slider")
     {
         Orientation orientation = getString(node, "orientation", "Horizontal") == "Vertical" ? Orientation::Vertical : Orientation::Horizontal;
-        auto slider = std::make_unique<Slider>(m_guiManager, 0, 0, 100, 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "value", 0), orientation);
+        auto slider = std::make_unique<Slider>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "value", 0), orientation);
         slider->setWheelStep(getInt(node, "wheelStep", 1));
         element = std::move(slider);
     }
     else if (type == "RangeSlider")
     {
         Orientation orientation = getString(node, "orientation", "Horizontal") == "Vertical" ? Orientation::Vertical : Orientation::Horizontal;
-        auto rangeSlider = std::make_unique<RangeSlider>(m_guiManager, 0, 0, 100, 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "lower", 0), getInt(node, "upper", 100), orientation);
+        auto rangeSlider = std::make_unique<RangeSlider>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "lower", 0), getInt(node, "upper", 100), orientation);
         rangeSlider->setWheelStep(getInt(node, "wheelStep", 1));
         element = std::move(rangeSlider);
     }
     else if (type == "StringGrid")
     {
-        auto grid = std::make_unique<StringGrid>(m_guiManager, 0, 0, 400, 300, static_cast<size_t>(getInt(node, "rowCount", 5)), static_cast<size_t>(getInt(node, "colCount", 5)));
+        auto grid = std::make_unique<StringGrid>(m_guiManager, x, y, w > 0 ? w : 400, h > 0 ? h : 300, static_cast<size_t>(getInt(node, "rowCount", 5)), static_cast<size_t>(getInt(node, "colCount", 5)));
         grid->setShowRowHeaders(getBool(node, "showRowHeaders", true));
         grid->setShowColumnHeaders(getBool(node, "showColumnHeaders", true));
         grid->setEditable(getBool(node, "editable", true));
@@ -137,14 +146,14 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else if (type == "TextInput")
     {
-        auto ti = std::make_unique<TextInput>(m_guiManager, 0, 0, 100, 30);
+        auto ti = std::make_unique<TextInput>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 30);
         if (hasNode(node, "text")) ti->setText(std::string_view(getString(node, "text")));
         ti->setLocked(getBool(node, "locked", false));
         element = std::move(ti);
     }
     else if (type == "TextArea")
     {
-        auto ta = std::make_unique<TextArea>(m_guiManager, 0, 0, 200, 150, getString(node, "fontPath", constants::kDefaultFontPath), getInt(node, "fontSize", 16));
+        auto ta = std::make_unique<TextArea>(m_guiManager, x, y, w > 0 ? w : 200, h > 0 ? h : 150, getString(node, "fontPath", constants::kDefaultFontPath), getInt(node, "fontSize", 16));
         if (hasNode(node, "text")) ta->setText(std::string_view(getString(node, "text")));
         ta->setWordWrap(getBool(node, "wordWrap", true));
         ta->setLocked(getBool(node, "locked", false));
@@ -152,7 +161,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else if (type == "ComboBox")
     {
-        auto cb = std::make_unique<ComboBox>(m_guiManager, 0, 0, 150, 30);
+        auto cb = std::make_unique<ComboBox>(m_guiManager, x, y, w > 0 ? w : 150, h > 0 ? h : 30);
         if (isArray(node, "items"))
         {
             forEachInArray(node, "items", [this, &cb](void* itemNode) {
@@ -180,7 +189,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else if (type == "TabControl")
     {
-        auto tc = std::make_unique<TabControl>(m_guiManager, 0, 0, 200, 200, getInt(node, "tabHeight", 30));
+        auto tc = std::make_unique<TabControl>(m_guiManager, x, y, w > 0 ? w : 200, h > 0 ? h : 200, getInt(node, "tabHeight", 30));
         if (isArray(node, "tabs"))
         {
             forEachInArray(node, "tabs", [this, &tc](void* tabNode) {
@@ -198,7 +207,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else if (type == "AnimatedImage")
     {
-        auto ai = std::make_unique<AnimatedImage>(m_guiManager, 0, 0, 100, 100);
+        auto ai = std::make_unique<AnimatedImage>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 100);
         if (hasNode(node, "path"))
             ai->setSpriteSheet(getString(node, "path"), getInt(node, "frames", 1), getInt(node, "rows", 1), getInt(node, "frameW", 0), getInt(node, "frameH", 0));
         if (hasNode(node, "frameDuration"))
@@ -223,11 +232,11 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else if (type == "Canvas")
     {
-        element = std::make_unique<Canvas>(m_guiManager, 0, 0, 100, 100);
+        element = std::make_unique<Canvas>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 100);
     }
     else if (type == "ProgressBar")
     {
-        auto pb = std::make_unique<ProgressBar>(m_guiManager, 0, 0, 200, 30);
+        auto pb = std::make_unique<ProgressBar>(m_guiManager, x, y, w > 0 ? w : 200, h > 0 ? h : 30);
         pb->setRange(getFloat(node, "min", 0.0f), getFloat(node, "max", 100.0f));
         pb->setValue(getFloat(node, "value", 0.0f));
         pb->setOrientation(getString(node, "orientation", "Horizontal") == "Vertical" ? Orientation::Vertical : Orientation::Horizontal);
@@ -237,7 +246,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else if (type == "ScrollArea")
     {
-        auto sa = std::make_unique<ScrollArea>(m_guiManager, 0, 0, 300, 200);
+        auto sa = std::make_unique<ScrollArea>(m_guiManager, x, y, w > 0 ? w : 300, h > 0 ? h : 200);
         if (hasNode(node, "contentWidth") || hasNode(node, "contentHeight"))
             sa->setContentSize(getInt(node, "contentWidth", sa->getWidth()), getInt(node, "contentHeight", sa->getHeight()));
         if (hasNode(node, "vScrollEnabled")) sa->setVerticalScroll(getBool(node, "vScrollEnabled", true));
@@ -246,12 +255,12 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
     else if (type == "ArcContainer")
     {
-        element = std::make_unique<ArcContainer>(m_guiManager, 0, 0, getInt(node, "radius", 100),
+        element = std::make_unique<ArcContainer>(m_guiManager, x, y, getInt(node, "radius", 100),
             getFloat(node, "startAngle", 0.0f), getFloat(node, "endAngle", 360.0f));
     }
     else if (type == "ListView")
     {
-        auto lv = std::make_unique<ListView>(m_guiManager, 0, 0, 200, 200);
+        auto lv = std::make_unique<ListView>(m_guiManager, x, y, w > 0 ? w : 200, h > 0 ? h : 200);
         if (hasNode(node, "rowHeight")) lv->setRowHeight(getInt(node, "rowHeight", 25));
         if (isArray(node, "items"))
         {
@@ -292,20 +301,14 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
 
     if (hasNode(node, "id")) element->setID(getString(node, "id"));
-    element->setPosition(getInt(node, "x", element->getX()), getInt(node, "y", element->getY()));
-    element->setSize(getInt(node, "width", element->getWidth()), getInt(node, "height", element->getHeight()));
-    
-    // Parse anchor for responsive positioning
-    if (hasNode(node, "anchorLeft") || hasNode(node, "anchorTop") || 
-        hasNode(node, "anchorRight") || hasNode(node, "anchorBottom"))
+
+    // Anchor: jawne tryby per oś + marginesy w px (enum, bez magicznych floatów).
+    // Kotwica aplikowana przy addChild/addElement — brak (0,0) przed resize.
+    if (hasNode(node, "anchorH") || hasNode(node, "anchorV") ||
+        hasNode(node, "marginLeft") || hasNode(node, "marginTop") ||
+        hasNode(node, "marginRight") || hasNode(node, "marginBottom"))
     {
-        Anchor anchor;
-        if (hasNode(node, "anchorLeft")) anchor.left = getFloat(node, "anchorLeft", -1.0f);
-        if (hasNode(node, "anchorTop")) anchor.top = getFloat(node, "anchorTop", -1.0f);
-        if (hasNode(node, "anchorRight")) anchor.right = getFloat(node, "anchorRight", -1.0f);
-        if (hasNode(node, "anchorBottom")) anchor.bottom = getFloat(node, "anchorBottom", -1.0f);
-        element->setAnchor(anchor);
-        element->storeOriginalSize();
+        element->setAnchor(parseAnchor(node));
     }
     
     if (hasNode(node, "visible")) element->setVisible(getBool(node, "visible", true));
@@ -351,7 +354,7 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
                 sa->setContent(std::move(contentChildren[0]));
             else
             {
-                auto panel = std::make_unique<Panel>(m_guiManager, 0, 0, 0, 0);
+                auto panel = std::make_unique<Panel>(m_guiManager, 0, 0, sa->getWidth(), sa->getHeight());
                 for (auto& c : contentChildren)
                     panel->addChild(std::move(c));
                 sa->setContent(std::move(panel));
@@ -367,6 +370,37 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
 
     return element;
+}
+
+Anchor LayoutParser::parseAnchor(void* node)
+{
+    HAnchor h = HAnchor::None;
+    VAnchor v = VAnchor::None;
+
+    if (hasNode(node, "anchorH"))
+    {
+        const std::string mode = getString(node, "anchorH");
+        if (mode == "left") h = HAnchor::Left;
+        else if (mode == "center") h = HAnchor::Center;
+        else if (mode == "right") h = HAnchor::Right;
+        else if (mode == "stretch") h = HAnchor::Stretch;
+        else if (mode == "none") h = HAnchor::None;
+        else LOG_WARNING("LayoutParser", "Unknown anchorH mode: {} (expected none|left|center|right|stretch)", mode);
+    }
+    if (hasNode(node, "anchorV"))
+    {
+        const std::string mode = getString(node, "anchorV");
+        if (mode == "top") v = VAnchor::Top;
+        else if (mode == "center") v = VAnchor::Center;
+        else if (mode == "bottom") v = VAnchor::Bottom;
+        else if (mode == "stretch") v = VAnchor::Stretch;
+        else if (mode == "none") v = VAnchor::None;
+        else LOG_WARNING("LayoutParser", "Unknown anchorV mode: {} (expected none|top|center|bottom|stretch)", mode);
+    }
+
+    return Anchor::pinned(h, v,
+        getInt(node, "marginLeft", 0), getInt(node, "marginTop", 0),
+        getInt(node, "marginRight", 0), getInt(node, "marginBottom", 0));
 }
 
 void LayoutParser::parseResources(void* resourcesNode)

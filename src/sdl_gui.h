@@ -41,14 +41,32 @@ typedef enum {
 } sdlgui_orientation_t;
 
 /* ═══════════════════════════════════════════════════════════════════
-   Anchor struct (same memory layout as C++ Anchor)
+   Anchor (enum per axis + pixel margins — no magic floats)
    ═══════════════════════════════════════════════════════════════ */
 
+typedef enum {
+    SDLGUI_H_NONE = 0,
+    SDLGUI_H_LEFT = 1,
+    SDLGUI_H_CENTER = 2,
+    SDLGUI_H_RIGHT = 3,
+    SDLGUI_H_STRETCH = 4
+} sdlgui_h_anchor_t;
+
+typedef enum {
+    SDLGUI_V_NONE = 0,
+    SDLGUI_V_TOP = 1,
+    SDLGUI_V_CENTER = 2,
+    SDLGUI_V_BOTTOM = 3,
+    SDLGUI_V_STRETCH = 4
+} sdlgui_v_anchor_t;
+
 typedef struct {
-    float left;    /* <0 = unset, 0.0-1.0 = percentage, >1.0 = pixels */
-    float top;
-    float right;
-    float bottom;
+    int h;       /* sdlgui_h_anchor_t */
+    int v;       /* sdlgui_v_anchor_t */
+    int left;    /* px from left (Left/Stretch) */
+    int top;     /* px from top (Top/Stretch) */
+    int right;   /* px from right (Right/Stretch) */
+    int bottom;  /* px from bottom (Bottom/Stretch) */
 } sdlgui_anchor_t;
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -245,19 +263,19 @@ int         sdlgui_element_add_child(sdlgui_element_t parent, sdlgui_element_t c
    ═══════════════════════════════════════════════════════════════ */
 
 sdlgui_anchor_t sdlgui_anchor_none(void);                          /* no anchor (fixed position) */
-sdlgui_anchor_t sdlgui_anchor_top_left(float margin);
-sdlgui_anchor_t sdlgui_anchor_top_right(float margin);
-sdlgui_anchor_t sdlgui_anchor_bottom_left(float margin);
-sdlgui_anchor_t sdlgui_anchor_bottom_right(float margin);
+sdlgui_anchor_t sdlgui_anchor_top_left(int margin);
+sdlgui_anchor_t sdlgui_anchor_top_right(int margin);
+sdlgui_anchor_t sdlgui_anchor_bottom_left(int margin);
+sdlgui_anchor_t sdlgui_anchor_bottom_right(int margin);
 sdlgui_anchor_t sdlgui_anchor_center(void);                        /* element centered, no corner offset */
 sdlgui_anchor_t sdlgui_anchor_fill(int padding);                   /* fill parent */
 sdlgui_anchor_t sdlgui_anchor_horizontal_stretch(int pad_left, int pad_right);
 sdlgui_anchor_t sdlgui_anchor_vertical_stretch(int pad_top, int pad_bottom);
-sdlgui_anchor_t sdlgui_anchor_top_bar(int height, int pad_vert, int pad_horiz);
-sdlgui_anchor_t sdlgui_anchor_bottom_bar(int height, int pad_vert, int pad_horiz);
-sdlgui_anchor_t sdlgui_anchor_left_sidebar(int width, int pad_top, int pad_bottom);
-sdlgui_anchor_t sdlgui_anchor_right_sidebar(int width, int pad_top, int pad_bottom);
-sdlgui_anchor_t sdlgui_anchor_raw(float left, float top, float right, float bottom);
+sdlgui_anchor_t sdlgui_anchor_top_bar(int height, int pad_horiz);
+sdlgui_anchor_t sdlgui_anchor_bottom_bar(int height, int pad_horiz);
+sdlgui_anchor_t sdlgui_anchor_left_sidebar(int pad_top, int pad_bottom);
+sdlgui_anchor_t sdlgui_anchor_right_sidebar(int pad_top, int pad_bottom);
+sdlgui_anchor_t sdlgui_anchor_make(int h, int v, int left, int top, int right, int bottom);
 
 /* ═══════════════════════════════════════════════════════════════════
    Phase 1: Widget create functions

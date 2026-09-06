@@ -22,7 +22,9 @@ TestHelper::TestHelper() {
         throw std::runtime_error("Renderer could not be created! SDL_Error: " + std::string(SDL_GetError()));
     }
 
-    m_guiManager = std::make_unique<GUIManager>(m_renderer);
+    // Viewport NonZero wstrzykiwany w konstruktorze — kotwice działają od
+    // startu, bez setWindowSize() i bez czekania na pierwszy resize.
+    m_guiManager = std::make_unique<GUIManager>(m_renderer, Viewport{800, 600});
 }
 
 TestHelper::~TestHelper() {

@@ -14,7 +14,7 @@ TEST_CASE("Render cache is shared between identical elements", "[render][cache]"
     TestHelper helper;
     GUIManager& manager = helper.getManager();
     manager.setTheme(Theme::createDefaultTheme());
-    manager.setWindowSize(640, 480);
+    manager.handleResize(640, 480);
 
     auto makeButton = [&](int x, bool distinct = false) {
         auto b = std::make_unique<Button>(manager, x, 10, 120, 40, "");

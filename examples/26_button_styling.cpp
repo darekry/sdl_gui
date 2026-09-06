@@ -9,7 +9,7 @@ int main(int, char**) {
     try {
         SDLApp app("Button Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
 
         // Default themed button

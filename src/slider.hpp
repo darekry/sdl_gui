@@ -39,6 +39,7 @@ public:
 
 protected:
     void draw(SDL_Renderer* renderer) override;
+    void layoutChildren() override;
 
     bool canShareRenderCache() const override { return false; }
 private:

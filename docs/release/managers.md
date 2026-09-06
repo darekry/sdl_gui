@@ -14,14 +14,17 @@ czcionek, tekstur, timerów i animacji. Jeden `GUIManager` = jeden renderer.
 ### Konstrukcja
 
 ```cpp
-GUIManager(SDL_Renderer* renderer);
+explicit GUIManager(SDL_Renderer* renderer, Viewport viewport);
 ```
+
+`Viewport{w, h}` (wymiary > 0) wstrzykiwany w konstruktorze — rozmiar okna
+nigdy nie jest `0x0`, więc kotwice i clamp menu/tooltipów działają od startu.
+`handleResize(0, 0)` (np. minimalizacja) jest ignorowane — niezmiennik NonZero.
 
 ```cpp
 SDLApp app("Aplikacja", 800, 600);
-GUIManager manager(app.getRenderer());
+GUIManager manager(app.getRenderer(), Viewport{800, 600});
 manager.setTheme(ThemePresets::createDarkTheme());  // KONIECZNE przed renderowaniem
-manager.setWindowSize(800, 600);                    // dla anchorów
 ```
 
 ### Dodawanie elementów
@@ -55,10 +58,10 @@ Kolejność jest krytyczna: `processEvent` → `update` → `cleanup` → `rende
 
 | Metoda | Opis |
 |--------|------|
-| `void handleResize(int width, int height);` | Przelicza wszystkie elementy z anchorami; wołaj przy `SDL_EVENT_WINDOW_RESIZED` |
-| `void setResizeCallback(ResizeCallback callback);` | Dodatkowy callback wołany po przeliczeniu anchorów (`ResizeCallback = std::function<void(int, int)>` — nowa szerokość, wysokość) |
-| `void getWindowSize(int& width, int& height) const;` | Bieżący zapisany rozmiar okna |
-| `void setWindowSize(int width, int height);` | Ustawia rozmiar okna; wywołaj raz przy inicjalizacji |
+| `void handleResize(int width, int height);` | Przelicza WSZYSTKIE top-level (też bez anchorów — resize propaguje do zakotwiczonych dzieci); wołaj przy `SDL_EVENT_WINDOW_RESIZED` |
+| `void setResizeCallback(ResizeCallback callback);` | Dodatkowy callback wołany po przeliczeniu layoutu (`ResizeCallback = std::function<void(int, int)>` — nowa szerokość, wysokość) |
+| `void getWindowSize(int& width, int& height) const;` | Bieżący rozmiar okna (zawsze > 0) |
+| `Viewport getViewport() const;` | Bieżący viewport jako struktura |
 
 ### Dostęp do zasobów i pod-menedżerów
 

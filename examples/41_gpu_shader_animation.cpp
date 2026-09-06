@@ -25,7 +25,7 @@ int main(int, char**) {
         SDLApp app("GPU Shader Animation — ESC: quit", 800, 560, false, GPU_VULKAN);
         LOG_INFO("ShaderAnim", "GPU driver: {}", SDL_GetGPUDeviceDriver(app.getGPUDevice()));
 
-        GUIManager gui(app.getRenderer());
+        GUIManager gui(app.getRenderer(), Viewport{800, 560});
 
         auto info = std::make_unique<Label>(gui, 20, 10,
             "Left: time-driven water (AnimationManager)   Right: mouse glow   ESC: quit");

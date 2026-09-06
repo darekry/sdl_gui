@@ -96,7 +96,6 @@ TEST_CASE("ContextMenu functionality", "[context_menu]") {
 TEST_CASE("ContextMenu clamps to window bounds", "[context_menu][position]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
-    manager.setWindowSize(800, 600);
 
     auto menu = std::make_unique<ContextMenu>(manager);
     ContextMenu* ctx = menu.get();

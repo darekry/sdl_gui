@@ -113,7 +113,6 @@ void setupMainWindow(Window* window, WindowManager& manager) {
 
 void setupSettingsWindow(Window* window) {
     GUIManager& gui = window->getGUIManager();
-    gui.setWindowSize(450, 400);
     
     auto panel = std::make_unique<Panel>(gui, 20, 20, 410, 360);
     panel->setBackgroundColor(ElementState::Normal, {240, 245, 250, 255});
@@ -169,7 +168,6 @@ void setupSettingsWindow(Window* window) {
 
 void setupFormWindow(Window* window) {
     GUIManager& gui = window->getGUIManager();
-    gui.setWindowSize(400, 500);
     
     auto panel = std::make_unique<Panel>(gui, 20, 20, 360, 460);
     panel->setBackgroundColor(ElementState::Normal, {255, 255, 255, 255});

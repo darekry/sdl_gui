@@ -73,9 +73,8 @@ w etykiecie. Kolejność w pętli zdarzeń jest obowiązkowa:
 int main(int, char**) {
     try {
         SDLApp app("Hello SDL GUI", 800, 600);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{800, 600});
         manager.setTheme(ThemePresets::createDarkTheme());  // KONIECZNE
-        manager.setWindowSize(800, 600);                    // dla anchorów
 
         auto label = manager.create<Label>(350, 240, "Kliknięć: 0");
         auto btn = manager.create<Button>(320, 300, 160, 40, "Kliknij");
@@ -161,9 +160,8 @@ Opcjonalny trzeci argument to callback `void(SDL_Event&)` wołany po
 int main(int, char**) {
     try {
         SDLApp app("Hello SDL GUI", 800, 600, true);  // resizable
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{800, 600});
         manager.setTheme(ThemePresets::createDarkTheme());
-        manager.setWindowSize(800, 600);
 
         // ... tworzenie widgetów ...
 

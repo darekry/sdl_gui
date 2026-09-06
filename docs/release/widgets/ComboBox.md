@@ -59,9 +59,8 @@ combo->on_selection_changed = [](int index, const std::string& text) {
 int main(int, char**) {
     try {
         SDLApp app("ComboBox", 800, 600);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{800, 600});
         manager.setTheme(ThemePresets::createDarkTheme());
-        manager.setWindowSize(800, 600);
 
         ComboBox* combo = manager.create<ComboBox>(10, 10, 200, 30);
         combo->addItem("Czerwony");

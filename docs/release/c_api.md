@@ -112,11 +112,16 @@ typedef enum {
     SDLGUI_STATE_DISABLED = 3
 } sdlgui_element_state_t;
 
+typedef enum { SDLGUI_H_NONE, SDLGUI_H_LEFT, SDLGUI_H_CENTER, SDLGUI_H_RIGHT, SDLGUI_H_STRETCH } sdlgui_h_anchor_t;
+typedef enum { SDLGUI_V_NONE, SDLGUI_V_TOP, SDLGUI_V_CENTER, SDLGUI_V_BOTTOM, SDLGUI_V_STRETCH } sdlgui_v_anchor_t;
+
 typedef struct {
-    float left;   /* <0 = nieustawione, 0.0–1.0 = procent, >1.0 = piksele */
-    float top;
-    float right;
-    float bottom;
+    int h;       /* sdlgui_h_anchor_t */
+    int v;       /* sdlgui_v_anchor_t */
+    int left;    /* px od lewej */
+    int top;     /* px od góry */
+    int right;   /* px od prawej */
+    int bottom;  /* px od dołu */
 } sdlgui_anchor_t;
 ```
 
@@ -125,19 +130,19 @@ typedef struct {
 | Funkcja | Opis |
 |---------|------|
 | `sdlgui_anchor_t sdlgui_anchor_none(void)` | Brak anchoru (stała pozycja) |
-| `sdlgui_anchor_t sdlgui_anchor_top_left(float margin)` | Lewy górny róg |
-| `sdlgui_anchor_t sdlgui_anchor_top_right(float margin)` | Prawy górny róg |
-| `sdlgui_anchor_t sdlgui_anchor_bottom_left(float margin)` | Lewy dolny róg |
-| `sdlgui_anchor_t sdlgui_anchor_bottom_right(float margin)` | Prawy dolny róg |
+| `sdlgui_anchor_t sdlgui_anchor_top_left(int margin)` | Lewy górny róg |
+| `sdlgui_anchor_t sdlgui_anchor_top_right(int margin)` | Prawy górny róg |
+| `sdlgui_anchor_t sdlgui_anchor_bottom_left(int margin)` | Lewy dolny róg |
+| `sdlgui_anchor_t sdlgui_anchor_bottom_right(int margin)` | Prawy dolny róg |
 | `sdlgui_anchor_t sdlgui_anchor_center(void)` | Wyśrodkowanie |
 | `sdlgui_anchor_t sdlgui_anchor_fill(int padding)` | Wypełnia rodzica (padding w px) |
 | `sdlgui_anchor_t sdlgui_anchor_horizontal_stretch(int pad_left, int pad_right)` | Rozciągnięcie poziome |
 | `sdlgui_anchor_t sdlgui_anchor_vertical_stretch(int pad_top, int pad_bottom)` | Rozciągnięcie pionowe |
-| `sdlgui_anchor_t sdlgui_anchor_top_bar(int height, int pad_vert, int pad_horiz)` | Pełna szerokość u góry |
-| `sdlgui_anchor_t sdlgui_anchor_bottom_bar(int height, int pad_vert, int pad_horiz)` | Pełna szerokość u dołu |
-| `sdlgui_anchor_t sdlgui_anchor_left_sidebar(int width, int pad_top, int pad_bottom)` | Pasek boczny po lewej |
-| `sdlgui_anchor_t sdlgui_anchor_right_sidebar(int width, int pad_top, int pad_bottom)` | Pasek boczny po prawej |
-| `sdlgui_anchor_t sdlgui_anchor_raw(float left, float top, float right, float bottom)` | Surowy anchor (konwencja: `<0` = nieustawione, `0–1` = procent, `>1` = px) |
+| `sdlgui_anchor_t sdlgui_anchor_top_bar(int height, int pad_horiz)` | Pełna szerokość u góry |
+| `sdlgui_anchor_t sdlgui_anchor_bottom_bar(int height, int pad_horiz)` | Pełna szerokość u dołu |
+| `sdlgui_anchor_t sdlgui_anchor_left_sidebar(int pad_top, int pad_bottom)` | Pasek boczny po lewej |
+| `sdlgui_anchor_t sdlgui_anchor_right_sidebar(int pad_top, int pad_bottom)` | Pasek boczny po prawej |
+| `sdlgui_anchor_t sdlgui_anchor_make(int h, int v, int left, int top, int right, int bottom)` | Dowolna kombinacja (enumy + marginesy px) |
 
 Anchory przeliczają się przy zmianie rozmiaru — w pętli obsłuż
 `SDL_EVENT_WINDOW_RESIZED` i przekaż nowe wymiary do

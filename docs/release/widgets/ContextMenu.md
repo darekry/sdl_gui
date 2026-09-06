@@ -69,9 +69,8 @@ etykietę:
 int main(int, char**) {
     try {
         SDLApp app("ContextMenu", 500, 320);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{500, 320});
         manager.setTheme(ThemePresets::createDarkTheme());   // KONIECZNE
-        manager.setWindowSize(500, 320);                     // dla anchorów
 
         auto info = std::make_unique<Label>(manager, 40, 200, "Kliknij prawym przyciskiem", 16);
         auto infoRef = manager.makeRef(info.get());          // PRZED std::move

@@ -48,6 +48,37 @@ Slider::Slider(GUIManager& manager, int x, int y, int width, int height, int min
     addChild(std::move(m_increaseButton));
 }
 
+void Slider::layoutChildren() {
+    // Własna geometria wewnętrzna: przyciski +/- na końcach, track pomiędzy.
+    // (LayoutPass — przeliczenie przy każdym resize, dawniej tylko w ctorze.)
+    const int buttonSize = (m_orientation == Orientation::Horizontal) ? m_height : m_width;
+    if (m_orientation == Orientation::Horizontal) {
+        m_trackOffsetX = buttonSize;
+        m_trackOffsetY = 0;
+        m_trackSize = m_width - 2 * buttonSize;
+        if (decrementButton) {
+            decrementButton->setPosition(0, 0);
+            decrementButton->setSize(buttonSize, m_height);
+        }
+        if (incrementButton) {
+            incrementButton->setPosition(m_width - buttonSize, 0);
+            incrementButton->setSize(buttonSize, m_height);
+        }
+    } else {
+        m_trackOffsetX = 0;
+        m_trackOffsetY = buttonSize;
+        m_trackSize = m_height - 2 * buttonSize;
+        if (decrementButton) {
+            decrementButton->setPosition(0, 0);
+            decrementButton->setSize(m_width, buttonSize);
+        }
+        if (incrementButton) {
+            incrementButton->setPosition(0, m_height - buttonSize);
+            incrementButton->setSize(m_width, buttonSize);
+        }
+    }
+}
+
 void Slider::updateValueFromMouse(int mouseX, int mouseY) {
     // Guard against division by zero
     if (m_trackSize <= 0) {

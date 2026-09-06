@@ -75,9 +75,8 @@ callback:
 int main(int, char**) {
     try {
         SDLApp app("Slider", 420, 200);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{420, 200});
         manager.setTheme(ThemePresets::createDarkTheme());   // KONIECZNE
-        manager.setWindowSize(420, 200);                     // dla anchorów
 
         auto label = std::make_unique<Label>(manager, 170, 82, "50", 18);
         auto labelRef = manager.makeRef(label.get());        // PRZED std::move

@@ -72,11 +72,11 @@ std::unique_ptr<Panel> buildWin95Dialog(GUIManager& guiManager) {
     dialog->addChild(std::move(progress));
 
     auto okButton = std::make_unique<Button>(guiManager, 0, 0, 76, 28, "OK");
-    okButton->setAnchor(Anchor{-1, -1, 12, 34});
+    okButton->setAnchor(Anchor::bottomRightAt(12, 34));
     dialog->addChild(std::move(okButton));
 
     auto cancelButton = std::make_unique<Button>(guiManager, 0, 0, 76, 28, "Anuluj");
-    cancelButton->setAnchor(Anchor{-1, -1, 100, 34});
+    cancelButton->setAnchor(Anchor::bottomRightAt(100, 34));
     dialog->addChild(std::move(cancelButton));
 
     auto statusBar = std::make_unique<Panel>(guiManager, 2, 354, 516, 24);
@@ -94,24 +94,22 @@ int main(int, char**) {
     try {
         SDLApp app("Windows 95 Bevel Demo", SCREEN_WIDTH, SCREEN_HEIGHT, true);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
-
-        guiManager.setTheme(Theme::createWindows95Theme());
-
         int windowWidth = SCREEN_WIDTH;
         int windowHeight = SCREEN_HEIGHT;
         app.getWindowSize(windowWidth, windowHeight);
-        guiManager.setWindowSize(windowWidth, windowHeight);
+        GUIManager guiManager(renderer, Viewport{windowWidth, windowHeight});
+
+        guiManager.setTheme(Theme::createWindows95Theme());
 
         auto hintLabel = std::make_unique<Label>(guiManager, 16, 8, "Przeciagnij okno za tlo, kliknij przyciski — faza odwraca sie w stanie Pressed", 14);
-        hintLabel->setAnchor(Anchor{16, 8, -1, -1});
+        hintLabel->setAnchor(Anchor::at(16, 8));
         Style hintStyle;
         hintStyle.textColor = {255, 255, 255, 255};
         hintLabel->setStyle(ElementState::Normal, hintStyle);
         guiManager.addElement(std::move(hintLabel));
 
         auto showButton = std::make_unique<Button>(guiManager, 16, 34, 140, 28, "Pokaż okno");
-        showButton->setAnchor(Anchor{16, 34, -1, -1});
+        showButton->setAnchor(Anchor::at(16, 34));
         showButton->setOnClickCallback([&guiManager](GUIElement*) {
             guiManager.addElement(buildWin95Dialog(guiManager));
         });

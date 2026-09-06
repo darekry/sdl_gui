@@ -67,9 +67,8 @@ pokazującą bieżącą klatkę:
 int main(int, char**) {
     try {
         SDLApp app("AnimatedImage", 420, 240);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{420, 240});
         manager.setTheme(ThemePresets::createDarkTheme());   // KONIECZNE
-        manager.setWindowSize(420, 240);                     // dla anchorów
 
         auto frameLabel = std::make_unique<Label>(manager, 160, 220, "klatka: 0", 16);
         auto frameRef = manager.makeRef(frameLabel.get());   // PRZED std::move

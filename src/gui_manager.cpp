@@ -22,8 +22,13 @@ static bool isDescendantOf(GUIElement* descendant, GUIElement* ancestor) {
     return false;
 }
 
-GUIManager::GUIManager(SDL_Renderer* renderer)
+GUIManager::GUIManager(SDL_Renderer* renderer, Viewport viewport)
     : tooltipElement(nullptr), m_renderer(renderer), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {
+    if (!viewport.valid()) {
+        throw std::invalid_argument("GUIManager requires a NonZero Viewport (width and height must be > 0)");
+    }
+    m_windowWidth = viewport.width;
+    m_windowHeight = viewport.height;
     timerManager = std::make_unique<TimerManager>();
     animation_manager = std::make_unique<AnimationManager>();
 
@@ -44,9 +49,9 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
         auto* raw_ptr = element.get();
         registerElement(raw_ptr);
         m_elements.push_back(std::move(element));
-        if (m_windowWidth > 0 && m_windowHeight > 0) {
-            raw_ptr->updateLayout(m_windowWidth, m_windowHeight);
-        }
+        // Viewport jest zawsze NonZero — kotwice aplikowane od razu, bez
+        // czekania na pierwszy resize (koniec elementów na (0,0) po dodaniu).
+        raw_ptr->updateLayout(m_windowWidth, m_windowHeight);
         return raw_ptr;
     }
     return nullptr;
@@ -382,16 +387,19 @@ void GUIManager::unregisterElement(GUIElement* element) {
 // === Resize handling ===
 
 void GUIManager::handleResize(int width, int height) {
+    // Zachowaj niezmiennik NonZero (0 przychodzi np. przy minimalizacji okna).
+    if (width <= 0 || height <= 0) {
+        return;
+    }
     m_windowWidth = width;
     m_windowHeight = height;
-    
-    // Update all top-level elements with anchors
+
+    // Propagacja do WSZYSTKICH top-level (nie tylko z anchorami): rodzic bez
+    // anchora też musi przekazać resize dzieciom z anchorami.
     for (const auto& element : m_elements) {
-        if (element->hasAnchor()) {
-            element->updateLayout(width, height);
-        }
+        element->updateLayout(width, height);
     }
-    
+
     // Call custom resize callback if set
     if (m_resizeCallback) {
         m_resizeCallback(width, height);
@@ -405,11 +413,6 @@ void GUIManager::setResizeCallback(ResizeCallback callback) {
 void GUIManager::getWindowSize(int& width, int& height) const {
     width = m_windowWidth;
     height = m_windowHeight;
-}
-
-void GUIManager::setWindowSize(int width, int height) {
-    m_windowWidth = width;
-    m_windowHeight = height;
 }
 
 void GUIManager::collectFocusableElements(std::vector<GUIElement*>& out) const {

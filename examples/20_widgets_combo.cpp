@@ -17,10 +17,8 @@ int main(int, char**) {
     try {
         SDLApp app("Widgets Combo Demo", SW, SH);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SW, SH});
         guiManager.setTheme(Theme::createDefaultTheme());
-        guiManager.setWindowSize(SW, SH);
-
         // Main panel — centered via anchor, dark, rounded corners
         auto panel = std::make_unique<Panel>(guiManager, 0, 0, 520, 370);
         panel->setAnchor(Anchor::center());

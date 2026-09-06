@@ -12,7 +12,7 @@ TEST_CASE("Rendering produces opaque widget pixels", "[render][pixel]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
     manager.setTheme(Theme::createDefaultTheme());
-    manager.setWindowSize(320, 240);
+    manager.handleResize(320, 240);
 
     SDL_Color bg = {45, 48, 58, 255};
     auto panel = std::make_unique<Panel>(manager, 10, 10, 200, 100);

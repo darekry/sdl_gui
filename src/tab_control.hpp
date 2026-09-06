@@ -20,6 +20,8 @@ public:
     ComponentType getComponentTypeId() const override;
 
 protected:
+    // Własna geometria: pasek zakładek + panele treści na pełny rozmiar.
+    void layoutChildren() override;
 
 private:
     void reorderTabs();  // Updates button positions

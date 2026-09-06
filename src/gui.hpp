@@ -15,6 +15,7 @@
 #include "logger.hpp"
 
 class GUIManager;
+class ILayoutManager;
 
 class GUIElement {
 private:
@@ -41,28 +42,29 @@ public:
     void setSize(int width, int height);
     void setParent(GUIElement* parent);
     
-    // === Anchor system (responsive layout) ===
-    
-    /** Set anchor for responsive positioning */
+    // === Layout pass (Measure/Arrange) ===
+
+    /** Set anchor for responsive positioning (data for AnchorLayout) */
     void setAnchor(const Anchor& anchor);
     [[nodiscard]] const Anchor& getAnchor() const { return m_anchor; }
     [[nodiscard]] bool hasAnchor() const { return m_anchor.hasAnyAnchor(); }
-    
-    /** Apply anchor to recalculate position/size based on parent dimensions */
-    void applyAnchor(int parentWidth, int parentHeight);
-    
-    /** Update layout for this element and all children (call on resize) */
+
+    /** Custom layout manager for this container (null = default AnchorLayout) */
+    void setLayoutManager(std::unique_ptr<ILayoutManager> manager);
+    [[nodiscard]] ILayoutManager* getLayoutManager() const { return m_layoutManager.get(); }
+
+    /**
+     * @brief Arrange this element's children (one LayoutPass step).
+     * Default: AnchorLayout — each child placed per its own Anchor.
+     * Widgets with internal geometry (Button label, Slider parts,
+     * ScrollArea sliders, TabControl tabs, dialog button strips) override it.
+     * Replaces the old onSizeChanged() hook.
+     */
+    virtual void layoutChildren();
+
+    /** Recompute own rect from parent size, then layoutChildren() (call on resize) */
     void updateLayout(int parentWidth, int parentHeight);
-    
-    /** Internal: called when parent size changes */
-    virtual void onParentResize(int parentWidth, int parentHeight);
-    
-    // === Original size storage (for anchor calculations) ===
-    
-    /** Store original size (used when anchor doesn't specify size) */
-    void storeOriginalSize();
-    [[nodiscard]] int getOriginalWidth() const { return m_originalWidth; }
-    [[nodiscard]] int getOriginalHeight() const { return m_originalHeight; }
+
     SDL_Point getAbsolutePosition() const;
     SDL_Point getRelativePosition() const { return {m_x, m_y}; }
     void invalidateAbsPosCache();
@@ -153,16 +155,11 @@ protected:
     bool m_canGetKeyboardFocus = false;
     bool m_clip_children = true;
     
-    // === Anchor system ===
-    Anchor m_anchor;                    // Anchor for responsive positioning
-    int m_originalWidth = 0;            // Original width before anchor modifications
-    int m_originalHeight = 0;           // Original height before anchor modifications
-    
-    virtual void draw(SDL_Renderer* renderer) { drawBackgroundAndBorder(renderer); }
+    // === Layout data ===
+    Anchor m_anchor;  // Anchor for responsive positioning (consumed by AnchorLayout)
+    std::unique_ptr<ILayoutManager> m_layoutManager;  // null = default AnchorLayout
 
-    // Hook called by setSize() when the dimensions actually changed.
-    // Widgets whose internal layout depends on size (e.g. centering children) override it.
-    virtual void onSizeChanged([[maybe_unused]] int oldWidth, [[maybe_unused]] int oldHeight) {}
+    virtual void draw(SDL_Renderer* renderer) { drawBackgroundAndBorder(renderer); }
 
     // Shared render cache (TextureManager::renderCache).
     // Default true: draw() depends only on the composed style + state + size.

@@ -28,7 +28,7 @@ int main(int, char**) {
     try {
         SDLApp app("ArcContainer Demo - Radial Menu", 500, 500, true);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{500, 500});
         
         Style btnStyle;
         btnStyle.backgroundColor = SDL_Color{70, 130, 180, 255};

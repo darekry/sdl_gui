@@ -16,7 +16,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     try {
         SDLApp app("Theme Switching Example", 800, 600);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager manager(renderer);
+        GUIManager manager(renderer, Viewport{800, 600});
 
         Theme light_theme = ThemePresets::createLightTheme();
         Theme dark_theme = ThemePresets::createDarkTheme();

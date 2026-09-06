@@ -10,7 +10,7 @@
 int main() {
     try {
         SDLApp app("Przykład - Animacje", 800, 600);
-        GUIManager gui(app.getRenderer());
+        GUIManager gui(app.getRenderer(), Viewport{800, 600});
 
         auto panel = std::make_unique<Panel>(gui, 50, 200, 100, 100);
         panel->setBackgroundColor(ElementState::Normal, {200, 100, 100, 255});

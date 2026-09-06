@@ -44,7 +44,9 @@ Window* WindowManager::createWindow(const std::string& title, int width, int hei
         LOG_DEBUG("WindowManager", "created '{}' (total windows: {})", title, m_windows.size());
         
         return rawPtr;
-    } catch (const std::runtime_error& e) {
+    } catch (const std::exception& e) {
+        // M.in. NonZero Viewport z GUIManagera (std::invalid_argument):
+        // okno 0x0 deterministycznie daje nullptr zamiast kaprysu SDL.
         LOG_ERROR("WindowManager", "createWindow() failed: {}", e.what());
         return nullptr;
     }

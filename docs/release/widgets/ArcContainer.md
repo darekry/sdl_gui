@@ -53,9 +53,8 @@ rotacji, z klikalnym pierścieniem ograniczonym do pierwszych 180°:
 int main(int, char**) {
     try {
         SDLApp app("ArcContainer", 500, 500);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{500, 500});
         manager.setTheme(ThemePresets::createDarkTheme());   // KONIECZNE
-        manager.setWindowSize(500, 500);                     // dla anchorów
 
         auto arc = std::make_unique<ArcContainer>(manager, 250, 250, 180);
         arc->setArcRange(0.0f, 180.0f);

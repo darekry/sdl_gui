@@ -13,7 +13,7 @@ int main(int, char**) {
     try {
         SDLApp app("TextArea Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
 
         // Panel with background, border and rounded corners

@@ -42,9 +42,8 @@ ScrollArea* scroll = manager.create<ScrollArea>(10, 10, 400, 300);
 int main(int, char**) {
     try {
         SDLApp app("ScrollArea", 800, 600);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{800, 600});
         manager.setTheme(ThemePresets::createDarkTheme());
-        manager.setWindowSize(800, 600);
 
         ScrollArea* scroll = manager.create<ScrollArea>(10, 10, 400, 300);
         scroll->setHorizontalScroll(true);

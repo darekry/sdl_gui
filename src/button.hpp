@@ -19,7 +19,7 @@ public:
     ComponentType getComponentTypeId() const override;
 
 protected:
-    void onSizeChanged(int oldWidth, int oldHeight) override;
+    void layoutChildren() override;
 
 private:
     OnClickCallback m_onClick;

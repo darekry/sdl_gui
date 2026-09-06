@@ -22,7 +22,7 @@ int main() {
     try {
         SDLApp app("Draggable Window Example", 800, 600);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{800, 600});
 
         // Main window panel
         auto windowPanel = std::make_unique<Panel>(guiManager, 100, 100, 300, 200);

@@ -14,10 +14,8 @@ int main(int, char**)
     try
     {
         SDLApp app("Run Callback — SDLApp::run() + events", SCREEN_WIDTH, SCREEN_HEIGHT);
-        GUIManager guiManager(app.getRenderer());
+        GUIManager guiManager(app.getRenderer(), Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
-        guiManager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-
         auto label = std::make_unique<Label>(
             guiManager, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 40, "No key pressed", 24);
         auto* labelPtr = label.get();

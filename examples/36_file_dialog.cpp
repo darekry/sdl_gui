@@ -24,7 +24,7 @@ int main(int, char**) {
     try {
         SDLApp app("FileDialog Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
 
         auto mainPanel = std::make_unique<Panel>(guiManager, 50, 50, 700, 500);
         Style panelStyle;

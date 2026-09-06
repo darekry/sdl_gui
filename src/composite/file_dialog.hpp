@@ -71,6 +71,8 @@ public:
 protected:
     void draw(SDL_Renderer* renderer) override;
     bool handleEvent(const SDL_Event& e) override;
+    // Proporcjonalny layout od rozmiaru dialogu + StackLayout na pasek przycisków.
+    void layoutChildren() override;
 
 private:
     void refreshDirectories();

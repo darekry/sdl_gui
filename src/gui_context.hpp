@@ -8,27 +8,24 @@ class GUIContext {
 public:
     GUIContext(const char* title, int width, int height, bool resizable = false)
         : m_app(title, width, height, resizable)
-        , m_guiManager(m_app.getRenderer())
+        , m_guiManager(m_app.getRenderer(), Viewport{width, height})
     {
         m_guiManager.setTheme(Theme::createDefaultTheme());
-        m_guiManager.setWindowSize(width, height);
     }
 
     GUIContext(const char* title, int width, int height, Theme theme, bool resizable = false)
         : m_app(title, width, height, resizable)
-        , m_guiManager(m_app.getRenderer())
+        , m_guiManager(m_app.getRenderer(), Viewport{width, height})
     {
         m_guiManager.setTheme(std::move(theme));
-        m_guiManager.setWindowSize(width, height);
     }
 
     /* GPU context (Vulkan + SDL_CreateGPURenderer) — for ShaderPanel etc. */
     GUIContext(const char* title, int width, int height, bool resizable, GPUBackend /*backend*/, bool gpuDebug = false)
         : m_app(title, width, height, resizable, GPU_VULKAN, gpuDebug)
-        , m_guiManager(m_app.getRenderer())
+        , m_guiManager(m_app.getRenderer(), Viewport{width, height})
     {
         m_guiManager.setTheme(Theme::createDefaultTheme());
-        m_guiManager.setWindowSize(width, height);
     }
 
     [[nodiscard]] SDL_Renderer* getRenderer() const { return m_app.getRenderer(); }

@@ -23,7 +23,7 @@ TEST_CASE("TextArea re-renders content after edit (shared cache opt-out)", "[tex
     TestHelper helper;
     GUIManager& manager = helper.getManager();
     manager.setTheme(Theme::createDefaultTheme());
-    manager.setWindowSize(320, 240);
+    manager.handleResize(320, 240);
 
     auto ta = std::make_unique<TextArea>(manager, 20, 20, 200, 100, "assets/fonts/font.ttf", 16);
     TextArea* area = ta.get();
@@ -52,7 +52,6 @@ TEST_CASE("TextArea receives input through GUIManager dispatch", "[text_area][pi
     TestHelper helper;
     GUIManager& manager = helper.getManager();
     manager.setTheme(Theme::createDefaultTheme());
-    manager.setWindowSize(800, 600);
 
     auto panel = std::make_unique<Panel>(manager, 50, 50, 700, 500);
     auto ta = std::make_unique<TextArea>(manager, 20, 50, 660, 430, "assets/fonts/font.ttf", 18);

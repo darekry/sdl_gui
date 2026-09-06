@@ -68,7 +68,7 @@ int main(int, char**) {
     try {
         SDLApp app("Performance Example", SCREEN_W, SCREEN_H);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_W, SCREEN_H});
 
         // Create TabControl filling most of the window
         auto tabControl = std::make_unique<TabControl>(guiManager, 10, 10, SCREEN_W - 20, SCREEN_H - 20);

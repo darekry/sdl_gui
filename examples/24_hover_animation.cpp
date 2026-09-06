@@ -106,7 +106,7 @@ public:
 int main() {
     try {
         SDLApp app("Hover Animation Example", 600, 400);
-        GUIManager gui(app.getRenderer());
+        GUIManager gui(app.getRenderer(), Viewport{600, 400});
         gui.setTheme(Theme::createDefaultTheme());
         auto title = std::make_unique<Label>(gui, 200, 20, "Hover Animation Demo");
         gui.addElement(std::move(title));

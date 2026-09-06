@@ -1,6 +1,7 @@
 #include "label.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
+#include "layout.hpp"
 #include "sdl_deleters.hpp"
 #include "constants.hpp"
 #include <SDL3/SDL.h>
@@ -190,12 +191,11 @@ void GUIElement::setPosition(int x, int y) {
 }
 
 void GUIElement::setSize(int width, int height) {
-    int oldWidth = m_width;
-    int oldHeight = m_height;
+    bool changed = (m_width != width || m_height != height);
     m_width = width;
     m_height = height;
-    if (oldWidth != width || oldHeight != height) {
-        onSizeChanged(oldWidth, oldHeight);
+    if (changed) {
+        layoutChildren();
     }
     markDirty();
 }
@@ -874,114 +874,38 @@ GUIElement* GUIElement::findElementAt(int x, int y) {
     return this;
 }
 
-// === Anchor system implementation ===
+// === Layout pass implementation ===
 
 void GUIElement::setAnchor(const Anchor& anchor) {
     m_anchor = anchor;
-    // Store original size before anchor modifications
-    if (m_originalWidth == 0 && m_originalHeight == 0) {
-        storeOriginalSize();
-    }
 }
 
-void GUIElement::storeOriginalSize() {
-    m_originalWidth = m_width;
-    m_originalHeight = m_height;
+void GUIElement::setLayoutManager(std::unique_ptr<ILayoutManager> manager) {
+    m_layoutManager = std::move(manager);
 }
 
-void GUIElement::applyAnchor(int parentWidth, int parentHeight) {
-    if (!m_anchor.hasAnyAnchor()) {
-        return; // No anchor set, use fixed position
+void GUIElement::layoutChildren() {
+    // Default pass: AnchorLayout arranges every child per its own Anchor
+    // and recurses. Containers with internal geometry override this.
+    if (m_layoutManager) {
+        m_layoutManager->arrange(*this);
+        return;
     }
-    
-    // Calculate new position and size
-    int newX = m_x;
-    int newY = m_y;
-    int newWidth = m_width;
-    int newHeight = m_height;
-    
-    // Helper function to convert anchor value to pixels
-    auto toPixels = [parentWidth, parentHeight](float value, bool isHorizontal) -> int {
-        if (value < 0) return -1; // Not set
-        if (value <= 1.0f) {
-            // Percentage
-            return static_cast<int>(static_cast<float>(isHorizontal ? parentWidth : parentHeight) * value);
-        }
-        // Fixed pixels (>1.0; exact 1.0 is already handled as 100% percentage)
-        return static_cast<int>(value);
-    };
-    
-    // Determine element size to use for positioning
-    int effectiveWidth = m_originalWidth > 0 ? m_originalWidth : m_width;
-    int effectiveHeight = m_originalHeight > 0 ? m_originalHeight : m_height;
-    
-    // Handle horizontal positioning
-    if (m_anchor.stretchesHorizontal()) {
-        // Stretch mode: both left and right are set
-        int leftPx = toPixels(m_anchor.left, true);
-        int rightPx = toPixels(m_anchor.right, true);
-        newX = leftPx;
-        newWidth = parentWidth - leftPx - rightPx;
-        if (newWidth < 0) newWidth = 0;
-    } else if (m_anchor.hasLeft()) {
-        int leftPx = toPixels(m_anchor.left, true);
-        // Special case: 0.5 means center horizontally
-        if (m_anchor.left == 0.5f) {
-            newX = leftPx - effectiveWidth / 2;  // Center the element, not its corner
-        } else {
-            newX = leftPx;
-        }
-        newWidth = effectiveWidth;
-    } else if (m_anchor.hasRight()) {
-        // Only right anchor: position from right edge, keep original width
-        int rightPx = toPixels(m_anchor.right, true);
-        newWidth = effectiveWidth;
-        newX = parentWidth - rightPx - newWidth;
-    }
-    
-    // Handle vertical positioning
-    if (m_anchor.stretchesVertical()) {
-        // Stretch mode: both top and bottom are set
-        int topPx = toPixels(m_anchor.top, false);
-        int bottomPx = toPixels(m_anchor.bottom, false);
-        newY = topPx;
-        newHeight = parentHeight - topPx - bottomPx;
-        if (newHeight < 0) newHeight = 0;
-    } else if (m_anchor.hasTop()) {
-        int topPx = toPixels(m_anchor.top, false);
-        // Special case: 0.5 means center vertically
-        if (m_anchor.top == 0.5f) {
-            newY = topPx - effectiveHeight / 2;  // Center the element, not its corner
-        } else {
-            newY = topPx;
-        }
-        newHeight = effectiveHeight;
-    } else if (m_anchor.hasBottom()) {
-        // Only bottom anchor: position from bottom edge, keep original height
-        int bottomPx = toPixels(m_anchor.bottom, false);
-        newHeight = effectiveHeight;
-        newY = parentHeight - bottomPx - newHeight;
-    }
-    
-    // Apply calculated values
-    if (newX != m_x || newY != m_y) {
-        setPosition(newX, newY);
-    }
-    if (newWidth != m_width || newHeight != m_height) {
-        setSize(newWidth, newHeight);
-    }
+    static AnchorLayout defaultLayout;
+    defaultLayout.arrange(*this);
 }
 
 void GUIElement::updateLayout(int parentWidth, int parentHeight) {
-    // Apply anchor to this element
-    applyAnchor(parentWidth, parentHeight);
-    
-    // Propagate to children
-    for (auto& child : m_children) {
-        child->updateLayout(m_width, m_height);
-    }
-}
+    // Place self against the parent rect, then arrange children.
+    // Runs unconditionally (also for anchor-less parents) so resize always
+    // propagates down the whole subtree.
+    const int wBefore = m_width;
+    const int hBefore = m_height;
+    AnchorLayout::place(*this, parentWidth, parentHeight);
 
-void GUIElement::onParentResize(int parentWidth, int parentHeight) {
-    updateLayout(parentWidth, parentHeight);
+    // place() → setSize() already ran layoutChildren() when our size changed;
+    // otherwise arrange children explicitly (position-only or anchor-less pass).
+    if (m_width == wBefore && m_height == hBefore) {
+        layoutChildren();
+    }
 }

@@ -244,9 +244,7 @@ int main(int, char**) {
     try {
         SDLApp app("Screen Manager Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
-        guiManager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         ScreenManager screenManager(guiManager);
         
         auto menuScreen = std::make_unique<MenuScreen>();

@@ -13,7 +13,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
     try {
         SDLApp app("ListView Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
 
         auto statusLabel = std::make_unique<Label>(guiManager, 20, 20, "Selected: None");
         auto statusLabelRef = guiManager.makeRef(statusLabel.get());

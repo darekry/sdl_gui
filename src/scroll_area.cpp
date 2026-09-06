@@ -16,7 +16,7 @@ ScrollArea::ScrollArea(GUIManager& manager, int x, int y, int width, int height)
 
     Panel::addChild(std::move(viewport));
 
-    updateLayout();
+    layoutChildren();
 }
 
 void ScrollArea::setContent(std::unique_ptr<GUIElement> content) {
@@ -41,19 +41,19 @@ void ScrollArea::setContentSize(int width, int height) {
 void ScrollArea::setScrollEnabled(bool vertical, bool horizontal) {
     m_vScrollEnabled = vertical;
     m_hScrollEnabled = horizontal;
-    updateLayout();
+    layoutChildren();
     markDirty();
 }
 
 void ScrollArea::setVerticalScroll(bool enabled) {
     m_vScrollEnabled = enabled;
-    updateLayout();
+    layoutChildren();
     markDirty();
 }
 
 void ScrollArea::setHorizontalScroll(bool enabled) {
     m_hScrollEnabled = enabled;
-    updateLayout();
+    layoutChildren();
     markDirty();
 }
 
@@ -66,7 +66,7 @@ void ScrollArea::setScrollOffset(int x, int y) {
     markDirty();
 }
 
-void ScrollArea::updateLayout() {
+void ScrollArea::layoutChildren() {
     int sliderW = m_sliderSize;
     int sliderH = m_sliderSize;
 
@@ -167,9 +167,4 @@ bool ScrollArea::handleEvent(const SDL_Event& e) {
     }
 
     return Panel::handleEvent(e);
-}
-
-void ScrollArea::onParentResize(int parentWidth, int parentHeight) {
-    Panel::onParentResize(parentWidth, parentHeight);
-    updateLayout();
 }

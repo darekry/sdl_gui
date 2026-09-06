@@ -34,7 +34,7 @@ SDL GUI to lekka biblioteka GUI oparta na SDL3. Cel: ułatwić tworzenie narzęd
 | **Zasoby** | TextureManager, FontManager, TimerManager, AnimationManager |
 | **Parsery** | JsonParser, SGMLParser, LayoutParser — definicja GUI z JSON/XML |
 | **Style** | Style + Theme — `unordered_map<string, array<optional<Style>, 4>>` per typ per stan (Normal/Hovered/Pressed/Disabled) |
-| **Layout** | Anchor — responsywne pozycjonowanie (procenty 0-1, piksele >1, stretch, presety: center/fill/topBar/leftSidebar itd.) |
+| **Layout** | Viewport (NonZero w ctorze GUIManagera) + Anchor (`HAnchor`/`VAnchor` enum + marginesy px) + LayoutPass Measure/Arrange (`ILayoutManager`: `AnchorLayout` domyślny, `StackLayout`; `layoutChildren()` per widget) |
 
 ### Źródła
 
@@ -79,9 +79,8 @@ int main(int, char**) {
         SDLApp app("Tytuł", 800, 600);
         SDL_Renderer* renderer = app.getRenderer();
 
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{800, 600});   // viewport NonZero w ctorze
         guiManager.setTheme(Theme::createDefaultTheme());   // KONIECZNE
-        guiManager.setWindowSize(800, 600);                 // dla anchorów
 
         // 2. Tworzenie widgetów
         auto widget = std::make_unique<Panel>(guiManager, x, y, w, h);
@@ -179,20 +178,23 @@ panel->addChild(std::move(slider));
 
 `ElementRef` sprawdza `isElementAlive()` przy każdym dostępie — bezpieczny dangling pointer.
 
-### Anchor (responsywny layout)
+### Anchor + LayoutPass (responsywny layout)
 
 ```cpp
 Anchor::center()             // centruj w rodzicu
 Anchor::fill(0)              // wypełnij cały rodzic
-Anchor::topBar(50, 10, 10)   // pełna szerokość, 50px wysokości, 10px od góry i boków
+Anchor::topBar(50, 10, 10)   // pełna szerokość, 50px od góry, 10px marginesy boczne
 Anchor::bottomBar(50, 10, 10)
-Anchor::leftSidebar(200, 60, 70)
+Anchor::leftSidebar(60, 70)   // szerokość z konstruktora elementu
 Anchor::horizontalStretch(5, 5)
+Anchor::bottomRightAt(12, 34)  // osobne marginesy prawa/dół
+Anchor::topCenter(40)          // środek poziomy, 40px od góry
+Anchor::pinned(HAnchor::Right, VAnchor::Bottom, 0, 0, 12, 34)  // escape hatch
 ```
 
-Konwencja kodowania float: `<0` = nieustawione, `0-1` = procent, `>1` = piksele, `0.5` = centrum.
+Enum per oś (`HAnchor::{None,Left,Center,Right,Stretch}`, `VAnchor::{None,Top,Center,Bottom,Stretch}`) + marginesy int w px. Brak magicznych floatów: `1px` osiągalne, center to wariant (nie `0.5`). Silnik: jeden pass Measure/Arrange (`ILayoutManager`: domyślny `AnchorLayout`, `StackLayout` do pasów/kolumn); widgety z własną geometrią nadpisują `layoutChildren()` (Button: label, Slider: track, ScrollArea: viewport/slidery, TabControl: zakładki, DialogBox/FileDialog: pas przycisków). Parser czyta `anchorH/anchorV` (`none|left|center|right|stretch` / `none|top|center|bottom|stretch`) + `marginLeft/Top/Right/Bottom` (px) i tworzy od razu docelowy rect (bez dummy `(0,0)`).
 
-Dla resize: okno z `SDLApp("Tytuł", 800, 600, true)` (resizable), w pętli obsłuż `SDL_EVENT_WINDOW_RESIZED` → `guiManager.handleResize(w, h)`.
+Dla resize: okno z `SDLApp("Tytuł", 800, 600, true)` (resizable), w pętli obsłuż `SDL_EVENT_WINDOW_RESIZED` → `guiManager.handleResize(w, h)` (propaguje do WSZYSTKICH top-level, też bez anchorów; wymiary <= 0 ignorowane — niezmiennik NonZero).
 
 ### Najczęstsze pułapki
 
@@ -265,7 +267,7 @@ Zasoby muszą być dostępne przez `pkg-config sdl3 sdl3-image sdl3-ttf`. `PKG_C
 - **Uruchamianie**: `./nob test` uruchamia binarki testowe **równolegle** (dynamiczna kolejka, domyślnie `min(16, nprocs)` zadań; `NOB_TEST_JOBS=<n>` zmienia limit). Output każdego testu trafia do `output/test_logs/<nazwa>.log` — przy porażce wypisywany jest ogon logu. Okna SDL w testach są ukrywane przez zmienną `SDL_GUI_HIDDEN=1` (ustawianą przez runnera; respektują ją `SDLApp`, `Window` i `WindowManager`).
 - **Widgety testowane (22)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, RangeSlider, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor, ArcContainer, ProgressBar, ScrollArea, ShaderPanel (CPU)
 - **Menedżery (4)**: FontManager, TextureManager, TimerManager, AnimationManager
-- **Systemy (11)**: GUIElement, GUIManager, Theme, Easing, UTF8, Anchor (presety, kodowanie 0-1/px, stretch, resize), Style, TextEditable (bazowa klasa przez podklasę testową), RenderCache, RenderPixel (pikselowa walidacja renderowania), Performance
+- **Systemy (11)**: GUIElement, GUIManager, Theme, Easing, UTF8, Anchor (enum H/V + marginesy px, presety, Viewport NonZero, LayoutPass, StackLayout), Style, TextEditable (bazowa klasa przez podklasę testową), RenderCache, RenderPixel (pikselowa walidacja renderowania), Performance
 - **Screen/Window (2)**: ScreenManager, WindowManager
 - **Parsery (3)**: JsonParser, SGMLParser, LayoutParser (fixture'y w `tests/data/` — `layout.json`, `layout.xml`, `widgets.json`, `win95_bevel.json/xml`, `bad.*`)
 - **C API (1)**: test_sdl_gui_c_api (Phase 0+1+2+3; + pixel test renderowania kursora — pozycja myszy ze syntetycznego motion eventu, bez warpowania wskaźnika)
@@ -325,6 +327,13 @@ Uruchom: `./nob test`
   (>10 wpisów), przenieś najstarsze do osobnego pliku CHANGELOG.md.
   ═══════════════════════════════════════════════════════════════════
 -->
+
+### Layout / Anchor — Viewport NonZero + enum + LayoutPass (2026-09-05)
+- **Nowość**: `Viewport{w,h}` wstrzykiwany do `GUIManager` w ctorze (niezmiennik NonZero — brak `0x0`, koniec `setWindowSize()` i fallbacku `800x600` w `ContextMenu`; `handleResize(<=0)` ignorowane, np. minimalizacja). `Anchor` jako enum per oś (`HAnchor`/`VAnchor` + marginesy int px) zamiast magicznych floatów (`<0/0-1/>1/==0.5`): `1px` osiągalne, center to wariant; nowe `at/pinned/topCenter/bottomRightAt`. Jeden `LayoutPass` Measure/Arrange (`src/layout.hpp`: `ILayoutManager`, `AnchorLayout` domyślny, `StackLayout` z `arrangeStrip` do pasów przycisków). `layoutChildren()` zamiast `onSizeChanged()` (Button: label, Slider: track+przyciski, ScrollArea: viewport/slidery — koniec shadowowania `updateLayout`, TabControl: zakładki+panele, DialogBox/FileDialog: pas przycisków). Usunięte `m_originalW/H`/`storeOriginalSize` (center z bieżącego rozmiaru). Parser tworzy od razu docelowy rect (bez dummy `(0,0)` + `setSize`), kotwice z `anchorH/anchorV` + `margin*` (px). `handleResize` propaguje do WSZYSTKICH top-level (fix: rodzic bez anchora blokował resize zakotwiczonych dzieci). DialogBox/FileDialog centrują z realnego viewportu (koniec hardcode `800x600`), C-API: `sdlgui_anchor_t{h,v,l,t,r,b}` + `sdlgui_anchor_make` (koniec `anchor_raw`/floatów).
+- **Zero shimów**: stare API usunięte (flota `Anchor`, `applyAnchor`, `onSizeChanged`, `onParentResize`, `setWindowSize`, `AnchorMode`, `anchorLeft/...` w plikach) — poprawione 48 przykładów, fixture'y JSON/XML, C-API i testy. `getAbsolutePosition`-cache i współdzielony render-cache bez zmian (perf).
+- **Przy okazji (pre-existing, blokowały `./nob release`)**: `text_area.cpp` nie includował `gui_manager.hpp` (sypał per-file compile), `nob.c` — `layout.hpp` w combined header + `theme_presets.hpp` po `gui.hpp` (undeclared `applyBevelToStyle` w `dist/sdl_gui.hpp`); `WindowManager::createWindow` łapie `std::exception` (okno 0x0 → deterministyczny `nullptr` przez NonZero Viewport).
+- Efekt: 44/44 testów przechodzi (test_anchor: 103 asercje/7 case'ów — nowe regresje: 1px, center bez historii, setSize rodzica bez anchora, propagacja przez rodzica bez anchora, brak (0,0) przed resize, NonZero przy resize 0x0, StackLayout dialogów), 48/48 przykładów + release (47_standalone, C smoke) zielone.
+- Zmienione pliki: src/anchor.hpp (rewrite), src/layout.hpp/cpp (nowe), src/gui.hpp/cpp, src/gui_manager.hpp/cpp, src/button.hpp/cpp, src/slider.hpp/cpp, src/tab_control.hpp/cpp, src/scroll_area.hpp/cpp, src/context_menu.cpp, src/composite/dialog_box.hpp/cpp, src/composite/file_dialog.hpp/cpp, src/layout_parser.hpp/cpp, src/window.cpp, src/window_manager.cpp, src/gui_context.hpp, src/text_area.cpp, src/sdl_gui.h, src/sdl_gui_c_api.cpp, nob.c, examples/* (48), examples/layouts/*, tests/data/win95_bevel.json, tests/test_anchor.cpp (rewrite), tests/test_gui_manager.cpp, tests/test_window_manager.cpp, tests/test_sdl_gui_c_api.cpp, tests/test_text_area.cpp, tests/test_render_*.cpp, tests/test_context_menu.cpp, tests/test_helper.cpp, docs/release/{core,resources,managers,patterns,getting_started,c_api}.md + skeletony w docs/release/widgets/*.md
 
 ### StyleResolver faza 1 — ComponentType + cache scalonego stylu + BorderRenderer (2026-09-05)
 - **Nowość**: `src/component_type.hpp` — enum `ComponentType:uint8_t` jako **jedyny** klucz typu w libie (stringi `"Button"…` tylko na granicy: pliki layoutu przez `componentTypeFromString`, C-API przez `componentTypeToString`). Usunięte: wirtualny `getComponentType()` ze wszystkich widgetów, stringowa mapa i overloady w `Theme` (została tablica `O(1)` `[typ][stan]` + `epoch()`). Klucz render-cache używa ID. `GUIElement::getComposedStyle()` cache'uje scalony styl per stan, przelicza tylko przy zmianie epoki themu/lokalnej.

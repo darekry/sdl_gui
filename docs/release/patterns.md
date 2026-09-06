@@ -112,15 +112,14 @@ Motywy: `ThemePresets::createWin9xTheme()`, `createWindows95Theme()`,
 
 ## 5. Responsive layout: Anchor + resize
 
-1. `manager.setWindowSize(w, h)` przy starcie.
+1. Wstrzyknij viewport w konstruktorze: `GUIManager manager(renderer, Viewport{w, h})`.
 2. Ustaw anchor elementom, które mają reagować na zmianę rozmiaru.
 3. Przy `SDL_EVENT_WINDOW_RESIZED` wołaj `manager.handleResize(w, h)`.
 
 ```cpp
 SDLApp app("Responsive", 800, 600, true);   // resizable
-GUIManager manager(app.getRenderer());
+GUIManager manager(app.getRenderer(), Viewport{800, 600});
 manager.setTheme(ThemePresets::createDarkTheme());
-manager.setWindowSize(800, 600);
 
 // pasek na górze — pełna szerokość, 50 px wysokości, 10 px marginesy
 auto topBar = manager.create<Panel>(0, 0, 0, 0);
@@ -132,7 +131,7 @@ content->setAnchor(Anchor::center());
 
 // lewa kolumna — 200 px szerokości, cała wysokość
 auto sidebar = manager.create<Panel>(0, 0, 0, 0);
-sidebar->setAnchor(Anchor::leftSidebar(200, 60, 10));
+sidebar->setAnchor(Anchor::leftSidebar(60, 10));
 
 app.run(manager, {40, 42, 54, 255}, [&manager](SDL_Event& e) {
     if (e.type == SDL_EVENT_WINDOW_RESIZED) {
@@ -141,8 +140,9 @@ app.run(manager, {40, 42, 54, 255}, [&manager](SDL_Event& e) {
 });
 ```
 
-Konwencja wartości anchorów (`resources.md`): `<0` nieustawione, `0–1`
-procenty, `>1` piksele, `0.5` = środek.
+Kotwice (`resources.md`): enum per oś (`HAnchor`/`VAnchor`) + marginesy
+w pikselach (int) — np. `Anchor::center()`, `Anchor::fill(10)`,
+`Anchor::bottomRightAt(12, 34)`, `Anchor::topCenter(40)`.
 
 ## 6. Okna dialogowe (overlay)
 
@@ -224,5 +224,5 @@ kompilatorem C++ z `-lsdl_gui` (patrz [getting_started.md](getting_started.md)).
 | Zmiana `Style` nie daje efektu | Bezpośrednia modyfikacja pól `Style` nie oznacza elementu jako brudnego — wywołaj `markDirty()` (settery robią to automatycznie) |
 | Fokus nie działa po Tab | Zapomniano `setCanGetKeyboardFocus(true)` na elemencie |
 | Element nie reaguje na zdarzenia | `setVisible(false)` lub `setEnabled(false)` — sprawdź oba |
-| Anchor nie działa przy resize | Brak `manager.setWindowSize(w, h)` na starcie lub brak `handleResize` na zdarzeniu `SDL_EVENT_WINDOW_RESIZED` |
+| Anchor nie działa przy resize | Brak `handleResize` na zdarzeniu `SDL_EVENT_WINDOW_RESIZED` (viewport startowy daje konstruktor — kotwice działają od razu) |
 | Dialog nie łapie fokusu | Dialogi są overlayami — elementy spoza aktywnego overlayu nie dostają fokusu Tab; nie twórz dialogów w środku innego overlayu |

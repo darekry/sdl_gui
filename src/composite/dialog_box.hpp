@@ -140,9 +140,10 @@ public:
 protected:
     void draw(SDL_Renderer* renderer) override;
     bool handleEvent(const SDL_Event& e) override;
+    // Pas przycisków jako StackLayout (wycentrowany poziomy strip na dole).
+    void layoutChildren() override;
 
 private:
-    void layoutButtons();
     void createTitleBar(std::string_view title);
 
     Label* m_messageLabel = nullptr;

@@ -1,4 +1,5 @@
 #include "text_area.hpp"
+#include "gui_manager.hpp"
 #include "context_menu.hpp"
 #include "texture_manager.hpp"
 #include "utf8_utils.hpp"

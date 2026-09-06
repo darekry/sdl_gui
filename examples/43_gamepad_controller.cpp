@@ -93,10 +93,8 @@ int main(int, char**) {
     try {
         SDLApp app("Gamepad Controller UI", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
-        guiManager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-
         // === Title ===
         auto title = std::make_unique<Label>(guiManager, SCREEN_WIDTH / 2 - 180, 20,
                                              "CHARACTER SELECT", 28);

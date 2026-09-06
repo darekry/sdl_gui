@@ -33,12 +33,10 @@ int main(int, char**)
         // Create RESIZABLE window
         SDLApp app("Anchor System Demo - Resize the window!", 800, 600, true);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
-        
-        // Set initial window size in GUIManager
+        // Viewport wstrzykiwany w konstruktorze — kotwice działają od startu.
         int windowWidth, windowHeight;
         app.getWindowSize(windowWidth, windowHeight);
-        guiManager.setWindowSize(windowWidth, windowHeight);
+        GUIManager guiManager(renderer, Viewport{windowWidth, windowHeight});
         
         // ====================================================================
         // Create elements with anchors - positions update automatically!
@@ -94,7 +92,7 @@ int main(int, char**)
         
         // 6. Left sidebar - full height, 200px width
         auto sidebar = std::make_unique<Panel>(guiManager, 0, 0, 200, 600);
-        sidebar->setAnchor(Anchor::leftSidebar(200, 60, 70)); // 200px wide, margins top/bottom
+        sidebar->setAnchor(Anchor::leftSidebar(60, 70)); // 200px wide (from ctor), margins top/bottom
         Style sidebarStyle;
         sidebarStyle.backgroundColor = SDL_Color{40, 44, 52, 230};
         sidebarStyle.borderColor = SDL_Color{60, 64, 72, 255};
@@ -105,12 +103,7 @@ int main(int, char**)
         // 7. Size indicator label - centered at top
         auto sizeLabel = std::make_unique<Label>(guiManager, 0, 40, "Window: 800 x 600");
         // Horizontal center, 40px from top
-        sizeLabel->setAnchor(Anchor{
-            .left = 0.5f,   // Center horizontally (50%)
-            .top = 40.0f,   // 40px from top
-            .right = -1,    // Not set
-            .bottom = -1    // Not set
-        });
+        sizeLabel->setAnchor(Anchor::topCenter(40));   // Center horizontally, 40px from top
         Label* sizeLabelPtr = sizeLabel.get();
         auto sizeLabelRef = guiManager.makeRef(sizeLabelPtr);
         guiManager.addElement(std::move(sizeLabel));

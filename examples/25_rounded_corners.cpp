@@ -15,7 +15,7 @@ int main() {
     try {
         SDLApp app("Rounded Corners Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
 
         // Demonstration 1: Panel with rounded corners and a border

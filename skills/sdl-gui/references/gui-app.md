@@ -15,13 +15,13 @@ responsive:
 SDLApp app("Tool", 1024, 768, /*resizable=*/true);
 GUIManager manager(app.getRenderer());
 manager.setTheme(ThemePresets::createDarkTheme());
-manager.setWindowSize(1024, 768);
+GUIManager manager(renderer, Viewport{1024, 768});
 
 auto toolbar = manager.create<Panel>(0, 0, 0, 0);
 toolbar->setAnchor(Anchor::topBar(48, 0, 0));            // full width, 48 px
 
 auto sidebar = manager.create<Panel>(0, 0, 0, 0);
-sidebar->setAnchor(Anchor::leftSidebar(200, 48, 24));    // below toolbar, above status
+sidebar->setAnchor(Anchor::leftSidebar(48, 24));    // 200px wide from ctor; below toolbar, above status
 
 auto content = manager.create<Panel>(0, 0, 0, 0);
 content->setAnchor(Anchor::fill(0));                     // whatever remains
@@ -37,7 +37,7 @@ app.run(manager, {40, 42, 54, 255}, [&manager](SDL_Event& e) {
 ```
 
 Anchor presets: `center()`, `fill(m)`, `topBar(h, l, r)`, `bottomBar(h, l, r)`,
-`leftSidebar(w, t, b)`, `rightSidebar(w, t, b)`, `horizontalStretch(l, r)`,
+`leftSidebar(t, b)`, `rightSidebar(t, b)`, `horizontalStretch(l, r)`,
 `verticalStretch(t, b)`, corners with margins. Value convention: `0–1` =
 fraction of parent, `>1` = pixels, `0.5` = center. Create children of a panel
 with `manager.create<Label>(parent, x, y, ...)` — coordinates are relative to

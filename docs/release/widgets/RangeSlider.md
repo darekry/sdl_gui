@@ -75,9 +75,8 @@ obie wartości, aktualizowanymi w jednym callbacku:
 int main(int, char**) {
     try {
         SDLApp app("RangeSlider", 420, 220);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{420, 220});
         manager.setTheme(ThemePresets::createDarkTheme());   // KONIECZNE
-        manager.setWindowSize(420, 220);                     // dla anchorów
 
         auto lowerLabel = std::make_unique<Label>(manager, 60, 110, "25", 16);
         auto upperLabel = std::make_unique<Label>(manager, 300, 110, "75", 16);

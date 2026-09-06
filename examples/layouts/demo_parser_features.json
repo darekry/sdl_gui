@@ -1,8 +1,14 @@
 {
   "resources": {
     "fonts": [
-      { "path": "assets/fonts/font.ttf", "size": 16 },
-      { "path": "assets/fonts/font.ttf", "size": 24 }
+      {
+        "path": "assets/fonts/font.ttf",
+        "size": 16
+      },
+      {
+        "path": "assets/fonts/font.ttf",
+        "size": 24
+      }
     ]
   },
   "root": {
@@ -19,47 +25,57 @@
           {
             "type": "Label",
             "text": "Top-Left Anchor (10px margin)",
-            "anchorLeft": 10,
-            "anchorTop": 10
+            "anchorH": "left",
+            "marginLeft": 10,
+            "anchorV": "top",
+            "marginTop": 10
           },
           {
             "type": "Label",
             "text": "Top-Right Anchor",
-            "anchorTop": 10,
-            "anchorRight": 10
+            "anchorH": "right",
+            "marginRight": 10,
+            "anchorV": "top",
+            "marginTop": 10
           },
           {
             "type": "Label",
             "text": "Centered (0.5)",
-            "anchorLeft": 0.5,
-            "anchorTop": 0.5
+            "anchorH": "center",
+            "anchorV": "center"
           },
           {
             "type": "Button",
             "text": "Bottom-Right",
             "width": 100,
             "height": 30,
-            "anchorRight": 10,
-            "anchorBottom": 10
+            "anchorH": "right",
+            "marginRight": 10,
+            "anchorV": "bottom",
+            "marginBottom": 10
           },
           {
             "type": "Panel",
             "width": 200,
             "height": 40,
-            "anchorLeft": 0,
-            "anchorBottom": 60,
-            "anchorRight": 0,
             "style": {
               "backgroundColor": "50,60,70,255",
               "borderColor": "100,110,120,255",
               "borderWidth": 1
-            }
+            },
+            "anchorH": "stretch",
+            "marginLeft": 0,
+            "marginRight": 0,
+            "anchorV": "bottom",
+            "marginBottom": 60
           },
           {
             "type": "Label",
             "text": "Bottom bar - stretched horizontally",
-            "anchorLeft": 10,
-            "anchorBottom": 75
+            "anchorH": "left",
+            "marginLeft": 10,
+            "anchorV": "bottom",
+            "marginBottom": 75
           }
         ]
       },
@@ -86,10 +102,19 @@
             "buttonSize": 18,
             "labelFontSize": 14,
             "options": [
-              { "text": "First option" },
-              { "text": "Second option (selected)", "selected": true },
-              { "text": "Third option" },
-              { "text": "Fourth option" }
+              {
+                "text": "First option"
+              },
+              {
+                "text": "Second option (selected)",
+                "selected": true
+              },
+              {
+                "text": "Third option"
+              },
+              {
+                "text": "Fourth option"
+              }
             ],
             "styles": [
               {
@@ -107,25 +132,49 @@
         "children": [
           {
             "type": "ListView",
-            "anchorLeft": 10,
-            "anchorTop": 10,
-            "anchorRight": 10,
-            "anchorBottom": 10,
             "rowHeight": 28,
             "selectedIndex": 0,
             "items": [
-              { "text": "Anchored ListView fills tab" },
-              { "text": "Resize window to test" },
-              { "text": "Second item" },
-              { "text": "Third item" },
-              { "text": "Fourth item" },
-              { "text": "Fifth item" },
-              { "text": "Sixth item" },
-              { "text": "Seventh item" },
-              { "text": "Eighth item" },
-              { "text": "Ninth item" },
-              { "text": "Tenth item" }
-            ]
+              {
+                "text": "Anchored ListView fills tab"
+              },
+              {
+                "text": "Resize window to test"
+              },
+              {
+                "text": "Second item"
+              },
+              {
+                "text": "Third item"
+              },
+              {
+                "text": "Fourth item"
+              },
+              {
+                "text": "Fifth item"
+              },
+              {
+                "text": "Sixth item"
+              },
+              {
+                "text": "Seventh item"
+              },
+              {
+                "text": "Eighth item"
+              },
+              {
+                "text": "Ninth item"
+              },
+              {
+                "text": "Tenth item"
+              }
+            ],
+            "anchorH": "stretch",
+            "marginLeft": 10,
+            "marginRight": 10,
+            "anchorV": "stretch",
+            "marginTop": 10,
+            "marginBottom": 10
           }
         ]
       }

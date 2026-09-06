@@ -11,7 +11,7 @@ int main() {
     try {
         SDLApp app("Texture & Font Previewer", 1000, 700);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager gui(renderer);
+        GUIManager gui(renderer, Viewport{1000, 700});
         gui.setTheme(Theme::createDefaultTheme());
 
         auto mainPanel = std::make_unique<Panel>(gui, 20, 20, 960, 660);

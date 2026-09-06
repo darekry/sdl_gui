@@ -13,8 +13,7 @@ int main(int argc, char * argv[])
     }
 
     SDLApp app("JSON Parser Example", 800, 600);
-    GUIManager guiManager(app.getRenderer());
-    guiManager.setWindowSize(800, 600);
+    GUIManager guiManager(app.getRenderer(), Viewport{800, 600});
     JsonParser parser(guiManager);
 
     std::string layout_file = argv[1];

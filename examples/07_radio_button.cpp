@@ -12,7 +12,7 @@ int main(int, char**) {
     try {
         SDLApp app("RadioButton Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         auto* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
 
         // Apply the default dark theme instead of inline styles
         guiManager.setTheme(Theme::createDefaultTheme());

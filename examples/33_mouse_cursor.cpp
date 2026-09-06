@@ -10,7 +10,7 @@
 int main() {
     try {
         SDLApp app("Przykład - MouseCursor", 800, 600);
-        GUIManager gui(app.getRenderer());
+        GUIManager gui(app.getRenderer(), Viewport{800, 600});
 
         auto cursorPtr = std::make_unique<Cursor>(gui);
         auto cursorRef = gui.makeRef(cursorPtr.get());

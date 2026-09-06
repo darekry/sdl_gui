@@ -49,7 +49,7 @@ stuck tooltips, leaks, or crashes inside callbacks.
 
 1. **Locate the SDK** (`dist/`) and open `dist/docs/getting_started.md` — compilation/linking, Hello World pattern.
 2. **Choose the architecture** (see "Architecture selection" below) — an RTS game uses `ScreenManager` (menu/pause/gameplay) and renders the game world with low-level SDL3; a tool application uses panels, anchors, and dialogs.
-3. **Write the skeleton**: `SDLApp` (or `GUIContext`) → `GUIManager` → `setTheme` → `setWindowSize`. For resizable windows: `SDLApp(title, w, h, true)` + handle `SDL_EVENT_WINDOW_RESIZED` → `manager.handleResize(w, h)`.
+3. **Write the skeleton**: `SDLApp` (or `GUIContext`) → `GUIManager(renderer, Viewport{w, h})` → `setTheme`. For resizable windows: `SDLApp(title, w, h, true)` + handle `SDL_EVENT_WINDOW_RESIZED` → `manager.handleResize(w, h)`.
 4. **Build the UI with widgets** per the docs (map below). Create widgets via `manager.create<T>(...)` (returns `T*`) or `std::make_unique` + `addElement(std::move(...))`. Attach callbacks with `ElementRef` when a callback touches other widgets.
 5. **Run the loop**: `app.run(manager, {40,42,54,255}, onEvent)` or a manual loop per rule 3.
 6. **Compile and verify** (commands below). The program must build with just `-I dist`; test by running it (if there is no display, report that to the user — do not block delivering the code).
@@ -110,7 +110,7 @@ Running with a shared library outside system paths: `LD_LIBRARY_PATH=dist ./app`
 | Children in wrong places | Child coordinates are relative to the parent, not the window |
 | `Style` change has no effect | Missing `markDirty()` after direct mutation |
 | Tab navigation does nothing | Missing `setCanGetKeyboardFocus(true)` on the element |
-| Anchors do not respond to resize | Missing `setWindowSize` at startup or missing `handleResize` on `SDL_EVENT_WINDOW_RESIZED` |
+| Anchors do not respond to resize | Missing `handleResize` on `SDL_EVENT_WINDOW_RESIZED` (startup viewport comes from the constructor) |
 | ShaderPanel does not work | Requires GPU renderer: `SDLApp(title, w, h, false, GPU_VULKAN)` |
 
 ## Resources

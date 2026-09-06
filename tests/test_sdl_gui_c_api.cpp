@@ -175,114 +175,113 @@ TEST_CASE("C API - Element base API", "[c_api]") {
 TEST_CASE("C API - Anchor factories", "[c_api]") {
     SECTION("none") {
         sdlgui_anchor_t a = sdlgui_anchor_none();
-        REQUIRE(a.left < 0);
-        REQUIRE(a.top < 0);
-        REQUIRE(a.right < 0);
-        REQUIRE(a.bottom < 0);
+        REQUIRE(a.h == SDLGUI_H_NONE);
+        REQUIRE(a.v == SDLGUI_V_NONE);
     }
 
     SECTION("top_left") {
-        sdlgui_anchor_t a = sdlgui_anchor_top_left(5.0f);
-        REQUIRE(a.left == 5.0f);
-        REQUIRE(a.top == 5.0f);
-        REQUIRE(a.right < 0);
-        REQUIRE(a.bottom < 0);
+        sdlgui_anchor_t a = sdlgui_anchor_top_left(5);
+        REQUIRE(a.h == SDLGUI_H_LEFT);
+        REQUIRE(a.v == SDLGUI_V_TOP);
+        REQUIRE(a.left == 5);
+        REQUIRE(a.top == 5);
     }
 
     SECTION("top_right") {
-        sdlgui_anchor_t a = sdlgui_anchor_top_right(10.0f);
-        REQUIRE(a.left < 0);
-        REQUIRE(a.top == 10.0f);
-        REQUIRE(a.right == 10.0f);
-        REQUIRE(a.bottom < 0);
+        sdlgui_anchor_t a = sdlgui_anchor_top_right(10);
+        REQUIRE(a.h == SDLGUI_H_RIGHT);
+        REQUIRE(a.v == SDLGUI_V_TOP);
+        REQUIRE(a.right == 10);
+        REQUIRE(a.top == 10);
     }
 
     SECTION("bottom_left") {
-        sdlgui_anchor_t a = sdlgui_anchor_bottom_left(7.0f);
-        REQUIRE(a.left == 7.0f);
-        REQUIRE(a.top < 0);
-        REQUIRE(a.right < 0);
-        REQUIRE(a.bottom == 7.0f);
+        sdlgui_anchor_t a = sdlgui_anchor_bottom_left(7);
+        REQUIRE(a.h == SDLGUI_H_LEFT);
+        REQUIRE(a.v == SDLGUI_V_BOTTOM);
+        REQUIRE(a.left == 7);
+        REQUIRE(a.bottom == 7);
     }
 
     SECTION("bottom_right") {
-        sdlgui_anchor_t a = sdlgui_anchor_bottom_right(3.0f);
-        REQUIRE(a.left < 0);
-        REQUIRE(a.top < 0);
-        REQUIRE(a.right == 3.0f);
-        REQUIRE(a.bottom == 3.0f);
+        sdlgui_anchor_t a = sdlgui_anchor_bottom_right(3);
+        REQUIRE(a.h == SDLGUI_H_RIGHT);
+        REQUIRE(a.v == SDLGUI_V_BOTTOM);
+        REQUIRE(a.right == 3);
+        REQUIRE(a.bottom == 3);
     }
 
     SECTION("center") {
         sdlgui_anchor_t a = sdlgui_anchor_center();
-        REQUIRE(a.left == 0.5f);
-        REQUIRE(a.top == 0.5f);
-        REQUIRE(a.right < 0);
-        REQUIRE(a.bottom < 0);
+        REQUIRE(a.h == SDLGUI_H_CENTER);
+        REQUIRE(a.v == SDLGUI_V_CENTER);
     }
 
     SECTION("fill") {
         sdlgui_anchor_t a = sdlgui_anchor_fill(5);
-        REQUIRE(a.left == 5.0f);
-        REQUIRE(a.top == 5.0f);
-        REQUIRE(a.right == 5.0f);
-        REQUIRE(a.bottom == 5.0f);
+        REQUIRE(a.h == SDLGUI_H_STRETCH);
+        REQUIRE(a.v == SDLGUI_V_STRETCH);
+        REQUIRE(a.left == 5);
+        REQUIRE(a.top == 5);
+        REQUIRE(a.right == 5);
+        REQUIRE(a.bottom == 5);
     }
 
     SECTION("horizontal_stretch") {
         sdlgui_anchor_t a = sdlgui_anchor_horizontal_stretch(3, 7);
-        REQUIRE(a.left == 3.0f);
-        REQUIRE(a.top < 0);
-        REQUIRE(a.right == 7.0f);
-        REQUIRE(a.bottom < 0);
+        REQUIRE(a.h == SDLGUI_H_STRETCH);
+        REQUIRE(a.v == SDLGUI_V_NONE);
+        REQUIRE(a.left == 3);
+        REQUIRE(a.right == 7);
     }
 
     SECTION("vertical_stretch") {
         sdlgui_anchor_t a = sdlgui_anchor_vertical_stretch(4, 8);
-        REQUIRE(a.left < 0);
-        REQUIRE(a.top == 4.0f);
-        REQUIRE(a.right < 0);
-        REQUIRE(a.bottom == 8.0f);
+        REQUIRE(a.h == SDLGUI_H_NONE);
+        REQUIRE(a.v == SDLGUI_V_STRETCH);
+        REQUIRE(a.top == 4);
+        REQUIRE(a.bottom == 8);
     }
 
     SECTION("top_bar") {
-        sdlgui_anchor_t a = sdlgui_anchor_top_bar(50, 0, 10);
-        REQUIRE(a.left == 10.0f);
-        REQUIRE(a.top == 50.0f);
-        REQUIRE(a.right == 10.0f);
-        REQUIRE(a.bottom < 0);
+        sdlgui_anchor_t a = sdlgui_anchor_top_bar(50, 10);
+        REQUIRE(a.h == SDLGUI_H_STRETCH);
+        REQUIRE(a.v == SDLGUI_V_TOP);
+        REQUIRE(a.left == 10);
+        REQUIRE(a.top == 50);
+        REQUIRE(a.right == 10);
     }
 
     SECTION("bottom_bar") {
-        sdlgui_anchor_t a = sdlgui_anchor_bottom_bar(50, 0, 10);
-        REQUIRE(a.left == 10.0f);
-        REQUIRE(a.top < 0);
-        REQUIRE(a.right == 10.0f);
-        REQUIRE(a.bottom == 50.0f);
+        sdlgui_anchor_t a = sdlgui_anchor_bottom_bar(50, 10);
+        REQUIRE(a.h == SDLGUI_H_STRETCH);
+        REQUIRE(a.v == SDLGUI_V_BOTTOM);
+        REQUIRE(a.left == 10);
+        REQUIRE(a.bottom == 50);
     }
 
     SECTION("left_sidebar") {
-        sdlgui_anchor_t a = sdlgui_anchor_left_sidebar(200, 10, 20);
-        REQUIRE(a.left == 0.0f);
-        REQUIRE(a.top == 10.0f);
-        REQUIRE(a.right < 0);
-        REQUIRE(a.bottom == 20.0f);
+        sdlgui_anchor_t a = sdlgui_anchor_left_sidebar(10, 20);
+        REQUIRE(a.h == SDLGUI_H_LEFT);
+        REQUIRE(a.v == SDLGUI_V_STRETCH);
+        REQUIRE(a.top == 10);
+        REQUIRE(a.bottom == 20);
     }
 
     SECTION("right_sidebar") {
-        sdlgui_anchor_t a = sdlgui_anchor_right_sidebar(200, 10, 20);
-        REQUIRE(a.left < 0);
-        REQUIRE(a.top == 10.0f);
-        REQUIRE(a.right == 0.0f);
-        REQUIRE(a.bottom == 20.0f);
+        sdlgui_anchor_t a = sdlgui_anchor_right_sidebar(10, 20);
+        REQUIRE(a.h == SDLGUI_H_RIGHT);
+        REQUIRE(a.v == SDLGUI_V_STRETCH);
+        REQUIRE(a.top == 10);
+        REQUIRE(a.bottom == 20);
     }
 
-    SECTION("raw") {
-        sdlgui_anchor_t a = sdlgui_anchor_raw(1.0f, 2.0f, 3.0f, 4.0f);
-        REQUIRE(a.left == 1.0f);
-        REQUIRE(a.top == 2.0f);
-        REQUIRE(a.right == 3.0f);
-        REQUIRE(a.bottom == 4.0f);
+    SECTION("make") {
+        sdlgui_anchor_t a = sdlgui_anchor_make(SDLGUI_H_RIGHT, SDLGUI_V_BOTTOM, 0, 0, 12, 34);
+        REQUIRE(a.h == SDLGUI_H_RIGHT);
+        REQUIRE(a.v == SDLGUI_V_BOTTOM);
+        REQUIRE(a.right == 12);
+        REQUIRE(a.bottom == 34);
     }
 }
 

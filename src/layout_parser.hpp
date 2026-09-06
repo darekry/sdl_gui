@@ -6,6 +6,7 @@
 
 class GUIManager;
 class GUIElement;
+struct Anchor;
 
 class LayoutParser
 {
@@ -33,6 +34,7 @@ protected:
 
 private:
     std::unique_ptr<GUIElement> parseNode(void* node);
+    Anchor parseAnchor(void* node);
     void parseResources(void* resourcesNode);
     void parseStyle(void* styleNode, GUIElement* element);
     std::optional<SDL_Color> parseColor(const std::string& colorStr);

@@ -16,9 +16,9 @@ Button::Button(GUIManager& manager, int x, int y, int width, int height, std::st
     }
 }
 
-void Button::onSizeChanged(int oldWidth, int oldHeight) {
-    (void)oldWidth;
-    (void)oldHeight;
+void Button::layoutChildren() {
+    // Własna geometria wewnętrzna: etykieta zawsze wycentrowana.
+    // (LayoutPass zamiast dawnego hooka onSizeChanged.)
     if (!m_label) {
         return;
     }

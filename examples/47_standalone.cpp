@@ -21,9 +21,7 @@ int main() {
         return 1;
     }
 
-    GUIManager manager(renderer);
-    manager.setWindowSize(800, 600);
-
+    GUIManager manager(renderer, Viewport{800, 600});
     // Apply default theme
     Theme theme = Theme::createDefaultTheme();
     manager.setTheme(theme);

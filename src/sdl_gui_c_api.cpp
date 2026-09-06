@@ -57,12 +57,29 @@ static ElementState convert_state(sdlgui_element_state_t s) {
    ═══════════════════════════════════════════════════════════ */
 
 static Anchor convert_anchor(const sdlgui_anchor_t* a) {
-    Anchor anchor;
-    anchor.left   = a->left;
-    anchor.top    = a->top;
-    anchor.right  = a->right;
-    anchor.bottom = a->bottom;
-    return anchor;
+    auto convH = [](int h) {
+        switch (h) {
+            case SDLGUI_H_LEFT: return HAnchor::Left;
+            case SDLGUI_H_CENTER: return HAnchor::Center;
+            case SDLGUI_H_RIGHT: return HAnchor::Right;
+            case SDLGUI_H_STRETCH: return HAnchor::Stretch;
+            default: return HAnchor::None;
+        }
+    };
+    auto convV = [](int v) {
+        switch (v) {
+            case SDLGUI_V_TOP: return VAnchor::Top;
+            case SDLGUI_V_CENTER: return VAnchor::Center;
+            case SDLGUI_V_BOTTOM: return VAnchor::Bottom;
+            case SDLGUI_V_STRETCH: return VAnchor::Stretch;
+            default: return VAnchor::None;
+        }
+    };
+    return Anchor::pinned(convH(a->h), convV(a->v), a->left, a->top, a->right, a->bottom);
+}
+
+static sdlgui_anchor_t wrap_anchor(const Anchor& a) {
+    return {static_cast<int>(a.h), static_cast<int>(a.v), a.left, a.top, a.right, a.bottom};
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -363,74 +380,59 @@ int sdlgui_element_add_child(sdlgui_element_t parent, sdlgui_element_t child) {
    ═══════════════════════════════════════════════════════════ */
 
 sdlgui_anchor_t sdlgui_anchor_none(void) {
-    auto a = Anchor::none();
-    return {a.left, a.top, a.right, a.bottom};
+    return wrap_anchor(Anchor::none());
 }
 
-sdlgui_anchor_t sdlgui_anchor_top_left(float margin) {
-    auto a = Anchor::topLeft(margin);
-    return {a.left, a.top, a.right, a.bottom};
+sdlgui_anchor_t sdlgui_anchor_top_left(int margin) {
+    return wrap_anchor(Anchor::topLeft(margin));
 }
 
-sdlgui_anchor_t sdlgui_anchor_top_right(float margin) {
-    auto a = Anchor::topRight(margin);
-    return {a.left, a.top, a.right, a.bottom};
+sdlgui_anchor_t sdlgui_anchor_top_right(int margin) {
+    return wrap_anchor(Anchor::topRight(margin));
 }
 
-sdlgui_anchor_t sdlgui_anchor_bottom_left(float margin) {
-    auto a = Anchor::bottomLeft(margin);
-    return {a.left, a.top, a.right, a.bottom};
+sdlgui_anchor_t sdlgui_anchor_bottom_left(int margin) {
+    return wrap_anchor(Anchor::bottomLeft(margin));
 }
 
-sdlgui_anchor_t sdlgui_anchor_bottom_right(float margin) {
-    auto a = Anchor::bottomRight(margin);
-    return {a.left, a.top, a.right, a.bottom};
+sdlgui_anchor_t sdlgui_anchor_bottom_right(int margin) {
+    return wrap_anchor(Anchor::bottomRight(margin));
 }
 
 sdlgui_anchor_t sdlgui_anchor_center(void) {
-    auto a = Anchor::center();
-    return {a.left, a.top, a.right, a.bottom};
+    return wrap_anchor(Anchor::center());
 }
 
 sdlgui_anchor_t sdlgui_anchor_fill(int padding) {
-    auto a = Anchor::fill(static_cast<float>(padding));
-    return {a.left, a.top, a.right, a.bottom};
+    return wrap_anchor(Anchor::fill(padding));
 }
 
 sdlgui_anchor_t sdlgui_anchor_horizontal_stretch(int pad_left, int pad_right) {
-    auto a = Anchor::horizontalStretch(static_cast<float>(pad_left), static_cast<float>(pad_right));
-    return {a.left, a.top, a.right, a.bottom};
+    return wrap_anchor(Anchor::horizontalStretch(pad_left, pad_right));
 }
 
 sdlgui_anchor_t sdlgui_anchor_vertical_stretch(int pad_top, int pad_bottom) {
-    auto a = Anchor::verticalStretch(static_cast<float>(pad_top), static_cast<float>(pad_bottom));
-    return {a.left, a.top, a.right, a.bottom};
+    return wrap_anchor(Anchor::verticalStretch(pad_top, pad_bottom));
 }
 
-sdlgui_anchor_t sdlgui_anchor_top_bar(int height, int pad_vert, int pad_horiz) {
-    (void)pad_vert;
-    auto a = Anchor::topBar(static_cast<float>(height), static_cast<float>(pad_horiz), static_cast<float>(pad_horiz));
-    return {a.left, a.top, a.right, a.bottom};
+sdlgui_anchor_t sdlgui_anchor_top_bar(int height, int pad_horiz) {
+    return wrap_anchor(Anchor::topBar(height, pad_horiz, pad_horiz));
 }
 
-sdlgui_anchor_t sdlgui_anchor_bottom_bar(int height, int pad_vert, int pad_horiz) {
-    (void)pad_vert;
-    auto a = Anchor::bottomBar(static_cast<float>(height), static_cast<float>(pad_horiz), static_cast<float>(pad_horiz));
-    return {a.left, a.top, a.right, a.bottom};
+sdlgui_anchor_t sdlgui_anchor_bottom_bar(int height, int pad_horiz) {
+    return wrap_anchor(Anchor::bottomBar(height, pad_horiz, pad_horiz));
 }
 
-sdlgui_anchor_t sdlgui_anchor_left_sidebar(int width, int pad_top, int pad_bottom) {
-    auto a = Anchor::leftSidebar(static_cast<float>(width), static_cast<float>(pad_top), static_cast<float>(pad_bottom));
-    return {a.left, a.top, a.right, a.bottom};
+sdlgui_anchor_t sdlgui_anchor_left_sidebar(int pad_top, int pad_bottom) {
+    return wrap_anchor(Anchor::leftSidebar(pad_top, pad_bottom));
 }
 
-sdlgui_anchor_t sdlgui_anchor_right_sidebar(int width, int pad_top, int pad_bottom) {
-    auto a = Anchor::rightSidebar(static_cast<float>(width), static_cast<float>(pad_top), static_cast<float>(pad_bottom));
-    return {a.left, a.top, a.right, a.bottom};
+sdlgui_anchor_t sdlgui_anchor_right_sidebar(int pad_top, int pad_bottom) {
+    return wrap_anchor(Anchor::rightSidebar(pad_top, pad_bottom));
 }
 
-sdlgui_anchor_t sdlgui_anchor_raw(float left, float top, float right, float bottom) {
-    return {left, top, right, bottom};
+sdlgui_anchor_t sdlgui_anchor_make(int h, int v, int left, int top, int right, int bottom) {
+    return {h, v, left, top, right, bottom};
 }
 
 /* ═══════════════════════════════════════════════════════════

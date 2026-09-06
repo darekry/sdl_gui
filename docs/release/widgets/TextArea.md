@@ -80,9 +80,8 @@ aktualizowany z `onTextChanged`.
 int main(int, char**) {
     try {
         SDLApp app("Notatnik", 700, 500);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{700, 500});
         manager.setTheme(ThemePresets::createDarkTheme());
-        manager.setWindowSize(700, 500);
 
         auto area = std::make_unique<TextArea>(manager, 20, 20, 660, 400,
                                                "assets/fonts/font.ttf", 16);

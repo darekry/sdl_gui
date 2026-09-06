@@ -719,20 +719,29 @@ TEST_CASE("GUIManager Constructor", "[gui_manager][constructor]") {
     TestHelper helper;
     SDL_Renderer* renderer = helper.getRenderer();
 
-    SECTION("GUIManager constructor accepts SDL_Renderer pointer") {
-        GUIManager manager(renderer);
+    SECTION("GUIManager constructor accepts renderer + NonZero viewport") {
+        GUIManager manager(renderer, Viewport{800, 600});
         REQUIRE(manager.getRenderer() == renderer);
+        int w = 0, h = 0;
+        manager.getWindowSize(w, h);
+        REQUIRE(w == 800);
+        REQUIRE(h == 600);
+    }
+
+    SECTION("GUIManager rejects a zero viewport") {
+        REQUIRE_THROWS_AS(GUIManager(renderer, Viewport{0, 0}), std::invalid_argument);
+        REQUIRE_THROWS_AS(GUIManager(renderer, Viewport{800, 0}), std::invalid_argument);
     }
 
     SECTION("GUIManager initializes resource managers") {
-        GUIManager manager(renderer);
+        GUIManager manager(renderer, Viewport{800, 600});
         REQUIRE(manager.getFontManager().isInitialized());
         REQUIRE(manager.getTimerManager() != nullptr);
         REQUIRE(manager.getAnimationManager() != nullptr);
     }
 
     SECTION("GUIManager initializes default theme") {
-        GUIManager manager(renderer);
+        GUIManager manager(renderer, Viewport{800, 600});
         Theme& theme = manager.getTheme();
         REQUIRE_NOTHROW(theme.getStyle(ComponentType::Button));
         REQUIRE_NOTHROW(theme.getDefaultStyle());

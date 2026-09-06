@@ -79,6 +79,15 @@ void TabControl::reorderTabs() {
     }
 }
 
+void TabControl::layoutChildren() {
+    // Pasek zakładek od lewej, panele treści wypełniają obszar pod spodem.
+    reorderTabs();
+    for (auto* panel : m_tabPanels) {
+        panel->setPosition(0, m_tabButtonHeight);
+        panel->setSize(m_width, m_height - m_tabButtonHeight);
+    }
+}
+
 ComponentType TabControl::getComponentTypeId() const {
     return ComponentType::TabControl;
 }

@@ -30,8 +30,7 @@ Window::Window(const std::string& title, int width, int height,
     }
     
     m_windowID = SDL_GetWindowID(m_window);
-    m_guiManager = std::make_unique<GUIManager>(m_renderer);
-    m_guiManager->setWindowSize(width, height);
+    m_guiManager = std::make_unique<GUIManager>(m_renderer, Viewport{width, height});
     
     LOG_DEBUG("Window", "created window '{}' (ID={})", title, m_windowID);
 }

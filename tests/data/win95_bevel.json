@@ -7,7 +7,10 @@
     "width": 640,
     "height": 480,
     "styles": [
-      {"state": "Normal", "backgroundColor": "#008080"}
+      {
+        "state": "Normal",
+        "backgroundColor": "#008080"
+      }
     ],
     "children": [
       {
@@ -17,11 +20,16 @@
         "y": 8,
         "text": "Przeciagnij okno za tlo, kliknij przyciski — faza odwraca sie w stanie Pressed",
         "fontSize": 14,
-        "anchorLeft": 16,
-        "anchorTop": 8,
         "styles": [
-          {"state": "Normal", "textColor": "#FFFFFF"}
-        ]
+          {
+            "state": "Normal",
+            "textColor": "#FFFFFF"
+          }
+        ],
+        "anchorH": "left",
+        "marginLeft": 16,
+        "anchorV": "top",
+        "marginTop": 8
       },
       {
         "type": "Button",
@@ -31,13 +39,27 @@
         "width": 140,
         "height": 28,
         "text": "Pokaż okno",
-        "anchorLeft": 16,
-        "anchorTop": 34,
         "styles": [
-          {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
-          {"state": "Hover", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
-          {"state": "Pressed", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
-        ]
+          {
+            "state": "Normal",
+            "backgroundColor": "#C0C0C0",
+            "bevel": "Raised"
+          },
+          {
+            "state": "Hover",
+            "backgroundColor": "#C0C0C0",
+            "bevel": "Raised"
+          },
+          {
+            "state": "Pressed",
+            "backgroundColor": "#C0C0C0",
+            "bevel": "Sunken"
+          }
+        ],
+        "anchorH": "left",
+        "marginLeft": 16,
+        "anchorV": "top",
+        "marginTop": 34
       },
       {
         "type": "Panel",
@@ -47,10 +69,12 @@
         "width": 520,
         "height": 380,
         "draggable": true,
-        "anchorLeft": 0.5,
-        "anchorTop": 0.5,
         "styles": [
-          {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"}
+          {
+            "state": "Normal",
+            "backgroundColor": "#C0C0C0",
+            "bevel": "Raised"
+          }
         ],
         "children": [
           {
@@ -60,11 +84,11 @@
             "y": 2,
             "width": 516,
             "height": 26,
-            "anchorLeft": 2,
-            "anchorTop": 2,
-            "anchorRight": 2,
             "styles": [
-              {"state": "Normal", "backgroundColor": "#000080"}
+              {
+                "state": "Normal",
+                "backgroundColor": "#000080"
+              }
             ],
             "children": [
               {
@@ -75,7 +99,10 @@
                 "text": "Bevel.exe",
                 "fontSize": 14,
                 "styles": [
-                  {"state": "Normal", "textColor": "#FFFFFF"}
+                  {
+                    "state": "Normal",
+                    "textColor": "#FFFFFF"
+                  }
                 ]
               },
               {
@@ -86,15 +113,34 @@
                 "width": 20,
                 "height": 16,
                 "text": "x",
-                "anchorTop": 5,
-                "anchorRight": 5,
                 "styles": [
-                  {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
-                  {"state": "Hover", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
-                  {"state": "Pressed", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
-                ]
+                  {
+                    "state": "Normal",
+                    "backgroundColor": "#C0C0C0",
+                    "bevel": "Raised"
+                  },
+                  {
+                    "state": "Hover",
+                    "backgroundColor": "#C0C0C0",
+                    "bevel": "Raised"
+                  },
+                  {
+                    "state": "Pressed",
+                    "backgroundColor": "#C0C0C0",
+                    "bevel": "Sunken"
+                  }
+                ],
+                "anchorH": "right",
+                "marginRight": 5,
+                "anchorV": "top",
+                "marginTop": 5
               }
-            ]
+            ],
+            "anchorH": "stretch",
+            "marginLeft": 2,
+            "marginRight": 2,
+            "anchorV": "top",
+            "marginTop": 2
           },
           {
             "type": "Label",
@@ -112,7 +158,11 @@
             "width": 140,
             "height": 34,
             "styles": [
-              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"}
+              {
+                "state": "Normal",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Raised"
+              }
             ]
           },
           {
@@ -131,7 +181,11 @@
             "width": 140,
             "height": 34,
             "styles": [
-              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+              {
+                "state": "Normal",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Sunken"
+              }
             ]
           },
           {
@@ -150,13 +204,26 @@
             "width": 480,
             "height": 30,
             "text": "C:\\WINDOWS\\SYSTEM32",
-            "anchorLeft": 20,
-            "anchorRight": 20,
             "styles": [
-              {"state": "Normal", "backgroundColor": "#FFFFFF", "bevel": "Sunken"},
-              {"state": "Hover", "backgroundColor": "#FFFFFF", "bevel": "Sunken"},
-              {"state": "Pressed", "backgroundColor": "#FFFFFF", "bevel": "Sunken"}
-            ]
+              {
+                "state": "Normal",
+                "backgroundColor": "#FFFFFF",
+                "bevel": "Sunken"
+              },
+              {
+                "state": "Hover",
+                "backgroundColor": "#FFFFFF",
+                "bevel": "Sunken"
+              },
+              {
+                "state": "Pressed",
+                "backgroundColor": "#FFFFFF",
+                "bevel": "Sunken"
+              }
+            ],
+            "anchorH": "stretch",
+            "marginLeft": 20,
+            "marginRight": 20
           },
           {
             "type": "ProgressBar",
@@ -169,7 +236,11 @@
             "max": 100,
             "value": 65,
             "styles": [
-              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+              {
+                "state": "Normal",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Sunken"
+              }
             ]
           },
           {
@@ -180,13 +251,27 @@
             "width": 76,
             "height": 28,
             "text": "OK",
-            "anchorRight": 12,
-            "anchorBottom": 34,
             "styles": [
-              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
-              {"state": "Hover", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
-              {"state": "Pressed", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
-            ]
+              {
+                "state": "Normal",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Raised"
+              },
+              {
+                "state": "Hover",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Raised"
+              },
+              {
+                "state": "Pressed",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Sunken"
+              }
+            ],
+            "anchorH": "right",
+            "marginRight": 12,
+            "anchorV": "bottom",
+            "marginBottom": 34
           },
           {
             "type": "Button",
@@ -196,13 +281,27 @@
             "width": 76,
             "height": 28,
             "text": "Anuluj",
-            "anchorRight": 100,
-            "anchorBottom": 34,
             "styles": [
-              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
-              {"state": "Hover", "backgroundColor": "#C0C0C0", "bevel": "Raised"},
-              {"state": "Pressed", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
-            ]
+              {
+                "state": "Normal",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Raised"
+              },
+              {
+                "state": "Hover",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Raised"
+              },
+              {
+                "state": "Pressed",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Sunken"
+              }
+            ],
+            "anchorH": "right",
+            "marginRight": 100,
+            "anchorV": "bottom",
+            "marginBottom": 34
           },
           {
             "type": "Panel",
@@ -211,11 +310,12 @@
             "y": 354,
             "width": 516,
             "height": 24,
-            "anchorLeft": 2,
-            "anchorRight": 2,
-            "anchorBottom": 2,
             "styles": [
-              {"state": "Normal", "backgroundColor": "#C0C0C0", "bevel": "Sunken"}
+              {
+                "state": "Normal",
+                "backgroundColor": "#C0C0C0",
+                "bevel": "Sunken"
+              }
             ],
             "children": [
               {
@@ -226,9 +326,16 @@
                 "text": "Gotowe",
                 "fontSize": 13
               }
-            ]
+            ],
+            "anchorH": "stretch",
+            "marginLeft": 2,
+            "marginRight": 2,
+            "anchorV": "bottom",
+            "marginBottom": 2
           }
-        ]
+        ],
+        "anchorH": "center",
+        "anchorV": "center"
       }
     ]
   }

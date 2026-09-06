@@ -14,7 +14,7 @@ int main(int, char**) {
     try {
         SDLApp app("Tooltip Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
 
         // --- Button with tooltip ---
         auto button = std::make_unique<Button>(guiManager, 50, 50, 200, 80);

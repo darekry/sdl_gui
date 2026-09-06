@@ -56,9 +56,8 @@ czyszczącym:
 int main(int, char**) {
     try {
         SDLApp app("Canvas", 520, 420);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{520, 420});
         manager.setTheme(ThemePresets::createDarkTheme());   // KONIECZNE
-        manager.setWindowSize(520, 420);                     // dla anchorów
 
         Canvas* canvas = manager.create<Canvas>(20, 20, 480, 320);
 

@@ -69,9 +69,8 @@ wywołuje ten sam handler co kliknięcie przycisku.
 int main(int, char**) {
     try {
         SDLApp app("Logowanie", 420, 200);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{420, 200});
         manager.setTheme(ThemePresets::createDarkTheme());
-        manager.setWindowSize(420, 200);
 
         auto nameInput = std::make_unique<TextInput>(manager, 20, 20, 380, 32);
         nameInput->setText("admin");

@@ -149,9 +149,8 @@ W callbackach nie trzymaj surowych wskaźników do innych widgetów, które mog�
 int main(int, char**) {
     try {
         SDLApp app("StringGrid", 800, 600);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{800, 600});
         manager.setTheme(ThemePresets::createDarkTheme());
-        manager.setWindowSize(800, 600);
 
         StringGrid* grid = manager.create<StringGrid>(10, 10, 560, 300, 5, 4);
         grid->setColumnHeader(0, "Nazwa");

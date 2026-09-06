@@ -1,6 +1,7 @@
 #include "file_dialog.hpp"
 #include "../gui_manager.hpp"
 #include "../gui.hpp"
+#include "../layout.hpp"
 
 #include "std.hpp"
 
@@ -19,9 +20,9 @@ FileDialog* FileDialog::createOpen(
 ) {
     int width = 640;
     int height = 450;
-    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
-    constexpr int kScreenH = 600;
-    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
+    int screenW = 0, screenH = 0;
+    manager.getWindowSize(screenW, screenH);
+    auto [x, y] = CenterRect(screenW, screenH, width, height);
 
     auto dialog = std::unique_ptr<FileDialog>(new FileDialog(
         manager, x, y, width, height,
@@ -53,9 +54,9 @@ FileDialog* FileDialog::createSave(
 ) {
     int width = 640;
     int height = 450;
-    constexpr int kScreenW = 800;  // TODO: Get actual screen dimensions from GUIManager
-    constexpr int kScreenH = 600;
-    auto [x, y] = CenterRect(kScreenW, kScreenH, width, height);
+    int screenW = 0, screenH = 0;
+    manager.getWindowSize(screenW, screenH);
+    auto [x, y] = CenterRect(screenW, screenH, width, height);
 
     auto dialog = std::unique_ptr<FileDialog>(new FileDialog(
         manager, x, y, width, height,
@@ -121,6 +122,7 @@ FileDialog::FileDialog(
 
     int dirLabelY = contentY - 5;
     auto dirLabel = std::make_unique<Label>(manager, 12, dirLabelY, "Directories", 13);
+    dirLabel->setID("fd_dir_label");
     dirLabel->setTextColor(ElementState::Normal, {60, 60, 60, 255});
     addChild(std::move(dirLabel));
 
@@ -168,6 +170,7 @@ FileDialog::FileDialog(
     int fileLabelY = contentY - 5;
     int fileGridX = dirGridX + dirGridWidth + 15;
     auto fileLabel = std::make_unique<Label>(manager, fileGridX, fileLabelY, "Files", 13);
+    fileLabel->setID("fd_file_label");
     fileLabel->setTextColor(ElementState::Normal, {60, 60, 60, 255});
     addChild(std::move(fileLabel));
 
@@ -205,6 +208,7 @@ FileDialog::FileDialog(
     // --- Filename input ---
     int bottomY = height - m_bottomBarHeight + 5;
     auto filenameLabel = std::make_unique<Label>(manager, 12, bottomY, "Filename:", 13);
+    filenameLabel->setID("fd_filename_label");
     filenameLabel->setTextColor(ElementState::Normal, {60, 60, 60, 255});
     addChild(std::move(filenameLabel));
 
@@ -237,6 +241,8 @@ FileDialog::FileDialog(
     });
     m_openBtn = openBtn.get();
     addChild(std::move(openBtn));
+
+    layoutChildren();
 }
 
 // ============================================================================
@@ -394,6 +400,53 @@ bool FileDialog::matchesFilter(const std::string& filename) const {
 void FileDialog::close() {
     m_isOpen = false;
     markForDeletion();
+}
+
+void FileDialog::layoutChildren() {
+    // Geometria proporcjonalna do bieżącego rozmiaru (LayoutPass — dawniej
+    // tylko matematyka w ctorze, łamana przy każdym resize).
+    const int contentY = m_titleBarHeight + 10;
+    const int gridHeight = m_height - m_titleBarHeight - m_bottomBarHeight - 5;
+    const int labelY = contentY - 5;
+    const int gridY = labelY + 18;
+    const int gridH = gridHeight - 18;
+
+    constexpr int dirGridWidth = 200;
+    constexpr int dirGridX = 10;
+    const int fileGridX = dirGridX + dirGridWidth + 15;
+    const int fileGridWidth = m_width - fileGridX - 15;
+
+    for (const auto& child : getChildren()) {
+        const std::string_view id = child->getID();
+        if (id == "fd_dir_label") child->setPosition(12, labelY);
+        else if (id == "fd_file_label") child->setPosition(fileGridX, labelY);
+        else if (id == "fd_filename_label") child->setPosition(12, m_height - m_bottomBarHeight + 5);
+    }
+
+    if (m_dirGrid) {
+        m_dirGrid->setPosition(dirGridX, gridY);
+        m_dirGrid->setSize(dirGridWidth, gridH);
+        m_dirGrid->setColumnWidth(0, dirGridWidth - 18);
+    }
+    if (m_fileGrid) {
+        m_fileGrid->setPosition(fileGridX, gridY);
+        m_fileGrid->setSize(fileGridWidth, gridH);
+        m_fileGrid->setColumnWidth(0, fileGridWidth - 18);
+    }
+    if (m_filenameInput) {
+        const int bottomY = m_height - m_bottomBarHeight + 5;
+        constexpr int inputX = 80;
+        m_filenameInput->setPosition(inputX, bottomY - 2);
+        m_filenameInput->setSize(m_width - inputX - 140, 26);
+    }
+
+    // Pasek przycisków: StackLayout wyrównany do prawej.
+    if (m_openBtn && m_cancelBtn) {
+        const int buttonY = m_height - m_bottomBarHeight + 40;
+        const StackLayout strip(StackLayout::Direction::Horizontal, 10,
+                                0, 0, 20, 0, StackLayout::Align::End);
+        strip.arrangeStrip(std::vector<GUIElement*>{m_openBtn, m_cancelBtn}, m_width, buttonY);
+    }
 }
 
 void FileDialog::draw(SDL_Renderer* renderer) {

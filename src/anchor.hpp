@@ -3,126 +3,166 @@
 #include "std.hpp"
 
 /**
- * @brief Anchor defines how an element positions itself relative to its parent/container
- * 
- * Anchors use a flexible coordinate system:
- * - Negative value (-1 or less) = anchor is NOT set, use fixed position
- * - 0.0 = anchored to left/top edge (0 pixels from edge)
- * - 1.0 = anchored to right/bottom edge (element moves with edge)
- * - 0.0-1.0 = percentage of parent size (element scales proportionally)
- * - >1.0 = fixed pixel offset from that edge
- * 
- * **Special case: 0.5 = CENTER**
- * When left=0.5, the element is horizontally centered (center of element at center of parent)
- * When top=0.5, the element is vertically centered (center of element at center of parent)
- * 
- * When both left and right are set (both >= 0), the element stretches horizontally.
- * When both top and bottom are set (both >= 0), the element stretches vertically.
- * 
- * Example layouts:
- * - Top-left fixed: left=10, top=10, right=-1, bottom=-1 (10px from edges, fixed size)
- * - Centered: left=0.5, top=0.5, right=-1, bottom=-1 (element centered, not corner!)
- * - Bottom-right: left=-1, top=-1, right=10, bottom=10 (10px from right/bottom)
- * - Full stretch: left=0, top=0, right=0, bottom=0 (fills entire parent)
- * - Horizontal bar: left=0, top=-1, right=0, bottom=50 (full width, 50px from bottom)
+ * @brief Viewport — rozmiar obszaru layoutu (okna) z niezmiennikiem NonZero.
+ *
+ * GUIManager wymaga Viewport w konstruktorze, więc rozmiar okna nigdy nie
+ * jest 0x0 i żaden kod nie potrzebuje fallbacku (dawne 800x600 w ContextMenu).
+ * handleResize() ignoruje wymiary <= 0 (np. minimalizacja okna), zachowując
+ * niezmiennik przez cały czas życia menedżera.
  */
-struct Anchor {
-    float left = -1.0f;     // <0 = not set, 0-1 = %, >1 = pixels from left
-    float top = -1.0f;      // <0 = not set, 0-1 = %, >1 = pixels from top
-    float right = -1.0f;    // <0 = not set, 0-1 = %, >1 = pixels from right
-    float bottom = -1.0f;   // <0 = not set, 0-1 = %, >1 = pixels from bottom
-    
-    // Check if anchor is set for this edge
-    bool hasLeft() const { return left >= 0; }
-    bool hasTop() const { return top >= 0; }
-    bool hasRight() const { return right >= 0; }
-    bool hasBottom() const { return bottom >= 0; }
-    
-    // Stretch modes
-    bool stretchesHorizontal() const { return hasLeft() && hasRight(); }
-    bool stretchesVertical() const { return hasTop() && hasBottom(); }
-    bool isStretched() const { return stretchesHorizontal() || stretchesVertical(); }
-    
-    // Check if any anchor is set
-    bool hasAnyAnchor() const { return hasLeft() || hasTop() || hasRight() || hasBottom(); }
-    
-    // === Preset anchors ===
-    
-    /** No anchor - use fixed position/size */
-    static Anchor none() { return Anchor{}; }
-    
-    /** Anchor to top-left corner with optional margins */
-    static Anchor topLeft(float margin = 0) {
-        return Anchor{margin, margin, -1, -1};
-    }
-    
-    /** Anchor to top-right corner with optional margins */
-    static Anchor topRight(float margin = 0) {
-        return Anchor{-1, margin, margin, -1};
-    }
-    
-    /** Anchor to bottom-left corner with optional margins */
-    static Anchor bottomLeft(float margin = 0) {
-        return Anchor{margin, -1, -1, margin};
-    }
-    
-    /** Anchor to bottom-right corner with optional margins */
-    static Anchor bottomRight(float margin = 0) {
-        return Anchor{-1, -1, margin, margin};
-    }
-    
-    /** Center in parent (keeps original size) */
-    static Anchor center() {
-        return Anchor{0.5f, 0.5f, -1, -1};
-    }
-    
-    /** Fill entire parent with uniform margin */
-    static Anchor fill(float margin = 0) {
-        return Anchor{margin, margin, margin, margin};
-    }
-    
-    /** Fill horizontally with top/bottom margins (keeps original height if not stretched) */
-    static Anchor horizontalStretch(float leftMargin = 0, float rightMargin = 0) {
-        return Anchor{leftMargin, -1, rightMargin, -1};
-    }
-    
-    /** Fill vertically with left/right margins (keeps original width if not stretched) */
-    static Anchor verticalStretch(float topMargin = 0, float bottomMargin = 0) {
-        return Anchor{-1, topMargin, -1, bottomMargin};
-    }
-    
-    /** Bottom bar - full width, fixed height from bottom */
-    static Anchor bottomBar(float height, float leftMargin = 0, float rightMargin = 0) {
-        return Anchor{leftMargin, -1, rightMargin, height};
-    }
-    
-    /** Top bar - full width, fixed height from top */
-    static Anchor topBar(float height, float leftMargin = 0, float rightMargin = 0) {
-        return Anchor{leftMargin, height, rightMargin, -1};
-    }
-    
-    /** Left sidebar - full height, fixed width from left
-     *  Width comes from the element's original size (kept by the anchor engine),
-     *  the width parameter is accepted for API compatibility. */
-    static Anchor leftSidebar(float width, float topMargin = 0, float bottomMargin = 0) {
-        (void)width;
-        return Anchor{0, topMargin, -1, bottomMargin};
-    }
-    
-    /** Right sidebar - full height, fixed width from right
-     *  Width comes from the element's original size (kept by the anchor engine),
-     *  the width parameter is accepted for API compatibility. */
-    static Anchor rightSidebar(float width, float topMargin = 0, float bottomMargin = 0) {
-        (void)width;
-        return Anchor{-1, topMargin, 0, bottomMargin};
-    }
+struct Viewport {
+    int width = 0;
+    int height = 0;
+
+    constexpr Viewport() = default;
+    constexpr Viewport(int w, int h) : width(w), height(h) {}
+
+    [[nodiscard]] constexpr bool valid() const { return width > 0 && height > 0; }
 };
 
 /**
- * @brief AnchorMode determines how anchor values are interpreted
+ * @brief Pozioma kotwica elementu względem rodzica (enum, nie magiczne floaty).
+ *
+ * - None:    brak kotwicy na tej osi — pozycja/rozmiar bez zmian.
+ * - Left:    lewa krawędź elementu `left` px od lewej krawędzi rodzica.
+ * - Center:  element wycentrowany poziomo (środek w środku rodzica).
+ * - Right:   prawa krawędź elementu `right` px od prawej krawędzi rodzica.
+ * - Stretch: element rozciągnięty: x = left, w = parentW - left - right.
+ *
+ * Wszystkie marginesy to int w pikselach — 1px jest osiągalne (dawne 1.0
+ * znaczyło 100% szerokości rodzica), a center to osobny wariant (dawne 0.5
+ * znaczyło naraz 50% i "centruj").
  */
-enum class AnchorMode {
-    Pixels,     // All values are in pixels
-    Percentage, // 0.0-1.0 values are percentages, >1.0 are pixels (hybrid)
-    Hybrid      // Same as Percentage (default)
+enum class HAnchor : uint8_t { None, Left, Center, Right, Stretch };
+
+/**
+ * @brief Pionowa kotwica elementu względem rodzica (enum, nie magiczne floaty).
+ *
+ * - None:   brak kotwicy na tej osi.
+ * - Top:    górna krawędź `top` px od góry rodzica.
+ * - Center: element wycentrowany pionowo.
+ * - Bottom: dolna krawędź `bottom` px od dołu rodzica.
+ * - Stretch: y = top, h = parentH - top - bottom.
+ */
+enum class VAnchor : uint8_t { None, Top, Center, Bottom, Stretch };
+
+/**
+ * @brief Anchor — deklaratywne pozycjonowanie elementu względem rodzica.
+ *
+ * Logika aranżacji mieszka w AnchorLayout (src/layout.hpp), tutaj tylko dane:
+ * tryb per oś + marginesy w pikselach. Rozmiar elementu na osiach
+ * nie-stretchowanych pochodzi z jego bieżącego rozmiaru (brak historii
+ * m_originalW/H — center liczone z aktualnego rozmiaru, nigdy ze starych).
+ *
+ * Przykłady:
+ * - Fixed top-left:      Anchor::at(10, 10)
+ * - Centered:            Anchor::center()
+ * - Bottom-right:        Anchor::pinned(HAnchor::Right, VAnchor::Bottom, 0, 0, 10, 10)
+ * - Full stretch:        Anchor::fill(0)
+ * - Horizontal bar:      Anchor::bottomBar(50, 10, 10)
+ */
+struct Anchor {
+    HAnchor h = HAnchor::None;
+    VAnchor v = VAnchor::None;
+    int left = 0;    // px od lewej (Left/Stretch)
+    int top = 0;     // px od góry (Top/Stretch)
+    int right = 0;   // px od prawej (Right/Stretch)
+    int bottom = 0;  // px od dołu (Bottom/Stretch)
+
+    constexpr Anchor() = default;
+    constexpr Anchor(HAnchor hh, VAnchor vv, int l = 0, int t = 0, int r = 0, int b = 0)
+        : h(hh), v(vv), left(l), top(t), right(r), bottom(b) {}
+
+    [[nodiscard]] constexpr bool hasAnyAnchor() const {
+        return h != HAnchor::None || v != VAnchor::None;
+    }
+    [[nodiscard]] constexpr bool stretchesHorizontal() const { return h == HAnchor::Stretch; }
+    [[nodiscard]] constexpr bool stretchesVertical() const { return v == VAnchor::Stretch; }
+
+    // === Presety ===
+
+    /** Brak kotwicy — stała pozycja i rozmiar. */
+    static Anchor none() { return Anchor{}; }
+
+    /** Dowolna kombinacja bez presetu (zastępuje dawny surowy init floatami). */
+    static Anchor pinned(HAnchor hh, VAnchor vv, int l = 0, int t = 0, int r = 0, int b = 0) {
+        return Anchor{hh, vv, l, t, r, b};
+    }
+
+    /** Stała pozycja (x, y) bez kotwicy rozciągającej. */
+    static Anchor at(int x, int y) {
+        return Anchor{HAnchor::Left, VAnchor::Top, x, y, 0, 0};
+    }
+
+    /** Kotwica do lewego górnego rogu z marginesem. */
+    static Anchor topLeft(int margin = 0) {
+        return Anchor{HAnchor::Left, VAnchor::Top, margin, margin, 0, 0};
+    }
+
+    /** Kotwica do prawego górnego rogu z marginesem. */
+    static Anchor topRight(int margin = 0) {
+        return Anchor{HAnchor::Right, VAnchor::Top, 0, margin, margin, 0};
+    }
+
+    /** Kotwica do lewego dolnego rogu z marginesem. */
+    static Anchor bottomLeft(int margin = 0) {
+        return Anchor{HAnchor::Left, VAnchor::Bottom, margin, 0, 0, margin};
+    }
+
+    /** Kotwica do prawego dolnego rogu z marginesem. */
+    static Anchor bottomRight(int margin = 0) {
+        return Anchor{HAnchor::Right, VAnchor::Bottom, 0, 0, margin, margin};
+    }
+
+    /** Kotwica do prawego dolnego rogu z osobnymi marginesami. */
+    static Anchor bottomRightAt(int rightMargin, int bottomMargin) {
+        return Anchor{HAnchor::Right, VAnchor::Bottom, 0, 0, rightMargin, bottomMargin};
+    }
+
+    /** Wycentrowanie w rodzicu (zachowuje rozmiar). */
+    static Anchor center() {
+        return Anchor{HAnchor::Center, VAnchor::Center};
+    }
+
+    /** Wycentrowanie poziome z marginesem od góry. */
+    static Anchor topCenter(int topMargin = 0) {
+        return Anchor{HAnchor::Center, VAnchor::Top, 0, topMargin, 0, 0};
+    }
+
+    /** Wypełnienie całego rodzica z jednolitym marginesem. */
+    static Anchor fill(int margin = 0) {
+        return Anchor{HAnchor::Stretch, VAnchor::Stretch, margin, margin, margin, margin};
+    }
+
+    /** Rozciągnięcie poziome (wysokość zachowana). */
+    static Anchor horizontalStretch(int leftMargin = 0, int rightMargin = 0) {
+        return Anchor{HAnchor::Stretch, VAnchor::None, leftMargin, 0, rightMargin, 0};
+    }
+
+    /** Rozciągnięcie pionowe (szerokość zachowana). */
+    static Anchor verticalStretch(int topMargin = 0, int bottomMargin = 0) {
+        return Anchor{HAnchor::None, VAnchor::Stretch, 0, topMargin, 0, bottomMargin};
+    }
+
+    /** Dolny pasek — pełna szerokość, dolna krawędź bottomMargin px od dołu. */
+    static Anchor bottomBar(int bottomMargin, int leftMargin = 0, int rightMargin = 0) {
+        return Anchor{HAnchor::Stretch, VAnchor::Bottom, leftMargin, 0, rightMargin, bottomMargin};
+    }
+
+    /** Górny pasek — pełna szerokość, górna krawędź topMargin px od góry. */
+    static Anchor topBar(int topMargin, int leftMargin = 0, int rightMargin = 0) {
+        return Anchor{HAnchor::Stretch, VAnchor::Top, leftMargin, topMargin, rightMargin, 0};
+    }
+
+    /** Lewy sidebar — pełna wysokość z marginesami góra/dół.
+     *  Szerokość pochodzi z rozmiaru elementu (ustaw ją w konstruktorze). */
+    static Anchor leftSidebar(int topMargin = 0, int bottomMargin = 0) {
+        return Anchor{HAnchor::Left, VAnchor::Stretch, 0, topMargin, 0, bottomMargin};
+    }
+
+    /** Prawy sidebar — pełna wysokość z marginesami góra/dół.
+     *  Szerokość pochodzi z rozmiaru elementu (ustaw ją w konstruktorze). */
+    static Anchor rightSidebar(int topMargin = 0, int bottomMargin = 0) {
+        return Anchor{HAnchor::Right, VAnchor::Stretch, 0, topMargin, 0, bottomMargin};
+    }
 };

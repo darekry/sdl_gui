@@ -14,7 +14,7 @@ int main(int, char**)
     {
         SDLApp app("Hello World!", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
 
         // Root panel centered on screen with rounded corners and visible border

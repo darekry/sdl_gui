@@ -74,9 +74,8 @@ pochodną `TextInput` (jednolinijkową) — te same metody działają w TextArea
 int main(int, char**) {
     try {
         SDLApp app("TextEditable — wspólne API", 800, 600);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{800, 600});
         manager.setTheme(ThemePresets::createDarkTheme());
-        manager.setWindowSize(800, 600);
 
         auto input = std::make_unique<TextInput>(manager, 20, 20, 300, 32);
         auto status = std::make_unique<Label>(manager, 20, 60, 400, 30, "Brak zaznaczenia");

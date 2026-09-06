@@ -127,23 +127,24 @@ const Anchor& getAnchor() const;
 bool hasAnchor() const;
 void applyAnchor(int parentWidth, int parentHeight);
 void updateLayout(int parentWidth, int parentHeight);
-virtual void onParentResize(int parentWidth, int parentHeight);
-void storeOriginalSize();
-int getOriginalWidth() const;
-int getOriginalHeight() const;
+virtual void layoutChildren();   // aranżacja dzieci (LayoutPass)
+void updateLayout(int parentWidth, int parentHeight);   // własny rect + layoutChildren()
+void setLayoutManager(std::unique_ptr<ILayoutManager> manager);   // null = AnchorLayout
 ```
 
-`Anchor` definiuje pozycję/rozmiar elementu względem rodzica. Konwencja wartości:
+`Anchor` definiuje pozycję/rozmiar elementu względem rodzica: tryb per oś
+(`HAnchor::{None,Left,Center,Right,Stretch}`,
+`VAnchor::{None,Top,Center,Bottom,Stretch}`) + marginesy w pikselach (int).
+Brak magicznych floatów: `1px` jest osiągalne, a center to osobny wariant
+(dawne `0.5` znaczyło naraz `50%` i „centruj").
 
-- `< 0` — krawędź nieustawiona (stała pozycja),
-- `0–1` — procent rozmiaru rodzica,
-- `> 1` — piksele od krawędzi,
-- `0.5` — środek rodzica (specjalny przypadek).
-
-Presety statyczne: `Anchor::none()`, `topLeft(m)`, `topRight(m)`,
-`bottomLeft(m)`, `bottomRight(m)`, `center()`, `fill(m)`,
+Presety statyczne: `Anchor::none()`, `at(x, y)`, `pinned(h, v, l, t, r, b)`,
+`topLeft(m)`, `topRight(m)`, `bottomLeft(m)`, `bottomRight(m)`,
+`bottomRightAt(r, b)`, `center()`, `topCenter(m)`, `fill(m)`,
 `horizontalStretch(l, r)`, `verticalStretch(t, b)`, `topBar(h, l, r)`,
-`bottomBar(h, l, r)`, `leftSidebar(w, t, b)`, `rightSidebar(w, t, b)`.
+`bottomBar(h, l, r)`, `leftSidebar(t, b)`, `rightSidebar(t, b)`.
+Aranżacją zajmuje się `AnchorLayout` (domyślny menedżer layoutu);
+kontenery o własnej geometrii nadpisują `layoutChildren()`.
 Pełny opis — [resources.md](resources.md).
 
 ### Rotacja
@@ -270,7 +271,7 @@ patrz [patterns.md](patterns.md#3-komunikacja-między-widgetami-callbacki-i-elem
 
 ```cpp
 void setTheme(Theme theme);   Theme& getTheme();
-void setWindowSize(int width, int height);
+// Viewport wstrzykiwany w konstruktorze: GUIManager(renderer, Viewport{w, h})
 void handleResize(int width, int height);   // po SDL_EVENT_WINDOW_RESIZED
 void setResizeCallback(ResizeCallback callback);   // std::function<void(int, int)>
 void getWindowSize(int& width, int& height) const;

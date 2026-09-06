@@ -86,10 +86,8 @@ int main(int, char**) {
     try {
         SDLApp app("TV Remote UI — Media Center", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager guiManager(renderer);
+        GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
-        guiManager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-
         // === Title bar (top) ===
         auto topBar = std::make_unique<Panel>(guiManager, 0, 0, SCREEN_WIDTH, 60);
         topBar->setBackgroundColor(ElementState::Normal, {12, 14, 22, 255});

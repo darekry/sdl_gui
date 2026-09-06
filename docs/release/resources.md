@@ -169,36 +169,45 @@ struct Anchor {
 };
 ```
 
-Konwencja kodowania wartości:
+Model: tryb per oś + marginesy w pikselach (int).
 
-- `< 0` — krawędź nieustawiona (element ma stałą pozycję/rozmiar),
-- `0-1` — procent rozmiaru rodzica,
-- `> 1` — piksele od krawędzi,
-- `0.5` — **specjalny przypadek: centrum** (środek elementu w środku rodzica).
+- `HAnchor::{None, Left, Center, Right, Stretch}` — kotwica pozioma,
+- `VAnchor::{None, Top, Center, Bottom, Stretch}` — kotwica pionowa,
+- `left/top/right/bottom` — marginesy w pikselach (zawsze px, więc `1px`
+  jest osiągalne; center to wariant enuma, nie `0.5`).
 
-Gdy `left` i `right` są ustawione, element rozciąga się poziomo; gdy `top`
-i `bottom` — pionowo.
+`Stretch` na osi = pozycja na marginesie + rozmiar `parent − marginesy`.
+Na osiach bez stretch element zachowuje bieżący rozmiar (center liczone
+z aktualnego rozmiaru — brak historii rozmiarów).
 
 ### Presety
 
 | Preset | Znaczenie |
 |--------|-----------|
 | `static Anchor none()` | Brak anchora — stała pozycja i rozmiar |
-| `static Anchor topLeft(float margin = 0)` | Lewy górny róg z marginesem |
-| `static Anchor topRight(float margin = 0)` | Prawy górny róg |
-| `static Anchor bottomLeft(float margin = 0)` | Lewy dolny róg |
-| `static Anchor bottomRight(float margin = 0)` | Prawy dolny róg |
+| `static Anchor at(int x, int y)` | Stała pozycja (x, y) bez rozciągania |
+| `static Anchor pinned(HAnchor h, VAnchor v, int l, int t, int r, int b)` | Dowolna kombinacja bez presetu |
+| `static Anchor topLeft(int margin = 0)` | Lewy górny róg z marginesem |
+| `static Anchor topRight(int margin = 0)` | Prawy górny róg |
+| `static Anchor bottomLeft(int margin = 0)` | Lewy dolny róg |
+| `static Anchor bottomRight(int margin = 0)` | Prawy dolny róg |
+| `static Anchor bottomRightAt(int rightMargin, int bottomMargin)` | Prawy dolny róg z osobnymi marginesami |
 | `static Anchor center()` | Wyśrodkowanie (zachowuje rozmiar) |
-| `static Anchor fill(float margin = 0)` | Wypełnienie rodzica z marginesem |
-| `static Anchor horizontalStretch(float leftMargin = 0, float rightMargin = 0)` | Pełna szerokość (wysokość bez zmian) |
-| `static Anchor verticalStretch(float topMargin = 0, float bottomMargin = 0)` | Pełna wysokość (szerokość bez zmian) |
-| `static Anchor bottomBar(float height, float leftMargin = 0, float rightMargin = 0)` | Pasek na dole: pełna szerokość, stała wysokość |
-| `static Anchor topBar(float height, float leftMargin = 0, float rightMargin = 0)` | Pasek na górze |
-| `static Anchor leftSidebar(float width, float topMargin = 0, float bottomMargin = 0)` | Pasek po lewej: pełna wysokość, stała szerokość |
-| `static Anchor rightSidebar(float width, float topMargin = 0, float bottomMargin = 0)` | Pasek po prawej |
+| `static Anchor topCenter(int topMargin = 0)` | Środek poziomy + margines od góry |
+| `static Anchor fill(int margin = 0)` | Wypełnienie rodzica z marginesem |
+| `static Anchor horizontalStretch(int leftMargin = 0, int rightMargin = 0)` | Pełna szerokość (wysokość bez zmian) |
+| `static Anchor verticalStretch(int topMargin = 0, int bottomMargin = 0)` | Pełna wysokość (szerokość bez zmian) |
+| `static Anchor bottomBar(int bottomMargin, int leftMargin = 0, int rightMargin = 0)` | Pasek na dole: pełna szerokość, dolna krawędź na marginesie |
+| `static Anchor topBar(int topMargin, int leftMargin = 0, int rightMargin = 0)` | Pasek na górze |
+| `static Anchor leftSidebar(int topMargin = 0, int bottomMargin = 0)` | Pasek po lewej: pełna wysokość (szerokość z rozmiaru elementu) |
+| `static Anchor rightSidebar(int topMargin = 0, int bottomMargin = 0)` | Pasek po prawej |
 
-Dodatkowo `enum class AnchorMode { Pixels, Percentage, Hybrid };` — tryb
-interpretacji wartości (domyślnie `Hybrid`, czyli konwencja powyżej).
+Silnik layoutu: jeden pass Measure/Arrange (`ILayoutManager` —
+`AnchorLayout` domyślny, `StackLayout` do liniowych pasków/kolumn).
+`layoutChildren()` zamiast dawnego hooka `onSizeChanged()`: `Button`
+centruje etykietę, `Slider` przelicza track, `ScrollArea` ustawia
+viewport/slidery, `TabControl` układa zakładki, `DialogBox`/`FileDialog`
+pas przycisków (`StackLayout`).
 
 ### Użycie
 
@@ -206,7 +215,7 @@ interpretacji wartości (domyślnie `Hybrid`, czyli konwencja powyżej).
 panel->setAnchor(Anchor::center());
 toolbar->setAnchor(Anchor::topBar(50, 10, 10));      // pełna szerokość, 50 px wysokości
 statusBar->setAnchor(Anchor::bottomBar(30, 10, 10));
-sidebar->setAnchor(Anchor::leftSidebar(200, 60, 70));
+sidebar->setAnchor(Anchor::leftSidebar(60, 70));   // szerokość 200 z konstruktora
 content->setAnchor(Anchor::fill(10));
 
 // okno resizable + w pętli:
@@ -215,8 +224,10 @@ if (e.type == SDL_EVENT_WINDOW_RESIZED) {
 }
 ```
 
-Dla poprawnego działania anchorów wywołaj `manager.setWindowSize(width, height)`
-raz przy inicjalizacji (robi to też `GUIContext`).
+Rozmiar okna (`Viewport`, niezmiennik NonZero) wstrzykiwany jest
+w konstruktorze — `GUIManager(renderer, Viewport{w, h})` — więc kotwice
+działają od startu bez żadnego wywołania inicjalizującego (`GUIContext`
+i `Window` robią to same).
 
 ## SDLApp
 
@@ -266,9 +277,8 @@ wołany po `processEvent` — np. do obsługi klawiszy lub resize.
 
 ```cpp
 SDLApp app("Aplikacja", 800, 600, true);
-GUIManager manager(app.getRenderer());
+GUIManager manager(app.getRenderer(), Viewport{800, 600});
 manager.setTheme(ThemePresets::createDarkTheme());
-manager.setWindowSize(800, 600);
 
 app.run(manager, {40, 42, 54, 255}, [&](SDL_Event& e) {
     if (e.type == SDL_EVENT_WINDOW_RESIZED) {
@@ -280,8 +290,8 @@ app.run(manager, {40, 42, 54, 255}, [&](SDL_Event& e) {
 ## GUIContext
 
 Wygodne opakowanie łączące `SDLApp` + `GUIManager` + motyw w jednym obiekcie
-RAII. Konstruktor automatycznie ustawia motyw i rozmiar okna w menedżerze —
-nie trzeba wołać `setTheme` ani `setWindowSize`.
+RAII. Konstruktor automatycznie ustawia motyw i wstrzykuje rozmiar okna
+(`Viewport`) do menedżera — nie trzeba wołać `setTheme` ani nic ustawiać.
 
 ```cpp
 GUIContext(const char* title, int width, int height, bool resizable = false);
@@ -345,6 +355,27 @@ if (layout) guiManager.addElement(std::move(layout));
 SGMLParser sgml(guiManager);
 auto layout2 = sgml.loadLayout("ui/main.xml");
 ```
+
+Widget tworzony jest od razu z docelowym rect (`x/y/width/height`
+z pliku — bez dummy `(0,0)`), a kotwica z atrybutów aplikowana jest
+przy `addChild`/`addElement`, więc layout jest poprawny jeszcze przed
+pierwszym resize. Kotwice w plikach to jawne tryby + marginesy px:
+
+```json
+{ "type": "Button", "x": 432, "y": 318, "width": 76, "height": 28,
+  "text": "OK", "anchorH": "right", "anchorV": "bottom",
+  "marginRight": 12, "marginBottom": 34 }
+```
+
+```xml
+<Panel x="2" y="2" width="516" height="26"
+       anchorH="stretch" anchorV="top"
+       marginLeft="2" marginTop="2" marginRight="2" />
+```
+
+- `anchorH`: `none|left|center|right|stretch`,
+- `anchorV`: `none|top|center|bottom|stretch`,
+- `marginLeft/marginTop/marginRight/marginBottom`: piksele (int).
 
 ## Logowanie
 

@@ -12,8 +12,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     try {
         SDLApp app("ContextMenu Example", SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_Renderer* renderer = app.getRenderer();
-        GUIManager manager(renderer);
-        manager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);  // real size for ContextMenu clamping
+        GUIManager manager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
 
         // Create a button that will trigger the context menu
         auto triggerButton = std::make_unique<Button>(manager, 350, 250, 100, 50, "Right Click Me");

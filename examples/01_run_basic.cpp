@@ -14,10 +14,8 @@ int main(int, char**)
     try
     {
         SDLApp app("Run Basic — SDLApp::run()", SCREEN_WIDTH, SCREEN_HEIGHT);
-        GUIManager guiManager(app.getRenderer());
+        GUIManager guiManager(app.getRenderer(), Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
-        guiManager.setWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-
         auto countPtr = std::make_shared<int>(0);
 
         auto label = std::make_unique<Label>(

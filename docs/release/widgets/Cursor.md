@@ -66,9 +66,8 @@ przełączanym checkboxem:
 int main(int, char**) {
     try {
         SDLApp app("Cursor", 420, 240);
-        GUIManager manager(app.getRenderer());
+        GUIManager manager(app.getRenderer(), Viewport{420, 240});
         manager.setTheme(ThemePresets::createDarkTheme());   // KONIECZNE
-        manager.setWindowSize(420, 240);                     // dla anchorów
 
         auto cursor = std::make_unique<Cursor>(manager);
         cursor->setCursorTexture(CursorState::Normal, "assets/cursor.png", 4, 2);

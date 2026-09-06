@@ -27,7 +27,7 @@ int main(int, char**) {
                     700, 450, false, GPU_VULKAN);
         LOG_INFO("GpuShader", "[Main] SDLApp GPU init total: {}ms", SDL_GetTicks() - startupStart);
 
-        GUIManager gui(app.getRenderer());
+        GUIManager gui(app.getRenderer(), Viewport{700, 450});
 
         auto info = std::make_unique<Label>(gui, 20, 10,
             "ENTER: toggle shader on right panel   ESC: quit");

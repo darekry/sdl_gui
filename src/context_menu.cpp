@@ -135,13 +135,11 @@ void ContextMenu::createMenuButtons() {
 }
 
 void ContextMenu::positionMenu(int x, int y) {
-    // Get actual window dimensions for boundary checking
-    // (fall back to sensible defaults when the window size was never reported)
-    int windowWidth = 800;
-    int windowHeight = 600;
+    // Viewport GUIManagera jest zawsze NonZero (wstrzykiwany w konstruktorze),
+    // więc clamp działa od startu bez fallbacku rozmiaru.
+    int windowWidth = 0;
+    int windowHeight = 0;
     m_manager.getWindowSize(windowWidth, windowHeight);
-    if (windowWidth <= 0) windowWidth = 800;
-    if (windowHeight <= 0) windowHeight = 600;
 
     int menuWidth = 200;
     int menuHeight = 0;
