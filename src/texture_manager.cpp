@@ -50,17 +50,14 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
         return nullptr;
     }
 
-    // Create text string ONCE - needed for both cache key and SDL call
-    std::string textStr(text);
-    
-    std::string cacheKey = textStr + "|" + std::to_string(reinterpret_cast<uintptr_t>(font.get())) 
-                          + "|" + std::to_string(color.r) + "," + std::to_string(color.g) 
-                          + "," + std::to_string(color.b) + "," + std::to_string(color.a);
-    
-    auto it = m_textureCache.find(cacheKey);
-    if (it != m_textureCache.end()) {
+    const uint64_t key = textCacheKey(text, static_cast<uint64_t>(reinterpret_cast<uintptr_t>(font.get())), color);
+    auto it = m_textCache.find(key);
+    if (it != m_textCache.end()) {
         return it->second;
     }
+
+    // Create text string ONCE for the SDL call (cache key is already hashed).
+    std::string textStr(text);
 
     auto* textSurface = TTF_RenderText_Blended(font.get(), textStr.c_str(), textStr.length(), color);
     if (!textSurface) {
@@ -78,24 +75,30 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, const
     SDL_SetTextureBlendMode(textTexture, SDL_BLENDMODE_BLEND);
 
     auto sharedTexture = SharedTexture(textTexture, SDLTextureDeleter());
-    m_textureCache.emplace(std::move(cacheKey), sharedTexture);
-    
+    m_textCache.emplace(key, sharedTexture);
+
     return sharedTexture;
 }
 
 SharedTexture TextureManager::createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color) {
-    // Create strings ONCE - needed for both cache key and SDL calls
-    std::string textStr(text);
-    std::string fontPathStr(fontPath);
-    
-    std::string cacheKey = textStr + "|" + fontPathStr + "|" + std::to_string(fontSize)
-                          + "|" + std::to_string(color.r) + "," + std::to_string(color.g) 
-                          + "," + std::to_string(color.b) + "," + std::to_string(color.a);
-    
-    auto it = m_textureCache.find(cacheKey);
-    if (it != m_textureCache.end()) {
+    // Font identity for the shared text store: hash of path + size
+    // (no caller in lib right now, but the overload stays API-compatible).
+    uint64_t fontId = 1469598103934665603ULL;
+    for (char c : fontPath) {
+        fontId ^= static_cast<uint64_t>(static_cast<unsigned char>(c));
+        fontId *= 1099511628211ULL;
+    }
+    fontId ^= static_cast<uint64_t>(fontSize) + 0x9e3779b97f4a7c15ULL;
+
+    const uint64_t key = textCacheKey(text, fontId, color);
+    auto it = m_textCache.find(key);
+    if (it != m_textCache.end()) {
         return it->second;
     }
+
+    // Create strings ONCE - needed for SDL calls (key is already hashed).
+    std::string textStr(text);
+    std::string fontPathStr(fontPath);
 
     auto* font = TTF_OpenFont(fontPathStr.c_str(), static_cast<float>(fontSize));
     if (!font) {
@@ -121,9 +124,22 @@ SharedTexture TextureManager::createTextureFromText(std::string_view text, std::
     SDL_SetTextureBlendMode(textTexture, SDL_BLENDMODE_BLEND);
 
     auto sharedTexture = SharedTexture(textTexture, SDLTextureDeleter());
-    m_textureCache.emplace(std::move(cacheKey), sharedTexture);
+    m_textCache.emplace(key, sharedTexture);
     
     return sharedTexture;
+}
+
+uint64_t TextureManager::textCacheKey(std::string_view text, uint64_t fontId, const SDL_Color& color) {
+    uint64_t h = 1469598103934665603ULL;
+    for (char c : text) {
+        h ^= static_cast<uint64_t>(static_cast<unsigned char>(c));
+        h *= 1099511628211ULL;
+    }
+    h ^= fontId + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+    const uint64_t rgba = (static_cast<uint64_t>(color.r) << 24) | (static_cast<uint64_t>(color.g) << 16) |
+                          (static_cast<uint64_t>(color.b) << 8) | static_cast<uint64_t>(color.a);
+    h ^= rgba + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+    return h;
 }
 
 SharedTexture TextureManager::loadTextureFromMemory(const uint8_t* data, size_t size, std::string_view key) {
@@ -319,16 +335,17 @@ void TextureManager::pruneUnused() {
         }
         return removed;
     };
-    size_t removed = pruneMap(m_textureCache) + pruneMap(m_renderCache);
+    size_t removed = pruneMap(m_textureCache) + pruneMap(m_renderCache) + pruneMap(m_textCache);
     if (removed > 0) {
         LOG_DEBUG("TextureManager::pruneUnused(): Removed %zu unused textures.", removed);
     }
 }
 
 void TextureManager::clearCache() {
-    size_t count = m_textureCache.size() + m_renderCache.size();
+    size_t count = m_textureCache.size() + m_renderCache.size() + m_textCache.size();
     m_textureCache.clear();
     m_renderCache.clear();
+    m_textCache.clear();
     if (count > 0) {
         LOG_DEBUG("TextureManager::clearCache(): Cleared %zu textures.", count);
     }
@@ -340,4 +357,8 @@ size_t TextureManager::getCacheSize() const {
 
 size_t TextureManager::getRenderCacheSize() const {
     return m_renderCache.size();
+}
+
+size_t TextureManager::getTextCacheSize() const {
+    return m_textCache.size();
 }

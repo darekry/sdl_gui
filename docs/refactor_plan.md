@@ -7,6 +7,9 @@
 > granica C-API — patrz `AGENTS.md` → „Lifetime").
 > Reszta to otwarta lista — bierz po jednym punkcie, każdy kończ zielonymi
 > testami (`./nob test`) i zbudowanymi przykładami (`./nob examples`).
+> Punkt 6 realizowany plastrami (patrz `AGENTS.md` → „Render punkt 6"):
+> plaster 1 (OverlayStack cache) i plaster 2 (TextShaper) zrobione 2026-09-06;
+> zostały zakaz mutacji w draw(), LRU bajtowe, precyzyjny dirty, rotacja/blit.
 
 ## TL;DR — 6 zmian strukturalnych
 

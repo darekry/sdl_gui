@@ -40,10 +40,10 @@ public:
     SharedTexture loadTexture(std::string_view path);
 
     SharedTexture createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color);
-    
+
     // Creates a text texture with a stable cache key (font_path + font_size).
     SharedTexture createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color);
-
+    
     // Loads a texture from memory (for embedded assets)
     SharedTexture loadTextureFromMemory(const uint8_t* data, size_t size, std::string_view key);
 
@@ -76,11 +76,19 @@ public:
     void clearCache();
     [[nodiscard]] size_t getCacheSize() const;
     [[nodiscard]] size_t getRenderCacheSize() const;
+    [[nodiscard]] size_t getTextCacheSize() const;
 
 private:
+    // TextShaper key (punkt 6): FNV-1a over text bytes mixed with font
+    // identity + color. No std::string allocation on the hot path (the old
+    // key built text+"|"+ptr+"|"+rgba per call, i.e. per frame for
+    // non-shared widgets like ComboBox/ProgressBar/StringGrid).
+    static uint64_t textCacheKey(std::string_view text, uint64_t fontId, const SDL_Color& color);
+
     SDL_Renderer* m_renderer;
     std::unordered_map<std::string, SharedTexture, StringHash, std::equal_to<>> m_textureCache;
     std::unordered_map<uint64_t, SharedTexture> m_renderCache;
+    std::unordered_map<uint64_t, SharedTexture> m_textCache;
     SharedTexture m_defaultTexture;
     bool m_initialized = false; // SDL_image initialization status
 };

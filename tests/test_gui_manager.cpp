@@ -9,6 +9,8 @@
 #include "../src/theme.hpp"
 #include "../src/style.hpp"
 #include "../src/constants.hpp"
+#include "../src/composite/dialog_box.hpp"
+#include "../src/string_grid.hpp"
 
 TEST_CASE("GUIManager Element Management", "[gui_manager][elements]") {
     TestHelper helper;
@@ -822,5 +824,94 @@ TEST_CASE("GUIManager requestFocus policy (1b)", "[gui_manager][focus]") {
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 110));
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 110));
         REQUIRE(manager.getKeyboardFocus() == braw);
+    }
+}
+
+TEST_CASE("GUIManager OverlayStack", "[gui_manager][overlay]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("modal dialog captures Tab focus, release after close") {
+        auto bg = std::make_unique<Button>(manager, 10, 10, 100, 40, "BG");
+        Button* bgRaw = bg.get();
+        manager.addElement(std::move(bg));
+
+        // Bez overlaya Tab ląduje na tle.
+        manager.focusNextElement(true);
+        REQUIRE(manager.getKeyboardFocus() == bgRaw);
+
+        auto dialog = DialogBox::createConfirm(manager, "Sure?", "Tak", "Nie");
+        DialogBox* dlgRaw = dialog.get();
+        manager.addElement(std::move(dialog));
+
+        // Z modalem Tab krąży tylko w dialogu (OverlayStack, nie pełny skan).
+        manager.setKeyboardFocus(nullptr);
+        manager.focusNextElement(true);
+        GUIElement* inDlg = manager.getKeyboardFocus();
+        REQUIRE(inDlg != nullptr);
+        REQUIRE(inDlg != bgRaw);
+        REQUIRE(inDlg->getParent() != nullptr);
+
+        // Render przechodzi przez overlay pass bez wywrotki.
+        REQUIRE_NOTHROW(manager.render());
+
+        dlgRaw->close();
+        manager.cleanup();
+        REQUIRE_NOTHROW(manager.render());
+
+        // Po zamknięciu Tab wraca na tło.
+        manager.setKeyboardFocus(nullptr);
+        manager.focusNextElement(true);
+        REQUIRE(manager.getKeyboardFocus() == bgRaw);
+    }
+
+    SECTION("two overlays: topmost wins, closing restores previous") {
+        auto dlg1 = DialogBox::createAlert(manager, "First", "OK");
+        DialogBox* raw1 = dlg1.get();
+        manager.addElement(std::move(dlg1));
+        auto dlg2 = DialogBox::createAlert(manager, "Second", "OK");
+        DialogBox* raw2 = dlg2.get();
+        manager.addElement(std::move(dlg2));
+
+        manager.setKeyboardFocus(nullptr);
+        manager.focusNextElement(true);
+        GUIElement* top = manager.getKeyboardFocus();
+        REQUIRE(top != nullptr);
+        // Fokus musi pochodzić z górnego (ostatniego) dialogu.
+        for (GUIElement* cur = top; cur; cur = cur->getParent()) {
+            if (cur == raw1) FAIL("focus landed in bottom dialog instead of topmost");
+            if (cur == raw2) break;
+        }
+        REQUIRE_NOTHROW(manager.render());
+
+        raw2->close();
+        manager.cleanup();
+        manager.setKeyboardFocus(nullptr);
+        manager.focusNextElement(true);
+        GUIElement* back = manager.getKeyboardFocus();
+        REQUIRE(back != nullptr);
+        bool inside1 = false;
+        for (GUIElement* cur = back; cur; cur = cur->getParent()) {
+            if (cur == raw1) { inside1 = true; break; }
+        }
+        REQUIRE(inside1);
+    }
+
+    SECTION("StringGrid editing flips overlay membership without crash") {
+        auto grid = std::make_unique<StringGrid>(manager, 10, 10, 400, 300, 5, 5);
+        StringGrid* graw = grid.get();
+        manager.addElement(std::move(grid));
+
+        REQUIRE_FALSE(graw->isOverlay());
+        REQUIRE_NOTHROW(manager.render());
+
+        graw->startEditing(1, 1);
+        REQUIRE(graw->isOverlay());
+        REQUIRE_NOTHROW(manager.render());
+
+        graw->stopEditing();
+        REQUIRE_FALSE(graw->isOverlay());
+        REQUIRE_NOTHROW(manager.render());
+        manager.cleanup();
     }
 }

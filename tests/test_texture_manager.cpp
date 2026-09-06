@@ -4,6 +4,7 @@
 #include "../src/texture_manager.hpp"
 #include "../src/font_manager.hpp"
 #include "../src/gui_manager.hpp"
+#include "../src/constants.hpp"
 
 TEST_CASE("TextureManager functionality", "[texture_manager]") {
     TestHelper helper;
@@ -103,5 +104,61 @@ TEST_CASE("TextureManager functionality", "[texture_manager]") {
         
         REQUIRE(w1 == w2);
         REQUIRE(h1 == h2);
+    }
+}
+
+TEST_CASE("TextureManager TextShaper", "[texture_manager][text]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    TextureManager& texManager = manager.getTextureManager();
+    FontManager& fontManager = manager.getFontManager();
+
+    auto font16 = fontManager.loadFont(constants::kDefaultFontPath, 16);
+    auto font24 = fontManager.loadFont(constants::kDefaultFontPath, 24);
+    REQUIRE(font16);
+    REQUIRE(font24);
+    const SDL_Color black{0, 0, 0, 255};
+    const SDL_Color red{255, 0, 0, 255};
+
+    SECTION("identical text shares one texture") {
+        const size_t before = texManager.getTextCacheSize();
+        auto t1 = texManager.createTextureFromText("shared", font16, black);
+        auto t2 = texManager.createTextureFromText("shared", font16, black);
+        REQUIRE(t1);
+        REQUIRE(t2.get() == t1.get());
+        REQUIRE(texManager.getTextCacheSize() == before + 1);
+    }
+
+    SECTION("color is part of the key") {
+        auto t1 = texManager.createTextureFromText("colorkey", font16, black);
+        auto t2 = texManager.createTextureFromText("colorkey", font16, red);
+        REQUIRE(t1);
+        REQUIRE(t2);
+        REQUIRE(t2.get() != t1.get());
+    }
+
+    SECTION("font is part of the key") {
+        auto t1 = texManager.createTextureFromText("fontkey", font16, black);
+        auto t2 = texManager.createTextureFromText("fontkey", font24, black);
+        REQUIRE(t1);
+        REQUIRE(t2);
+        REQUIRE(t2.get() != t1.get());
+    }
+
+    SECTION("different texts do not collide") {
+        auto t1 = texManager.createTextureFromText("alpha", font16, black);
+        auto t2 = texManager.createTextureFromText("beta", font16, black);
+        REQUIRE(t1);
+        REQUIRE(t2);
+        REQUIRE(t2.get() != t1.get());
+    }
+
+    SECTION("grid-scale sharing: N identical cells, 1 entry") {
+        const size_t before = texManager.getTextCacheSize();
+        for (int i = 0; i < 100; ++i) {
+            auto t = texManager.createTextureFromText("cell", font16, black);
+            REQUIRE(t);
+        }
+        REQUIRE(texManager.getTextCacheSize() == before + 1);
     }
 }

@@ -49,6 +49,7 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
         auto* raw_ptr = element.get();
         registerElement(raw_ptr);
         m_elements.push_back(std::move(element));
+        m_overlayStack.markDirty();
         // Viewport jest zawsze NonZero — kotwice aplikowane od razu, bez
         // czekania na pierwszy resize (koniec elementów na (0,0) po dodaniu).
         raw_ptr->updateLayout(m_windowWidth, m_windowHeight);
@@ -63,6 +64,7 @@ std::unique_ptr<GUIElement> GUIManager::detachElement(GUIElement* element) {
         if (it->get() == element) {
             auto detached = std::move(*it);
             m_elements.erase(it);
+            m_overlayStack.markDirty();
             return detached;
         }
     }
@@ -165,9 +167,14 @@ void GUIManager::render() {
         tooltipElement->render(m_renderer);
     }
 
-    for (const auto& element : m_elements) {
-        if (element->isOverlay() && !element->isMarkedForDeletion()) {
-            element->renderOverlay(m_renderer);
+    // Overlay pass over the cached views (O(K) overlayi, nie O(N) skan).
+    // Pierwszy pass celowo nadal filtruje isOverlay() per element: status
+    // może być dynamiczny (StringGrid::m_isEditing), a cache odświeża się
+    // tylko w punktach invalidacji + notifyOverlayChanged().
+    ensureOverlayCache();
+    for (GUIElement* overlay : m_overlayStack.overlays()) {
+        if (overlay && !overlay->isMarkedForDeletion()) {
+            overlay->renderOverlay(m_renderer);
         }
     }
 
@@ -243,6 +250,7 @@ void GUIManager::cleanup() {
     {
         LOG_DEBUG("GUIManager::cleanup() - erasing {} elements from vector", m_elements.size() - prefix_distance);
         m_elements.erase(new_end, m_elements.end());
+        m_overlayStack.markDirty();
     }
 
     // Post-erase: never notify — the object may be gone. Just reset stale
@@ -567,12 +575,14 @@ void GUIManager::collectFocusableElements(std::vector<GUIElement*>& out) const {
 }
 
 GUIElement* GUIManager::getActiveOverlay() const {
-    for (const auto& element : m_elements) {
-        if (element->isOverlay() && element->isVisible() && !element->isMarkedForDeletion()) {
-            return element.get();
-        }
+    ensureOverlayCache();
+    return m_overlayStack.topActive();
+}
+
+void GUIManager::ensureOverlayCache() const {
+    if (m_overlayStack.isDirty()) {
+        m_overlayStack.rebuild(m_elements);
     }
-    return nullptr;
 }
 
 void GUIManager::focusNextElement(bool forward) {

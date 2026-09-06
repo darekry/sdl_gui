@@ -59,7 +59,8 @@ public:
         // Clear pointers to children before Panel destroys them
         m_vSlider = nullptr;
         m_hSlider = nullptr;
-        clearLocalTextureCache();
+        // Cell textures live in the shared TextShaper (TextureManager) —
+        // pruned globally, nothing local to clear.
     }
     
     // Data management
@@ -161,13 +162,13 @@ private:
     [[nodiscard]] CellCoord getCellAtPosition(int x, int y) const;
     [[nodiscard]] SDL_Rect getCellRect(size_t row, size_t col) const;
     void drawCell(SDL_Renderer* renderer, size_t row, size_t col, int screenX, int screenY, int width, int height,
-                  SDL_Color cellBackgroundColor, SDL_Color textColor, TTF_Font* font);
+                  SDL_Color cellBackgroundColor, SDL_Color textColor, const SharedFont& font);
     void drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
                            SDL_Color headerBackgroundColor, SDL_Color headerTextColor, SDL_Color gridLineColor,
-                           TTF_Font* font);
+                           const SharedFont& font);
     void drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY,
                         SDL_Color headerBackgroundColor, SDL_Color headerTextColor, SDL_Color gridLineColor,
-                        TTF_Font* font);
+                        const SharedFont& font);
     void drawSelection(SDL_Renderer* renderer, int offsetX, int offsetY);
     void drawGridLines(SDL_Renderer* renderer, int offsetX, int offsetY, SDL_Color gridLineColor);
     void ensureCellVisible(size_t row, size_t col);
@@ -182,7 +183,7 @@ private:
     // Helper methods for drawing
     void drawCells(SDL_Renderer* renderer, int offsetX, int offsetY, 
                    SDL_Color cellBackgroundColor, SDL_Color textColor,
-                   const VisibleRange& range, TTF_Font* font);
+                   const VisibleRange& range, const SharedFont& font);
     
     // Helper methods for event handling
     bool handleMouseButtonDown(const SDL_Event& e);
@@ -252,9 +253,4 @@ private:
     
     // Font
     static constexpr int DEFAULT_FONT_SIZE = 14;
-    
-    // Local cell texture cache (not in TextureManager)
-    std::unordered_map<std::string, SharedTexture, StringHash, std::equal_to<>> m_localTextureCache;
-    SharedTexture createLocalTextTexture(std::string_view text, TTF_Font* font, SDL_Color color);
-    void clearLocalTextureCache();
 };

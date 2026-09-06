@@ -10,6 +10,7 @@
 #include "animation_manager.hpp"
 #include "cursor.hpp"
 #include "element_handle.hpp"
+#include "overlay_stack.hpp"
 #include <SDL3/SDL_gpu.h>
 
 #include "std.hpp"
@@ -142,6 +143,10 @@ public:
     void setCursor(std::unique_ptr<Cursor> new_cursor);
     [[nodiscard]] Cursor* getCursor() const { return cursor.get(); }
 
+    // Dynamic overlay flip (StringGrid::start/stopEditing) — the element is
+    // already in m_elements, only the cached overlay view needs a rebuild.
+    void notifyOverlayChanged() { m_overlayStack.markDirty(); }
+
     // === Generational lifetime (point 5: SlotMap + ElementHandle) ===
     //
     // registerElement assigns (or reuses) a slot and stamps the element's
@@ -175,6 +180,10 @@ private:
     [[nodiscard]] GUIElement* resolveSlot(ElementHandle handle) const;
 
     std::vector<std::unique_ptr<GUIElement>> m_elements;
+    // Overlay views (non-owning cache over m_elements, see overlay_stack.hpp).
+    // Ownership and Z-order stay in m_elements; this only accelerates the
+    // overlay-side paths (overlay render pass, getActiveOverlay, focus).
+    mutable OverlayStack m_overlayStack;
     std::unique_ptr<Cursor> cursor;
     // Lazily created context menu, owned by m_elements. Accessed only via
     // m_contextMenuHandle (auto-null after destroy) — never a stale raw*.
@@ -203,6 +212,8 @@ private:
     
     void collectFocusableElements(std::vector<GUIElement*>& out) const;
     GUIElement* getActiveOverlay() const;
+    // Rebuild overlay views when dirty (add/detach/cleanup/dynamic flip).
+    void ensureOverlayCache() const;
     
     // === Resize handling ===
     int m_windowWidth = 0;

@@ -172,7 +172,7 @@ bool isInitialized() const;   // czy inicjalizacja SDL_image się powiodła
 | Metoda | Opis |
 |--------|------|
 | `SharedTexture loadTexture(std::string_view path);` | Ładuje plik obrazu (PNG/JPG/...); cache'owana po ścieżce |
-| `SharedTexture createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color);` | Renderuje tekst do tekstury |
+| `SharedTexture createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color);` | Renderuje tekst do tekstury; współdzielony TextShaper — klucz (tekst, font, kolor), identyczne wywołania zwracają 1 teksturę |
 | `SharedTexture createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color);` | Jak wyżej, z cache'owaniem po (ścieżka czcionki, rozmiar) |
 | `SharedTexture loadTextureFromMemory(const uint8_t* data, size_t size, std::string_view key);` | Ładuje z pamięci (dla zasobów wkompilowanych) |
 | `SharedTexture addTexture(std::string_view key, SDL_Texture* texture);` | Rejestruje istniejącą teksturę pod kluczem (przejmuje ownership) |
@@ -185,6 +185,8 @@ bool isInitialized() const;   // czy inicjalizacja SDL_image się powiodła
 | `void pruneUnused();` | Usuwa tekstury bez aktywnych referencji |
 | `void clearCache();` | Czyści cały cache |
 | `size_t getCacheSize() const;` | Liczba tekstur w cache'u |
+| `size_t getRenderCacheSize() const;` | Liczba wpisów render-cache |
+| `size_t getTextCacheSize() const;` | Liczba wpisów TextShapera |
 
 ### Zasoby wkompilowane (embedded assets)
 
