@@ -123,6 +123,7 @@ int main(int, char**)
         SDL_Event e;
         
         while (!quit) {
+            Uint64 frameStart = SDL_GetTicks();
             while (SDL_PollEvent(&e)) {
                 switch (e.type) {
                     case SDL_EVENT_QUIT:
@@ -140,6 +141,7 @@ int main(int, char**)
             }
             
             guiManager.update();
+            guiManager.cleanup();
             
             // Render
             SDL_SetRenderDrawColor(renderer, 30, 30, 40, 255);
@@ -148,6 +150,7 @@ int main(int, char**)
             guiManager.render();
             
             SDL_RenderPresent(renderer);
+            app.endFrame(frameStart);
         }
         
     } catch (const std::runtime_error& e) {

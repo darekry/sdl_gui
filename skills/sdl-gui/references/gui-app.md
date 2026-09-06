@@ -13,21 +13,22 @@ responsive:
 
 ```cpp
 SDLApp app("Tool", 1024, 768, /*resizable=*/true);
-GUIManager manager(app.getRenderer());
+GUIManager manager(app.getRenderer(), Viewport{1024, 768});
 manager.setTheme(ThemePresets::createDarkTheme());
-GUIManager manager(renderer, Viewport{1024, 768});
 
-auto toolbar = manager.create<Panel>(0, 0, 0, 0);
-toolbar->setAnchor(Anchor::topBar(48, 0, 0));            // full width, 48 px
+auto toolbar = manager.create<Panel>(0, 0, 0, 48);
+toolbar->setAnchor(Anchor::topBar(0, 0, 0));               // full width, pinned to top (height 48 from ctor)
 
-auto sidebar = manager.create<Panel>(0, 0, 0, 0);
-sidebar->setAnchor(Anchor::leftSidebar(48, 24));    // 200px wide from ctor; below toolbar, above status
+// sidebar width comes from the constructor; top/bottom margins keep it
+// clear of the toolbar and the status bar:
+auto sidebar = manager.create<Panel>(0, 0, 200, 0);
+sidebar->setAnchor(Anchor::leftSidebar(48, 24));
 
 auto content = manager.create<Panel>(0, 0, 0, 0);
 content->setAnchor(Anchor::fill(0));                     // whatever remains
 
-auto statusBar = manager.create<Panel>(0, 0, 0, 0);
-statusBar->setAnchor(Anchor::bottomBar(24, 0, 0));
+auto statusBar = manager.create<Panel>(0, 0, 0, 24);
+statusBar->setAnchor(Anchor::bottomBar(0, 0, 0));
 
 app.run(manager, {40, 42, 54, 255}, [&manager](SDL_Event& e) {
     if (e.type == SDL_EVENT_WINDOW_RESIZED) {
@@ -36,12 +37,19 @@ app.run(manager, {40, 42, 54, 255}, [&manager](SDL_Event& e) {
 });
 ```
 
-Anchor presets: `center()`, `fill(m)`, `topBar(h, l, r)`, `bottomBar(h, l, r)`,
-`leftSidebar(t, b)`, `rightSidebar(t, b)`, `horizontalStretch(l, r)`,
-`verticalStretch(t, b)`, corners with margins. Value convention: `0–1` =
-fraction of parent, `>1` = pixels, `0.5` = center. Create children of a panel
-with `manager.create<Label>(parent, x, y, ...)` — coordinates are relative to
-the parent.
+Anchor presets: `center()`, `fill(m)`, `topBar(top, l, r)`,
+`bottomBar(bottom, l, r)`, `leftSidebar(t, b)`, `rightSidebar(t, b)`,
+`horizontalStretch(l, r)`, `verticalStretch(t, b)`, `topCenter(top)`,
+`bottomRightAt(right, bottom)`, corners with margins, plus the escape hatch
+`pinned(h, v, l, t, r, b)`. Anchoring is per-axis enums (`HAnchor::{None,
+Left, Center, Right, Stretch}`, `VAnchor::{None, Top, Center, Bottom,
+Stretch}`) with integer pixel margins — no fractions. The anchor positions
+the element; the element keeps its constructor size unless the axis is
+`Stretch`. Create children of a panel with `manager.create<T>(parent, x, y,
+...)` (works for widgets whose constructor takes `(x, y, w, h, ...)` after
+the manager) — child coordinates are relative to the parent. Widgets without
+a rect constructor (e.g. `Label`) become children via
+`parent->addChild(std::make_unique<T>(manager, ...))`.
 
 ## Widget selection by use case
 
@@ -122,7 +130,7 @@ manager.setTheme(ThemePresets::createDarkTheme());   // or Win9x/Light/HighContr
 Theme& theme = manager.getTheme();
 Style s;
 s.backgroundColor = {200, 80, 80, 255};
-theme.setStyle("Button", ElementState::Hover, s);
+theme.setStyle(ComponentType::Button, ElementState::Hover, s);
 ```
 
 Widget styles cascade: local style → theme[type][state] → theme[type][Normal]

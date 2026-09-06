@@ -44,7 +44,8 @@ src/composite/ — gotowe dialogi
 src/editor/    — edytor wizualny GUI
 examples/      — 49 przykładów (00–48); examples/c/ — 10 przykładów C
 tests/         — 43 binarki testowe (Catch2)
-docs/          — dokumentacja (EN/PL)
+docs/          — release/ (kanon end-user → dist/docs/), refactor_plan.md, archive/ (nieaktualne)
+skills/sdl-gui/ — skill agenta (SKILL.md + references/); `./nob release` kopiuje do dist/skills/
 lib/           — Catch2 amalgamated, tinyxml2
 ```
 
@@ -92,6 +93,7 @@ int main(int, char**) {
         bool quit = false;
         SDL_Event e;
         while (!quit) {
+            Uint64 frameStart = SDL_GetTicks();   // do limitowania FPS (patrz app.endFrame)
             while (SDL_PollEvent(&e)) {
                 if (e.type == SDL_EVENT_QUIT) quit = true;
                 guiManager.processEvent(e);
@@ -102,6 +104,7 @@ int main(int, char**) {
             SDL_RenderClear(renderer);
             guiManager.render();
             SDL_RenderPresent(renderer);
+            app.endFrame(frameStart);   // cap ~60 FPS — BEZ TEGO pętla kręci się tysiące FPS i zjada 1 rdzeń CPU
         }
 
     } catch (const std::runtime_error& e) {
@@ -328,6 +331,20 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
+### Idle CPU — VSync + cap ~60 FPS w pętli głównej (2026-09-06)
+- **Przyczyna**: `SDL_CreateRenderer` w SDL3 domyślnie wyłącza vsync (`SDL_RENDERER_VSYNC_DISABLED`), a pętle przykładów nie miały żadnego limitera — przykład 29 kręcił się z ~270 FPS (zmierzone; czysty renderer do 11000+ FPS), co na wielordzeniowym CPU widać jako ~7% (1 rdzeń na 100%). Sam `SDL_SetRenderVSync(renderer, 1)` nie wystarczył — sterownik na X11 go ignorował (nadal 271 FPS przy `vsync=1`).
+- **Fix**: `SDLApp` (CPU) i `Window` wołają `SDL_SetRenderVSync(renderer, 1)` po utworzeniu renderera (pomaga tam, gdzie sterownik respektuje vsync + eliminuje tearing) + nowa `SDLApp::endFrame(frameStart)` — dosypia resztę budżetu 16 ms; nie podwaja throttlingu, gdy vsync zadziałał. `SDLApp::run()` i przykład 29 jej używają; przykład 29 dostał też brakujące `guiManager.cleanup()`. Boilerplate pętli w AGENTS.md zaktualizowany.
+- Efekt: przykład 29 w idle: 14–20% → 0–3% CPU (widoczne okno, build debug+ASan). Pozostałe ~44 przykłady nadal mają starą pętlę bez capa — migracja to 2 linijki (`frameStart` + `app.endFrame(frameStart)`).
+- Zmienione pliki: src/sdl_app.hpp, src/window.cpp, examples/29_resize.cpp, AGENTS.md
+
+### Porządki docs + skill sdl-gui do projektów zewnętrznych (2026-09-06)
+- **AGENTS.md → CHANGELOG.md**: 8 starszych wpisów (2026-08-22–08-25: Label multiline, tooltip multiline, Win95Theme, Cursor-flake, Button-parser, anchory-przy-add, Bevel, cleanup null-checków) przeniesionych na górę CHANGELOG.md; w AGENTS.md zostały 4 wpisy z 2026-09-05. Usunięty też wiszący link "do 2026-08-02" w środku listy.
+- **docs/**: martwe pliki przeniesione `git mv` do `docs/archive/` (api/, en/, pl/ — era SDL2; getting_started.md root — SDL2; pigulka.md — usunięte `setWindowSize()`; mouse_cursor.md — stara nazwa `MouseCursor`; propozycje/plany: responsive_layout, text_input_text_area, texture_font_review, wysiwyg — zrealizowane lub zastąpione). Zostały: `release/` (kanon), `refactor_plan.md` (w toku), `index.md` (linki do archive/, poprawione 48→49 przykładów).
+- **Skill**: naprawione rozjazdy z kodem po refaktorach — `gui-app.md`: podwójna deklaracja `GUIManager` (brak Viewport) → jeden ctor z `Viewport`, stara konwencja float-anchorów (`0–1/>1/0.5`) → enum `HAnchor`/`VAnchor` + int px, `setStyle("Button"…)` → `ComponentType::Button`, wymiary pasków/sidebara z ctora; `rts-game.md`: niekompilujące się `create<Label>(bar,…)` → `make_unique` + `addChild` z `makeRef` przed move, `onExit` → `markForDeletion` zamiast gołego `cleanup()`; SKILL.md: przykłady `00–47` → `00–48`.
+- **Dystrybucja**: `nob.c build_release()` kopiuje `skills/sdl-gui/` → `dist/skills/sdl-gui/` (marker: SKILL.md); SKILL.md dostał sekcję instalacji (`cp -r <sdk>/skills/sdl-gui <gra>/.kilo/skills/`) — skill samowystarczalny, gra nie kopiuje źródeł biblioteki. Walidacja `quick_validate.py` PASS dla `skills/` i `dist/skills/`.
+- Efekt: `./nob release` zielone (dist zawiera skills/), `diff -r skills/sdl-gui dist/skills/sdl-gui` identyczne. Testów nie ruszano (bez zmian kodu lib).
+- Zmienione pliki: AGENTS.md, CHANGELOG.md, docs/index.md, docs/archive/* (git mv), nob.c, skills/sdl-gui/SKILL.md, skills/sdl-gui/references/gui-app.md, skills/sdl-gui/references/rts-game.md
+
 ### Layout / Anchor — Viewport NonZero + enum + LayoutPass (2026-09-05)
 - **Nowość**: `Viewport{w,h}` wstrzykiwany do `GUIManager` w ctorze (niezmiennik NonZero — brak `0x0`, koniec `setWindowSize()` i fallbacku `800x600` w `ContextMenu`; `handleResize(<=0)` ignorowane, np. minimalizacja). `Anchor` jako enum per oś (`HAnchor`/`VAnchor` + marginesy int px) zamiast magicznych floatów (`<0/0-1/>1/==0.5`): `1px` osiągalne, center to wariant; nowe `at/pinned/topCenter/bottomRightAt`. Jeden `LayoutPass` Measure/Arrange (`src/layout.hpp`: `ILayoutManager`, `AnchorLayout` domyślny, `StackLayout` z `arrangeStrip` do pasów przycisków). `layoutChildren()` zamiast `onSizeChanged()` (Button: label, Slider: track+przyciski, ScrollArea: viewport/slidery — koniec shadowowania `updateLayout`, TabControl: zakładki+panele, DialogBox/FileDialog: pas przycisków). Usunięte `m_originalW/H`/`storeOriginalSize` (center z bieżącego rozmiaru). Parser tworzy od razu docelowy rect (bez dummy `(0,0)` + `setSize`), kotwice z `anchorH/anchorV` + `margin*` (px). `handleResize` propaguje do WSZYSTKICH top-level (fix: rodzic bez anchora blokował resize zakotwiczonych dzieci). DialogBox/FileDialog centrują z realnego viewportu (koniec hardcode `800x600`), C-API: `sdlgui_anchor_t{h,v,l,t,r,b}` + `sdlgui_anchor_make` (koniec `anchor_raw`/floatów).
 - **Zero shimów**: stare API usunięte (flota `Anchor`, `applyAnchor`, `onSizeChanged`, `onParentResize`, `setWindowSize`, `AnchorMode`, `anchorLeft/...` w plikach) — poprawione 48 przykładów, fixture'y JSON/XML, C-API i testy. `getAbsolutePosition`-cache i współdzielony render-cache bez zmian (perf).
@@ -359,60 +376,7 @@ Uruchom: `./nob test`
 - Efekt: 43/43 testów przechodzi, 48 przykładów się buduje.
 - Zmienione pliki: src/gui.hpp, src/gui.cpp, src/gui_manager.hpp, src/gui_manager.cpp, src/context_menu.hpp, src/context_menu.cpp, src/text_editable.hpp, src/text_editable.cpp, src/text_input.cpp, src/text_area.hpp, src/text_area.cpp, examples/12_context_menu.cpp, tests/test_gui_element.cpp, tests/test_text_input.cpp, tests/test_text_area.cpp, tests/test_context_menu.cpp
 
-### Label wieloliniowy — `\n` łamie linię (2026-08-25)
-- **Nowość**: `Label` obsługuje wiele linii — tekst zawierający `\n` dzielony jest na linie (`updateLines()` → `m_lines`); szerokość elementu = najszersza linia, wysokość = liczba linii × `TTF_GetFontHeight()` (konwencja z TextArea). Rysowanie: jedna cache'owana tekstura per linia (`createTextureFromText`), każda w naturalnym rozmiarze, lewe wyrównanie; puste linie tylko przesuwają yOffset. `\r\n` traktowane jak pojedynczy break. Tekst jednolinijkowy bez zmian (stara ścieżka: `TTF_GetStringSize`, rozciągnięcie do rozmiaru elementu przy ręcznym `setSize`). Render-cache key bez zmian (hash całego tekstu).
-- **Testy**: nowe case'y w test_label.cpp ("Label multi-line support": wysokość = n×font height, szerokość najszerszej linii, puste/wiodące/kończące `\n`, CRLF, przełączanie single↔multi przez setText, render smoke).
-- Efekt: 43/43 testów przechodzi, 48 przykładów się buduje.
-- Zmienione pliki: src/label.hpp, src/label.cpp, tests/test_label.cpp, docs/release/widgets/Label.md
-
-### Bugfix: tooltip za mały dla tekstu wieloliniowego (2026-08-25)
-- **Problem**: `GUIManager::showTooltip()` wymiarował panel przez `FontManager::getTextSize` (jedna linia, `TTF_GetStringSize`) — przy tekście z `\n` panel był za niski/wąski i linie wystawały poza tło (przykład 11, tooltip checkboxa). Sam Label renderował już wieloliniowo poprawnie.
-- **Fix**: panel wymiarowany z faktycznych wymiarów `m_tooltipLabel` po `setText()` (jedno źródło prawdy, zero duplikacji logiki pomiaru). Stałe `TOOLTIP_FONT_SIZE`/`TOOLTIP_PADDING` przeniesione do `constants::kTooltipFontSize/kTooltipPadding`; nowy publiczny getter `GUIManager::getActiveTooltip()`.
-- **Testy**: test_gui_manager.cpp — "Multi-line tooltip panel fits all lines" (szerokość = najszersza linia + 2×padding, wysokość = 3×font height + 2×padding) + sekcja "Single-line tooltip shrinks back".
-- Efekt: 43/43 testów przechodzi, 48 przykładów się buduje.
-- Zmienione pliki: src/gui_manager.cpp, src/gui_manager.hpp, src/constants.hpp, tests/test_gui_manager.cpp, docs/release/core.md, docs/release/managers.md
-
-Starsza historia zmian (do 2026-08-02): [CHANGELOG.md](CHANGELOG.md).
-
-### Theme::createWindows95Theme() + audyt bevel w widgetach (2026-08-25)
-- **Nowość**: `Theme::createWindows95Theme()` (deleguje do `ThemePresets::createWindows95Theme()`) — autentyczny Win95/98 na systemie faz 3D: Button Raised w Normal/Hover/Disabled i Sunken w Pressed; TextInput/TextArea/ListView/ComboBox/Canvas/StringGrid białe + Sunken; ProgressBar biały + Sunken z navy wypełnieniem (`borderColor` = kolor fill w widgetcie); Slider/RangeSlider `borderColor` = kolor suwaka; ContextMenu biało-granatowe; Panel/TabControl/ScrollArea płaskie. Helper `ThemePresets::withBevel(Style, BevelType)` owija `applyBevelToStyle`. Disabled pola edycji gubią bevel (szary tekst). Bevel NIE przecieka: typy bez fazy mają czyste `optional` (Panel flat, unknown type → default bez bevel).
-- **Audyt custom-draw**: tylko `RadioButton` rysował ramkę ręcznie — dostał gałąź `drawStyleBevel` przed fallbackiem na `RenderRect` (semantyka texture-jako-indykator zachowana, celowo bez `drawBackgroundAndBorder`, bo base traktuje `style.texture` jako tło). Pozostałe: Checkbox/ComboBox/TextInput/TextArea/StringGrid wołają `drawBackgroundAndBorder` wprost; Slider/RangeSlider/ProgressBar/DialogBox przez `Panel::draw`; ScrollArea/TabControl dziedziczą Panel — wspierają bevel automatycznie. Label/Cursor/AnimatedImage/Canvas/ShaderPanel bez ramek z definicji.
-- **Przykład 48**: przepisany na `createWindows95Theme()` — usunięte ręczne helpery `applyWin95Button`/`applyWin95Sunken` (dialog/status bar trzymają lokalny bevel jako ramy okna).
-- **Testy/docs**: nowe case'y w test_theme.cpp ("Windows95 theme": kolory faz Raised/Sunken, Disabled drop bevel, ProgressBar navy, StringGrid gridlines, brak przecieku do Panel/unknown); dokumentacja (core.md, resources.md, patterns.md).
-- Efekt: 43/43 testów przechodzi (5 pełnych przebiegów), 48 przykładów się buduje.
-- Zmienione pliki: src/theme.hpp, src/theme.cpp, src/theme_presets.hpp, src/radio_button.cpp, examples/48_win95_bevel.cpp, tests/test_theme.cpp, docs/release/core.md, docs/release/resources.md, docs/release/patterns.md
-
-### Bugfix: flaky test_sdl_gui_c_api — Cursor śledzi pozycję myszy z eventów (2026-08-24)
-- **Problem**: test "Cursor renders pixels" wymuszał `SDL_WarpMouseInWindow` + polling `SDL_GetMouseState`; po migracji dev-maszyny na Wayland warp przestał działać (kompozytor nie pozwala aplikacjom przesuwać wskaźnika) → deterministyczny fail `0 == 50` (wcześniej losowy flake). `Cursor::renderOverlay` pollował `SDL_GetMouseState()` w renderze, niezależnie od systemu eventów.
-- **Fix**: `Cursor::handleEvent()` śledzi `SDL_EVENT_MOUSE_MOTION` (`m_mouseX/Y`, flaga `m_hasMousePos`); `renderOverlay()` używa śledzonej pozycji, z fallbackiem na `SDL_GetMouseState()` dopóki nie przyszedł żaden motion (kompatybilność wstecz). `GUIManager::processEvent()` w gałęzi mouse-capture forwarduje event do kursora przed early-return — kursor nie zamiera podczas dragowania. Test: syntetyczny motion event przez `sdlgui_process_event` zamiast warp+mapowania okna (bez `SDL_ShowWindow`, bez `SDL_Delay`, bez pętli pollującej).
-- Efekt: 43/43 testów przechodzi; test [pixel] 5× PASS pod rząd.
-- Zmienione pliki: src/cursor.hpp, src/cursor.cpp, src/gui_manager.cpp, tests/test_sdl_gui_c_api.cpp
-
-### Bugfix: etykiety Buttonów przycinane przy tworzeniu przez parser (2026-08-25)
-- **Problem**: parsery layoutów tworzą widgety z rozmiarem (0,0) i dopiero potem wołają `setSize()`. `Button` centruje Label-dziecko tylko w konstruktorze — po `setSize` etykieta wisała na ujemnych współrzędnych i była przycinana przez clip rect (widać tylko ogonki tekstu: "okno", "uj", "K").
-- **Fix**: nowy chroniony hook wirtualny `GUIElement::onSizeChanged(oldW, oldH)` wołany z `setSize()` przy faktycznej zmianie wymiarów; `Button` nadpisuje go i re-centruje etykietę (`m_label` — nowy członek). Przykłady 30/31 (JSON/XML parser) dostają `setWindowSize` + obsługę `SDL_EVENT_WINDOW_RESIZED` (anchory top-level reagują na resize).
-- Efekt: 43/43 testów przechodzi; nowe case'y: test_button.cpp ("label re-centers when size changes"), test_layout_parser.cpp (etykieta OK wycentrowana po parse, dialog wycentrowany przez anchor z JSON).
-- Zmienione pliki: src/gui.hpp, src/gui.cpp, src/button.hpp, src/button.cpp, examples/30_json_parser.cpp, examples/31_xml_parser.cpp, tests/test_button.cpp, tests/test_layout_parser.cpp
-
-### Bugfix: anchory aplikowane od razu przy dodawaniu, nie dopiero przy resize (2026-08-24)
-- **Problem**: `GUIManager::addElement()` i `GUIElement::addChild()` nie aplikowały anchorów — elementy dodane po starcie (np. dialog zbudowany w callbacku) miały dzieci na pozycjach konstrukcyjnych do pierwszego `SDL_EVENT_WINDOW_RESIZED`. Objaw: przyciski OK/Anuluj w (0,0), "brakujące" widgety (nakładka z-order), przykład 48_win95_bevel po zamknięciu i "Pokaż okno".
-- **Fix**: `addElement()` woła `updateLayout(m_windowWidth, m_windowHeight)` (guard >0), `addChild()` woła `child->updateLayout(m_width, m_height)`. Dla elementów bez anchorów no-op. Uwaga: `getX()` zwraca współrzędne względem rodzica.
-- Efekt: 42/43 (1 fail = pre-existing flake warp myszy w test_sdl_gui_c_api, potwierdzony na czystym drzewie przez git stash); nowe case'y w test_anchor.cpp (aplikacja przy add/addChild/subtree bez resize).
-- Zmienione pliki: src/gui_manager.cpp, src/gui.cpp, tests/test_anchor.cpp, examples/48_win95_bevel.cpp
-
-### Bevel 3D w stylu Windows 95/98 (2026-08-24)
-- **Nowość**: fazowane obramowanie 3D — fundament pod look Win95/98. `Style` dostaje 4 opcjonalne kolory krawędzi (`borderColorOuter/InnerTopLeft/BottomRight`), `GUIElement::setBevel(state, BevelType::Raised/Sunken)` wypełnia je z palety systemowej (`constants::kWin95Face/Light/Highlight/Shadow/DarkShadow`). Rysowanie: wolne funkcje `drawBevelFrame()` / `drawStyleBevel()` w gui.cpp; bevel ma priorytet nad zwykłą ramką i rysuje się ostro (bez zaokrągleń). `buildRenderCacheKey()` domieszuje nowe pola; `mergeWith`/`operator==` rozszerzone. Paletę aplikuje wolna funkcja `applyBevelToStyle(Style&, BevelType)`.
-- **Parsery**: `LayoutParser::parseStyle` obsługuje shorthand `"bevel": "Raised"|"Sunken"` (JSON attr / XML attr) + 4 jawne kolory `borderColorOuter/InnerTopLeft/BottomRight` (nadpisują shorthand). `getComposedStyle()` upublicznione (testy/debug). Fixture: `tests/data/win95_bevel.json` (layout przykładu 48 — ładuje go `./output/30_json_parser tests/data/win95_bevel.json`), `tests/data/win95_bevel.xml`.
-- Efekt: 43/43 testów przechodzi; nowe case'y w test_style.cpp (mergeWith, równość, setBevel per stan, render smoke) i test_layout_parser.cpp (bevel JSON+XML).
-- Zmienione pliki: src/constants.hpp, src/style.hpp, src/gui.hpp, src/gui.cpp, src/layout_parser.cpp, tests/test_style.cpp, tests/test_layout_parser.cpp, examples/48_win95_bevel.cpp
-- Następne kroki: ~~Theme::createWindows95Theme()~~, ~~audyt widgetów z własnym draw()~~ (zrealizowane 2026-08-25, patrz wyżej). Pozostało: pressed content offset 1px dla Buttona.
-
-### Cleanup: usunięcie redundantnych null-checków i martwej obsługi błędów (2026-08-22)
-- **Niezmienniki udokumentowane w kodzie**: `m_children`/`m_elements`/`m_windows` nigdy nie zawierają nulli (filtrowane przed push); `getTimerManager()` zawsze nie-null (ctor); wartości `PreviewWindow::m_widgetMap` nigdy null; `ScrollArea::m_viewport/m_content`, członkowie FileDialog/DialogBox przypisani tylko w ctorach.
-- Usunięto: checki iteracyjne `if (child && ...)` / `if (element && ...)` nad kontenerami unique_ptr; straż na `getTimerManager()` w `startTimer/stopTimer`; `if (!self)` w callbackach timerów; martwy licznik `total_removed_count` w `GUIManager::cleanup()`; O(n) skan duplikatów w `addElement()` (osiągalny tylko przez UB); podwójne checki `m_selectedCell`, `m_cellEditor+m_isEditing`, `m_messageLabel`, `m_pathLabel/m_titleLabel/m_filenameInput`, `m_dirGrid/m_fileGrid`, widget map w preview_window, dead `if (element)` w `LayoutParser::parseNode` + straż w `parseStyle`.
-- Zachowano: straż na granicach publicznego API (`addElement`, `detachElement`, `register/unregisterElement`, `isElementAlive`, parametry renderer), obsługę błędów SDL/fontów/IO, walidację wejścia parserów.
-- Efekt: 42/43 testów przechodzi (1 porażka = pre-existing flake środowiskowy warp myszy w test_sdl_gui_c_api, pada też na czystym drzewie), wszystkie przykłady się budują.
-- Zmienione pliki: src/gui.cpp, src/gui_manager.cpp, src/scroll_area.cpp, src/tab_control.cpp, src/window_manager.cpp, src/string_grid.cpp, src/animated_image.cpp, src/composite/dialog_box.cpp, src/composite/file_dialog.cpp, src/editor/editor_window.cpp, src/editor/preview_window.cpp, src/layout_parser.cpp
+Starsza historia zmian: [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

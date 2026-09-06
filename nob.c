@@ -1307,6 +1307,26 @@ static bool build_release(void) {
         if (!nob_cmd_run(&cmd)) return false;
     }
 
+    // Copy the agent skill to dist/skills/ so downstream projects (e.g. a game
+    // built on this library) can install it with:
+    //   cp -r <sdk>/skills/sdl-gui <game>/.kilo/skills/
+    {
+        const char *skill_src = "skills/sdl-gui";
+        const char *skill_marker = nob_temp_sprintf("%s/%s", skill_src, "SKILL.md");
+        if (!nob_file_exists(skill_marker)) {
+            nob_log(ERROR, "Missing skills/sdl-gui/SKILL.md");
+            return false;
+        }
+        nob_log(INFO, "Copying agent skill: %s -> %s/skills/", skill_src, DIST_DIR);
+        Nob_Cmd cmd = {0};
+        nob_cmd_append(&cmd, "rm", "-rf", DIST_DIR "/skills");
+        if (!nob_cmd_run(&cmd)) return false;
+        nob_cmd_append(&cmd, "mkdir", "-p", DIST_DIR "/skills");
+        if (!nob_cmd_run(&cmd)) return false;
+        nob_cmd_append(&cmd, "cp", "-r", skill_src, DIST_DIR "/skills/sdl-gui");
+        if (!nob_cmd_run(&cmd)) return false;
+    }
+
     // Smoke test: compile standalone example with combined header + static library
     {
         const char *standalone_src = EXAMPLES_DIR "/47_standalone.cpp";

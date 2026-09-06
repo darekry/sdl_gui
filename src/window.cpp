@@ -28,6 +28,13 @@ Window::Window(const std::string& title, int width, int height,
         SDL_DestroyWindow(m_window);
         throw std::runtime_error("SDL_CreateRenderer failed: " + std::string(SDL_GetError()));
     }
+
+    // VSync paces SDL_RenderPresent() to the display refresh rate.
+    // Without it the main loop spins at thousands of FPS, pinning one
+    // CPU core at 100% even when the app is idle.
+    if (!SDL_SetRenderVSync(m_renderer, 1)) {
+        LOG_WARNING("Window", "SDL_SetRenderVSync failed, main loop will not be paced: {}", SDL_GetError());
+    }
     
     m_windowID = SDL_GetWindowID(m_window);
     m_guiManager = std::make_unique<GUIManager>(m_renderer, Viewport{width, height});

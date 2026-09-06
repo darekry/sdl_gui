@@ -32,6 +32,22 @@ Verify the directory exists (`ls dist/`). If the SDK lives elsewhere, use the
 found path in all commands and includes instead of `dist/`. If it cannot be
 found, ask the user for the path before writing code.
 
+## Installing this skill in another project
+
+The SDK ships this skill under `dist/skills/sdl-gui/` (`SKILL.md` +
+`references/`). To use it in a downstream project (e.g. a game built on this
+library), copy the whole directory into the project's skills location, next
+to the SDK:
+
+```bash
+cp -r <sdk>/skills/sdl-gui <project>/.kilo/skills/
+```
+
+The skill is self-contained: it references the SDK only through the `dist/`
+directory (headers, libraries, `dist/docs/`) and its own `references/`. Do
+not copy library sources or implementation details into the game project —
+the skill exists precisely so game code stays free of them.
+
 ## Foundations — mandatory rules
 
 These rules apply to EVERY program. Breaking them yields invisible widgets,
@@ -77,7 +93,7 @@ Read the relevant file BEFORE using an API — signatures are 1:1 with the heade
 | Style/Theme/ThemePresets, Anchor, SDLApp, GUIContext, layout parsers (JSON/XML), logging, Easing | `resources.md` |
 | C API (`sdlgui_*`) | `c_api.md` |
 
-In addition, the dev repo has examples in `examples/` (00–47, numbered simple →
+In addition, the dev repo has examples in `examples/` (00–48, 49 files, numbered simple →
 complex, e.g. `37_screen_manager.cpp`, `43_gamepad_controller.cpp`,
 `29_resize.cpp`) — use them as reference; in target code use only `sdl_gui.hpp`.
 

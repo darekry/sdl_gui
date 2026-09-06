@@ -33,16 +33,23 @@ public:
 
     void onEnter(GUIManager& manager) override {
         // HUD: top bar with resources
-        auto bar = manager.create<Panel>(0, 0, 0, 0);
-        bar->setAnchor(Anchor::topBar(40, 0, 0));
-        m_gold = manager.create<Label>(bar, 10, 10, "Gold: 100");
+        m_bar = manager.create<Panel>(0, 0, 0, 40);
+        m_bar->setAnchor(Anchor::topBar(0, 0, 0));
+        // Label has no rect constructor, so it becomes a child via addChild;
+        // create the ElementRef BEFORE transferring ownership:
+        auto gold = std::make_unique<Label>(manager, 10, 10, "Gold: 100");
+        m_gold = gold.get();
         m_goldRef = manager.makeRef(m_gold);
+        m_bar->addChild(std::move(gold));
         // ... more widgets ...
     }
 
-    void onExit(GUIManager& manager) override {
-        // cleanup is automatic: elements created in onEnter are removed here
-        manager.cleanup();
+    void onExit(GUIManager&) override {
+        // remove everything this screen created (actual removal happens
+        // in manager.cleanup() later in the frame):
+        if (m_bar) m_bar->markForDeletion();
+        m_bar = nullptr;
+        m_gold = nullptr;
     }
 
     bool handleEvent(GUIManager&, const SDL_Event& e) override {
@@ -64,6 +71,7 @@ public:
 
 private:
     World m_world;
+    Panel* m_bar = nullptr;
     Label* m_gold = nullptr;
     ElementRef<Label> m_goldRef;
 };

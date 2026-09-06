@@ -3,6 +3,59 @@
 Historia zmian projektu — starsze wpisy przeniesione z AGENTS.md
 (sekcja „Bieżący stan i ostatnie zmiany").
 
+### Label wieloliniowy — `\n` łamie linię (2026-08-25)
+- **Nowość**: `Label` obsługuje wiele linii — tekst zawierający `\n` dzielony jest na linie (`updateLines()` → `m_lines`); szerokość elementu = najszersza linia, wysokość = liczba linii × `TTF_GetFontHeight()` (konwencja z TextArea). Rysowanie: jedna cache'owana tekstura per linia (`createTextureFromText`), każda w naturalnym rozmiarze, lewe wyrównanie; puste linie tylko przesuwają yOffset. `\r\n` traktowane jak pojedynczy break. Tekst jednolinijkowy bez zmian (stara ścieżka: `TTF_GetStringSize`, rozciągnięcie do rozmiaru elementu przy ręcznym `setSize`). Render-cache key bez zmian (hash całego tekstu).
+- **Testy**: nowe case'y w test_label.cpp ("Label multi-line support": wysokość = n×font height, szerokość najszerszej linii, puste/wiodące/kończące `\n`, CRLF, przełączanie single↔multi przez setText, render smoke).
+- Efekt: 43/43 testów przechodzi, 48 przykładów się buduje.
+- Zmienione pliki: src/label.hpp, src/label.cpp, tests/test_label.cpp, docs/release/widgets/Label.md
+
+### Bugfix: tooltip za mały dla tekstu wieloliniowego (2026-08-25)
+- **Problem**: `GUIManager::showTooltip()` wymiarował panel przez `FontManager::getTextSize` (jedna linia, `TTF_GetStringSize`) — przy tekście z `\n` panel był za niski/wąski i linie wystawały poza tło (przykład 11, tooltip checkboxa). Sam Label renderował już wieloliniowo poprawnie.
+- **Fix**: panel wymiarowany z faktycznych wymiarów `m_tooltipLabel` po `setText()` (jedno źródło prawdy, zero duplikacji logiki pomiaru). Stałe `TOOLTIP_FONT_SIZE`/`TOOLTIP_PADDING` przeniesione do `constants::kTooltipFontSize/kTooltipPadding`; nowy publiczny getter `GUIManager::getActiveTooltip()`.
+- **Testy**: test_gui_manager.cpp — "Multi-line tooltip panel fits all lines" (szerokość = najszersza linia + 2×padding, wysokość = 3×font height + 2×padding) + sekcja "Single-line tooltip shrinks back".
+- Efekt: 43/43 testów przechodzi, 48 przykładów się buduje.
+- Zmienione pliki: src/gui_manager.cpp, src/gui_manager.hpp, src/constants.hpp, tests/test_gui_manager.cpp, docs/release/core.md, docs/release/managers.md
+
+### Theme::createWindows95Theme() + audyt bevel w widgetach (2026-08-25)
+- **Nowość**: `Theme::createWindows95Theme()` (deleguje do `ThemePresets::createWindows95Theme()`) — autentyczny Win95/98 na systemie faz 3D: Button Raised w Normal/Hover/Disabled i Sunken w Pressed; TextInput/TextArea/ListView/ComboBox/Canvas/StringGrid białe + Sunken; ProgressBar biały + Sunken z navy wypełnieniem (`borderColor` = kolor fill w widgetcie); Slider/RangeSlider `borderColor` = kolor suwaka; ContextMenu biało-granatowe; Panel/TabControl/ScrollArea płaskie. Helper `ThemePresets::withBevel(Style, BevelType)` owija `applyBevelToStyle`. Disabled pola edycji gubią bevel (szary tekst). Bevel NIE przecieka: typy bez fazy mają czyste `optional` (Panel flat, unknown type → default bez bevel).
+- **Audyt custom-draw**: tylko `RadioButton` rysował ramkę ręcznie — dostał gałąź `drawStyleBevel` przed fallbackiem na `RenderRect` (semantyka texture-jako-indykator zachowana, celowo bez `drawBackgroundAndBorder`, bo base traktuje `style.texture` jako tło). Pozostałe: Checkbox/ComboBox/TextInput/TextArea/StringGrid wołają `drawBackgroundAndBorder` wprost; Slider/RangeSlider/ProgressBar/DialogBox przez `Panel::draw`; ScrollArea/TabControl dziedziczą Panel — wspierają bevel automatycznie. Label/Cursor/AnimatedImage/Canvas/ShaderPanel bez ramek z definicji.
+- **Przykład 48**: przepisany na `createWindows95Theme()` — usunięte ręczne helpery `applyWin95Button`/`applyWin95Sunken` (dialog/status bar trzymają lokalny bevel jako ramy okna).
+- **Testy/docs**: nowe case'y w test_theme.cpp ("Windows95 theme": kolory faz Raised/Sunken, Disabled drop bevel, ProgressBar navy, StringGrid gridlines, brak przecieku do Panel/unknown); dokumentacja (core.md, resources.md, patterns.md).
+- Efekt: 43/43 testów przechodzi (5 pełnych przebiegów), 48 przykładów się buduje.
+- Zmienione pliki: src/theme.hpp, src/theme.cpp, src/theme_presets.hpp, src/radio_button.cpp, examples/48_win95_bevel.cpp, tests/test_theme.cpp, docs/release/core.md, docs/release/resources.md, docs/release/patterns.md
+
+### Bugfix: flaky test_sdl_gui_c_api — Cursor śledzi pozycję myszy z eventów (2026-08-24)
+- **Problem**: test "Cursor renders pixels" wymuszał `SDL_WarpMouseInWindow` + polling `SDL_GetMouseState`; po migracji dev-maszyny na Wayland warp przestał działać (kompozytor nie pozwala aplikacjom przesuwać wskaźnika) → deterministyczny fail `0 == 50` (wcześniej losowy flake). `Cursor::renderOverlay` pollował `SDL_GetMouseState()` w renderze, niezależnie od systemu eventów.
+- **Fix**: `Cursor::handleEvent()` śledzi `SDL_EVENT_MOUSE_MOTION` (`m_mouseX/Y`, flaga `m_hasMousePos`); `renderOverlay()` używa śledzonej pozycji, z fallbackiem na `SDL_GetMouseState()` dopóki nie przyszedł żaden motion (kompatybilność wstecz). `GUIManager::processEvent()` w gałęzi mouse-capture forwarduje event do kursora przed early-return — kursor nie zamiera podczas dragowania. Test: syntetyczny motion event przez `sdlgui_process_event` zamiast warp+mapowania okna (bez `SDL_ShowWindow`, bez `SDL_Delay`, bez pętli pollującej).
+- Efekt: 43/43 testów przechodzi; test [pixel] 5× PASS pod rząd.
+- Zmienione pliki: src/cursor.hpp, src/cursor.cpp, src/gui_manager.cpp, tests/test_sdl_gui_c_api.cpp
+
+### Bugfix: etykiety Buttonów przycinane przy tworzeniu przez parser (2026-08-25)
+- **Problem**: parsery layoutów tworzą widgety z rozmiarem (0,0) i dopiero potem wołają `setSize()`. `Button` centruje Label-dziecko tylko w konstruktorze — po `setSize` etykieta wisała na ujemnych współrzędnych i była przycinana przez clip rect (widać tylko ogonki tekstu: "okno", "uj", "K").
+- **Fix**: nowy chroniony hook wirtualny `GUIElement::onSizeChanged(oldW, oldH)` wołany z `setSize()` przy faktycznej zmianie wymiarów; `Button` nadpisuje go i re-centruje etykietę (`m_label` — nowy członek). Przykłady 30/31 (JSON/XML parser) dostają `setWindowSize` + obsługę `SDL_EVENT_WINDOW_RESIZED` (anchory top-level reagują na resize).
+- Efekt: 43/43 testów przechodzi; nowe case'y: test_button.cpp ("label re-centers when size changes"), test_layout_parser.cpp (etykieta OK wycentrowana po parse, dialog wycentrowany przez anchor z JSON).
+- Zmienione pliki: src/gui.hpp, src/gui.cpp, src/button.hpp, src/button.cpp, examples/30_json_parser.cpp, examples/31_xml_parser.cpp, tests/test_button.cpp, tests/test_layout_parser.cpp
+
+### Bugfix: anchory aplikowane od razu przy dodawaniu, nie dopiero przy resize (2026-08-24)
+- **Problem**: `GUIManager::addElement()` i `GUIElement::addChild()` nie aplikowały anchorów — elementy dodane po starcie (np. dialog zbudowany w callbacku) miały dzieci na pozycjach konstrukcyjnych do pierwszego `SDL_EVENT_WINDOW_RESIZED`. Objaw: przyciski OK/Anuluj w (0,0), "brakujące" widgety (nakładka z-order), przykład 48_win95_bevel po zamknięciu i "Pokaż okno".
+- **Fix**: `addElement()` woła `updateLayout(m_windowWidth, m_windowHeight)` (guard >0), `addChild()` woła `child->updateLayout(m_width, m_height)`. Dla elementów bez anchorów no-op. Uwaga: `getX()` zwraca współrzędne względem rodzica.
+- Efekt: 42/43 (1 fail = pre-existing flake warp myszy w test_sdl_gui_c_api, potwierdzony na czystym drzewie przez git stash); nowe case'y w test_anchor.cpp (aplikacja przy add/addChild/subtree bez resize).
+- Zmienione pliki: src/gui_manager.cpp, src/gui.cpp, tests/test_anchor.cpp, examples/48_win95_bevel.cpp
+
+### Bevel 3D w stylu Windows 95/98 (2026-08-24)
+- **Nowość**: fazowane obramowanie 3D — fundament pod look Win95/98. `Style` dostaje 4 opcjonalne kolory krawędzi (`borderColorOuter/InnerTopLeft/BottomRight`), `GUIElement::setBevel(state, BevelType::Raised/Sunken)` wypełnia je z palety systemowej (`constants::kWin95Face/Light/Highlight/Shadow/DarkShadow`). Rysowanie: wolne funkcje `drawBevelFrame()` / `drawStyleBevel()` w gui.cpp; bevel ma priorytet nad zwykłą ramką i rysuje się ostro (bez zaokrągleń). `buildRenderCacheKey()` domieszuje nowe pola; `mergeWith`/`operator==` rozszerzone. Paletę aplikuje wolna funkcja `applyBevelToStyle(Style&, BevelType)`.
+- **Parsery**: `LayoutParser::parseStyle` obsługuje shorthand `"bevel": "Raised"|"Sunken"` (JSON attr / XML attr) + 4 jawne kolory `borderColorOuter/InnerTopLeft/BottomRight` (nadpisują shorthand). `getComposedStyle()` upublicznione (testy/debug). Fixture: `tests/data/win95_bevel.json` (layout przykładu 48 — ładuje go `./output/30_json_parser tests/data/win95_bevel.json`), `tests/data/win95_bevel.xml`.
+- Efekt: 43/43 testów przechodzi; nowe case'y w test_style.cpp (mergeWith, równość, setBevel per stan, render smoke) i test_layout_parser.cpp (bevel JSON+XML).
+- Zmienione pliki: src/constants.hpp, src/style.hpp, src/gui.hpp, src/gui.cpp, src/layout_parser.cpp, tests/test_style.cpp, tests/test_layout_parser.cpp, examples/48_win95_bevel.cpp
+- Następne kroki: ~~Theme::createWindows95Theme()~~, ~~audyt widgetów z własnym draw()~~ (zrealizowane 2026-08-25, patrz wyżej). Pozostało: pressed content offset 1px dla Buttona.
+
+### Cleanup: usunięcie redundantnych null-checków i martwej obsługi błędów (2026-08-22)
+- **Niezmienniki udokumentowane w kodzie**: `m_children`/`m_elements`/`m_windows` nigdy nie zawierają nulli (filtrowane przed push); `getTimerManager()` zawsze nie-null (ctor); wartości `PreviewWindow::m_widgetMap` nigdy null; `ScrollArea::m_viewport/m_content`, członkowie FileDialog/DialogBox przypisani tylko w ctorach.
+- Usunięto: checki iteracyjne `if (child && ...)` / `if (element && ...)` nad kontenerami unique_ptr; straż na `getTimerManager()` w `startTimer/stopTimer`; `if (!self)` w callbackach timerów; martwy licznik `total_removed_count` w `GUIManager::cleanup()`; O(n) skan duplikatów w `addElement()` (osiągalny tylko przez UB); podwójne checki `m_selectedCell`, `m_cellEditor+m_isEditing`, `m_messageLabel`, `m_pathLabel/m_titleLabel/m_filenameInput`, `m_dirGrid/m_fileGrid`, widget map w preview_window, dead `if (element)` w `LayoutParser::parseNode` + straż w `parseStyle`.
+- Zachowano: straż na granicach publicznego API (`addElement`, `detachElement`, `register/unregisterElement`, `isElementAlive`, parametry renderer), obsługę błędów SDL/fontów/IO, walidację wejścia parserów.
+- Efekt: 42/43 testów przechodzi (1 porażka = pre-existing flake środowiskowy warp myszy w test_sdl_gui_c_api, pada też na czystym drzewie), wszystkie przykłady się budują.
+- Zmienione pliki: src/gui.cpp, src/gui_manager.cpp, src/scroll_area.cpp, src/tab_control.cpp, src/window_manager.cpp, src/string_grid.cpp, src/animated_image.cpp, src/composite/dialog_box.cpp, src/composite/file_dialog.cpp, src/editor/editor_window.cpp, src/editor/preview_window.cpp, src/layout_parser.cpp
+
 ### Bugfix: TextArea nie uczestniczył w systemie keyboard focus — martwa edycja (2026-08-02)
 
 ### Bugfix: TextArea pominięty w opt-out współdzielonego render cache (2026-08-02)

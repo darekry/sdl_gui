@@ -62,6 +62,13 @@ public:
             SDL_Quit();
             throw std::runtime_error("SDL_CreateRenderer failed");
         }
+
+        // VSync paces SDL_RenderPresent() to the display refresh rate.
+        // Without it the main loop spins at thousands of FPS, pinning one
+        // CPU core at 100% even when the app is idle.
+        if (!SDL_SetRenderVSync(m_renderer, 1)) {
+            LOG_WARNING("SDLApp", "SDL_SetRenderVSync failed, main loop will not be paced: {}", SDL_GetError());
+        }
     }
 
     /**
@@ -186,6 +193,36 @@ public:
     [[nodiscard]] SDL_Renderer* getRenderer() const { return m_renderer; }
     [[nodiscard]] SDL_Window* getWindow() const { return m_window; }
     [[nodiscard]] SDL_GPUDevice* getGPUDevice() const { return m_gpuDevice; }
+
+    /**
+     * @brief Cap the frame rate by sleeping the remainder of the frame budget.
+     *
+     * Call once per frame, AFTER SDL_RenderPresent(), with the tick count
+     * taken at the TOP of the frame:
+     *
+     *   while (!quit) {
+     *       Uint64 frameStart = SDL_GetTicks();
+     *       ...
+     *       SDL_RenderPresent(renderer);
+     *       app.endFrame(frameStart);
+     *   }
+     *
+     * Why this is needed: SDL_SetRenderVSync() is only a hint and the driver
+     * is free to ignore it (measured 271 FPS with vsync=1 on X11). Without
+     * pacing, the loop spins at hundreds/thousands of FPS and pins one CPU
+     * core at 100% even when the app is idle. If vsync already blocked for
+     * the full budget, elapsed >= budget and no extra delay is added, so
+     * this never double-throttles.
+     *
+     * @param frameStart SDL_GetTicks() value from the top of the frame
+     * @param frameBudgetMs Target frame length in ms (default 16 ≈ 60 FPS)
+     */
+    void endFrame(Uint64 frameStart, Uint32 frameBudgetMs = 16) const {
+        Uint64 elapsed = SDL_GetTicks() - frameStart;
+        if (elapsed < frameBudgetMs) {
+            SDL_Delay(static_cast<Uint32>(frameBudgetMs - elapsed));
+        }
+    }
     
     /**
      * @brief Get current window size
@@ -210,6 +247,7 @@ public:
         bool quit = false;
         SDL_Event e;
         while (!quit) {
+            Uint64 frameStart = SDL_GetTicks();
             while (SDL_PollEvent(&e)) {
                 if (e.type == SDL_EVENT_QUIT) {
                     quit = true;
@@ -226,6 +264,7 @@ public:
             SDL_RenderClear(m_renderer);
             guiManager.render();
             SDL_RenderPresent(m_renderer);
+            endFrame(frameStart);
         }
     }
 
