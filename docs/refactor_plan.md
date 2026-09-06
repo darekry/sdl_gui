@@ -1,8 +1,10 @@
 # Plan dużego refaktoru SDL GUI
 
-> Status: propozycja (2026-09-05). Zrealizowane: punkt 4 (unifikacja
-> TextArea/TextEditable) i punkt 3 (Style/ComponentType/BorderRenderer) —
-> patrz `AGENTS.md` → „Bieżący stan i ostatnie zmiany".
+> Status: propozycja (2026-09-05). Zrealizowane: punkt 2 (Layout/Anchor —
+> patrz `AGENTS.md` → „Layout / Anchor"), punkt 4 (unifikacja
+> TextArea/TextEditable), punkt 3 (Style/ComponentType/BorderRenderer)
+> i punkt 5 (Lifetime Handle/SlotMap + WidgetFactory + diff edytora +
+> granica C-API — patrz `AGENTS.md` → „Lifetime").
 > Reszta to otwarta lista — bierz po jednym punkcie, każdy kończ zielonymi
 > testami (`./nob test`) i zbudowanymi przykładami (`./nob examples`).
 
@@ -14,10 +16,11 @@
 | 2 | `Layout pass (Measure/Arrange)` + `Anchor` jako enum | magiczne floaty (`<0/0-1/>1/==0.5`), `onSizeChanged`, ręczne centrowanie labeli, dummy `(0,0)` w parserze, fallback `800x600` |
 | 3 | `StyleResolver (ComputedStyle)` + `ComponentType: enum` | ✅ ZROBIONE (2026-09-05) — `unordered_map<string,...>`, hash stringów w renderze, `mergeWith` na gorąco, bevel-`if` per widget, nadużycie `borderColor` jako thumb/fill |
 | 4 | Jeden `TextModel (char-index UTF-8)` | ✅ ZROBIONE — duplikacja TextInput/TextArea, bugi bajtowe |
-| 5 | `Lifetime Handle (SlotMap/generation, weak_ptr)` | `m_liveElements + raw*`, `isElementAlive`-guardy w lambdach, wiszące `c_str()` w C-API, niestabilne indeksy w edytorze |
+| 5 | `Lifetime Handle (SlotMap/generation, weak_ptr)` | ✅ ZROBIONE (2026-09-06) — `m_liveElements + raw*`, `isElementAlive`-guardy w lambdach, wiszące `c_str()` w C-API, niestabilne indeksy w edytorze |
 | 6 | `WidgetFactory` + `OverlayStack` + `RenderPolicy` | 3 kopie `if type=="Button"`, singleton-menu/tooltip ping-pong, `isOverlay()`, `wantsDirectRender` + 3 poziomy cache |
 
 Kolejność odklejania: `5 Lifetime/Focus → 3 Style → 2 Layout → 1 Event → 6 Factory/Overlay/Render`.
+Zrealizowane: 5, 3, 2, 4. Zostały: `1 Event` i `6 Render/Overlay` (+ drobne).
 Każdy punkt usuwa hacki z punktów niższych (np. Layout usuwa połowę powodów,
 dla których Event musi robić DFS).
 
@@ -163,14 +166,30 @@ Szczegóły: wpis w `AGENTS.md` + `docs/release/widgets/TextArea.md`.
 
 ---
 
-## 5. Lifetime (`m_liveElements`, focus/capture, C-API stringi, edytor)
+## 5. Lifetime — ✅ ZROBIONE (2026-09-05/06)
 
-> Częściowo zahaczone przy punkcie 3 (2026-09-05): stringowe API typów
-> usunięte (`getComponentType()`, `Theme(string)`, `strcmp(...,"Label")`
-> w C-API). Reszta punktu (SlotMap, WidgetFactory, C-API handle table,
-> diff w edytorze) — otwarta.
+Zrealizowane (szczegóły: wpis w `AGENTS.md` → „Lifetime"):
+- `src/element_handle.hpp` — `ElementHandle{index,generation}`; `GUIManager`
+  trzyma sloty (generacja rośnie przy `unregister` — brak ABA przy reużyciu
+  adresu). `ElementRef<T>` rozwiązuje się przez slot + weryfikację `raw*`.
+  Focus/capture jako handle'e (samoczynny null po zniszczeniu, bez spacerów
+  po rodzicach); `cleanup()` bez `hasAncestorMarkedForDeletion`.
+- Tooltip bez ping-ponga własności (stały panel + `setVisible`),
+  `ContextMenu` przez handle, `ContextMenu::hide()` przez `isFocusInside()`.
+- `src/widget_factory.{hpp,cpp}` — jeden rejestr `string↔ComponentType` +
+  domyślne rozmiary + konstrukcja z `WidgetProps` dla parsera, podglądu
+  edytora (`EditorState::addElement` też) i C-API (`sdlgui_create_widget`).
+  Podgląd zyskał `RadioGroup/RangeSlider/ProgressBar/ScrollArea/ArcContainer`.
+- Edytor diff: `PreviewWindow::m_widgetMap` po stabilnym `EditorElement.id`,
+  nowe `syncAll()` (update w miejscu, recreate tylko strukturalny).
+- C-API: `checked_elem<T>` (`dynamic_cast`, hierarchia działa) w fazach
+  Button/Label/Panel/Slider/Checkbox/TextInput/ListView/TextArea/ComboBox
+  (zły typ → no-op/default + `sdlgui_last_error()`), `sdlgui_element_is_alive`,
+  warianty `*_buf` kopiujące stringi do bufora callera. Uchwyty C świadomie
+  zostają surowymi wskaźnikami (stabilne ABI); reszta faz do dokończenia
+  w tym samym wzorcu.
 
-### Obecne hacki
+### Pierwotne hacki (dla historii)
 - `gui_manager.hpp:138 m_liveElements + register/unregister`, surowe
   `m_focus/m_capture/m_tooltipLabel`, guardy `if(isAlive(self))` w lambdach
   menu — łatwe do zapomnienia. `cleanup:173 hasAncestorMarkedForDeletion +

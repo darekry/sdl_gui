@@ -3,6 +3,7 @@
 #include <SDL3/SDL_pixels.h>
 
 #include "std.hpp"
+#include "widget_factory.hpp"
 
 class GUIManager;
 class GUIElement;
@@ -34,6 +35,10 @@ protected:
 
 private:
     std::unique_ptr<GUIElement> parseNode(void* node);
+    // Scalar/list props for WidgetFactory (one construction path shared with
+    // the editor preview). Structural children stay here (tabs, scroll
+    // content, arc angles) — factory owns widget type knowledge.
+    void fillPropsFromNode(void* node, const std::string& type, WidgetProps& props);
     Anchor parseAnchor(void* node);
     void parseResources(void* resourcesNode);
     void parseStyle(void* styleNode, GUIElement* element);

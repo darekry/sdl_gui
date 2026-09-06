@@ -472,6 +472,19 @@ Wzorzec ustawiania: `sdlgui_<widget>_set_on_<event>(element, cb, userdata)` —
   `sdlgui_element_mark_for_deletion()` + `sdlgui_cleanup()`, po
   `sdlgui_destroy()` oraz po zniszczeniu rodzica.
 - Po `sdlgui_destroy()` wszystkie uchwyty elementów są nieważne.
+- **Sprawdzanie**: `sdlgui_element_is_alive(gui, e)` mówi, czy uchwyt jest
+  nadal zarejestrowany (test generacyjny — bezpieczny po zniszczeniu).
+  Funkcje widgetów sprawdzają typ uchwytu: zły typ to no-op / bezpieczny
+  default + komunikat w `sdlgui_last_error()` (pusty string = ostatnie
+  wywołanie przeszło).
+- **Generyczne tworzenie**: `sdlgui_create_widget(gui, parent, type, x, y,
+  w, h)` buduje widget po nazwie przez współdzielony rejestr fabryki
+  (`Panel`, `Button`, `Label`, `Checkbox`, `RadioButton`, `RadioGroup`,
+  `Slider`, `RangeSlider`, `StringGrid`, `ListView`, `TextInput`,
+  `TextArea`, `ComboBox`, `TabControl`, `AnimatedImage`, `Canvas`,
+  `ProgressBar`, `ScrollArea`, `ArcContainer`; nieznany typ = `NULL` +
+  błąd). Widget powstaje z domyślnymi propsami — konfiguracja dalej
+  przez API typowe dla danego typu.
 
 ## Zwracane stringi
 
@@ -489,7 +502,14 @@ Funkcje zwracające `const char*` dają wskaźnik do wewnętrznego `std::string`
 | `text` w `sdlgui_index_text_callback_t` | tylko w trakcie callbacka |
 
 Nie zapisuj tych wskaźników na później — skopiuj string, jeśli ma przetrwać
-kolejną operację.
+kolejną operację. Bezpieczna alternatywa: warianty `*_buf` kopiujące do
+bufora wywołującego (NUL-terminowane, obcinane przy za małym buforze,
+zwracają liczbę bajtów bez NUL-a):
+
+- `sdlgui_label_get_text_buf`, `sdlgui_text_input_get_text_buf`,
+  `sdlgui_text_area_get_text_buf`
+- `sdlgui_list_view_get_item_text_buf`,
+  `sdlgui_combo_box_get_item_text_buf`
 
 ## Kompilacja i linkowanie
 

@@ -9,6 +9,7 @@
 #include "theme.hpp"
 #include "animation_manager.hpp"
 #include "cursor.hpp"
+#include "element_handle.hpp"
 #include <SDL3/SDL_gpu.h>
 
 #include "std.hpp"
@@ -62,7 +63,7 @@ public:
     /*
      * Detach a top-level element without deleting it.
      * Returns the unique_ptr, or nullptr if the element is not a top-level element.
-     * The element remains registered in m_liveElements (still valid).
+     * The element keeps its lifetime slot (handle stays valid).
      */
     std::unique_ptr<GUIElement> detachElement(GUIElement* element);
 
@@ -104,15 +105,16 @@ public:
     
     void showTooltip(GUIElement* target, const std::string& text);
     void hideTooltip();
-    [[nodiscard]] GUIElement* getActiveTooltip() const { return tooltipElement.get(); }
+    [[nodiscard]] GUIElement* getActiveTooltip() const { return tooltipElement; }
 
     // Shared right-click context menu (one instance, reused; items rebuilt on each show).
     // Used for the default Cut/Copy/Paste/Select All menu in text fields and for custom menus.
-    // Item actions must guard against widget destruction (e.g. via isElementAlive).
+    // Item actions no longer need isElementAlive guards when they capture an
+    // ElementRef (handle-based, auto-null after destroy).
     void showContextMenu(const std::vector<ContextMenuItem>& items, float x, float y);
     void closeContextMenu();
     [[nodiscard]] bool isContextMenuVisible() const;
-    [[nodiscard]] ContextMenu* getContextMenu() const { return m_contextMenu; }
+    [[nodiscard]] ContextMenu* getContextMenu();
 
     void setTheme(Theme theme);
     Theme& getTheme();
@@ -121,34 +123,68 @@ public:
 
     void captureMouse(GUIElement* element);
     void releaseMouse();
+    [[nodiscard]] GUIElement* getMouseCapture() const;
     void setKeyboardFocus(GUIElement* element);
     [[nodiscard]] GUIElement* getKeyboardFocus() const;
+    // True when the focused element is this element or one of its descendants.
+    // Used by overlays (e.g. ContextMenu::hide) instead of walking parents
+    // with raw pointers that may dangle.
+    [[nodiscard]] bool isFocusInside(const GUIElement* element) const;
     void focusNextElement(bool forward);
 
     void setCursor(std::unique_ptr<Cursor> new_cursor);
     [[nodiscard]] Cursor* getCursor() const { return cursor.get(); }
-    
+
+    // === Generational lifetime (point 5: SlotMap + ElementHandle) ===
+    //
+    // registerElement assigns (or reuses) a slot and stamps the element's
+    // lifetime handle; unregisterElement bumps the generation so all existing
+    // handle copies stop resolving. Safe against address reuse (ABA).
     bool isElementAlive(GUIElement* element) const;
     void registerElement(GUIElement* element);
     void unregisterElement(GUIElement* element);
+
+    // O(1) handle API — the preferred way to hold elements across frames.
+    [[nodiscard]] ElementHandle getHandle(const GUIElement* element) const;
+    [[nodiscard]] GUIElement* resolve(ElementHandle handle) const;
+    [[nodiscard]] bool isHandleAlive(ElementHandle handle) const;
     
     template<typename T = GUIElement>
     ElementRef<T> makeRef(T* element);
 
 private:
-    std::unordered_set<GUIElement*> m_liveElements;
-    
+    // One slot per registered element. Generation bumps on unregister;
+    // resolve() requires generation match + alive + ptr set.
+    struct LifetimeSlot {
+        GUIElement* ptr = nullptr;
+        uint32_t generation = 1;
+        bool alive = false;
+    };
+    mutable std::vector<LifetimeSlot> m_slots;
+    mutable std::vector<uint32_t> m_freeSlots;
+    mutable std::unordered_map<const GUIElement*, uint32_t> m_ptrToSlot;
+
+    [[nodiscard]] ElementHandle registerSlot(GUIElement* element) const;
+    [[nodiscard]] GUIElement* resolveSlot(ElementHandle handle) const;
+
     std::vector<std::unique_ptr<GUIElement>> m_elements;
-    std::unique_ptr<GUIElement> tooltipElement;
     std::unique_ptr<Cursor> cursor;
-    ContextMenu* m_contextMenu = nullptr;  // owned by m_elements, created lazily
-    
-    // Cached tooltip components (reuse to avoid allocations)
+    // Lazily created context menu, owned by m_elements. Accessed only via
+    // m_contextMenuHandle (auto-null after destroy) — never a stale raw*.
+    ElementHandle m_contextMenuHandle;
+    ContextMenu* m_contextMenuCache = nullptr;
+
+    // Tooltip: single persistent panel, toggled with setVisible().
+    // (Old code ping-ponged ownership between two unique_ptrs via move().)
     std::unique_ptr<Panel> m_tooltipPanel;
     Label* m_tooltipLabel = nullptr;
+    GUIElement* tooltipElement = nullptr;  // non-owning view of m_tooltipPanel
 
-    GUIElement* m_mouseCaptureElement = nullptr;
-    GUIElement* m_keyboardFocusElement = nullptr;
+    // Focus/capture as handles: they self-null when the target is destroyed,
+    // so cleanup() never touches dangling pointers and needs no
+    // hasAncestorMarkedForDeletion walk.
+    ElementHandle m_mouseCaptureHandle;
+    ElementHandle m_keyboardFocusHandle;
 
     SDL_Renderer* m_renderer;
     FontManager m_fontManager;
@@ -170,14 +206,19 @@ private:
 template<typename T>
 class ElementRef {
 public:
-    ElementRef() : m_manager(nullptr), m_ptr(nullptr) {}
-    ElementRef(GUIManager& manager, T* ptr) : m_manager(&manager), m_ptr(ptr) {}
+    ElementRef() = default;
+    ElementRef(GUIManager& manager, T* ptr)
+        : m_manager(&manager)
+        , m_handle(manager.getHandle(ptr))
+        , m_raw(ptr) {}
 
+    // Resolves through the generational slot: null after destroy, even if
+    // the address was reused by a different element (no ABA).
     T* get() const {
-        if (m_ptr && m_manager && m_manager->isElementAlive(m_ptr)) {
-            return m_ptr;
-        }
-        return nullptr;
+        if (!m_manager || !m_handle.valid()) return nullptr;
+        GUIElement* live = m_manager->resolve(m_handle);
+        if (live != m_raw) return nullptr;
+        return static_cast<T*>(live);
     }
 
     T* operator->() const { return get(); }
@@ -186,9 +227,12 @@ public:
 
     bool operator==(std::nullptr_t) const { return get() == nullptr; }
 
+    [[nodiscard]] ElementHandle handle() const { return m_handle; }
+
 private:
-    GUIManager* m_manager;
-    T* m_ptr;
+    GUIManager* m_manager = nullptr;
+    ElementHandle m_handle;
+    GUIElement* m_raw = nullptr;
 };
 
 template<typename T>

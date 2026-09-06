@@ -11,6 +11,7 @@
 #include "anchor.hpp"
 #include "constants.hpp"
 #include "component_type.hpp"
+#include "element_handle.hpp"
 
 #include "logger.hpp"
 
@@ -127,6 +128,12 @@ public:
     void clearChildren();
     [[nodiscard]] GUIElement* getParent() const { return m_parent; }
     [[nodiscard]] GUIManager& getManager() const { return m_manager; }
+    // Generational lifetime handle assigned by GUIManager::registerElement.
+    // Stays with the element for life; any copy resolves to null after
+    // unregister (no ABA on address reuse). Used by ElementRef, focus/capture
+    // slots and editor maps instead of raw-pointer liveness sets.
+    void setLifetimeHandle(ElementHandle h) { m_lifetimeHandle = h; }
+    [[nodiscard]] ElementHandle lifetimeHandle() const { return m_lifetimeHandle; }
     [[nodiscard]] const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
     size_t countDescendants() const;
     GUIElement* findElementAt(int x, int y);
@@ -177,6 +184,7 @@ protected:
     void drawBackgroundAndBorder(SDL_Renderer* renderer);
 
     GUIManager& m_manager;
+    ElementHandle m_lifetimeHandle;  // set by registerElement, see above
     bool m_isHovered = false;
     bool m_isMarkedForDeletion = false;
     OnRightClickCallback m_onRightClick;

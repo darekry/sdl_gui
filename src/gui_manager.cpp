@@ -23,7 +23,7 @@ static bool isDescendantOf(GUIElement* descendant, GUIElement* ancestor) {
 }
 
 GUIManager::GUIManager(SDL_Renderer* renderer, Viewport viewport)
-    : tooltipElement(nullptr), m_renderer(renderer), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {
+    : m_renderer(renderer), m_textureManager(renderer), m_theme(Theme::createDefaultTheme()) {
     if (!viewport.valid()) {
         throw std::invalid_argument("GUIManager requires a NonZero Viewport (width and height must be > 0)");
     }
@@ -72,10 +72,12 @@ std::unique_ptr<GUIElement> GUIManager::detachElement(GUIElement* element) {
 bool GUIManager::processEvent(const SDL_Event& event) {
     // 1. Mouse events
     if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-        if (m_mouseCaptureElement) {
-            // If an element captured the mouse, send events only to it
+        if (GUIElement* capture = getMouseCapture()) {
+            // If an element captured the mouse, send events only to it.
+            // A destroyed capture target resolves to null, so this branch
+            // is simply skipped — no dangling call.
             if (cursor) cursor->handleEvent(event); /* cursor overlay tracks position even during capture */
-            return m_mouseCaptureElement->handleEvent(event);
+            return capture->handleEvent(event);
         }
     }
     // 2. Keyboard events
@@ -84,9 +86,9 @@ bool GUIManager::processEvent(const SDL_Event& event) {
             focusNextElement(!(event.key.mod & SDL_KMOD_SHIFT));
             return true;
         }
-        if (m_keyboardFocusElement) {
+        if (GUIElement* focus = getKeyboardFocus()) {
             // If an element has keyboard focus, send events only to it
-            return m_keyboardFocusElement->handleEvent(event);
+            return focus->handleEvent(event);
         }
         // If no element has focus, keyboard events are ignored by the GUI
         return false;
@@ -104,7 +106,7 @@ bool GUIManager::processEvent(const SDL_Event& event) {
     }
 
     // Special handling for clicks outside focused elements
-    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && m_keyboardFocusElement) {
+    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && getKeyboardFocus()) {
         bool click_on_focusable = false;
         for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it) {
             if ((*it)->contains(event.button.x, event.button.y)) {
@@ -154,11 +156,15 @@ void GUIManager::render() {
     }
 
     // Render overlay for keyboard focus element (e.g., TextInput cursor/selection)
-    // Only render if element is not hidden behind a modal overlay
-    if (m_keyboardFocusElement && !m_keyboardFocusElement->isMarkedForDeletion()) {
-        auto* overlay = getActiveOverlay();
-        if (!overlay || isDescendantOf(m_keyboardFocusElement, overlay)) {
-            m_keyboardFocusElement->renderOverlay(m_renderer);
+    // Only render if element is not hidden behind a modal overlay.
+    // getKeyboardFocus() resolves the handle — a destroyed target yields
+    // null instead of a dangling pointer, so no isMarkedForDeletion dance.
+    if (GUIElement* focus = getKeyboardFocus()) {
+        if (!focus->isMarkedForDeletion()) {
+            auto* overlay = getActiveOverlay();
+            if (!overlay || isDescendantOf(focus, overlay)) {
+                focus->renderOverlay(m_renderer);
+            }
         }
     }
 
@@ -168,44 +174,49 @@ void GUIManager::render() {
 }
 
 void GUIManager::cleanup() {
-  //  LOG_DEBUG("GUIManager::cleanup() - ENTER, m_elements.size = %zu", m_elements.size());
-    
-    if (tooltipElement && tooltipElement->isMarkedForDeletion()) {
-        LOG_DEBUG("GUIManager::cleanup() - clearing tooltipElement");
-        tooltipElement.reset();
-    }
-
-    auto hasAncestorMarkedForDeletion = [](GUIElement* element) {
-        GUIElement* current = element;
-        while (current) {
+    auto subtreeDead = [](GUIElement* element) {
+        for (GUIElement* current = element; current; current = current->getParent()) {
             if (current->isMarkedForDeletion()) return true;
-            current = current->getParent();
         }
         return false;
     };
 
-    // Check keyboard/mouse focus BEFORE removing elements
-    // Focus element might be a child of an element marked for deletion
-    if (m_keyboardFocusElement && 
-        (m_keyboardFocusElement->isMarkedForDeletion() || hasAncestorMarkedForDeletion(m_keyboardFocusElement))) {
-        LOG_DEBUG("GUIManager::cleanup() - clearing keyboardFocus (marked for deletion)");
-        setKeyboardFocus(nullptr);
+    // Focus/capture are handles: if the target (or any ancestor) is marked,
+    // drop the handle after the standard lost-notification. The target object
+    // itself is still alive here, so notifying is safe. If the target was
+    // already destroyed, resolve() returns null and we just reset.
+    if (m_keyboardFocusHandle.valid()) {
+        if (GUIElement* focus = resolve(m_keyboardFocusHandle)) {
+            if (subtreeDead(focus)) {
+                m_keyboardFocusHandle.reset();
+                focus->onFocusLost();
+            }
+        } else {
+            m_keyboardFocusHandle.reset();
+        }
     }
-    if (m_mouseCaptureElement && 
-        (m_mouseCaptureElement->isMarkedForDeletion() || hasAncestorMarkedForDeletion(m_mouseCaptureElement))) {
-        LOG_DEBUG("GUIManager::cleanup() - releasing mouse (marked for deletion)");
-        releaseMouse();
+    if (m_mouseCaptureHandle.valid()) {
+        if (GUIElement* capture = resolve(m_mouseCaptureHandle)) {
+            if (subtreeDead(capture)) {
+                m_mouseCaptureHandle.reset();
+                capture->onMouseCaptureLost();
+            }
+        } else {
+            m_mouseCaptureHandle.reset();
+        }
     }
-    
-  //  LOG_DEBUG("GUIManager::cleanup() - calling cleanup on elements");
+
+    if (tooltipElement && tooltipElement->isMarkedForDeletion()) {
+        hideTooltip();
+    }
+
     for (const auto& element : m_elements) {
         element->cleanup();
     }
 
-    // Elements to be removed (and their children via unique_ptr destructor)
-    // After erase, all children will be destroyed too
-    // So we need to clear focus/capture if they point to any descendant of removed elements
-
+    // Erasing destroys subtrees; each element's destructor unregisters its
+    // slot (bumping the generation), so focus/capture/menu handles pointing
+    // into removed subtrees go stale automatically.
     auto new_end = std::remove_if(m_elements.begin(), m_elements.end(),
                                   [](const std::unique_ptr<GUIElement>& element) {
         return element->isMarkedForDeletion();
@@ -217,15 +228,17 @@ void GUIManager::cleanup() {
         LOG_DEBUG("GUIManager::cleanup() - erasing {} elements from vector", m_elements.size() - prefix_distance);
         m_elements.erase(new_end, m_elements.end());
     }
-    
-    // After erase, focus/capture pointers might be invalid (pointing to destroyed children)
-    // We already checked hasAncestorMarkedForDeletion before, which should have cleared them
-    // But double-check: if focus/capture still exists, it should not be null
-    // SAFELY check if focus/capture is null (don't access the pointer)
-    // Note: We cannot safely access m_keyboardFocusElement here if it was destroyed
-    // The hasAncestorMarkedForDeletion check above should have handled it
-    
- //   LOG_DEBUG("GUIManager::cleanup() - EXIT, m_elements.size = %zu", m_elements.size());
+
+    // Post-erase: never notify — the object may be gone. Just reset stale
+    // handles and refresh the context-menu cache.
+    if (m_keyboardFocusHandle.valid() && !resolve(m_keyboardFocusHandle)) {
+        m_keyboardFocusHandle.reset();
+    }
+    if (m_mouseCaptureHandle.valid() && !resolve(m_mouseCaptureHandle)) {
+        m_mouseCaptureHandle.reset();
+    }
+    m_contextMenuCache = static_cast<ContextMenu*>(resolve(m_contextMenuHandle));
+    if (!m_contextMenuCache) m_contextMenuHandle.reset();
 }
 
 void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
@@ -239,6 +252,9 @@ void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
     int posY = targetPos.y + target->getHeight();
 
     if (!m_tooltipPanel) {
+        // Persistent panel: created once, toggled with setVisible().
+        // Registration happens in the Label ctor + addChild; the panel
+        // itself is registered explicitly (never reparented, never moved).
         m_tooltipPanel = std::make_unique<Panel>(*this, posX, posY, 0, 0);
         m_tooltipPanel->setBackgroundColor(ElementState::Normal, TOOLTIP_BG_COLOR);
         m_tooltipPanel->setBorder(ElementState::Normal, {0, 0, 0, 255}, 1);
@@ -246,6 +262,7 @@ void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
         auto label = std::make_unique<Label>(*this, padding, padding, "", fontSize);
         m_tooltipLabel = label.get();
         m_tooltipPanel->addChild(std::move(label));
+        tooltipElement = m_tooltipPanel.get();
     }
 
     m_tooltipLabel->setText(text);
@@ -256,43 +273,52 @@ void GUIManager::showTooltip(GUIElement* target, const std::string& text) {
     m_tooltipPanel->setSize(panelWidth, panelHeight);
 
     m_tooltipPanel->setVisible(true);
-    tooltipElement = std::move(m_tooltipPanel);
 }
 
 void GUIManager::hideTooltip() {
-    if (tooltipElement) {
-        GUIElement* raw = tooltipElement.release();
-        m_tooltipPanel.reset(static_cast<Panel*>(raw));
+    if (m_tooltipPanel) {
         m_tooltipPanel->setVisible(false);
     }
 }
 
 void GUIManager::showContextMenu(const std::vector<ContextMenuItem>& items, float x, float y) {
-    if (!m_contextMenu) {
-        auto menu = std::make_unique<ContextMenu>(*this);
-        m_contextMenu = static_cast<ContextMenu*>(addElement(std::move(menu)));
-        if (!m_contextMenu) return;
+    ContextMenu* menu = getContextMenu();
+    if (!menu) {
+        auto fresh = std::make_unique<ContextMenu>(*this);
+        menu = fresh.get();
+        if (addElement(std::move(fresh)) == nullptr) return;
+        m_contextMenuHandle = getHandle(menu);
+        m_contextMenuCache = menu;
     }
 
-    m_contextMenu->clearItems();
+    menu->clearItems();
     for (const auto& item : items) {
         if (item.separator) {
-            m_contextMenu->addSeparator();
+            menu->addSeparator();
         } else {
-            m_contextMenu->addItem(item.text, item.action, item.enabled);
+            menu->addItem(item.text, item.action, item.enabled);
         }
     }
-    m_contextMenu->showAt(static_cast<int>(x), static_cast<int>(y));
+    menu->showAt(static_cast<int>(x), static_cast<int>(y));
 }
 
 void GUIManager::closeContextMenu() {
-    if (m_contextMenu) {
-        m_contextMenu->hide();
+    if (ContextMenu* menu = getContextMenu()) {
+        menu->hide();
     }
 }
 
 bool GUIManager::isContextMenuVisible() const {
-    return m_contextMenu && m_contextMenu->isVisible();
+    if (const GUIElement* menu = resolveSlot(m_contextMenuHandle)) {
+        return menu->isVisible();
+    }
+    return false;
+}
+
+ContextMenu* GUIManager::getContextMenu() {
+    m_contextMenuCache = static_cast<ContextMenu*>(resolve(m_contextMenuHandle));
+    if (!m_contextMenuCache) m_contextMenuHandle.reset();
+    return m_contextMenuCache;
 }
 
 
@@ -312,37 +338,52 @@ Theme& GUIManager::getTheme() {
 }
 
 void GUIManager::captureMouse(GUIElement* element) {
-    if (m_mouseCaptureElement && m_mouseCaptureElement != element) {
-        m_mouseCaptureElement->onMouseCaptureLost();
+    GUIElement* current = getMouseCapture();
+    if (current == element) return;
+    if (current) {
+        current->onMouseCaptureLost();
     }
-    m_mouseCaptureElement = element;
-    if (m_mouseCaptureElement) {
-        m_mouseCaptureElement->onMouseCaptureGained();
+    m_mouseCaptureHandle = getHandle(element);
+    if (element) {
+        element->onMouseCaptureGained();
     }
 }
 
 void GUIManager::releaseMouse() {
-    if (m_mouseCaptureElement) {
-        m_mouseCaptureElement->onMouseCaptureLost();
+    if (GUIElement* current = getMouseCapture()) {
+        current->onMouseCaptureLost();
     }
-    m_mouseCaptureElement = nullptr;
+    m_mouseCaptureHandle.reset();
+}
+
+GUIElement* GUIManager::getMouseCapture() const {
+    return resolve(m_mouseCaptureHandle);
 }
 
 void GUIManager::setKeyboardFocus(GUIElement* element) {
-    if (m_keyboardFocusElement == element) {
+    GUIElement* current = getKeyboardFocus();
+    if (current == element) {
         return;
     }
-    if (m_keyboardFocusElement) {
-        m_keyboardFocusElement->onFocusLost();
+    if (current) {
+        current->onFocusLost();
     }
-    m_keyboardFocusElement = element;
-    if (m_keyboardFocusElement) {
-        m_keyboardFocusElement->onFocusGained();
+    m_keyboardFocusHandle = getHandle(element);
+    if (element) {
+        element->onFocusGained();
     }
 }
 
 GUIElement* GUIManager::getKeyboardFocus() const {
-    return m_keyboardFocusElement;
+    return resolve(m_keyboardFocusHandle);
+}
+
+bool GUIManager::isFocusInside(const GUIElement* element) const {
+    if (!element) return false;
+    for (GUIElement* focused = getKeyboardFocus(); focused; focused = focused->getParent()) {
+        if (focused == element) return true;
+    }
+    return false;
 }
 
 AnimationManager* GUIManager::getAnimationManager() {
@@ -367,21 +408,80 @@ GUIElement* GUIManager::findElementAt(int x, int y) {
 
 bool GUIManager::isElementAlive(GUIElement* element) const {
     if (!element) return false;
-    return m_liveElements.contains(element);
+    auto it = m_ptrToSlot.find(element);
+    if (it == m_ptrToSlot.end()) return false;
+    uint32_t idx = it->second;
+    return idx < m_slots.size() && m_slots[idx].alive && m_slots[idx].ptr == element;
+}
+
+ElementHandle GUIManager::registerSlot(GUIElement* element) const {
+    if (!element) return {};
+    if (auto it = m_ptrToSlot.find(element); it != m_ptrToSlot.end()) {
+        uint32_t idx = it->second;
+        if (idx < m_slots.size() && m_slots[idx].alive && m_slots[idx].ptr == element) {
+            return {idx, m_slots[idx].generation};
+        }
+    }
+    uint32_t idx;
+    if (!m_freeSlots.empty()) {
+        idx = m_freeSlots.back();
+        m_freeSlots.pop_back();
+    } else {
+        idx = static_cast<uint32_t>(m_slots.size());
+        m_slots.push_back({});
+    }
+    m_slots[idx].ptr = element;
+    m_slots[idx].alive = true;
+    // Generation was bumped on unregister; first use keeps the initial 1.
+    m_ptrToSlot[element] = idx;
+    return {idx, m_slots[idx].generation};
+}
+
+GUIElement* GUIManager::resolveSlot(ElementHandle handle) const {
+    if (!handle.valid() || handle.index >= m_slots.size()) return nullptr;
+    const LifetimeSlot& slot = m_slots[handle.index];
+    if (!slot.alive || slot.generation != handle.generation) return nullptr;
+    return slot.ptr;
 }
 
 void GUIManager::registerElement(GUIElement* element) {
-    if (element) {
-        m_liveElements.insert(element);
-        LOG_DEBUG("GUIManager::registerElement() - registered {}, total = {}", static_cast<const void*>(element), m_liveElements.size());
-    }
+    if (!element) return;
+    ElementHandle h = registerSlot(element);
+    element->setLifetimeHandle(h);
+    LOG_DEBUG("GUIManager::registerElement() - registered {}, total = {}", static_cast<const void*>(element), m_ptrToSlot.size());
 }
 
 void GUIManager::unregisterElement(GUIElement* element) {
-    if (element) {
-        m_liveElements.erase(element);
-        LOG_DEBUG("GUIManager::unregisterElement() - unregistered {}, total = {}", static_cast<const void*>(element), m_liveElements.size());
+    if (!element) return;
+    auto it = m_ptrToSlot.find(element);
+    if (it == m_ptrToSlot.end()) return;
+    uint32_t idx = it->second;
+    m_ptrToSlot.erase(it);
+    if (idx < m_slots.size()) {
+        m_slots[idx].ptr = nullptr;
+        m_slots[idx].alive = false;
+        if (++m_slots[idx].generation == 0) ++m_slots[idx].generation;
+        if (m_slots[idx].generation == ElementHandle::kInvalidIndex) ++m_slots[idx].generation;
+        m_freeSlots.push_back(idx);
     }
+    LOG_DEBUG("GUIManager::unregisterElement() - unregistered {}, total = {}", static_cast<const void*>(element), m_ptrToSlot.size());
+}
+
+ElementHandle GUIManager::getHandle(const GUIElement* element) const {
+    if (!element) return {};
+    auto it = m_ptrToSlot.find(element);
+    if (it == m_ptrToSlot.end()) return {};
+    uint32_t idx = it->second;
+    if (idx >= m_slots.size() || !m_slots[idx].alive) return {};
+    return {idx, m_slots[idx].generation};
+}
+
+GUIElement* GUIManager::resolve(ElementHandle handle) const {
+    return resolveSlot(handle);
+}
+
+bool GUIManager::isHandleAlive(ElementHandle handle) const {
+    return resolveSlot(handle) != nullptr;
 }
 
 // === Resize handling ===
@@ -452,7 +552,7 @@ void GUIManager::focusNextElement(bool forward) {
     collectFocusableElements(focusable);
     if (focusable.empty()) return;
 
-    auto it = std::find(focusable.begin(), focusable.end(), m_keyboardFocusElement);
+    auto it = std::find(focusable.begin(), focusable.end(), getKeyboardFocus());
     size_t index;
     if (it == focusable.end()) {
         index = forward ? 0 : focusable.size() - 1;

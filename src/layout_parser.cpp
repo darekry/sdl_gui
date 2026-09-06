@@ -1,25 +1,10 @@
 #include "layout_parser.hpp"
 #include "anchor.hpp"
-#include "animated_image.hpp"
 #include "arc_container.hpp"
-#include "button.hpp"
-#include "canvas.hpp"
-#include "checkbox.hpp"
-#include "combobox.hpp"
 #include "gui_manager.hpp"
-#include "label.hpp"
-#include "list_view.hpp"
 #include "panel.hpp"
-#include "progress_bar.hpp"
-#include "radio_button.hpp"
-#include "radio_group.hpp"
-#include "range_slider.hpp"
 #include "scroll_area.hpp"
-#include "slider.hpp"
-#include "string_grid.hpp"
 #include "tab_control.hpp"
-#include "text_area.hpp"
-#include "text_input.hpp"
 #include <SDL3/SDL.h>
 
 #include "constants.hpp"
@@ -57,245 +42,24 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     std::string type = getNodeName(node);
     if (type.empty()) return nullptr;
 
-    std::unique_ptr<GUIElement> element = nullptr;
-
     // Docelowy rect od razu w konstruktorze — bez dummy (0,0) + późniejszego
     // setSize() (to dummy zostawiało labelki Buttona na ujemnych coords).
-    const int x = getInt(node, "x", 0);
-    const int y = getInt(node, "y", 0);
-    const int w = getInt(node, "width", 0);
-    const int h = getInt(node, "height", 0);
+    // Konstrukcja przez WidgetFactory — jeden rejestr typów współdzielony
+    // z podglądem edytora, EditorState i C-API (koniec 3 kopii if type==).
+    // Tutaj tylko atrybuty wspólne + dzieci strukturalne (zakładki, treść
+    // scrolla, kąty łuku); cała reszta propsów w fillPropsFromNode().
+    WidgetProps props;
+    props.x = getInt(node, "x", 0);
+    props.y = getInt(node, "y", 0);
+    props.w = getInt(node, "width", 0);
+    props.h = getInt(node, "height", 0);
+    fillPropsFromNode(node, type, props);
 
-    if (type == "Panel")
-    {
-        auto p = std::make_unique<Panel>(m_guiManager, x, y, w, h);
-        p->setDraggable(getBool(node, "draggable", false));
-        element = std::move(p);
-    }
-    else if (type == "Button")
-    {
-        element = std::make_unique<Button>(m_guiManager, x, y, w, h, getString(node, "text", ""));
-    }
-    else if (type == "Label")
-    {
-        // Label sam wymiaruje się z tekstu — pozycja z atrybutów, rozmiar auto.
-        element = std::make_unique<Label>(m_guiManager, x, y, getString(node, "text", ""), getInt(node, "fontSize", -1));
-    }
-    else if (type == "Checkbox")
-    {
-        auto c = std::make_unique<Checkbox>(m_guiManager, x, y, w, h);
-        c->setChecked(getBool(node, "checked", false));
-        element = std::move(c);
-    }
-    else if (type == "RadioButton")
-    {
-        auto rb = std::make_unique<RadioButton>(m_guiManager, x, y, w, h);
-        rb->setSelected(getBool(node, "selected", false));
-        element = std::move(rb);
-    }
-    else if (type == "RadioGroup")
-    {
-        auto rg = std::make_unique<RadioGroup>(m_guiManager, x, y, w, h);
-        
-        // Parse option configuration
-        if (hasNode(node, "optionSpacing")) rg->setOptionSpacing(getInt(node, "optionSpacing", 40));
-        if (hasNode(node, "buttonX") || hasNode(node, "labelX") || hasNode(node, "startY"))
-            rg->setOptionMargins(getInt(node, "buttonX", 20), getInt(node, "labelX", 45), getInt(node, "startY", 20));
-        if (hasNode(node, "buttonSize") || hasNode(node, "labelFontSize"))
-            rg->setOptionSizes(getInt(node, "buttonSize", 20), getInt(node, "labelFontSize", 16));
-        
-        // Parse options array
-        if (isArray(node, "options"))
-        {
-            forEachInArray(node, "options", [this, &rg](void* optNode) {
-                std::string text = getString(optNode, "text", "");
-                bool selected = getBool(optNode, "selected", false);
-                if (!text.empty())
-                    rg->addOption(text, selected);
-            });
+    std::unique_ptr<GUIElement> element = WidgetFactory::create(m_guiManager, type, props);
+    if (!element) {
+        if (type == "Style" || type == "Item" || type == "Resources" || type == "Option") {
+            return nullptr;
         }
-        
-        element = std::move(rg);
-    }
-    else if (type == "Slider")
-    {
-        Orientation orientation = getString(node, "orientation", "Horizontal") == "Vertical" ? Orientation::Vertical : Orientation::Horizontal;
-        auto slider = std::make_unique<Slider>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "value", 0), orientation);
-        slider->setWheelStep(getInt(node, "wheelStep", 1));
-        element = std::move(slider);
-    }
-    else if (type == "RangeSlider")
-    {
-        Orientation orientation = getString(node, "orientation", "Horizontal") == "Vertical" ? Orientation::Vertical : Orientation::Horizontal;
-        auto rangeSlider = std::make_unique<RangeSlider>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 20, getInt(node, "min", 0), getInt(node, "max", 100), getInt(node, "lower", 0), getInt(node, "upper", 100), orientation);
-        rangeSlider->setWheelStep(getInt(node, "wheelStep", 1));
-        element = std::move(rangeSlider);
-    }
-    else if (type == "StringGrid")
-    {
-        auto grid = std::make_unique<StringGrid>(m_guiManager, x, y, w > 0 ? w : 400, h > 0 ? h : 300, static_cast<size_t>(getInt(node, "rowCount", 5)), static_cast<size_t>(getInt(node, "colCount", 5)));
-        grid->setShowRowHeaders(getBool(node, "showRowHeaders", true));
-        grid->setShowColumnHeaders(getBool(node, "showColumnHeaders", true));
-        grid->setEditable(getBool(node, "editable", true));
-        if (hasNode(node, "rowHeight")) grid->setRowHeight(getInt(node, "rowHeight", 24));
-        if (hasNode(node, "headerHeight")) grid->setHeaderHeight(getInt(node, "headerHeight", 28));
-        if (hasNode(node, "rowHeaderWidth")) grid->setRowHeaderWidth(getInt(node, "rowHeaderWidth", 50));
-        if (hasNode(node, "hScrollEnabled")) grid->setHorizontalScrollEnabled(getBool(node, "hScrollEnabled", true));
-        if (hasNode(node, "vScrollEnabled")) grid->setVerticalScrollEnabled(getBool(node, "vScrollEnabled", true));
-        element = std::move(grid);
-    }
-    else if (type == "TextInput")
-    {
-        auto ti = std::make_unique<TextInput>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 30);
-        if (hasNode(node, "text")) ti->setText(std::string_view(getString(node, "text")));
-        ti->setLocked(getBool(node, "locked", false));
-        element = std::move(ti);
-    }
-    else if (type == "TextArea")
-    {
-        auto ta = std::make_unique<TextArea>(m_guiManager, x, y, w > 0 ? w : 200, h > 0 ? h : 150, getString(node, "fontPath", constants::kDefaultFontPath), getInt(node, "fontSize", 16));
-        if (hasNode(node, "text")) ta->setText(std::string_view(getString(node, "text")));
-        ta->setWordWrap(getBool(node, "wordWrap", true));
-        ta->setLocked(getBool(node, "locked", false));
-        element = std::move(ta);
-    }
-    else if (type == "ComboBox")
-    {
-        auto cb = std::make_unique<ComboBox>(m_guiManager, x, y, w > 0 ? w : 150, h > 0 ? h : 30);
-        if (isArray(node, "items"))
-        {
-            forEachInArray(node, "items", [this, &cb](void* itemNode) {
-                cb->addItem(getString(itemNode, "text", ""));
-            });
-        }
-        else if (hasNode(node, "items"))
-        {
-            std::string itemsAttr = getString(node, "items", "");
-            if (!itemsAttr.empty())
-            {
-                std::stringstream ss(itemsAttr);
-                std::string item;
-                while (std::getline(ss, item, ','))
-                {
-                    size_t start = item.find_first_not_of(" \t");
-                    size_t end = item.find_last_not_of(" \t");
-                    if (start != std::string::npos && end != std::string::npos)
-                        cb->addItem(item.substr(start, end - start + 1));
-                }
-            }
-        }
-        if (hasNode(node, "selectedIndex")) cb->setSelectedIndex(getInt(node, "selectedIndex", -1));
-        element = std::move(cb);
-    }
-    else if (type == "TabControl")
-    {
-        auto tc = std::make_unique<TabControl>(m_guiManager, x, y, w > 0 ? w : 200, h > 0 ? h : 200, getInt(node, "tabHeight", 30));
-        if (isArray(node, "tabs"))
-        {
-            forEachInArray(node, "tabs", [this, &tc](void* tabNode) {
-                Panel* content = tc->addTab(getString(tabNode, "title", "Tab"), getInt(tabNode, "width", 100), getInt(tabNode, "height", -1));
-                if (isArray(tabNode, "children"))
-                {
-                    forEachInArray(tabNode, "children", [this, content](void* childNode) {
-                        auto childEl = parseNode(childNode);
-                        if (childEl) content->addChild(std::move(childEl));
-                    });
-                }
-            });
-        }
-        element = std::move(tc);
-    }
-    else if (type == "AnimatedImage")
-    {
-        auto ai = std::make_unique<AnimatedImage>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 100);
-        if (hasNode(node, "path"))
-            ai->setSpriteSheet(getString(node, "path"), getInt(node, "frames", 1), getInt(node, "rows", 1), getInt(node, "frameW", 0), getInt(node, "frameH", 0));
-        if (hasNode(node, "frameDuration"))
-            ai->setFrameDuration(getFloat(node, "frameDuration", 1.0f / 12.0f));
-        else
-            ai->setFPS(getFloat(node, "fps", 12.0f));
-        ai->setLoop(getBool(node, "loop", true));
-        ai->setUseCache(getBool(node, "useCache", true));
-        ai->setPreserveAspect(getBool(node, "preserveAspect", true));
-        if (hasNode(node, "scaleMode"))
-        {
-            std::string scaleModeStr = getString(node, "scaleMode", "Fit");
-            if (scaleModeStr == "Center")
-                ai->setScaleMode(AnimatedImage::ScaleMode::Center);
-            else if (scaleModeStr == "None")
-                ai->setScaleMode(AnimatedImage::ScaleMode::None);
-            else
-                ai->setScaleMode(AnimatedImage::ScaleMode::Fit);
-        }
-        if (getBool(node, "autoplay", true)) ai->play();
-        element = std::move(ai);
-    }
-    else if (type == "Canvas")
-    {
-        element = std::make_unique<Canvas>(m_guiManager, x, y, w > 0 ? w : 100, h > 0 ? h : 100);
-    }
-    else if (type == "ProgressBar")
-    {
-        auto pb = std::make_unique<ProgressBar>(m_guiManager, x, y, w > 0 ? w : 200, h > 0 ? h : 30);
-        pb->setRange(getFloat(node, "min", 0.0f), getFloat(node, "max", 100.0f));
-        pb->setValue(getFloat(node, "value", 0.0f));
-        pb->setOrientation(getString(node, "orientation", "Horizontal") == "Vertical" ? Orientation::Vertical : Orientation::Horizontal);
-        pb->setShowText(getBool(node, "showText", true));
-        if (hasNode(node, "textFormat")) pb->setTextFormat(getString(node, "textFormat", "%.0f%%"));
-        element = std::move(pb);
-    }
-    else if (type == "ScrollArea")
-    {
-        auto sa = std::make_unique<ScrollArea>(m_guiManager, x, y, w > 0 ? w : 300, h > 0 ? h : 200);
-        if (hasNode(node, "contentWidth") || hasNode(node, "contentHeight"))
-            sa->setContentSize(getInt(node, "contentWidth", sa->getWidth()), getInt(node, "contentHeight", sa->getHeight()));
-        if (hasNode(node, "vScrollEnabled")) sa->setVerticalScroll(getBool(node, "vScrollEnabled", true));
-        if (hasNode(node, "hScrollEnabled")) sa->setHorizontalScroll(getBool(node, "hScrollEnabled", false));
-        element = std::move(sa);
-    }
-    else if (type == "ArcContainer")
-    {
-        element = std::make_unique<ArcContainer>(m_guiManager, x, y, getInt(node, "radius", 100),
-            getFloat(node, "startAngle", 0.0f), getFloat(node, "endAngle", 360.0f));
-    }
-    else if (type == "ListView")
-    {
-        auto lv = std::make_unique<ListView>(m_guiManager, x, y, w > 0 ? w : 200, h > 0 ? h : 200);
-        if (hasNode(node, "rowHeight")) lv->setRowHeight(getInt(node, "rowHeight", 25));
-        if (isArray(node, "items"))
-        {
-            forEachInArray(node, "items", [this, &lv](void* itemNode) {
-                std::string text = getString(itemNode, "text", "");
-                if (text.empty()) text = getDirectString(itemNode, "");
-                if (!text.empty()) lv->addItem(text);
-            });
-        }
-        else if (hasNode(node, "items"))
-        {
-            std::string itemsAttr = getString(node, "items", "");
-            if (!itemsAttr.empty())
-            {
-                std::stringstream ss(itemsAttr);
-                std::string item;
-                while (std::getline(ss, item, ','))
-                {
-                    size_t start = item.find_first_not_of(" \t");
-                    size_t end = item.find_last_not_of(" \t");
-                    if (start != std::string::npos && end != std::string::npos)
-                        lv->addItem(item.substr(start, end - start + 1));
-                }
-            }
-        }
-        if (hasNode(node, "selectedIndex"))
-            lv->setSelectedRow(static_cast<size_t>(getInt(node, "selectedIndex", -1)));
-        element = std::move(lv);
-    }
-    else if (type == "Style" || type == "Item" || type == "Resources" || type == "Option")
-    {
-        return nullptr;
-    }
-    else
-    {
         LOG_WARNING("LayoutParser", "Unknown GUI element type: {}", type);
         return nullptr;
     }
@@ -361,7 +125,29 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
             }
         }
     }
-    else if (type != "TabControl")
+    else if (type == "TabControl")
+    {
+        // Taby utworzyła fabryka (fillPropsFromNode); tutaj tylko dzieci
+        // strukturalne — panele treści pobrane po indeksie, bez recreate.
+        auto* tc = static_cast<TabControl*>(element.get());
+        if (isArray(node, "tabs"))
+        {
+            size_t tabIndex = 0;
+            forEachInArray(node, "tabs", [this, tc, &tabIndex](void* tabNode) {
+                if (Panel* content = tc->getTabContent(tabIndex)) {
+                    if (isArray(tabNode, "children"))
+                    {
+                        forEachInArray(tabNode, "children", [this, content](void* childNode) {
+                            auto childEl = parseNode(childNode);
+                            if (childEl) content->addChild(std::move(childEl));
+                        });
+                    }
+                }
+                ++tabIndex;
+            });
+        }
+    }
+    else
     {
         forEachInArray(node, "children", [this, &element](void* childNode) {
             auto childElement = parseNode(childNode);
@@ -370,6 +156,177 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     }
 
     return element;
+}
+
+void LayoutParser::fillPropsFromNode(void* node, const std::string& type, WidgetProps& p) {
+    auto splitComma = [](const std::string& s) {
+        std::vector<std::string> out;
+        std::stringstream ss(s);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            size_t start = item.find_first_not_of(" \t");
+            size_t end = item.find_last_not_of(" \t");
+            if (start != std::string::npos && end != std::string::npos) {
+                out.push_back(item.substr(start, end - start + 1));
+            }
+        }
+        return out;
+    };
+
+    if (type == "Panel") {
+        p.draggable = getBool(node, "draggable", false);
+    } else if (type == "Button") {
+        p.text = getString(node, "text", "");
+    } else if (type == "Label") {
+        // Label sam wymiaruje się z tekstu — pozycja z atrybutów, rozmiar auto.
+        p.text = getString(node, "text", "");
+        p.fontSize = getInt(node, "fontSize", -1);
+    } else if (type == "Checkbox") {
+        p.checked = getBool(node, "checked", false);
+    } else if (type == "RadioButton") {
+        p.selected = getBool(node, "selected", false);
+    } else if (type == "RadioGroup") {
+        if (hasNode(node, "optionSpacing")) {
+            p.hasOptionSpacing = true;
+            p.optionSpacing = getInt(node, "optionSpacing", 40);
+        }
+        if (hasNode(node, "buttonX") || hasNode(node, "labelX") || hasNode(node, "startY")) {
+            p.hasOptionMargins = true;
+            p.buttonX = getInt(node, "buttonX", 20);
+            p.labelX = getInt(node, "labelX", 45);
+            p.startY = getInt(node, "startY", 20);
+        }
+        if (hasNode(node, "buttonSize") || hasNode(node, "labelFontSize")) {
+            p.hasOptionSizes = true;
+            p.buttonSize = getInt(node, "buttonSize", 20);
+            p.labelFontSize = getInt(node, "labelFontSize", 16);
+        }
+        if (isArray(node, "options")) {
+            forEachInArray(node, "options", [this, &p](void* optNode) {
+                WidgetOptionSpec opt;
+                opt.text = getString(optNode, "text", "");
+                opt.selected = getBool(optNode, "selected", false);
+                if (!opt.text.empty()) p.options.push_back(std::move(opt));
+            });
+        }
+    } else if (type == "Slider" || type == "RangeSlider") {
+        p.vertical = getString(node, "orientation", "Horizontal") == "Vertical";
+        p.minVal = getInt(node, "min", 0);
+        p.maxVal = getInt(node, "max", 100);
+        p.value = getInt(node, "value", 0);
+        p.wheelStep = getInt(node, "wheelStep", 1);
+        if (type == "RangeSlider") {
+            p.lowerVal = getInt(node, "lower", 0);
+            p.upperVal = getInt(node, "upper", 100);
+        }
+    } else if (type == "StringGrid") {
+        p.rowCount = static_cast<size_t>(getInt(node, "rowCount", 5));
+        p.colCount = static_cast<size_t>(getInt(node, "colCount", 5));
+        p.showRowHeaders = getBool(node, "showRowHeaders", true);
+        p.showColumnHeaders = getBool(node, "showColumnHeaders", true);
+        p.editable = getBool(node, "editable", true);
+        if (hasNode(node, "rowHeight")) p.rowHeight = getInt(node, "rowHeight", 24);
+        if (hasNode(node, "headerHeight")) p.headerHeight = getInt(node, "headerHeight", 28);
+        if (hasNode(node, "rowHeaderWidth")) p.rowHeaderWidth = getInt(node, "rowHeaderWidth", 50);
+        if (hasNode(node, "hScrollEnabled")) {
+            p.hasHScroll = true;
+            p.hScrollEnabled = getBool(node, "hScrollEnabled", true);
+        }
+        if (hasNode(node, "vScrollEnabled")) {
+            p.hasVScroll = true;
+            p.vScrollEnabled = getBool(node, "vScrollEnabled", true);
+        }
+    } else if (type == "TextInput") {
+        if (hasNode(node, "text")) p.text = getString(node, "text");
+        p.locked = getBool(node, "locked", false);
+    } else if (type == "TextArea") {
+        if (hasNode(node, "text")) p.text = getString(node, "text");
+        p.fontPath = getString(node, "fontPath", constants::kDefaultFontPath);
+        p.fontSize = getInt(node, "fontSize", 16);
+        p.wordWrap = getBool(node, "wordWrap", true);
+        p.locked = getBool(node, "locked", false);
+    } else if (type == "ComboBox") {
+        if (isArray(node, "items")) {
+            forEachInArray(node, "items", [this, &p](void* itemNode) {
+                p.items.push_back(getString(itemNode, "text", ""));
+            });
+        } else if (hasNode(node, "items")) {
+            p.items = splitComma(getString(node, "items", ""));
+        }
+        if (hasNode(node, "selectedIndex")) {
+            p.hasSelectedIndex = true;
+            p.selectedIndex = getInt(node, "selectedIndex", -1);
+        }
+    } else if (type == "TabControl") {
+        p.tabHeight = getInt(node, "tabHeight", 30);
+        if (isArray(node, "tabs")) {
+            forEachInArray(node, "tabs", [this, &p](void* tabNode) {
+                WidgetTabSpec tab;
+                tab.title = getString(tabNode, "title", "Tab");
+                tab.width = getInt(tabNode, "width", 100);
+                tab.height = getInt(tabNode, "height", -1);
+                p.tabs.push_back(std::move(tab));
+            });
+        }
+    } else if (type == "AnimatedImage") {
+        p.path = getString(node, "path", "");
+        p.frames = getInt(node, "frames", 1);
+        p.rows = getInt(node, "rows", 1);
+        p.frameW = getInt(node, "frameW", 0);
+        p.frameH = getInt(node, "frameH", 0);
+        if (hasNode(node, "frameDuration")) {
+            p.frameDuration = getFloat(node, "frameDuration", 1.0f / 12.0f);
+        } else {
+            p.fps = getFloat(node, "fps", 12.0f);
+        }
+        p.loop = getBool(node, "loop", true);
+        p.useCache = getBool(node, "useCache", true);
+        p.preserveAspect = getBool(node, "preserveAspect", true);
+        p.scaleMode = getString(node, "scaleMode", "Fit");
+        p.autoplay = getBool(node, "autoplay", true);
+    } else if (type == "Canvas") {
+        // Bez propsów.
+    } else if (type == "ProgressBar") {
+        p.minF = getFloat(node, "min", 0.0f);
+        p.maxF = getFloat(node, "max", 100.0f);
+        p.valueF = getFloat(node, "value", 0.0f);
+        p.vertical = getString(node, "orientation", "Horizontal") == "Vertical";
+        p.showText = getBool(node, "showText", true);
+        if (hasNode(node, "textFormat")) {
+            p.hasTextFormat = true;
+            p.textFormat = getString(node, "textFormat", "%.0f%%");
+        }
+    } else if (type == "ScrollArea") {
+        if (hasNode(node, "contentWidth")) p.contentWidth = getInt(node, "contentWidth", 0);
+        if (hasNode(node, "contentHeight")) p.contentHeight = getInt(node, "contentHeight", 0);
+        if (hasNode(node, "vScrollEnabled")) {
+            p.hasVScroll = true;
+            p.vScrollEnabled = getBool(node, "vScrollEnabled", true);
+        }
+        if (hasNode(node, "hScrollEnabled")) {
+            p.hasHScroll = true;
+            p.hScrollEnabled = getBool(node, "hScrollEnabled", false);
+        }
+    } else if (type == "ArcContainer") {
+        p.radius = getInt(node, "radius", 100);
+        p.startAngle = getFloat(node, "startAngle", 0.0f);
+        p.endAngle = getFloat(node, "endAngle", 360.0f);
+    } else if (type == "ListView") {
+        if (hasNode(node, "rowHeight")) p.rowHeight = getInt(node, "rowHeight", 25);
+        if (isArray(node, "items")) {
+            forEachInArray(node, "items", [this, &p](void* itemNode) {
+                std::string text = getString(itemNode, "text", "");
+                if (text.empty()) text = getDirectString(itemNode, "");
+                if (!text.empty()) p.items.push_back(text);
+            });
+        } else if (hasNode(node, "items")) {
+            p.items = splitComma(getString(node, "items", ""));
+        }
+        if (hasNode(node, "selectedIndex")) {
+            p.hasSelectedIndex = true;
+            p.selectedIndex = getInt(node, "selectedIndex", -1);
+        }
+    }
 }
 
 Anchor LayoutParser::parseAnchor(void* node)

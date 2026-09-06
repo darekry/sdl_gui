@@ -17,6 +17,13 @@ public:
     // Sets the active tab by index (0-based)
     void setActiveTab(int index);
 
+    // Content access for layout population (LayoutParser fills tab children
+    // after WidgetFactory creates the tabs — no recreate, stable pointers).
+    [[nodiscard]] size_t getTabCount() const { return m_tabPanels.size(); }
+    [[nodiscard]] Panel* getTabContent(size_t index) {
+        return index < m_tabPanels.size() ? m_tabPanels[index] : nullptr;
+    }
+
     ComponentType getComponentTypeId() const override;
 
 protected:

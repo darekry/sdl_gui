@@ -1,4 +1,5 @@
 #include "editor_state.hpp"
+#include "../widget_factory.hpp"
 
 #include "std.hpp"
 
@@ -46,23 +47,12 @@ size_t EditorState::addElement(const std::string& type, int x, int y, const std:
     element.x = snapToGrid(x);
     element.y = snapToGrid(y);
     element.parentId = parentId;
-    
-    if (type == "Button") { element.width = 120; element.height = 40; }
-    else if (type == "Label") { element.width = 100; element.height = 25; }
-    else if (type == "Checkbox") { element.width = 150; element.height = 25; }
-    else if (type == "RadioButton") { element.width = 150; element.height = 25; }
-    else if (type == "RadioGroup") { element.width = 150; element.height = 100; }
-    else if (type == "Slider") { element.width = 150; element.height = 20; }
-    else if (type == "TextInput") { element.width = 150; element.height = 30; }
-    else if (type == "TextArea") { element.width = 200; element.height = 150; }
-    else if (type == "TabControl") { element.width = 300; element.height = 200; }
-    else if (type == "Panel") { element.width = 300; element.height = 200; }
-    else if (type == "AnimatedImage") { element.width = 100; element.height = 100; }
-    else if (type == "ComboBox") { element.width = 150; element.height = 30; }
-    else if (type == "Canvas") { element.width = 200; element.height = 200; }
-    else if (type == "StringGrid") { element.width = 400; element.height = 300; }
-    else if (type == "ListView") { element.width = 200; element.height = 200; }
-    else { element.width = 100; element.height = 50; }
+
+    // Domyślny rozmiar z jednego rejestru (WidgetFactory) — koniec osobnej
+    // kopii listy typów w edytorze (rozjeżdżała się z parserem i podglądem).
+    auto [defW, defH] = WidgetFactory::defaultSize(type);
+    element.width = defW;
+    element.height = defH;
     
     m_elements.push_back(std::move(element));
     size_t newIndex = m_elements.size() - 1;

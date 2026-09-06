@@ -1,18 +1,17 @@
 #include "preview_window.hpp"
-#include "../constants.hpp"
 #include "../button.hpp"
-#include "../label.hpp"
 #include "../checkbox.hpp"
-#include "../radio_button.hpp"
-#include "../slider.hpp"
-#include "../text_input.hpp"
-#include "../text_area.hpp"
 #include "../combobox.hpp"
-#include "../tab_control.hpp"
-#include "../animated_image.hpp"
-#include "../canvas.hpp"
-#include "../string_grid.hpp"
-#include "../list_view.hpp"
+#include "../constants.hpp"
+#include "../label.hpp"
+#include "../progress_bar.hpp"
+#include "../radio_button.hpp"
+#include "../range_slider.hpp"
+#include "../scroll_area.hpp"
+#include "../slider.hpp"
+#include "../text_area.hpp"
+#include "../text_input.hpp"
+#include "../widget_factory.hpp"
 
 #include "editor_utils.hpp"
 #include "std.hpp"
@@ -39,195 +38,336 @@ PreviewWindow::~PreviewWindow() {
 }
 
 void PreviewWindow::refreshElement(size_t index) {
-    if (index >= m_state.getElements().size()) return;
-    
-    removeElementWidget(index);
-    createWidgetForElement(index);
+    // Thin wrapper: the map is id-keyed, so even a stale index (e.g. after a
+    // delete that shifted the vector) cannot remove the wrong widget.
+    // A full diff also prunes widgets whose ids left the document.
+    if (index < m_state.getElements().size()) {
+        const EditorElement& elem = m_state.getElements()[index];
+        GUIElement* widget = findWidgetById(elem.id);
+        const std::string key = structureKey(elem);
+        auto kit = m_structureKeys.find(elem.id);
+        ComponentType expected = componentTypeFromString(elem.type);
+        if (expected == ComponentType::Unknown) expected = ComponentType::Panel;  // createWidget fallback
+        if (!widget || kit == m_structureKeys.end() || kit->second != key ||
+            widget->getComponentTypeId() != expected) {
+            removeWidgetById(elem.id);
+            createWidgetForElement(index);
+        } else {
+            updateWidgetForElement(widget, elem);
+        }
+    }
+    syncAll();
 }
 
 void PreviewWindow::removeElementWidget(size_t index) {
-    auto it = m_widgetMap.find(index);
+    // NOTE: EditorWindow fires onElementDeleted AFTER deleteElement(), so the
+    // index is already stale here. Remove by id when possible, then run the
+    // diff which prunes by document membership — never by position.
+    if (index < m_state.getElements().size()) {
+        removeWidgetById(m_state.getElements()[index].id);
+    }
+    syncAll();
+}
+
+void PreviewWindow::clearAllWidgets() {
+    for (auto& [id, widget] : m_widgetMap) {
+        widget->markForDeletion();
+    }
+    m_widgetMap.clear();
+    m_structureKeys.clear();
+}
+
+GUIElement* PreviewWindow::findWidgetById(const std::string& id) const {
+    auto it = m_widgetMap.find(id);
+    return it != m_widgetMap.end() ? it->second : nullptr;
+}
+
+void PreviewWindow::syncAll() {
+    const auto& elements = m_state.getElements();
+    std::unordered_set<std::string> seen;
+    seen.reserve(elements.size());
+
+    for (size_t i = 0; i < elements.size(); ++i) {
+        const EditorElement& elem = elements[i];
+        seen.insert(elem.id);
+        const std::string key = structureKey(elem);
+        GUIElement* widget = findWidgetById(elem.id);
+        auto kit = m_structureKeys.find(elem.id);
+        ComponentType expected = componentTypeFromString(elem.type);
+        if (expected == ComponentType::Unknown) expected = ComponentType::Panel;  // fallback
+        if (!widget || kit == m_structureKeys.end() || kit->second != key ||
+            widget->getComponentTypeId() != expected) {
+            removeWidgetById(elem.id);
+            createWidgetForElement(i);
+        } else {
+            // Same structure: update in place — focus, scroll position and
+            // text selection survive property edits (no remove+create).
+            updateWidgetForElement(widget, elem);
+        }
+    }
+
+    std::vector<std::string> dead;
+    for (const auto& [id, widget] : m_widgetMap) {
+        if (!seen.contains(id)) dead.push_back(id);
+    }
+    for (const auto& id : dead) removeWidgetById(id);
+}
+
+void PreviewWindow::removeWidgetById(const std::string& id) {
+    auto it = m_widgetMap.find(id);
     if (it != m_widgetMap.end()) {
         it->second->markForDeletion();
         m_widgetMap.erase(it);
     }
-}
-
-void PreviewWindow::clearAllWidgets() {
-    for (auto& [idx, widget] : m_widgetMap) {
-        widget->markForDeletion();
-    }
-    m_widgetMap.clear();
+    m_structureKeys.erase(id);
 }
 
 void PreviewWindow::createWidgetForElement(size_t index) {
     const auto& elements = m_state.getElements();
     if (index >= elements.size()) return;
-    
+
     const EditorElement& elem = elements[index];
-    
+
     std::unique_ptr<GUIElement> widgetPtr = createWidget(elem);
     if (!widgetPtr) return;
-    
+
     GUIElement* widget = widgetPtr.get();
-    
+
     applyElementProperties(widget, elem);
     applyElementStyles(widget, elem);
-    
+
     GUIElement* parentWidget = m_canvas;
     if (!elem.parentId.empty()) {
-        auto parentIt = m_state.findElementById(elem.parentId);
-        if (parentIt.has_value()) {
-            auto widgetIt = m_widgetMap.find(parentIt.value());
-            if (widgetIt != m_widgetMap.end()) {
-                parentWidget = widgetIt->second;
+        if (auto parentIdx = m_state.findElementById(elem.parentId)) {
+            const auto& all = m_state.getElements();
+            if (*parentIdx < all.size()) {
+                if (GUIElement* pw = findWidgetById(all[*parentIdx].id)) {
+                    parentWidget = pw;
+                }
             }
         }
     }
-    
+
     parentWidget->addChild(std::move(widgetPtr));
-    
+
     widget->setPosition(elem.x, elem.y);
-    
-    m_widgetMap[index] = widget;
+
+    m_widgetMap[elem.id] = widget;
+    m_structureKeys[elem.id] = structureKey(elem);
+}
+
+void PreviewWindow::updateWidgetForElement(GUIElement* widget, const EditorElement& elem) {
+    applyElementProperties(widget, elem);
+    applyElementStyles(widget, elem);
+
+    // Scalar props, applied idempotently. List/structure props are covered
+    // by structureKey() and take the recreate path instead.
+    WidgetProps props;
+    fillPropsFromEditor(elem, props);
+    switch (widget->getComponentTypeId()) {
+        case ComponentType::Button: {
+            for (auto& child : widget->getChildren()) {
+                if (child->getComponentTypeId() == ComponentType::Label) {
+                    static_cast<Label*>(child.get())->setText(props.text);
+                    break;
+                }
+            }
+            break;
+        }
+        case ComponentType::Label:
+            static_cast<Label*>(widget)->setText(props.text);
+            break;
+        case ComponentType::Checkbox:
+            static_cast<Checkbox*>(widget)->setChecked(props.checked);
+            break;
+        case ComponentType::RadioButton:
+            static_cast<RadioButton*>(widget)->setSelected(props.selected);
+            break;
+        case ComponentType::Slider: {
+            auto* s = static_cast<Slider*>(widget);
+            s->setRange(props.minVal, props.maxVal);
+            s->setValue(props.value);
+            s->setWheelStep(props.wheelStep);
+            break;
+        }
+        case ComponentType::RangeSlider: {
+            auto* rs = static_cast<RangeSlider*>(widget);
+            rs->setRange(props.minVal, props.maxVal);
+            rs->setLowerValue(props.lowerVal);
+            rs->setUpperValue(props.upperVal);
+            rs->setWheelStep(props.wheelStep);
+            break;
+        }
+        case ComponentType::TextInput: {
+            auto* ti = static_cast<TextInput*>(widget);
+            ti->setText(props.text);
+            ti->setLocked(props.locked);
+            break;
+        }
+        case ComponentType::TextArea: {
+            auto* ta = static_cast<TextArea*>(widget);
+            ta->setText(props.text);
+            ta->setWordWrap(props.wordWrap);
+            ta->setLocked(props.locked);
+            break;
+        }
+        case ComponentType::ComboBox:
+            static_cast<ComboBox*>(widget)->setSelectedIndex(props.selectedIndex);
+            break;
+        case ComponentType::ProgressBar: {
+            auto* pb = static_cast<ProgressBar*>(widget);
+            pb->setRange(props.minF, props.maxF);
+            pb->setValue(props.valueF);
+            pb->setShowText(props.showText);
+            break;
+        }
+        case ComponentType::ScrollArea: {
+            auto* sa = static_cast<ScrollArea*>(widget);
+            if (props.contentWidth >= 0 || props.contentHeight >= 0) {
+                sa->setContentSize(props.contentWidth >= 0 ? props.contentWidth : sa->getWidth(),
+                                   props.contentHeight >= 0 ? props.contentHeight : sa->getHeight());
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+void PreviewWindow::fillPropsFromEditor(const EditorElement& elem, WidgetProps& p) {
+    p.w = elem.width;
+    p.h = elem.height;
+
+    auto getBool = [&elem](const char* key, bool def) {
+        return elem.getProperty(key, def ? "true" : "false") == "true";
+    };
+    auto getInt = [&elem](const char* key, int def) {
+        return safeParseInt(elem.getProperty(key, std::to_string(def)), def);
+    };
+    auto splitItems = [&elem](const char* key) {
+        std::vector<std::string> out;
+        std::istringstream iss(elem.getProperty(key, ""));
+        std::string item;
+        while (std::getline(iss, item, ',')) {
+            if (!item.empty()) out.push_back(item);
+        }
+        return out;
+    };
+
+    const std::string& type = elem.type;
+    if (type == "Button") {
+        p.text = elem.getProperty("text", "Button");
+    } else if (type == "Label") {
+        p.text = elem.getProperty("text", "Label");
+        p.fontSize = getInt("fontSize", -1);
+    } else if (type == "Checkbox") {
+        p.checked = getBool("checked", false);
+    } else if (type == "RadioButton") {
+        p.selected = getBool("selected", false);
+    } else if (type == "RadioGroup") {
+        p.hasOptionSpacing = elem.hasProperty("optionSpacing");
+        p.optionSpacing = getInt("optionSpacing", 40);
+    } else if (type == "Slider" || type == "RangeSlider") {
+        p.minVal = getInt("min", 0);
+        p.maxVal = getInt("max", 100);
+        p.value = getInt("value", 50);
+        p.wheelStep = getInt("wheelStep", 1);
+        p.vertical = elem.getProperty("orientation", "horizontal") == "vertical";
+        if (type == "RangeSlider") {
+            p.lowerVal = getInt("lower", 0);
+            p.upperVal = getInt("upper", 100);
+        }
+    } else if (type == "TextInput") {
+        p.text = elem.getProperty("text", "");
+        p.locked = getBool("locked", false);
+    } else if (type == "TextArea") {
+        p.text = elem.getProperty("text", "");
+        p.fontPath = elem.getProperty("fontPath", constants::kDefaultFontPath);
+        p.fontSize = getInt("fontSize", 16);
+        p.wordWrap = getBool("wordWrap", true);
+        p.locked = getBool("locked", false);
+    } else if (type == "ComboBox") {
+        p.items = splitItems("items");
+        if (elem.hasProperty("selectedIndex")) {
+            p.hasSelectedIndex = true;
+            p.selectedIndex = getInt("selectedIndex", -1);
+        }
+    } else if (type == "TabControl") {
+        p.tabHeight = getInt("tabHeight", 30);
+        for (const auto& title : splitItems("tabs")) {
+            WidgetTabSpec tab;
+            tab.title = title;
+            p.tabs.push_back(std::move(tab));
+        }
+    } else if (type == "AnimatedImage") {
+        p.path = elem.getProperty("path", "");
+        p.frames = getInt("frames", 1);
+        p.rows = getInt("rows", 1);
+        p.frameW = getInt("frameW", 0);
+        p.frameH = getInt("frameH", 0);
+        p.fps = previewParseFloat(elem.getProperty("fps", "12"), 12.0f);
+        p.loop = getBool("loop", true);
+        p.autoplay = getBool("autoplay", true);
+    } else if (type == "StringGrid") {
+        p.rowCount = static_cast<size_t>(getInt("rowCount", 5));
+        p.colCount = static_cast<size_t>(getInt("colCount", 5));
+        p.showRowHeaders = getBool("showRowHeaders", true);
+        p.showColumnHeaders = getBool("showColumnHeaders", true);
+        p.editable = getBool("editable", false);
+    } else if (type == "ListView") {
+        p.items = splitItems("items");
+        if (elem.hasProperty("selectedIndex")) {
+            p.hasSelectedIndex = true;
+            p.selectedIndex = getInt("selectedIndex", -1);
+        }
+    } else if (type == "ProgressBar") {
+        p.minF = previewParseFloat(elem.getProperty("min", "0"), 0.0f);
+        p.maxF = previewParseFloat(elem.getProperty("max", "100"), 100.0f);
+        p.valueF = previewParseFloat(elem.getProperty("value", "0"), 0.0f);
+        p.showText = getBool("showText", true);
+        p.vertical = elem.getProperty("orientation", "horizontal") == "vertical";
+    } else if (type == "ScrollArea") {
+        if (elem.hasProperty("contentWidth")) p.contentWidth = getInt("contentWidth", 0);
+        if (elem.hasProperty("contentHeight")) p.contentHeight = getInt("contentHeight", 0);
+    } else if (type == "ArcContainer") {
+        p.radius = getInt("radius", 100);
+        p.startAngle = previewParseFloat(elem.getProperty("startAngle", "0"), 0.0f);
+        p.endAngle = previewParseFloat(elem.getProperty("endAngle", "360"), 360.0f);
+    }
+}
+
+std::string PreviewWindow::structureKey(const EditorElement& elem) {
+    std::string key = elem.type;
+    key += '\x1f' + elem.getProperty("items", "");
+    key += '\x1f' + elem.getProperty("tabs", "");
+    key += '\x1f' + elem.getProperty("options", "");
+    key += '\x1f' + elem.getProperty("rowCount", "") + 'x' + elem.getProperty("colCount", "");
+    key += '\x1f' + elem.getProperty("path", "") + elem.getProperty("frames", "") +
+           elem.getProperty("rows", "");
+    key += '\x1f' + elem.getProperty("radius", "") + elem.getProperty("startAngle", "") +
+           elem.getProperty("endAngle", "");
+    key += '\x1f' + elem.getProperty("contentWidth", "") + 'x' +
+           elem.getProperty("contentHeight", "");
+    key += '\x1f' + elem.getProperty("tabHeight", "");
+    return key;
 }
 
 std::unique_ptr<GUIElement> PreviewWindow::createWidget(const EditorElement& elem) {
-    if (elem.type == "Button") {
-        std::string text = elem.getProperty("text", "Button");
-        return std::make_unique<Button>(m_manager, 0, 0, elem.width, elem.height, text);
-    }
-    else if (elem.type == "Label") {
-        std::string text = elem.getProperty("text", "Label");
-        int fontSize = safeParseInt(elem.getProperty("fontSize", "-1"), -1);
-        return std::make_unique<Label>(m_manager, 0, 0, text, fontSize);
-    }
-    else if (elem.type == "Checkbox") {
-        auto checkbox = std::make_unique<Checkbox>(m_manager, 0, 0, elem.width, elem.height);
-        bool checked = elem.getProperty("checked", "false") == "true";
-        checkbox->setChecked(checked);
-        return checkbox;
-    }
-    else if (elem.type == "RadioButton") {
-        auto radio = std::make_unique<RadioButton>(m_manager, 0, 0, elem.width, elem.height);
-        bool selected = elem.getProperty("selected", "false") == "true";
-        radio->setSelected(selected);
-        return radio;
-    }
-    else if (elem.type == "Slider") {
-        int min = safeParseInt(elem.getProperty("min", "0"), 0);
-        int max = safeParseInt(elem.getProperty("max", "100"), 100);
-        int value = safeParseInt(elem.getProperty("value", "50"), 50);
-        Orientation orient = elem.getProperty("orientation", "horizontal") == "vertical" 
-            ? Orientation::Vertical : Orientation::Horizontal;
-        auto slider = std::make_unique<Slider>(m_manager, 0, 0, elem.width, elem.height, min, max, value, orient);
-        return slider;
-    }
-    else if (elem.type == "TextInput") {
-        std::string text = elem.getProperty("text", "");
-        bool locked = elem.getProperty("locked", "false") == "true";
-        auto input = std::make_unique<TextInput>(m_manager, 0, 0, elem.width, elem.height);
-        input->setText(text);
-        input->setLocked(locked);
-        return input;
-    }
-    else if (elem.type == "TextArea") {
-        std::string text = elem.getProperty("text", "");
-        std::string fontPath = elem.getProperty("fontPath", constants::kDefaultFontPath);
-        int fontSize = safeParseInt(elem.getProperty("fontSize", "16"), 16);
-        auto area = std::make_unique<TextArea>(m_manager, 0, 0, elem.width, elem.height, fontPath, fontSize);
-        area->setText(text);
-        return area;
-    }
-    else if (elem.type == "ComboBox") {
-        auto combo = std::make_unique<ComboBox>(m_manager, 0, 0, elem.width, elem.height);
-        std::string items = elem.getProperty("items", "");
-        if (!items.empty()) {
-            std::istringstream iss(items);
-            std::string item;
-            while (std::getline(iss, item, ',')) {
-                if (!item.empty()) {
-                    combo->addItem(item);
-                }
-            }
+    // Single construction path shared with LayoutParser: the factory owns
+    // type knowledge (this also gains preview support for RadioGroup,
+    // RangeSlider, ProgressBar, ScrollArea and ArcContainer, which the old
+    // if-chain silently downgraded to Panel).
+    WidgetProps props;
+    fillPropsFromEditor(elem, props);
+    if (auto widget = WidgetFactory::create(m_manager, elem.type, props)) {
+        if (elem.type == "Panel") {
+            static_cast<Panel*>(widget.get())->setClipChildren(false);
         }
-        return combo;
+        return widget;
     }
-    else if (elem.type == "Panel") {
-        auto panel = std::make_unique<Panel>(m_manager, 0, 0, elem.width, elem.height);
-        panel->setClipChildren(false);
-        return panel;
-    }
-    else if (elem.type == "TabControl") {
-        int tabHeight = safeParseInt(elem.getProperty("tabHeight", "30"), 30);
-        auto tabs = std::make_unique<TabControl>(m_manager, 0, 0, elem.width, elem.height, tabHeight);
-        std::string tabsStr = elem.getProperty("tabs", "");
-        if (!tabsStr.empty()) {
-            std::istringstream iss(tabsStr);
-            std::string tabName;
-            while (std::getline(iss, tabName, ',')) {
-                if (!tabName.empty()) {
-                    tabs->addTab(tabName);
-                }
-            }
-        }
-        return tabs;
-    }
-    else if (elem.type == "AnimatedImage") {
-        auto anim = std::make_unique<AnimatedImage>(m_manager, 0, 0, elem.width, elem.height);
-        std::string path = elem.getProperty("path", "");
-        int frames = safeParseInt(elem.getProperty("frames", "1"), 1);
-        int rows = safeParseInt(elem.getProperty("rows", "1"), 1);
-        int frameW = safeParseInt(elem.getProperty("frameW", "0"), 0);
-        int frameH = safeParseInt(elem.getProperty("frameH", "0"), 0);
-        float fps = previewParseFloat(elem.getProperty("fps", "12"), 12.0f);
-        bool loop = elem.getProperty("loop", "true") == "true";
-        bool autoplay = elem.getProperty("autoplay", "true") == "true";
-        
-        if (!path.empty()) {
-            anim->setSpriteSheet(path, frames, rows, frameW, frameH);
-            anim->setFPS(fps);
-            anim->setLoop(loop);
-            if (autoplay) anim->play();
-        }
-        return anim;
-    }
-    else if (elem.type == "Canvas") {
-        return std::make_unique<Canvas>(m_manager, 0, 0, elem.width, elem.height);
-    }
-    else if (elem.type == "StringGrid") {
-        int rowCount = safeParseInt(elem.getProperty("rowCount", "5"), 5);
-        int colCount = safeParseInt(elem.getProperty("colCount", "5"), 5);
-        bool showRowHeaders = elem.getProperty("showRowHeaders", "true") == "true";
-        bool showColHeaders = elem.getProperty("showColumnHeaders", "true") == "true";
-        bool editable = elem.getProperty("editable", "false") == "true";
-        auto grid = std::make_unique<StringGrid>(m_manager, 0, 0, elem.width, elem.height, 
-            static_cast<size_t>(rowCount), static_cast<size_t>(colCount));
-        grid->setShowRowHeaders(showRowHeaders);
-        grid->setShowColumnHeaders(showColHeaders);
-        grid->setEditable(editable);
-        return grid;
-    }
-    else if (elem.type == "ListView") {
-        auto list = std::make_unique<ListView>(m_manager, 0, 0, elem.width, elem.height);
-        std::string items = elem.getProperty("items", "");
-        if (!items.empty()) {
-            std::istringstream iss(items);
-            std::string item;
-            while (std::getline(iss, item, ',')) {
-                if (!item.empty()) {
-                    list->addItem(item);
-                }
-            }
-        }
-        int selectedIndex = safeParseInt(elem.getProperty("selectedIndex", "-1"), -1);
-        if (selectedIndex >= 0) {
-            list->setSelectedRow(static_cast<size_t>(selectedIndex));
-        }
-        return list;
-    }
-    
-    return std::make_unique<Panel>(m_manager, 0, 0, elem.width, elem.height);
+    auto panel = std::make_unique<Panel>(m_manager, 0, 0, elem.width, elem.height);
+    panel->setClipChildren(false);
+    return panel;
 }
 
 void PreviewWindow::applyElementProperties(GUIElement* widget, const EditorElement& elem) {
@@ -304,11 +444,11 @@ void CanvasPanel::renderOverlay(SDL_Renderer* renderer) {
 
 void CanvasPanel::drawSelectionHighlight(SDL_Renderer* renderer, size_t index) {
     if (m_previewWindow == nullptr) return;
-    
-    auto it = m_previewWindow->m_widgetMap.find(index);
-    if (it == m_previewWindow->m_widgetMap.end()) return;
-    
-    GUIElement* widget = it->second;
+
+    const auto& elements = m_state.getElements();
+    if (index >= elements.size()) return;
+    GUIElement* widget = m_previewWindow->findWidgetById(elements[index].id);
+    if (!widget) return;
     SDL_Point abs = widget->getAbsolutePosition();
     
     const int borderWidth = 3;
@@ -432,9 +572,11 @@ void CanvasPanel::updateDrag(float mouseX, float mouseY) {
     m_state.moveElement(selectedIndex, newX, newY);
     
     if (m_previewWindow) {
-        auto it = m_previewWindow->m_widgetMap.find(selectedIndex);
-        if (it != m_previewWindow->m_widgetMap.end()) {
-            it->second->setPosition(newX, newY);
+        const auto& elements = m_state.getElements();
+        if (selectedIndex < elements.size()) {
+            if (GUIElement* w = m_previewWindow->findWidgetById(elements[selectedIndex].id)) {
+                w->setPosition(newX, newY);
+            }
         }
         
         if (m_previewWindow->m_onElementMoved) {

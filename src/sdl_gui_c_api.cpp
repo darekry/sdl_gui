@@ -23,10 +23,12 @@
 #include "range_slider.hpp"
 #include "cursor.hpp"
 #include "shader_panel.hpp"
+#include "widget_factory.hpp"
 
 #include "sdl_gui.h"
 
 #include <cassert>
+#include <cstring>
 
 /* ═══════════════════════════════════════════════════════════
    Internal context
@@ -37,6 +39,50 @@ using CContext = GUIContext;
 static CContext* unwrap_ctx(sdlgui_t gui) { return static_cast<CContext*>(gui); }
 static GUIElement* unwrap_elem(sdlgui_element_t e) { return static_cast<GUIElement*>(e); }
 static sdlgui_element_t wrap_elem(GUIElement* e) { return e; }
+
+/* ═══════════════════════════════════════════════════════════
+   Handle validation (point 5): type-tagged checked casts + errors
+   ═══════════════════════════════════════════════════════════ */
+
+namespace {
+
+thread_local std::string g_lastError;
+
+void set_c_error(const std::string& msg) { g_lastError = msg; }
+
+// Checked downcast: null handle or wrong widget type -> nullptr + recorded
+// error. dynamic_cast (not type-id equality) so documented upcasts keep
+// working — e.g. panel API on a Slider (Slider inherits Panel).
+// Replaces bare static_cast<T*> which was UB on type mismatch.
+template<typename T>
+T* checked_elem(sdlgui_element_t e, ComponentType expected, const char* fn) {
+    GUIElement* base = unwrap_elem(e);
+    if (!base) {
+        set_c_error(std::string(fn) + ": null element handle");
+        return nullptr;
+    }
+    T* typed = dynamic_cast<T*>(base);
+    if (!typed) {
+        set_c_error(std::string(fn) + ": type mismatch (handle is " +
+                    std::string(componentTypeToString(expected)) + "-incompatible " +
+                    std::string(componentTypeToString(base->getComponentTypeId())) + ")");
+        return nullptr;
+    }
+    g_lastError.clear();
+    return typed;
+}
+
+// Copies an internal string into the caller buffer (no dangling c_str()).
+// Returns bytes written excluding NUL; truncates safely when too small.
+size_t copy_c_string(const std::string& src, char* buf, size_t len) {
+    if (!buf || len == 0) return 0;
+    size_t n = std::min(src.size(), len - 1);
+    if (n > 0) std::memcpy(buf, src.data(), n);
+    buf[n] = '\0';
+    return n;
+}
+
+}  // namespace
 
 /* ═══════════════════════════════════════════════════════════
    State conversion
@@ -447,21 +493,24 @@ sdlgui_element_t sdlgui_button_create(sdlgui_t gui, sdlgui_element_t parent,
 }
 
 void sdlgui_button_set_on_click(sdlgui_element_t e, sdlgui_callback_t cb, void* userdata) {
-    auto* btn = static_cast<Button*>(unwrap_elem(e));
+    auto* btn = checked_elem<Button>(e, ComponentType::Button, __func__);
+    if (!btn) return;
     btn->setOnClickCallback([cb, userdata](GUIElement* elem) {
         if (cb) cb(wrap_elem(elem), userdata);
     });
 }
 
 void sdlgui_button_set_on_mouse_over(sdlgui_element_t e, sdlgui_callback_t cb, void* userdata) {
-    auto* btn = static_cast<Button*>(unwrap_elem(e));
+    auto* btn = checked_elem<Button>(e, ComponentType::Button, __func__);
+    if (!btn) return;
     btn->setOnMouseOverCallback([cb, userdata](GUIElement* elem) {
         if (cb) cb(wrap_elem(elem), userdata);
     });
 }
 
 void sdlgui_button_set_label(sdlgui_element_t e, const char* label) {
-    auto* btn = static_cast<Button*>(unwrap_elem(e));
+    auto* btn = checked_elem<Button>(e, ComponentType::Button, __func__);
+    if (!btn) return;
     Label* lbl = nullptr;
     for (auto& child : btn->getChildren()) {
         if (child->getComponentTypeId() == ComponentType::Label) {
@@ -486,11 +535,26 @@ sdlgui_element_t sdlgui_label_create(sdlgui_t gui, sdlgui_element_t parent,
 }
 
 void sdlgui_label_set_text(sdlgui_element_t e, const char* text) {
-    static_cast<Label*>(unwrap_elem(e))->setText(text ? text : "");
+    auto* lbl = checked_elem<Label>(e, ComponentType::Label, __func__);
+    if (!lbl) return;
+    lbl->setText(text ? text : "");
 }
 
 const char* sdlgui_label_get_text(sdlgui_element_t e) {
-    return static_cast<Label*>(unwrap_elem(e))->getText().c_str();
+    // Legacy: pointer to internal storage, valid until next set_text() on
+    // the same element. Prefer sdlgui_label_get_text_buf() (caller buffer).
+    auto* lbl = checked_elem<Label>(e, ComponentType::Label, __func__);
+    if (!lbl) return "";
+    return lbl->getText().c_str();
+}
+
+size_t sdlgui_label_get_text_buf(sdlgui_element_t e, char* buf, size_t buf_len) {
+    auto* lbl = checked_elem<Label>(e, ComponentType::Label, __func__);
+    if (!lbl) {
+        if (buf && buf_len > 0) buf[0] = '\0';
+        return 0;
+    }
+    return copy_c_string(std::string(lbl->getText()), buf, buf_len);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -505,7 +569,9 @@ sdlgui_element_t sdlgui_panel_create(sdlgui_t gui, sdlgui_element_t parent,
 }
 
 void sdlgui_panel_set_draggable(sdlgui_element_t e, int draggable) {
-    static_cast<Panel*>(unwrap_elem(e))->setDraggable(draggable != 0);
+    auto* pnl = checked_elem<Panel>(e, ComponentType::Panel, __func__);
+    if (!pnl) return;
+    pnl->setDraggable(draggable != 0);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -526,46 +592,62 @@ sdlgui_element_t sdlgui_slider_create(sdlgui_t gui, sdlgui_element_t parent,
 }
 
 int sdlgui_slider_get_value(sdlgui_element_t e) {
-    return static_cast<Slider*>(unwrap_elem(e))->getValue();
+    auto* s = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    return s ? s->getValue() : 0;
 }
 
 void sdlgui_slider_set_value(sdlgui_element_t e, int value) {
-    static_cast<Slider*>(unwrap_elem(e))->setValue(value);
+    auto* s = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    if (!s) return;
+    s->setValue(value);
 }
 
 void sdlgui_slider_set_range(sdlgui_element_t e, int min_val, int max_val) {
-    static_cast<Slider*>(unwrap_elem(e))->setRange(min_val, max_val);
+    auto* s = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    if (!s) return;
+    s->setRange(min_val, max_val);
 }
 
 int sdlgui_slider_get_min(sdlgui_element_t e) {
-    return static_cast<Slider*>(unwrap_elem(e))->getMin();
+    auto* s = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    return s ? s->getMin() : 0;
 }
 
 int sdlgui_slider_get_max(sdlgui_element_t e) {
-    return static_cast<Slider*>(unwrap_elem(e))->getMax();
+    auto* s = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    return s ? s->getMax() : 0;
 }
 
 void sdlgui_slider_set_min(sdlgui_element_t e, int min) {
-    static_cast<Slider*>(unwrap_elem(e))->setMin(min);
+    auto* s = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    if (!s) return;
+    s->setMin(min);
 }
 
 void sdlgui_slider_set_max(sdlgui_element_t e, int max) {
-    static_cast<Slider*>(unwrap_elem(e))->setMax(max);
+    auto* s = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    if (!s) return;
+    s->setMax(max);
 }
 
 void sdlgui_slider_set_wheel_step(sdlgui_element_t e, int step) {
-    static_cast<Slider*>(unwrap_elem(e))->setWheelStep(step);
+    auto* s = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    if (!s) return;
+    s->setWheelStep(step);
 }
 
 void sdlgui_slider_set_on_change(sdlgui_element_t e, sdlgui_callback_t cb, void* userdata) {
-    auto* sld = static_cast<Slider*>(unwrap_elem(e));
+    auto* sld = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    if (!sld) return;
     sld->setOnChangeCallback([cb, userdata](GUIElement* elem) {
         if (cb) cb(wrap_elem(elem), userdata);
     });
 }
 
 int sdlgui_slider_get_orientation(sdlgui_element_t e) {
-    return static_cast<Slider*>(unwrap_elem(e))->getOrientation() == Orientation::Vertical ? 1 : 0;
+    auto* s = checked_elem<Slider>(e, ComponentType::Slider, __func__);
+    if (!s) return 0;
+    return s->getOrientation() == Orientation::Vertical ? 1 : 0;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -580,15 +662,19 @@ sdlgui_element_t sdlgui_checkbox_create(sdlgui_t gui, sdlgui_element_t parent,
 }
 
 int sdlgui_checkbox_is_checked(sdlgui_element_t e) {
-    return static_cast<Checkbox*>(unwrap_elem(e))->isChecked() ? 1 : 0;
+    auto* c = checked_elem<Checkbox>(e, ComponentType::Checkbox, __func__);
+    return (c && c->isChecked()) ? 1 : 0;
 }
 
 void sdlgui_checkbox_set_checked(sdlgui_element_t e, int checked) {
-    static_cast<Checkbox*>(unwrap_elem(e))->setChecked(checked != 0);
+    auto* c = checked_elem<Checkbox>(e, ComponentType::Checkbox, __func__);
+    if (!c) return;
+    c->setChecked(checked != 0);
 }
 
 void sdlgui_checkbox_set_on_change(sdlgui_element_t e, sdlgui_bool_callback_t cb, void* userdata) {
-    auto* chk = static_cast<Checkbox*>(unwrap_elem(e));
+    auto* chk = checked_elem<Checkbox>(e, ComponentType::Checkbox, __func__);
+    if (!chk) return;
     chk->setOnChange([cb, userdata](Checkbox* element, bool value) {
         if (cb) cb(wrap_elem(element), value ? 1 : 0, userdata);
     });
@@ -606,33 +692,52 @@ sdlgui_element_t sdlgui_text_input_create(sdlgui_t gui, sdlgui_element_t parent,
 }
 
 void sdlgui_text_input_set_text(sdlgui_element_t e, const char* text) {
-    static_cast<TextInput*>(unwrap_elem(e))->setText(text ? text : "");
+    auto* ti = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (!ti) return;
+    ti->setText(text ? text : "");
 }
 
 const char* sdlgui_text_input_get_text(sdlgui_element_t e) {
-    return static_cast<TextInput*>(unwrap_elem(e))->getText().c_str();
+    // Legacy: pointer to internal storage. Prefer _buf variant.
+    auto* ti = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (!ti) return "";
+    return ti->getText().c_str();
+}
+
+size_t sdlgui_text_input_get_text_buf(sdlgui_element_t e, char* buf, size_t buf_len) {
+    auto* ti = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (!ti) {
+        if (buf && buf_len > 0) buf[0] = '\0';
+        return 0;
+    }
+    return copy_c_string(std::string(ti->getText()), buf, buf_len);
 }
 
 void sdlgui_text_input_set_on_text_changed(sdlgui_element_t e, sdlgui_callback_t cb, void* userdata) {
-    auto* ti = static_cast<TextInput*>(unwrap_elem(e));
+    auto* ti = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (!ti) return;
     ti->setOnTextChanged([cb, userdata](TextInput* elem) {
         if (cb) cb(wrap_elem(elem), userdata);
     });
 }
 
 void sdlgui_text_input_set_on_enter_pressed(sdlgui_element_t e, sdlgui_callback_t cb, void* userdata) {
-    auto* ti = static_cast<TextInput*>(unwrap_elem(e));
+    auto* ti = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (!ti) return;
     ti->setOnEnterPressed([cb, userdata](TextInput* elem) {
         if (cb) cb(wrap_elem(elem), userdata);
     });
 }
 
 void sdlgui_text_input_set_locked(sdlgui_element_t e, int locked) {
-    static_cast<TextInput*>(unwrap_elem(e))->setLocked(locked != 0);
+    auto* ti = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (!ti) return;
+    ti->setLocked(locked != 0);
 }
 
 int sdlgui_text_input_is_locked(sdlgui_element_t e) {
-    return static_cast<TextInput*>(unwrap_elem(e))->isLocked() ? 1 : 0;
+    auto* ti = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    return (ti && ti->isLocked()) ? 1 : 0;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -647,35 +752,65 @@ sdlgui_element_t sdlgui_list_view_create(sdlgui_t gui, sdlgui_element_t parent,
 }
 
 void sdlgui_list_view_add_item(sdlgui_element_t e, const char* item) {
-    static_cast<ListView*>(unwrap_elem(e))->addItem(item ? item : "");
+    auto* lv = checked_elem<ListView>(e, ComponentType::ListView, __func__);
+    if (!lv) return;
+    lv->addItem(item ? item : "");
 }
 
 void sdlgui_list_view_remove_item(sdlgui_element_t e, size_t index) {
-    static_cast<ListView*>(unwrap_elem(e))->removeItem(index);
+    auto* lv = checked_elem<ListView>(e, ComponentType::ListView, __func__);
+    if (!lv) return;
+    lv->removeItem(index);
 }
 
 void sdlgui_list_view_clear(sdlgui_element_t e) {
-    static_cast<ListView*>(unwrap_elem(e))->clearItems();
+    auto* lv = checked_elem<ListView>(e, ComponentType::ListView, __func__);
+    if (!lv) return;
+    lv->clearItems();
 }
 
 size_t sdlgui_list_view_get_item_count(sdlgui_element_t e) {
-    return static_cast<ListView*>(unwrap_elem(e))->getItemCount();
+    auto* lv = checked_elem<ListView>(e, ComponentType::ListView, __func__);
+    return lv ? lv->getItemCount() : 0;
 }
 
 const char* sdlgui_list_view_get_item_text(sdlgui_element_t e, size_t index) {
-    auto sv = static_cast<ListView*>(unwrap_elem(e))->getItem(index);
+    // Legacy: pointer to internal storage. Prefer _buf variant.
+    auto* lv = checked_elem<ListView>(e, ComponentType::ListView, __func__);
+    if (!lv) return "";
+    if (index >= lv->getItemCount()) {
+        set_c_error(std::string(__func__) + ": item index out of range");
+        return "";
+    }
+    auto sv = lv->getItem(index);
     return sv.data();
 }
 
+size_t sdlgui_list_view_get_item_text_buf(sdlgui_element_t e, size_t index, char* buf, size_t buf_len) {
+    auto* lv = checked_elem<ListView>(e, ComponentType::ListView, __func__);
+    if (!lv) {
+        if (buf && buf_len > 0) buf[0] = '\0';
+        return 0;
+    }
+    if (index >= lv->getItemCount()) {
+        set_c_error(std::string(__func__) + ": item index out of range");
+        if (buf && buf_len > 0) buf[0] = '\0';
+        return 0;
+    }
+    return copy_c_string(std::string(lv->getItem(index)), buf, buf_len);
+}
+
 void sdlgui_list_view_set_on_row_click(sdlgui_element_t e, sdlgui_size_callback_t cb, void* userdata) {
-    auto* lv = static_cast<ListView*>(unwrap_elem(e));
+    auto* lv = checked_elem<ListView>(e, ComponentType::ListView, __func__);
+    if (!lv) return;
     lv->setOnRowClick([cb, userdata](ListView* elem, size_t row) {
         if (cb) cb(wrap_elem(elem), row, userdata);
     });
 }
 
 void sdlgui_list_view_set_on_row_double_click(sdlgui_element_t e, sdlgui_size_callback_t cb, void* userdata) {
-    auto* lv = static_cast<ListView*>(unwrap_elem(e));
+    auto* lv = checked_elem<ListView>(e, ComponentType::ListView, __func__);
+    if (!lv) return;
     lv->setOnRowDoubleClick([cb, userdata](ListView* elem, size_t row) {
         if (cb) cb(wrap_elem(elem), row, userdata);
     });
@@ -801,31 +936,52 @@ sdlgui_element_t sdlgui_text_area_create(sdlgui_t gui, sdlgui_element_t parent,
 }
 
 void sdlgui_text_area_set_text(sdlgui_element_t e, const char* text) {
-    static_cast<TextArea*>(unwrap_elem(e))->setText(text ? text : "");
+    auto* ta = checked_elem<TextArea>(e, ComponentType::TextArea, __func__);
+    if (!ta) return;
+    ta->setText(text ? text : "");
 }
 
 const char* sdlgui_text_area_get_text(sdlgui_element_t e) {
-    return static_cast<TextArea*>(unwrap_elem(e))->getText().c_str();
+    // Legacy: pointer to internal storage. Prefer _buf variant.
+    auto* ta = checked_elem<TextArea>(e, ComponentType::TextArea, __func__);
+    if (!ta) return "";
+    return ta->getText().c_str();
+}
+
+size_t sdlgui_text_area_get_text_buf(sdlgui_element_t e, char* buf, size_t buf_len) {
+    auto* ta = checked_elem<TextArea>(e, ComponentType::TextArea, __func__);
+    if (!ta) {
+        if (buf && buf_len > 0) buf[0] = '\0';
+        return 0;
+    }
+    return copy_c_string(std::string(ta->getText()), buf, buf_len);
 }
 
 void sdlgui_text_area_set_word_wrap(sdlgui_element_t e, int wrap) {
-    static_cast<TextArea*>(unwrap_elem(e))->setWordWrap(wrap != 0);
+    auto* ta = checked_elem<TextArea>(e, ComponentType::TextArea, __func__);
+    if (!ta) return;
+    ta->setWordWrap(wrap != 0);
 }
 
 int sdlgui_text_area_get_word_wrap(sdlgui_element_t e) {
-    return static_cast<TextArea*>(unwrap_elem(e))->getWordWrap() ? 1 : 0;
+    auto* ta = checked_elem<TextArea>(e, ComponentType::TextArea, __func__);
+    return (ta && ta->getWordWrap()) ? 1 : 0;
 }
 
 void sdlgui_text_area_set_locked(sdlgui_element_t e, int locked) {
-    static_cast<TextArea*>(unwrap_elem(e))->setLocked(locked != 0);
+    auto* ta = checked_elem<TextArea>(e, ComponentType::TextArea, __func__);
+    if (!ta) return;
+    ta->setLocked(locked != 0);
 }
 
 int sdlgui_text_area_is_locked(sdlgui_element_t e) {
-    return static_cast<TextArea*>(unwrap_elem(e))->isLocked() ? 1 : 0;
+    auto* ta = checked_elem<TextArea>(e, ComponentType::TextArea, __func__);
+    return (ta && ta->isLocked()) ? 1 : 0;
 }
 
 void sdlgui_text_area_set_on_text_changed(sdlgui_element_t e, sdlgui_callback_t cb, void* userdata) {
-    auto* ta = static_cast<TextArea*>(unwrap_elem(e));
+    auto* ta = checked_elem<TextArea>(e, ComponentType::TextArea, __func__);
+    if (!ta) return;
     ta->setOnTextChanged([cb, userdata](TextArea* elem) {
         if (cb) cb(wrap_elem(elem), userdata);
     });
@@ -843,19 +999,29 @@ sdlgui_element_t sdlgui_combo_box_create(sdlgui_t gui, sdlgui_element_t parent,
 }
 
 void sdlgui_combo_box_add_item(sdlgui_element_t e, const char* item) {
-    static_cast<ComboBox*>(unwrap_elem(e))->addItem(item ? item : "");
+    auto* cb = checked_elem<ComboBox>(e, ComponentType::ComboBox, __func__);
+    if (!cb) return;
+    cb->addItem(item ? item : "");
 }
 
 void sdlgui_combo_box_clear(sdlgui_element_t e) {
-    static_cast<ComboBox*>(unwrap_elem(e))->clearItems();
+    auto* cb = checked_elem<ComboBox>(e, ComponentType::ComboBox, __func__);
+    if (!cb) return;
+    cb->clearItems();
 }
 
 size_t sdlgui_combo_box_get_item_count(sdlgui_element_t e) {
-    return static_cast<ComboBox*>(unwrap_elem(e))->getItemCount();
+    auto* cb = checked_elem<ComboBox>(e, ComponentType::ComboBox, __func__);
+    return cb ? cb->getItemCount() : 0;
 }
 
 const char* sdlgui_combo_box_get_item_text(sdlgui_element_t e, size_t index) {
-    auto* cb = static_cast<ComboBox*>(unwrap_elem(e));
+    auto* cb = checked_elem<ComboBox>(e, ComponentType::ComboBox, __func__);
+    if (!cb) return "";
+    if (index >= cb->getItemCount()) {
+        set_c_error(std::string(__func__) + ": item index out of range");
+        return "";
+    }
     auto item = cb->getItem(index);  /* returns by value — c_str() safe until next set/get on same cb */
     /* Note: returning stale .c_str() from temporary — caller must use immediately */
     static thread_local std::string cached;
@@ -863,17 +1029,35 @@ const char* sdlgui_combo_box_get_item_text(sdlgui_element_t e, size_t index) {
     return cached.c_str();
 }
 
+size_t sdlgui_combo_box_get_item_text_buf(sdlgui_element_t e, size_t index, char* buf, size_t buf_len) {
+    auto* cb = checked_elem<ComboBox>(e, ComponentType::ComboBox, __func__);
+    if (!cb) {
+        if (buf && buf_len > 0) buf[0] = '\0';
+        return 0;
+    }
+    if (index >= cb->getItemCount()) {
+        set_c_error(std::string(__func__) + ": item index out of range");
+        if (buf && buf_len > 0) buf[0] = '\0';
+        return 0;
+    }
+    return copy_c_string(std::string(cb->getItem(index)), buf, buf_len);
+}
+
 int sdlgui_combo_box_get_selected_index(sdlgui_element_t e) {
-    return static_cast<ComboBox*>(unwrap_elem(e))->getSelectedIndex();
+    auto* cb = checked_elem<ComboBox>(e, ComponentType::ComboBox, __func__);
+    return cb ? cb->getSelectedIndex() : -1;
 }
 
 void sdlgui_combo_box_set_selected_index(sdlgui_element_t e, int index) {
-    static_cast<ComboBox*>(unwrap_elem(e))->setSelectedIndex(index);
+    auto* cb = checked_elem<ComboBox>(e, ComponentType::ComboBox, __func__);
+    if (!cb) return;
+    cb->setSelectedIndex(index);
 }
 
 void sdlgui_combo_box_set_on_select(sdlgui_element_t e,
                                     sdlgui_index_text_callback_t cb, void* userdata) {
-    auto* combo = static_cast<ComboBox*>(unwrap_elem(e));
+    auto* combo = checked_elem<ComboBox>(e, ComponentType::ComboBox, __func__);
+    if (!combo) return;
     combo->on_selection_changed = [cb, userdata](int index, const std::string& text) {
         if (cb) cb(wrap_elem(nullptr), index, text.c_str(), userdata);
     };
@@ -1342,6 +1526,45 @@ void sdlgui_shader_panel_set_uniform_time(sdlgui_element_t e, float time) {
 
 void sdlgui_shader_panel_set_uniform_mouse(sdlgui_element_t e, float x, float y) {
     static_cast<ShaderPanel*>(unwrap_elem(e))->setUniformMouse(x, y);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Point 5: Lifetime + WidgetFactory boundary API
+   ═══════════════════════════════════════════════════════════════════ */
+
+const char* sdlgui_last_error(void) {
+    return g_lastError.c_str();
+}
+
+int sdlgui_element_is_alive(sdlgui_t gui, sdlgui_element_t e) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx || !e) return 0;
+    return ctx->getGUIManager().isElementAlive(unwrap_elem(e)) ? 1 : 0;
+}
+
+sdlgui_element_t sdlgui_create_widget(sdlgui_t gui, sdlgui_element_t parent,
+                                      const char* type, int x, int y, int w, int h) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_create_widget: null context");
+        return nullptr;
+    }
+    if (!type || !WidgetFactory::isKnownType(type)) {
+        set_c_error(std::string("sdlgui_create_widget: unknown widget type '") +
+                    (type ? type : "(null)") + "'");
+        return nullptr;
+    }
+    WidgetProps props;
+    props.x = x;
+    props.y = y;
+    props.w = w;
+    props.h = h;
+    auto widget = WidgetFactory::create(ctx->getGUIManager(), type, props);
+    if (!widget) {
+        set_c_error(std::string("sdlgui_create_widget: factory failed for '") + type + "'");
+        return nullptr;
+    }
+    return add_element(ctx, parent, std::move(widget));
 }
 
 } // extern "C"

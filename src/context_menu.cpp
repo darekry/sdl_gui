@@ -53,12 +53,9 @@ void ContextMenu::hide() {
     // inside this menu, release it — otherwise GUIManager::render keeps painting
     // the item through the focus-overlay pass even though the menu is hidden
     // (ghost button with a focus outline, gone only after clicking elsewhere).
-    GUIElement* focused = m_manager.getKeyboardFocus();
-    for (GUIElement* e = focused; e != nullptr; e = e->getParent()) {
-        if (e == this) {
-            m_manager.setKeyboardFocus(nullptr);
-            break;
-        }
+    // isFocusInside() is handle-based: safe even if the focused element died.
+    if (m_manager.isFocusInside(this)) {
+        m_manager.setKeyboardFocus(nullptr);
     }
     setVisible(false);
     m_panel->setVisible(false);

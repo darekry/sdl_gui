@@ -743,6 +743,47 @@ int  sdlgui_shader_panel_is_shader_enabled(sdlgui_element_t e);
 void sdlgui_shader_panel_set_uniform_time(sdlgui_element_t e, float time);
 void sdlgui_shader_panel_set_uniform_mouse(sdlgui_element_t e, float x, float y);
 
+/* ═══════════════════════════════════════════════════════════════════
+   Point 5: Lifetime + WidgetFactory boundary API
+   ═══════════════════════════════════════════════════════════════════ */
+
+/*
+ * Last error string from a checked API call (type mismatch, null handle,
+ * unknown widget type, index out of range). Empty when the last call
+ * succeeded. Thread-local; valid until the next failing call on this thread.
+ */
+const char*      sdlgui_last_error(void);
+
+/*
+ * Non-zero when the element handle is still registered with the GUI
+ * (generational check — safe against address reuse after destroy).
+ */
+int              sdlgui_element_is_alive(sdlgui_t gui, sdlgui_element_t e);
+
+/*
+ * Generic widget creation through the shared WidgetFactory registry.
+ * type is one of: Panel, Button, Label, Checkbox, RadioButton, RadioGroup,
+ * Slider, RangeSlider, StringGrid, ListView, TextInput, TextArea, ComboBox,
+ * TabControl, AnimatedImage, Canvas, ProgressBar, ScrollArea, ArcContainer.
+ * Returns NULL + sdlgui_last_error() on unknown type. Widgets are created
+ * with default props — configure afterwards with the type-specific API.
+ */
+sdlgui_element_t sdlgui_create_widget(sdlgui_t gui, sdlgui_element_t parent,
+                                      const char* type, int x, int y, int w, int h);
+
+/*
+ * Caller-buffer string getters — the fix for dangling c_str() pointers.
+ * Copy into buf (NUL-terminated, truncated when too small) and return bytes
+ * written excluding NUL. Never return internal pointers.
+ */
+size_t           sdlgui_label_get_text_buf(sdlgui_element_t e, char* buf, size_t buf_len);
+size_t           sdlgui_text_input_get_text_buf(sdlgui_element_t e, char* buf, size_t buf_len);
+size_t           sdlgui_text_area_get_text_buf(sdlgui_element_t e, char* buf, size_t buf_len);
+size_t           sdlgui_list_view_get_item_text_buf(sdlgui_element_t e, size_t index,
+                                                   char* buf, size_t buf_len);
+size_t           sdlgui_combo_box_get_item_text_buf(sdlgui_element_t e, size_t index,
+                                                   char* buf, size_t buf_len);
+
 #ifdef __cplusplus
 }
 #endif
