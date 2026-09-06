@@ -37,7 +37,18 @@ public:
     
     void setOnStateChanged(std::function<void(CursorState)> callback);
 
-    bool handleEvent(const SDL_Event& event) override;
+    /**
+     * @brief Mouse-position service feed (point 1c).
+     *
+     * The cursor is NOT an event consumer: GUIManager calls updatePosition()
+     * once per mouse event (top of processEvent), covering propagation,
+     * capture and unconsumed paths from a single site. Any mouse event
+     * (motion or button) refreshes the position — one source of truth.
+     */
+    void updatePosition(const SDL_Event& event);
+    void getPosition(int& mouseX, int& mouseY) const;
+    void render(SDL_Renderer* renderer);
+
     ComponentType getComponentTypeId() const override;
     void setVisible(bool visible);
     bool isOverlay() const override { return true; }

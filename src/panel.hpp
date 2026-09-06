@@ -5,7 +5,7 @@ class Panel : public GUIElement {
 public:
     Panel(GUIManager& manager, int x, int y, int width, int height);
     Panel(GUIManager& manager, SDL_Rect rect);
-    bool handleEvent(const SDL_Event& event) override;
+    bool handleSelf(const SDL_Event& event) override;
     void setDraggable(bool draggable);
 
     ComponentType getComponentTypeId() const override;

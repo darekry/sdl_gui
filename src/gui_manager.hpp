@@ -124,7 +124,14 @@ public:
     void captureMouse(GUIElement* element);
     void releaseMouse();
     [[nodiscard]] GUIElement* getMouseCapture() const;
+    // Mechanical setter: assigns focus unconditionally (clears with nullptr).
     void setKeyboardFocus(GUIElement* element);
+    /**
+     * @brief Focus policy (point 1b): the only way for widgets to TAKE focus.
+     * Grants focus only to registered, focusable, enabled, visible elements;
+     * nullptr always clears. Returns true when focus was assigned.
+     */
+    bool requestFocus(GUIElement* element);
     [[nodiscard]] GUIElement* getKeyboardFocus() const;
     // True when the focused element is this element or one of its descendants.
     // Used by overlays (e.g. ContextMenu::hide) instead of walking parents

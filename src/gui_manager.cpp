@@ -70,14 +70,30 @@ std::unique_ptr<GUIElement> GUIManager::detachElement(GUIElement* element) {
 }
 
 bool GUIManager::processEvent(const SDL_Event& event) {
+    // Mouse position service (point 1c): single feed for the cursor, first in
+    // the pipeline — covers propagation, capture and unconsumed paths alike.
+    if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+        if (cursor) cursor->updatePosition(event);
+    }
+
     // 1. Mouse events
     if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
         if (GUIElement* capture = getMouseCapture()) {
             // If an element captured the mouse, send events only to it.
             // A destroyed capture target resolves to null, so this branch
             // is simply skipped — no dangling call.
-            if (cursor) cursor->handleEvent(event); /* cursor overlay tracks position even during capture */
-            return capture->handleEvent(event);
+            // NOTE (1c): cursor position is fed centrally at the top of
+            // processEvent, so no cursor forward is needed here.
+            bool consumed = capture->handleEvent(event);
+            // PointerCapture autoReleaseOnUp (point 1b): the capture ends with
+            // the left-button release even if the owner forgot releaseMouse().
+            // The owner's own release (if any) ran first and notified; this
+            // second release only fires onMouseCaptureLost when the owner
+            // never released.
+            if (event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
+                releaseMouse();
+            }
+            return consumed;
         }
     }
     // 2. Keyboard events
@@ -105,13 +121,17 @@ bool GUIManager::processEvent(const SDL_Event& event) {
         }
     }
 
-    // Special handling for clicks outside focused elements
+    // Special handling for clicks outside focused elements.
+    // Focusability-aware (point 1b): a click keeps focus only when the deep
+    // hit-test lands on the focused subtree or on an element that can take
+    // focus (walking up from the deepest hit, so Button-with-Label counts).
+    // Clicks on inert widgets (Panel/Label/...) clear focus — this replaces
+    // the per-widget outside-click handlers (TextArea).
     if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && getKeyboardFocus()) {
+        GUIElement* hit = findElementAt(event.button.x, event.button.y);
         bool click_on_focusable = false;
-        for (auto it = m_elements.rbegin(); it != m_elements.rend(); ++it) {
-            if ((*it)->contains(event.button.x, event.button.y)) {
-                // This is a simplification; ideally we would check whether the clicked element
-                // can actually receive focus.
+        for (GUIElement* cur = hit; cur; cur = cur->getParent()) {
+            if (cur->canGetKeyboardFocus()) {
                 click_on_focusable = true;
                 break;
             }
@@ -119,10 +139,6 @@ bool GUIManager::processEvent(const SDL_Event& event) {
         if (!click_on_focusable) {
             setKeyboardFocus(nullptr);
         }
-    }
-
-    if (cursor) {
-        cursor->handleEvent(event);
     }
 
     return false;
@@ -169,7 +185,7 @@ void GUIManager::render() {
     }
 
     if (cursor) {
-        cursor->renderOverlay(m_renderer);
+        cursor->render(m_renderer);
     }
 }
 
@@ -372,6 +388,18 @@ void GUIManager::setKeyboardFocus(GUIElement* element) {
     if (element) {
         element->onFocusGained();
     }
+}
+
+bool GUIManager::requestFocus(GUIElement* element) {
+    if (!element) {
+        setKeyboardFocus(nullptr);
+        return true;
+    }
+    if (!element->canGetKeyboardFocus() || !element->isEnabled() || !element->isVisible() || !isElementAlive(element)) {
+        return false;
+    }
+    setKeyboardFocus(element);
+    return true;
 }
 
 GUIElement* GUIManager::getKeyboardFocus() const {

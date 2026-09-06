@@ -24,7 +24,7 @@ void Checkbox::setOnChange(OnChangeCallback callback) {
     m_onChange = std::move(callback);
 }
 
-bool Checkbox::handleEvent(const SDL_Event& e) {
+bool Checkbox::handleSelf(const SDL_Event& e) {
     if (!m_enabled || !m_visible) {
         return false;
     }
@@ -32,7 +32,7 @@ bool Checkbox::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
         setState(ElementState::Pressed);
         m_manager.captureMouse(this);
-        m_manager.setKeyboardFocus(this);
+        m_manager.requestFocus(this);
         return true;
     }
 

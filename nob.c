@@ -11,6 +11,7 @@
 #define OUTPUT_DIR "output"
 #define DIST_DIR "dist"
 #define TESTS_DIR "tests"
+#define BENCH_DIR "bench"
 #define LIB_DIR "lib"
 #define MODULE_CACHE_DIR "modules_cache"
 #define EXAMPLES_DIR "examples"
@@ -1532,6 +1533,66 @@ static bool build_non_unity(bool release) {
     return true;
 }
 
+// ========== BENCH ==========
+
+// Synthetic GUI benchmark on a REAL window (see bench/bench_gui.cpp).
+// Builds output/bench_gui; run it directly, e.g.:
+//   ./output/bench_gui --widgets 200 --seconds 5
+//   ./output/bench_gui --sweep --seconds 5 --save bench_baseline.json
+//   ./output/bench_gui --compare bench_baseline.json
+static bool build_bench(bool release) {
+    nob_mkdir_if_not_exists(OUTPUT_DIR);
+    init_globals();
+
+    if (!build_unity_object(release, false)) return false;
+
+    Nob_File_Paths embedded_objects = {0};
+    if (!build_embedded_assets(&embedded_objects, release)) return false;
+
+    Nob_File_Paths shader_objects = {0};
+    if (!build_gpu_shaders(&shader_objects, release)) return false;
+
+    const char *src = BENCH_DIR "/bench_gui.cpp";
+    const char *exe = OUTPUT_DIR "/bench_gui";
+    const char *unity_obj = OUTPUT_DIR "/all.o";
+
+    Nob_File_Paths inputs = {0};
+    nob_da_append(&inputs, src);
+    nob_da_append(&inputs, unity_obj);
+    for (size_t ei = 0; ei < embedded_objects.count; ei++) {
+        nob_da_append(&inputs, embedded_objects.items[ei]);
+    }
+    for (size_t si = 0; si < shader_objects.count; si++) {
+        nob_da_append(&inputs, shader_objects.items[si]);
+    }
+
+    if (nob_needs_rebuild(exe, inputs.items, inputs.count) > 0) {
+        Nob_Cmd cmd = {0};
+        nob_cmd_append(&cmd, CXX);
+        cmd_add_common(&cmd);
+        cmd_add_mode(&cmd, release);
+        cmd_add_modules(&cmd, release);
+        nob_cmd_append(&cmd, "-o", exe, src, unity_obj);
+        nob_da_foreach(const char*, obj, &embedded_objects) {
+            nob_cmd_append(&cmd, *obj);
+        }
+        nob_da_foreach(const char*, obj, &shader_objects) {
+            nob_cmd_append(&cmd, *obj);
+        }
+        cmd_add_sdl3(&cmd);
+
+        nob_compdb_add(&g_compdb, &cmd, src, .output = exe);
+
+        nob_da_free(inputs);
+        if (!nob_cmd_run(&cmd)) return false;
+    } else {
+        nob_da_free(inputs);
+    }
+
+    nob_log(INFO, "Bench ready: %s", exe);
+    return true;
+}
+
 // ========== CLEAN ==========
 
 static void clean(void) {
@@ -1561,12 +1622,13 @@ int main(int argc, char **argv) {
         else if (strcmp(arg, "clean") == 0) target = "clean";
         else if (strcmp(arg, "non_unity") == 0) target = "non_unity";
         else if (strcmp(arg, "examples") == 0) target = "examples";
+        else if (strcmp(arg, "bench") == 0) target = "bench";
         else if (strcmp(arg, "-r") == 0 || strcmp(arg, "--release") == 0) {
             release = true;
             if (argc > 2) target = argv[2];
         } else {
             nob_log(ERROR, "Unknown target: %s", arg);
-            nob_log(INFO, "Targets: examples, test, release, clean, non_unity");
+            nob_log(INFO, "Targets: examples, test, bench, release, clean, non_unity");
             return 1;
         }
     }
@@ -1574,6 +1636,7 @@ int main(int argc, char **argv) {
     bool ok = false;
     if (strcmp(target, "examples") == 0) ok = build_examples(release);
     else if (strcmp(target, "test") == 0) { ok = build_tests(release, test_filter); if (ok) ok = run_tests(test_filter); }
+    else if (strcmp(target, "bench") == 0) ok = build_bench(release);
     else if (strcmp(target, "release") == 0) ok = build_release();
     else if (strcmp(target, "clean") == 0) { clean(); ok = true; }
     else if (strcmp(target, "non_unity") == 0) ok = build_non_unity(release);

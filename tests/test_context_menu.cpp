@@ -2,6 +2,7 @@
 
 #include "test_helper.hpp"
 #include "../src/context_menu.hpp"
+#include "../src/text_input.hpp"
 #include "../src/gui_manager.hpp"
 
 TEST_CASE("ContextMenu functionality", "[context_menu]") {
@@ -154,4 +155,31 @@ TEST_CASE("GUIManager shared context menu", "[context_menu][manager]") {
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 400, 300));
         REQUIRE_FALSE(manager.isContextMenuVisible());
     }
+}
+
+TEST_CASE("ContextMenu FocusScope restores pre-show focus (1b)", "[context_menu][focus]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
+    TextInput* field = input.get();
+    manager.addElement(std::move(input));
+
+    // Focus the text field, then open the shared menu elsewhere.
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
+    REQUIRE(manager.getKeyboardFocus() == field);
+
+    bool fired = false;
+    manager.showContextMenu({ContextMenuItem("Do", [&]() { fired = true; })}, 400, 100);
+    REQUIRE(manager.isContextMenuVisible());
+
+    // Click the first item: Button DOWN steals focus, UP fires + closes.
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 410, 110));
+    REQUIRE(manager.getKeyboardFocus() != field);
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 410, 110));
+    REQUIRE(fired);
+    REQUIRE_FALSE(manager.isContextMenuVisible());
+    // FocusScope pop: focus is back on the field, no ghost overlay.
+    REQUIRE(manager.getKeyboardFocus() == field);
 }

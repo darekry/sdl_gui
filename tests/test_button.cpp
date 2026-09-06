@@ -162,11 +162,13 @@ TEST_CASE("Button disabled state", "[button]") {
     button->setOnClickCallback([&](GUIElement*) { ++clickCount; });
     manager.addElement(std::move(button));
 
-    SECTION("Disabled button ignores mouse motion (state unchanged)") {
+    SECTION("Disabled button ignores mouse motion (no hover/press)") {
         REQUIRE(btn->getState() == ElementState::Normal);
         btn->setEnabled(false);
         manager.processEvent(helper.createMouseMotion(20, 20));
-        REQUIRE(btn->getState() == ElementState::Normal);
+        // Point 1 unification: base handleEvent() marks Disabled on any event
+        // (same as Panel/Slider/...); the button no longer keeps Normal.
+        REQUIRE(btn->getState() == ElementState::Disabled);
     }
 
     SECTION("Disabled button ignores click") {
@@ -181,7 +183,7 @@ TEST_CASE("Button disabled state", "[button]") {
     SECTION("setEnabled(true) allows interactions again") {
         btn->setEnabled(false);
         manager.processEvent(helper.createMouseMotion(20, 20));
-        REQUIRE(btn->getState() == ElementState::Normal);
+        REQUIRE(btn->getState() == ElementState::Disabled);
 
         btn->setEnabled(true);
         manager.processEvent(helper.createMouseMotion(20, 20));

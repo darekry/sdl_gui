@@ -2,6 +2,7 @@
 
 #include "test_helper.hpp"
 #include "../src/cursor.hpp"
+#include "../src/button.hpp"
 #include "../src/gui_manager.hpp"
 
 TEST_CASE("Cursor - Construction", "[cursor]") {
@@ -411,31 +412,59 @@ TEST_CASE("Cursor - Cursor Texture Setup", "[cursor][texture]") {
     }
 }
 
-TEST_CASE("Cursor - Event Handling", "[cursor][events]") {
+TEST_CASE("Cursor - Position Service", "[cursor][events]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("handleEvent returns false for mouse motion") {
+    SECTION("updatePosition tracks mouse motion") {
         auto cursor = std::make_unique<Cursor>(manager);
         Cursor* cursorPtr = cursor.get();
         manager.addElement(std::move(cursor));
 
         SDL_Event event = helper.createMouseMotion(100, 100);
-        bool handled = cursorPtr->handleEvent(event);
+        cursorPtr->updatePosition(event);
 
-        // Cursor doesn't consume events - it's an overlay
-        REQUIRE(handled == false);
+        int x = -1, y = -1;
+        cursorPtr->getPosition(x, y);
+        REQUIRE(x == 100);
+        REQUIRE(y == 100);
     }
 
-    SECTION("handleEvent returns false for mouse button") {
+    SECTION("updatePosition tracks button press (single source, buttons included)") {
         auto cursor = std::make_unique<Cursor>(manager);
         Cursor* cursorPtr = cursor.get();
         manager.addElement(std::move(cursor));
 
-        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 100, 100);
-        bool handled = cursorPtr->handleEvent(event);
+        SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 50, 60);
+        cursorPtr->updatePosition(event);
 
-        REQUIRE(handled == false);
+        int x = -1, y = -1;
+        cursorPtr->getPosition(x, y);
+        REQUIRE(x == 50);
+        REQUIRE(y == 60);
+    }
+
+    SECTION("manager feeds cursor centrally, also during mouse capture") {
+        auto cursor = std::make_unique<Cursor>(manager);
+        Cursor* cursorPtr = cursor.get();
+        manager.setCursor(std::move(cursor));
+
+        // Button press captures the mouse; the cursor must still track.
+        auto button = std::make_unique<Button>(manager, 10, 10, 100, 40, "Cap");
+        manager.addElement(std::move(button));
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        REQUIRE(manager.getMouseCapture() != nullptr);
+        manager.processEvent(helper.createMouseMotion(300, 250));
+
+        int x = -1, y = -1;
+        cursorPtr->getPosition(x, y);
+        REQUIRE(x == 300);
+        REQUIRE(y == 250);
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 300, 250));
+        // PointerCapture autoReleaseOnUp (1b): capture ends with the release.
+        REQUIRE(manager.getMouseCapture() == nullptr);
     }
 }
 

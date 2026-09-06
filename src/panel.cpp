@@ -15,19 +15,13 @@ void Panel::setDraggable(bool draggable) {
     m_is_draggable = draggable;
 }
 
-bool Panel::handleEvent(const SDL_Event& event) {
+bool Panel::handleSelf(const SDL_Event& event) {
     if (!m_visible) {
         return false;
     }
 
-    // Forward the event to children. If one handles it, do nothing more.
-    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        if ((*it)->handleEvent(event)) {
-            return true;
-        }
-    }
-
     // Drag logic - only active if no child handled the event
+    // (children already ran in propagateToChildren before this hook).
     if (m_is_draggable) {
         if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button == SDL_BUTTON_LEFT && contains(event.button.x, event.button.y)) {
             m_is_dragging = true;
@@ -53,25 +47,9 @@ bool Panel::handleEvent(const SDL_Event& event) {
         return true;
     }
 
-    // Hover check - only when NOT dragging
-    if (!m_is_dragging && event.type == SDL_EVENT_MOUSE_MOTION) {
-        int mouseX = static_cast<int>(event.motion.x);
-        int mouseY = static_cast<int>(event.motion.y);
-        bool currentlyHovered = contains(mouseX, mouseY);
-
-        if (currentlyHovered && !m_isHovered) {
-            m_isHovered = true;
-            setState(ElementState::Hover);
-        } else if (!currentlyHovered && m_isHovered) {
-            m_isHovered = false;
-            setState(ElementState::Normal);
-        }
-        processHoverTooltip(currentlyHovered);
-    }
-    
-    processButtonEvent(event);
-    
-    return false;
+    // Hover + press state: shared base implementation (was a hand-rolled
+    // hover block + processButtonEvent here).
+    return GUIElement::handleSelf(event);
 }
 
 ComponentType Panel::getComponentTypeId() const {

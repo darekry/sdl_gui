@@ -57,4 +57,8 @@ private:
     bool m_needsUpdate = true;
     const int m_itemHeight = 25;
     const int m_separatorHeight = 8;
+    // FocusScope (point 1b): focus to restore on hide. Snapshotted on show —
+    // but only when focus is NOT already inside the menu — as a generational
+    // handle, so a destroyed target restores to null instead of dangling.
+    ElementHandle m_returnFocus;
 };

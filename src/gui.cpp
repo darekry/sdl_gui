@@ -297,10 +297,8 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
         return false;
     }
 
-    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        if ((*it)->handleEvent(e)) {
-            return true;
-        }
+    if (propagateToChildren(e)) {
+        return true;
     }
 
     if (!m_enabled) {
@@ -308,11 +306,9 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
         return false;
     }
 
-    if (e.type == SDL_EVENT_MOUSE_MOTION) {
-        processHoverTooltip(contains(e.motion.x, e.motion.y));
+    if (handleSelf(e)) {
+        return true;
     }
-
-    processButtonEvent(e);
 
     // Right click: fire the callback and consume the event so that
     // ancestors along the DFS path do not fire their own callbacks too.
@@ -321,6 +317,27 @@ bool GUIElement::handleEvent(const SDL_Event& e) {
     }
 
     return false;
+}
+
+bool GUIElement::propagateToChildren(const SDL_Event& e) {
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+        if ((*it)->handleEvent(e)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool GUIElement::handleSelf(const SDL_Event& e) {
+    updateHoverState(e);
+    processButtonEvent(e);
+    return false;
+}
+
+void GUIElement::updateHoverState(const SDL_Event& e) {
+    if (e.type == SDL_EVENT_MOUSE_MOTION) {
+        processHoverTooltip(contains(e.motion.x, e.motion.y));
+    }
 }
 
 bool GUIElement::processRightClick(const SDL_Event& e) {
@@ -332,9 +349,16 @@ bool GUIElement::processRightClick(const SDL_Event& e) {
 }
 
 void GUIElement::processButtonEvent(const SDL_Event& e) {
-    bool mouseInside = m_isHovered || (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && contains(e.button.x, e.button.y)) ||
-                       (e.type == SDL_EVENT_MOUSE_BUTTON_UP && contains(e.button.x, e.button.y));
-    
+    // Position straight from the event (SDL3 carries x/y), never from the
+    // stale m_isHovered flag (set on MOTION only). Non-mouse events keep the
+    // old hover-based behavior.
+    bool mouseInside = m_isHovered;
+    if (e.type == SDL_EVENT_MOUSE_MOTION) {
+        mouseInside = contains(e.motion.x, e.motion.y);
+    } else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+        mouseInside = contains(e.button.x, e.button.y);
+    }
+
     if (mouseInside) {
         if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
             setState(ElementState::Pressed);

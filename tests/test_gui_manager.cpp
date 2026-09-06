@@ -747,3 +747,80 @@ TEST_CASE("GUIManager Constructor", "[gui_manager][constructor]") {
         REQUIRE_NOTHROW(theme.getDefaultStyle());
     }
 }
+TEST_CASE("GUIManager requestFocus policy (1b)", "[gui_manager][focus]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("grants focus to focusable enabled visible widget") {
+        auto btn = std::make_unique<Button>(manager, 10, 10, 100, 40, "F");
+        Button* raw = btn.get();
+        manager.addElement(std::move(btn));
+        REQUIRE(manager.requestFocus(raw));
+        REQUIRE(manager.getKeyboardFocus() == raw);
+    }
+
+    SECTION("rejects disabled widget, focus unchanged") {
+        auto btn = std::make_unique<Button>(manager, 10, 10, 100, 40, "D");
+        Button* raw = btn.get();
+        raw->setEnabled(false);
+        manager.addElement(std::move(btn));
+        REQUIRE_FALSE(manager.requestFocus(raw));
+        REQUIRE(manager.getKeyboardFocus() == nullptr);
+    }
+
+    SECTION("rejects non-focusable widget and invisible widget") {
+        auto panel = std::make_unique<Panel>(manager, 10, 10, 100, 40);
+        Panel* praw = panel.get();
+        manager.addElement(std::move(panel));
+        REQUIRE_FALSE(manager.requestFocus(praw));
+
+        auto btn = std::make_unique<Button>(manager, 200, 10, 100, 40, "H");
+        Button* braw = btn.get();
+        braw->setVisible(false);
+        manager.addElement(std::move(btn));
+        REQUIRE_FALSE(manager.requestFocus(braw));
+        REQUIRE(manager.getKeyboardFocus() == nullptr);
+    }
+
+    SECTION("nullptr clears focus") {
+        auto btn = std::make_unique<Button>(manager, 10, 10, 100, 40, "C");
+        Button* raw = btn.get();
+        manager.addElement(std::move(btn));
+        REQUIRE(manager.requestFocus(raw));
+        REQUIRE(manager.requestFocus(nullptr));
+        REQUIRE(manager.getKeyboardFocus() == nullptr);
+    }
+
+    SECTION("click on inert panel clears text field focus (unified click-outside)") {
+        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
+        TextInput* iraw = input.get();
+        manager.addElement(std::move(input));
+        auto panel = std::make_unique<Panel>(manager, 10, 100, 200, 100);
+        manager.addElement(std::move(panel));
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
+        REQUIRE(manager.getKeyboardFocus() == iraw);
+
+        // Click on the inert panel: no focusable hit -> focus cleared.
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 120));
+        REQUIRE(manager.getKeyboardFocus() == nullptr);
+    }
+
+    SECTION("click on button moves focus to the button") {
+        auto input = std::make_unique<TextInput>(manager, 10, 10, 200, 30);
+        TextInput* iraw = input.get();
+        manager.addElement(std::move(input));
+        auto btn = std::make_unique<Button>(manager, 10, 100, 200, 40, "B");
+        Button* braw = btn.get();
+        manager.addElement(std::move(btn));
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 20));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 20));
+        REQUIRE(manager.getKeyboardFocus() == iraw);
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 20, 110));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 20, 110));
+        REQUIRE(manager.getKeyboardFocus() == braw);
+    }
+}

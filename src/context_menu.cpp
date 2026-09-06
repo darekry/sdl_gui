@@ -36,6 +36,11 @@ void ContextMenu::clearItems() {
 }
 
 void ContextMenu::showAt(int x, int y) {
+    // FocusScope push: remember where to return on hide. Skip when focus is
+    // already inside (re-show while interacting keeps the original target).
+    if (!m_manager.isFocusInside(this)) {
+        m_returnFocus = m_manager.getHandle(m_manager.getKeyboardFocus());
+    }
     positionMenu(x, y);
     setVisible(true);
     m_panel->setVisible(true);
@@ -49,14 +54,18 @@ void ContextMenu::showAt(int x, int y) {
 }
 
 void ContextMenu::hide() {
-    // The clicked item grabbed keyboard focus on BUTTON_DOWN. If focus is still
-    // inside this menu, release it — otherwise GUIManager::render keeps painting
-    // the item through the focus-overlay pass even though the menu is hidden
-    // (ghost button with a focus outline, gone only after clicking elsewhere).
-    // isFocusInside() is handle-based: safe even if the focused element died.
+    // FocusScope pop with auto-restore (point 1b): the clicked item grabbed
+    // keyboard focus on BUTTON_DOWN. If focus is still inside this menu, hand
+    // it back to the pre-show target instead of dropping it — otherwise
+    // GUIManager::render keeps painting the item through the focus-overlay
+    // pass even though the menu is hidden (ghost button with a focus outline,
+    // gone only after clicking elsewhere). The handle self-nulls when the
+    // target died, so restore degrades to a plain clear. Focus from outside
+    // the menu (e.g. a text field the user kept typing in) is never touched.
     if (m_manager.isFocusInside(this)) {
-        m_manager.setKeyboardFocus(nullptr);
+        m_manager.setKeyboardFocus(m_manager.resolve(m_returnFocus));
     }
+    m_returnFocus.reset();
     setVisible(false);
     m_panel->setVisible(false);
     markDirty();

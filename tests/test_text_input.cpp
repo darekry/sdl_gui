@@ -629,7 +629,7 @@ TEST_CASE("TextInput - Hidden State", "[text_input]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
 
-    SECTION("Hidden TextInput still receives focus (visibility not checked in handleEvent)") {
+    SECTION("Hidden TextInput ignores clicks (unified with TextArea/base, 1b)") {
         auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
         TextInput* input = ti.get();
         input->setVisible(false);
@@ -637,10 +637,10 @@ TEST_CASE("TextInput - Hidden State", "[text_input]") {
 
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
 
-        REQUIRE(input->hasKeyboardFocus());
+        REQUIRE_FALSE(input->hasKeyboardFocus());
     }
 
-    SECTION("Hidden TextInput can receive text input when focused") {
+    SECTION("Hidden TextInput ignores text input") {
         auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
         TextInput* input = ti.get();
         input->setVisible(false);
@@ -649,6 +649,20 @@ TEST_CASE("TextInput - Hidden State", "[text_input]") {
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
         manager.processEvent(helper.createTextInputEvent("X"));
 
+        REQUIRE(input->getText().empty());
+    }
+
+    SECTION("Hidden TextInput works again after setVisible(true)") {
+        auto ti = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+        TextInput* input = ti.get();
+        input->setVisible(false);
+        manager.addElement(std::move(ti));
+
+        input->setVisible(true);
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
+        REQUIRE(input->hasKeyboardFocus());
+
+        manager.processEvent(helper.createTextInputEvent("X"));
         REQUIRE(input->getText() == "X");
     }
 }

@@ -121,7 +121,7 @@ int main(int, char**) {
 
 ## Uwagi
 
-- **Edycja wymaga fokusu**: kliknięcie ustawia fokus (`setKeyboardFocus`),
+- **Edycja wymaga fokusu**: kliknięcie ustawia fokus (`requestFocus`),
   po utracie fokusu (Tab, kliknięcie gdzie indziej) pole przestaje przyjmować
   tekst, a kursora nie ma. Fokus wizualnie zaznacza obwódka.
 - **Enter nie tworzy nowej linii** — to pole jednolinijkowe; naciśnięcie Enter

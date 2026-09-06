@@ -35,21 +35,15 @@ void Button::setOnMouseOverCallback(OnMouseOverCallback callback) {
     m_onMouseOver = std::move(callback);
 }
 
-bool Button::handleEvent(const SDL_Event& e) {
+bool Button::handleSelf(const SDL_Event& e) {
     if (!m_enabled || !m_visible) {
         return false;
-    }
-
-    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        if ((*it)->handleEvent(e)) {
-            return true;
-        }
     }
 
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
         setState(ElementState::Pressed);
         m_manager.captureMouse(this);
-        m_manager.setKeyboardFocus(this);
+        m_manager.requestFocus(this);
         return true;
     }
 
@@ -100,9 +94,6 @@ bool Button::handleEvent(const SDL_Event& e) {
     }
 
     processButtonEvent(e);
-    if (processRightClick(e)) {
-        return true;
-    }
 
     return false;
 }

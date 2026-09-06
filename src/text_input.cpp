@@ -189,7 +189,7 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
 }
 
 bool TextInput::handleEvent(const SDL_Event& e) {
-    if (m_locked || !m_enabled) {
+    if (m_locked || !m_enabled || !m_visible) {
         return false;
     }
 
@@ -201,7 +201,7 @@ bool TextInput::handleEvent(const SDL_Event& e) {
             return true;
         }
 
-        m_manager.setKeyboardFocus(this);
+        m_manager.requestFocus(this);
         
         auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
         if (font) {

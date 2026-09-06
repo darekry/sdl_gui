@@ -41,9 +41,9 @@ void RadioButton::setOnChange(OnChangeCallback callback) {
     m_onChange = std::move(callback);
 }
 
-bool RadioButton::handleEvent(const SDL_Event& e) {
+bool RadioButton::handleSelf(const SDL_Event& e) {
     auto previousState = m_state;
-    GUIElement::handleEvent(e);
+    GUIElement::handleSelf(e);
 
     if (m_enabled && m_visible) {
         if (previousState == ElementState::Pressed && m_state == ElementState::Hover) {

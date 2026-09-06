@@ -106,13 +106,30 @@ void Cursor::setOnStateChanged(std::function<void(CursorState)> callback) {
     m_onStateChanged = std::move(callback);
 }
 
-bool Cursor::handleEvent(const SDL_Event& event) {
+void Cursor::updatePosition(const SDL_Event& event) {
     if (event.type == SDL_EVENT_MOUSE_MOTION) {
         m_mouseX = static_cast<int>(event.motion.x);
         m_mouseY = static_cast<int>(event.motion.y);
         m_hasMousePos = true;
+    } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+        m_mouseX = static_cast<int>(event.button.x);
+        m_mouseY = static_cast<int>(event.button.y);
+        m_hasMousePos = true;
     }
-    return false;
+}
+
+void Cursor::getPosition(int& mouseX, int& mouseY) const {
+    if (m_hasMousePos) {
+        mouseX = m_mouseX;
+        mouseY = m_mouseY;
+        return;
+    }
+    // Cold start (no mouse event seen yet): single documented fallback to the
+    // system pointer state. After the first event the service owns the truth.
+    float fx = 0.0f, fy = 0.0f;
+    SDL_GetMouseState(&fx, &fy);
+    mouseX = static_cast<int>(fx);
+    mouseY = static_cast<int>(fy);
 }
 
 ComponentType Cursor::getComponentTypeId() const {
@@ -131,19 +148,13 @@ void Cursor::draw(SDL_Renderer* /*renderer*/) {
     // Cursor does not use cached drawing.
 }
 
-void Cursor::renderOverlay(SDL_Renderer* renderer) {
+void Cursor::render(SDL_Renderer* renderer) {
     if (!isVisible()) {
         return;
     }
 
-    int mouseX = m_mouseX;
-    int mouseY = m_mouseY;
-    if (!m_hasMousePos) {  /* no events yet -> fall back to system state */
-        float _mx, _my;
-        SDL_GetMouseState(&_mx, &_my);
-        mouseX = static_cast<int>(_mx);
-        mouseY = static_cast<int>(_my);
-    }
+    int mouseX = 0, mouseY = 0;
+    getPosition(mouseX, mouseY);
 
     auto& opt = m_cursors[static_cast<size_t>(m_currentState)];
     if (!opt) {
@@ -151,6 +162,10 @@ void Cursor::renderOverlay(SDL_Renderer* renderer) {
     }
 
     renderCursor(renderer, *opt, mouseX, mouseY);
+}
+
+void Cursor::renderOverlay(SDL_Renderer* renderer) {
+    render(renderer);
 }
 
 void Cursor::renderCursor(SDL_Renderer* renderer, const CursorData& data, int mouseX, int mouseY) {

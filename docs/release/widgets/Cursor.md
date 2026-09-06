@@ -52,8 +52,14 @@ manager.setCursor(std::move(cursor));
 |----------|-----------|------------------|
 | onStateChanged | `std::function<void(CursorState)>` ustawiany przez `void setOnStateChanged(std::function<void(CursorState)> callback)` | Po zmianie stanu przez `setState` — argument to nowy stan |
 
-`handleEvent` nie robi nic — kursor sam nie reaguje na zdarzenia; `GUIManager`
-woła `renderOverlay` podczas renderowania.
+| `void updatePosition(const SDL_Event& event)` | Serwis pozycji: odświeża pozycję z eventu myszy (ruch i przyciski); wołane centralnie przez `GUIManager` |
+| `void getPosition(int& mouseX, int& mouseY) const` | Bieżąca pozycja kursora |
+| `void render(SDL_Renderer* renderer)` | Rysuje kursor w bieżącej pozycji |
+
+Kursor nie konsumuje zdarzeń — `GUIManager` karmi jego pozycję centralnie
+przy każdym evencie myszy (jedno źródło prawdy, działa też podczas
+przechwycenia myszy) i woła `render` podczas renderowania. Przed pierwszym
+eventem pozycja pochodzi z systemowego stanu myszy.
 
 ## Przykład
 

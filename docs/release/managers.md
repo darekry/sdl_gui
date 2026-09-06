@@ -91,7 +91,8 @@ Kolejność jest krytyczna: `processEvent` → `update` → `cleanup` → `rende
 |--------|------|
 | `void captureMouse(GUIElement* element);` | Przechwytuje wszystkie zdarzenia myszy do elementu (używane m.in. przez Slider przy drag) |
 | `void releaseMouse();` | Zwalnia przechwycenie |
-| `void setKeyboardFocus(GUIElement* element);` | Ustawia element z focusem klawiaturowym |
+| `void setKeyboardFocus(GUIElement* element);` | Mechaniczne ustawienie fokusu (bez polityki; `nullptr` czyści) |
+| `bool requestFocus(GUIElement* element);` | Jedyna droga widgetów do brania fokusu: przyznaje tylko focusowalnemu, aktywnemu (`enabled`) i widocznemu elementowi; `nullptr` zawsze czyści; zwraca powodzenie |
 | `GUIElement* getKeyboardFocus() const;` | Element z focusem lub `nullptr` |
 | `void focusNextElement(bool forward);` | Przesuwa focus do następnego/poprzedniego elementu z `setCanGetKeyboardFocus(true)` (DFS z zawijaniem) |
 | `bool isElementAlive(GUIElement* element) const;` | Czy element nadal istnieje w hierarchii |

@@ -215,7 +215,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
 
         setState(ElementState::Hover);
         m_isHovered = true;
-        m_manager.setKeyboardFocus(this);
+        m_manager.requestFocus(this);
         resetCursorBlink();
 
         auto font = m_manager.getFontManager().loadFont(m_font_path, m_font_size);
@@ -247,6 +247,10 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         }
         return true;
     }
+    // Outside clicks: hover/drag reset stays local, but focus clearing lives
+    // in GUIManager::processEvent (focusability-aware click-outside, point
+    // 1b) — no per-widget duplicate. Fall through unconsumed so the manager
+    // runs its click-outside pass.
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && !contains(e.button.x, e.button.y)) {
         if (m_isHovered) {
             setState(ElementState::Normal);
@@ -254,11 +258,6 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         }
         m_isHovered = false;
         m_isDragging = false;
-        if (hasKeyboardFocus()) {
-            m_manager.setKeyboardFocus(nullptr);
-        }
-        m_showCursor = false;
-        return false;
     }
 
     // Mouse motion - extend selection during drag (focus-based, works outside bounds)

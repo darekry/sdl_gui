@@ -14,7 +14,7 @@ public:
     using OnChangeCallback = std::function<void(RadioButton*, bool)>;
     void setOnChange(OnChangeCallback callback);
 
-    bool handleEvent(const SDL_Event& e) override;
+    bool handleSelf(const SDL_Event& e) override;
     ComponentType getComponentTypeId() const override;
 
 protected:

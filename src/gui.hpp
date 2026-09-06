@@ -80,6 +80,17 @@ public:
     void setRotationCenter(int cx, int cy);
     SDL_Point getRotationCenter() const { return m_rotationCenter; }
     virtual bool handleEvent(const SDL_Event& e);
+    /**
+     * @brief Widget's own event handling (Template Method hook, point 1).
+     *
+     * handleEvent() runs the fixed pipeline: propagateToChildren() →
+     * handleSelf() → processRightClick(). Widgets override handleSelf(),
+     * NOT handleEvent(): child-DFS and RMB consumption live in the base.
+     * Default: hover update (MOTION) + press-state update, consumes nothing.
+     * Widgets that still override handleEvent() (TextInput/TextArea/...) keep
+     * working — migration to handleSelf() is incremental.
+     */
+    virtual bool handleSelf(const SDL_Event& e);
     void processHoverTooltip(bool currentlyHovered);
     void processButtonEvent(const SDL_Event& e);
 
@@ -150,6 +161,14 @@ public:
 
 protected:
     void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
+
+    // Reverse child-DFS: first step of the handleEvent() pipeline.
+    // Returns true when a child consumed the event.
+    bool propagateToChildren(const SDL_Event& e);
+
+    // Hover/tooltip update from event coordinates (MOTION only, one contains()).
+    // Replaces hand-rolled hover blocks in widgets; never reads stale m_isHovered.
+    void updateHoverState(const SDL_Event& e);
 
     // Fires m_onRightClick for an RMB press inside this element.
     // Returns true when the event was consumed (callback present and fired).

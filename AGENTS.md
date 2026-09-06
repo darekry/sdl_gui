@@ -6,6 +6,7 @@
 ./nob test          # build + run all tests
 ./nob test <filter> # run tests matching substring
 ./nob examples      # build all examples (default)
+./nob bench         # build synthetic benchmark (output/bench_gui, real window)
 ./nob release       # build release artifacts (.a, .so, combined header)
 ./nob clean         # clean output directories
 ./nob non_unity     # compile each .cpp separately (for IDE)
@@ -330,6 +331,27 @@ Uruchom: `./nob test`
   (>10 wpisów), przenieś najstarsze do osobnego pliku CHANGELOG.md.
   ═══════════════════════════════════════════════════════════════════
 -->
+
+### Event punkt 1 — plastry 1b+1c: Focus/Capture + Cursor-serwis (2026-09-06)
+- **1b Focus**: nowe `GUIManager::requestFocus()` — jedyna droga widgetów do brania fokusu (polityka: focusable + enabled + visible + alive; `nullptr` zawsze czyści). Migracja: Button/Checkbox/TextInput/TextArea. `setKeyboardFocus()` zostaje mechanicznym setterem (testy/Tab go używają). Click-outside w managerze sprawdza teraz focusowalność głębokim hit-testem (`findElementAt` + spacer w górę po `canGetKeyboardFocus` — klik w Button-z-Labelką trzyma fokus), więc klik w Panel/Label czyści fokus; zdublowany handler w TextArea usunięty (został lokalny reset hover/drag bez wczesnego `return`, żeby event doszedł do managera).
+- **1b Capture**: `PointerCapture{autoReleaseOnUp}` — manager zwalnia capture po LEFT-UP nawet gdy właściciel zapomniał `releaseMouse()` (podwójny release jest cichy). Drag poza bounds działał już przez forward capture — dopięty testem (Button + ruch poza + UP poza → brak klika, capture null).
+- **1b FocusScope**: `ContextMenu::{showAt,hide}` trzyma `m_returnFocus` (handle generacyjny): show snapshotuje fokus spoza menu, hide przywraca go gdy fokus jest w menu (zamiast gołego clear — koniec ducha focus-overlay *i* utraty fokusu pola tekstowego po kliknięciu itemu).
+- **Unifikacje (testy poprawione)**: ukryty TextInput ignoruje klik/typing jak TextArea i baza (koniec testów przypinających buga „hidden still receives focus"); disabled-odstępstwa z 1a domknięte polityką requestFocus.
+- **1c Cursor**: `Cursor::handleEvent` skasowany → `updatePosition(event)` (MOTION + BUTTON — jedno źródło prawdy) + `getPosition()` + `render()`; manager karmi pozycję centralnie na górze `processEvent()` (skasowane oba forwardy: gałąź capture i ogon), render przez `render()`. Dziedziczenie po `GUIElement`, slot lifetime, `ElementRef`, C-API (`sdlgui_cursor_*`, `get_type=="Cursor"`) i przykład 33 bez zmian — świadomie, dla stabilnego ABI. Jedyny fallback `SDL_GetMouseState` to udokumentowany cold-start (przed pierwszym eventem).
+- Efekt: 45/45 testów (nowe: `requestFocus` polityka 4×, click-outside panel/button, FocusScope-restore, cursor-pod-capture + autoRelease), 48/48 przykładów. Bench vs baseline: wszystko na + (maszyna cichsza niż przy baseline) — jak w 1a, pojedyncze runy niekonkluzywne; brak sygnatury regresji.
+- Zmienione pliki: src/gui_manager.{hpp,cpp}, src/context_menu.{hpp,cpp}, src/cursor.{hpp,cpp}, src/button.cpp, src/checkbox.cpp, src/text_input.cpp, src/text_area.cpp, tests/test_cursor.cpp, tests/test_gui_manager.cpp, tests/test_context_menu.cpp, tests/test_text_input.cpp
+
+### Event punkt 1 — plaster 1a: Template Method + contains() z eventu (2026-09-06)
+- **Szkielet**: `GUIElement::handleEvent()` to stały potok `propagateToChildren()` → `handleSelf()` → `processRightClick()`; widgety nadpisują `handleSelf()` (nowe, domyślnie hover+button-state), nie `handleEvent()`. `processButtonEvent()` liczy `inside` z koordynatów eventu (MOTION/DOWN/UP) zamiast zgate'owanego `m_isHovered`; reszta eventów po staremu. `updateHoverState()` (protected) — hover/tooltip z MOTION-a w 1× `contains()`.
+- **Migracja**: Button/Checkbox/Panel/RadioButton przeszły na `handleSelf()` (DFS i RMB w bazie; Button stracił własny `processRightClick`, Panel ręczny hover-set). Kwalifikowane `Panel::handleEvent` (StringGrid/ScrollArea/dialogi/...) działają bez zmian — trafiają w bazę + wirtualny `Panel::handleSelf`. TextInput/TextArea i reszta celowo nietknięte (plaster 1b/1c).
+- **Unifikacja**: disabled Button/Checkbox wchodzi w `Disabled` przy evencie jak reszta widgetów (koniec odstępstwa `return false` przed DFS); test_button poprawiony.
+- Efekt: 45/45 testów, 48/48 przykładów. Bench A/B pod obciążeniem (IDE ~60% CPU) niekonkluzywny — szum ±20% w obie strony, sekcje bez eventów (label_text/typing) pływają identycznie, więc brak sygnatury regresji; pliki `/tmp/base_loaded.json` (pre-1a, pod obciążeniem) do wyrzucenia po powtórce na idle. Powtórzyć A/B na spokojnej maszynie przed 1b.
+- Zmienione pliki: src/gui.{hpp,cpp}, src/button.{hpp,cpp}, src/checkbox.{hpp,cpp}, src/panel.{hpp,cpp}, src/radio_button.{hpp,cpp}, tests/test_button.cpp
+
+### Bench syntetyczny na prawdziwym oknie — baseline przed punktem 1 (2026-09-06)
+- **Nowość**: `bench/bench_gui.cpp` + target `./nob bench` → `output/bench_gui` (prawdziwe okno przez `SDLApp`, flaga `--backend vulkan` na GPU renderer, `--hidden` pod CI). Deterministyczna scena (seed 42): siatka Button/Label/Slider/Checkbox/TextInput/TextArea/Panel-z-dzieckiem, co 5. widget zakotwiczony — 8 sekcji: `hover` (MOTION/DFS, tylko processEvent), `click`, `slider_drag`, `label_text` (setText), `typing` (TEXT_INPUT), `create_destroy`, `resize` (prawdziwe `SDL_SetWindowSize` + `handleResize`), `frame_loop` (mieszany ruch + update/cleanup/render/present, fps + p95). Parametry: `--widgets N`, `--sweep` (100/200/1000), `--seconds S`, `--save/--compare F.json`.
+- **Baseline**: `bench/baseline.json` (sweep 5 s, debug+ASan, backend sdl): hover 5.8k/3.7k/0.68k ev/s dla 100/200/1000 widgetów (171 µs → 1.47 ms/ev — superliniowo), frame_loop 278/261/66 fps. Porównanie `--compare` pokazuje delty % per_sec. Uwagi: pętla celowo bez capa (surowy throughput), run-to-run szum ~15% na sekcjach CPU — porównywać na tej samej maszynie/obciążeniu; release (`./nob --release bench`) da stabilniejsze liczby; ASan wypisuje leak-noise SDLa na końcu (nieszkodliwe, testy je tłumią przez `detect_leaks=0`).
+- Zmienione pliki: bench/bench_gui.cpp (nowy), bench/baseline.json (nowy), nob.c (`BENCH_DIR`, `build_bench()`, target `bench`)
 
 ### Lifetime — SlotMap/Handle + WidgetFactory + diff edytora (2026-09-06)
 - **Nowość (punkt 5 planu)**: `src/element_handle.hpp` — `ElementHandle{index,generation}`; `GUIManager` trzyma sloty (generacja rośnie przy `unregister`, brak ABA przy reużyciu adresu). `ElementRef<T>` rozwiązuje się przez slot + weryfikację `raw*` (stary kod z `isAlive`-guardami działa bez zmian, guardy nie są już potrzebne w nowych lambdach). Focus/capture jako handle'e — `cleanup()` bez spaceru `hasAncestorMarkedForDeletion`, powiadomienia `onFocusLost/onMouseCaptureLost` tylko na żywym obiekcie. Tooltip bez ping-ponga własności (stały panel + `setVisible`), `ContextMenu` przez handle (`getContextMenu()` nigdy nie wisi), `ContextMenu::hide()` przez `isFocusInside()`.
