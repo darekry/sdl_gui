@@ -13,6 +13,11 @@ public:
     // Methods for assigning callbacks
     void setOnClickCallback(OnClickCallback callback);
     void setOnMouseOverCallback(OnMouseOverCallback callback);
+
+    // Label text: retargets (or lazily creates) the centered child label.
+    // This replaces the manual "Button + Label child" pattern from examples.
+    void setText(std::string_view text);
+    [[nodiscard]] std::string getText() const;
     
     // Overridden methods
     bool handleSelf(const SDL_Event& e) override;

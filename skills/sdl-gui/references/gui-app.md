@@ -61,7 +61,7 @@ a rect constructor (e.g. `Label`) become children via
 | One-line input | `TextInput` (Enter, input lock, focus) | widgets/TextInput.md |
 | Multi-line text / logs | `TextArea` | widgets/TextArea.md |
 | On/off options | `Checkbox`, `RadioButton` + `RadioGroup` | widgets/Checkbox.md |
-| Numeric options | `Slider`, `RangeSlider` | widgets/Slider.md |
+| Numeric options | `Slider`, `RangeSlider` (mirror value into a label with `linkLabel` from `ui_helpers.hpp`) | widgets/Slider.md |
 | Single choice from a list | `ComboBox` (callback: public field `on_selection_changed`) | widgets/ComboBox.md |
 | Item lists (files, logs) | `ListView` (`addItem`, `setOnRowClick`, `setOnRowActivate`) | widgets/ListView.md |
 | Tables | `StringGrid` (sorting, selection, cell editing) | widgets/StringGrid.md |
@@ -146,6 +146,10 @@ automatically. Direct `Style` field mutation requires `markDirty()`.
 - Event logs: `TextArea` (append) or `ListView` with auto-scroll.
 - Long-running tasks: `ProgressBar` driven by `TimerManager::addTimer(...,
   singleShot=false, ...)` or `AnimationManager` cycling callbacks.
+- One-shot delays / polling without a target widget: `manager.after(ms, fn)`,
+  `manager.every(ms, fn)`, `manager.cancelTimer(id)` — fired from `update()`.
+  Not tied to widget lifetime: capture `ElementRef`, guard restarts
+  (see `examples/62_memory.cpp`, `dist/docs/managers.md`).
 - Layouts defined in files: `JsonParser`/`SGMLParser` return a widget tree
   from a JSON/XML file — `manager.addElement(std::move(layout))`.
   See `dist/docs/resources.md`.

@@ -46,8 +46,8 @@ int main(int, char**) {
         cards.reserve(kSide * kSide);
         int moves = 0, pairs = 0;
         int first = -1; // index of the first open card, -1 = none
-        Uint64 flipDeadline = 0;
-        int flipA = -1, flipB = -1;
+        bool flipping = false; // mismatch pair shown, waiting for flip-back
+        int dealId = 0; // bumped per deal; stale after() callbacks bail out
 
         std::function<void()> refresh;
         refresh = [&]() {
@@ -73,9 +73,9 @@ int main(int, char**) {
                 c.btn = btn.get();
                 c.face = face.get();
                 btn->addChild(std::move(face));
-                btn->setOnClickCallback([i, &cards, &first, &moves, &pairs, &flipDeadline,
-                                         &flipA, &flipB, &setOpen, &refresh](GUIElement*) {
-                    if (flipDeadline != 0) return; // waiting for flip-back
+                btn->setOnClickCallback([i, &cards, &first, &moves, &pairs, &flipping,
+                                         &dealId, &setOpen, &refresh, &guiManager](GUIElement*) {
+                    if (flipping) return; // waiting for flip-back
                     Card& c = cards[i];
                     if (c.open || c.done) return;
                     setOpen(i, true);
@@ -93,11 +93,20 @@ int main(int, char**) {
                             first = -1;
                             refresh();
                         } else {
-                            flipA = first;
-                            flipB = i;
+                            int a = first, b = i, id = dealId;
                             first = -1;
-                            flipDeadline = SDL_GetTicks() + 700;
+                            flipping = true;
                             refresh();
+                            // Delayed flip-back via GUIManager::after() (fired from update()).
+                            guiManager.after(700, [&cards, a, b, id, &flipping, &dealId]() {
+                                if (id != dealId) return; // restarted meanwhile
+                                cards[a].open = cards[b].open = false;
+                                cards[a].face->setVisible(false);
+                                cards[b].face->setVisible(false);
+                                cards[a].btn->setBackgroundColor(ElementState::Normal, {50, 52, 64, 255});
+                                cards[b].btn->setBackgroundColor(ElementState::Normal, {50, 52, 64, 255});
+                                flipping = false;
+                            });
                         }
                     }
                 });
@@ -123,7 +132,8 @@ int main(int, char**) {
             }
             moves = pairs = 0;
             first = -1;
-            flipDeadline = 0;
+            flipping = false;
+            ++dealId; // invalidates any pending flip-back
             refresh();
         };
 
@@ -139,13 +149,6 @@ int main(int, char**) {
             while (SDL_PollEvent(&e)) {
                 if (e.type == SDL_EVENT_QUIT) quit = true;
                 guiManager.processEvent(e);
-            }
-            if (flipDeadline != 0 && frameStart >= flipDeadline) {
-                setOpen(flipA, false);
-                setOpen(flipB, false);
-                cards[flipA].btn->setBackgroundColor(ElementState::Normal, {50, 52, 64, 255});
-                cards[flipB].btn->setBackgroundColor(ElementState::Normal, {50, 52, 64, 255});
-                flipDeadline = 0;
             }
             guiManager.update();
             guiManager.cleanup();

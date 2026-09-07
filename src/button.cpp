@@ -35,6 +35,24 @@ void Button::setOnMouseOverCallback(OnMouseOverCallback callback) {
     m_onMouseOver = std::move(callback);
 }
 
+void Button::setText(std::string_view text) {
+    if (!m_label) {
+        // Button created with an empty label has no face yet; build one so
+        // setText() also works as "add a caption later".
+        auto label_elem = std::make_unique<Label>(m_manager, 0, 0, text);
+        m_label = label_elem.get();
+        addChild(std::move(label_elem));
+    } else {
+        m_label->setText(text);
+    }
+    layoutChildren(); // re-center: text width changed
+    markDirty();
+}
+
+std::string Button::getText() const {
+    return m_label ? m_label->getText() : std::string{};
+}
+
 bool Button::handleSelf(const SDL_Event& e) {
     if (!m_enabled || !m_visible) {
         return false;

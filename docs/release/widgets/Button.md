@@ -24,6 +24,8 @@ Button* btn = manager.create<Button>(10, 10, 120, 40, "Kliknij");
 
 | Metoda | Opis |
 |--------|------|
+| `void setText(std::string_view text)` | Zmienia tekst etykiety (centrowana na nowo); gdy przycisk powstał z pustą etykietą, tworzy ją leniwie |
+| `std::string getText()` | Zwraca aktualny tekst etykiety (`""` gdy brak) |
 | `void setOnClickCallback(OnClickCallback callback)` | Ustawia callback wywoływany po kliknięciu |
 | `void setOnMouseOverCallback(OnMouseOverCallback callback)` | Ustawia callback najechania myszą (patrz Uwagi) |
 | `void setBackgroundColor(ElementState state, SDL_Color color)` | Kolor tła per stan (dziedziczone z GUIElement) |

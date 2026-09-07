@@ -81,6 +81,25 @@ slider->setOnChangeCallback([ref](GUIElement* e) {
 `ElementRef::get()` zwraca `nullptr`, jeśli element został usunięty —
 wzorzec „sprawdź i użyj" jest bezpieczny nawet po `markForDeletion()`.
 
+### Gotowe wiązania: `ui_helpers` (`src/ui_helpers.hpp`)
+
+Najczęstsze wiązanie slider→label nie wymaga już ręcznego callbacka —
+`linkLabel` robi to za Ciebie (odświeżenie natychmiast + przy każdej zmianie,
+etykieta trzymana przez `ElementRef`):
+
+```cpp
+#include "ui_helpers.hpp"
+
+linkLabel(volumeSlider, volumeLabel, "vol=", "%");  // "vol=80%"
+linkLabel(speedSlider, speedLabel, [](int v) { return std::to_string(v / 60) + " min"; });
+linkRangeLabel(range, windowLabel);                 // "[20, 80]"
+```
+
+Uwaga: jedno wiązanie na widget — ponowne `linkLabel` tego samego slidera
+zastępuje poprzednie (jak `setOnChangeCallback`). Plik `ui_helpers` to baza
+pod kolejne wolne funkcje (generatory, buildery) — dopisuj deklarację + definicję
+w `ui_helpers.cpp`, bez zależności od konkretnych aplikacji.
+
 ## 4. Style
 
 Setterami (automatycznie oznaczają element jako brudny):

@@ -105,3 +105,34 @@ TEST_CASE("TimerManager functionality", "[timer_manager]") {
         REQUIRE(receivedTarget == target);
     }
 }
+
+TEST_CASE("GUIManager after/every simplified timers", "[timer_manager]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    TimerManager* timerManager = manager.getTimerManager();
+
+    SECTION("after() fires once without a target element") {
+        int callCount = 0;
+        manager.after(10, [&]() { ++callCount; });
+        REQUIRE(callCount == 0);
+        SDL_Delay(15);
+        timerManager->update();
+        REQUIRE(callCount == 1);
+        SDL_Delay(20);
+        timerManager->update();
+        REQUIRE(callCount == 1);
+    }
+
+    SECTION("every() repeats until cancelled") {
+        int callCount = 0;
+        uint32_t id = manager.every(10, [&]() { ++callCount; });
+        SDL_Delay(15);
+        timerManager->update();
+        REQUIRE(callCount >= 1);
+        manager.cancelTimer(id);
+        int frozen = callCount;
+        SDL_Delay(20);
+        timerManager->update();
+        REQUIRE(callCount == frozen);
+    }
+}

@@ -354,6 +354,20 @@ TimerManager* GUIManager::getTimerManager() {
     return timerManager.get();
 }
 
+uint32_t GUIManager::after(uint32_t delayMs, std::function<void()> callback) {
+    return timerManager->addTimer(nullptr, delayMs, true,
+                                  [cb = std::move(callback)](GUIElement*) { cb(); });
+}
+
+uint32_t GUIManager::every(uint32_t intervalMs, std::function<void()> callback) {
+    return timerManager->addTimer(nullptr, intervalMs, false,
+                                  [cb = std::move(callback)](GUIElement*) { cb(); });
+}
+
+void GUIManager::cancelTimer(uint32_t timerId) {
+    timerManager->removeTimer(timerId);
+}
+
 void GUIManager::setTheme(Theme theme) {
     m_theme = std::move(theme);
     for (const auto& element : m_elements) {

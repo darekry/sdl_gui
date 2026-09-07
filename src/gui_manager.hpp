@@ -103,6 +103,14 @@ public:
     const TextureManager& getTextureManager() const { return m_textureManager; }
     TimerManager* getTimerManager();
     AnimationManager* getAnimationManager();
+
+    // Fire-and-forget timers with a simplified signature (no GUIElement*
+    // target). Fired from update(), like all TimerManager timers.
+    // NOTE: unlike addTimer(target, ...), these are NOT tied to any widget
+    // lifetime — capture ElementRef (not raw pointers) for widget access.
+    uint32_t after(uint32_t delayMs, std::function<void()> callback);
+    uint32_t every(uint32_t intervalMs, std::function<void()> callback);
+    void cancelTimer(uint32_t timerId);
     
     void showTooltip(GUIElement* target, const std::string& text);
     void hideTooltip();

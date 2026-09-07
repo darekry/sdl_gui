@@ -239,6 +239,30 @@ uint32_t id = timers->addTimer(btn, 1000, true, [](GUIElement* target) {
 // timers->removeTimer(id);  // anulowanie przed odpaleniem
 ```
 
+### Skróty `after()` / `every()` (GUIManager)
+
+Do prostych opóźnień bez widgetu-docelowego nie trzeba sięgać po `TimerManager`
+wprost — `GUIManager` ma uproszczone sygnatury (bez `GUIElement*`):
+
+```cpp
+uint32_t after(uint32_t delayMs, std::function<void()> callback);    // raz
+uint32_t every(uint32_t intervalMs, std::function<void()> callback); // cyklicznie
+void cancelTimer(uint32_t timerId);
+```
+
+```cpp
+// "odwróć karty z powrotem po 700 ms" (przykład 62_memory):
+guiManager.after(700, [&]() { hideMismatchedPair(); });
+
+uint32_t id = guiManager.every(1000, [&]() { pollServer(); });
+guiManager.cancelTimer(id);
+```
+
+Uwaga: w przeciwieństwie do `addTimer(target, …)` te timery **nie są
+powiązane z cyklem życia żadnego widgetu** — w callbackach sięgaj po widgety
+przez `ElementRef` (nie surowe wskaźniki) i kasuj zbędne timery przy restarcie
+stanu (np. licznikiem generacji, jak `dealId` w przykładzie 62).
+
 Uwaga: klasa **nie jest thread-safe** (ostrzeżenie z nagłówka).
 
 ## AnimationManager

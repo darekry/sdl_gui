@@ -518,3 +518,25 @@ TEST_CASE("Button mouse capture behavior", "[button]") {
         REQUIRE(btn2->getState() == ElementState::Normal);
     }
 }
+TEST_CASE("Button setText/getText", "[button]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("setText retargets the label created in ctor") {
+        auto button = std::make_unique<Button>(manager, 10, 10, 100, 40, "Old");
+        Button* btn = button.get();
+        manager.addElement(std::move(button));
+        REQUIRE(btn->getText() == "Old");
+        btn->setText("New");
+        REQUIRE(btn->getText() == "New");
+    }
+
+    SECTION("setText lazily creates a label for an empty-caption button") {
+        auto button = std::make_unique<Button>(manager, 10, 10, 100, 40, "");
+        Button* btn = button.get();
+        manager.addElement(std::move(button));
+        REQUIRE(btn->getText().empty());
+        btn->setText("Caption");
+        REQUIRE(btn->getText() == "Caption");
+    }
+}

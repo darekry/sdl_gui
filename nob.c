@@ -949,6 +949,7 @@ static const char * hpp_order[] = {
     "src/slider.hpp",
     "src/range_slider.hpp",
     "src/progress_bar.hpp",
+    "src/ui_helpers.hpp",
     "src/text_editable.hpp",
     "src/text_input.hpp",
     "src/canvas.hpp",
