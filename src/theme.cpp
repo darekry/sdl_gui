@@ -45,7 +45,7 @@ const Style& Theme::getDefaultStyle() const {
 // === Factory ===
 
 Theme Theme::createDefaultTheme() {
-    return ThemePresets::createWin9xTheme();
+    return ThemePresets::createWindows95Theme();
 }
 
 Theme Theme::createWindows95Theme() {

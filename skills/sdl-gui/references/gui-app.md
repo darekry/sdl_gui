@@ -124,7 +124,7 @@ FileDialog* fd = FileDialog::createOpen(manager, "Open layout",
 ## Theming
 
 ```cpp
-manager.setTheme(ThemePresets::createDarkTheme());   // or Win9x/Light/HighContrast
+manager.setTheme(ThemePresets::createDarkTheme());   // or Windows95/Light/HighContrast
 
 // per-type tweaks on top of the preset:
 Theme& theme = manager.getTheme();

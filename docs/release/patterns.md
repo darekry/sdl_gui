@@ -105,10 +105,11 @@ btn->markDirty();
 (kaskada: lokalny → motyw[typ][stan] → motyw[typ][Normal] → domyślny).
 Dzięki temu wystarczy ustawić tylko to, co się różni od motywu.
 
-Motywy: `ThemePresets::createWin9xTheme()`, `createWindows95Theme()`,
+Motywy: `ThemePresets::createWindows95Theme()`,
 `createLightTheme()`, `createDarkTheme()`, `createHighContrastTheme()` oraz
-`Theme::createDefaultTheme()` i `Theme::createWindows95Theme()`. Ustawiaj przez
-`manager.setTheme(ThemePresets::createDarkTheme())`.
+`Theme::createDefaultTheme()` (= Windows95) i `Theme::createWindows95Theme()`.
+(`ThemePresets::createWin9xTheme()` to deprecated alias dla Windows95.)
+Ustawiaj przez `manager.setTheme(ThemePresets::createDarkTheme())`.
 
 ## 5. Responsive layout: Anchor + resize
 

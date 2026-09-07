@@ -660,7 +660,7 @@ element->setStyle(ElementState::Normal, style);
 
 ### Theme System
 ```cpp
-Theme theme = Theme::createDefaultTheme();  // Windows 95/98 style
+Theme theme = Theme::createDefaultTheme();  // authentic Windows 95/98 with 3D bevel
 theme.setStyle("Button", buttonStyle);
 theme.setStyle("Panel", panelStyle);
 guiManager.setTheme(theme);

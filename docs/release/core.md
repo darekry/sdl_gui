@@ -316,10 +316,11 @@ bool isElementAlive(GUIElement* element) const;
 
 ### Theme i ThemePresets
 
-- `Theme::createDefaultTheme()` — domyślny motyw (klasyczny, w stylu Win9x).
-- `Theme::createWindows95Theme()` — motyw z fazami 3D (bevel) w stylu Win95/98.
-- `ThemePresets::createWin9xTheme()`, `createWindows95Theme()`, `createLightTheme()`,
+- `Theme::createDefaultTheme()` — domyślny motyw: autentyczny Win95/98 z fazami 3D (bevel).
+- `Theme::createWindows95Theme()` — ten sam motyw, jawna nazwa (kanon).
+- `ThemePresets::createWindows95Theme()`, `createLightTheme()`,
   `createDarkTheme()`, `createHighContrastTheme()` — gotowe motywy (patrz [managers.md](managers.md)).
+  `ThemePresets::createWin9xTheme()` to deprecated alias dla `createWindows95Theme()`.
 
 ### SDLApp i GUIContext
 

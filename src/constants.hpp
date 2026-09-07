@@ -18,4 +18,5 @@ namespace constants {
     constexpr SDL_Color kWin95Highlight  {255, 255, 255, 255};
     constexpr SDL_Color kWin95Shadow     {128, 128, 128, 255};
     constexpr SDL_Color kWin95DarkShadow {0,   0,   0,   255};
+    constexpr SDL_Color kWin95Navy       {0,   0,   128, 255};
 }

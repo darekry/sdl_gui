@@ -132,7 +132,7 @@ typedef enum {
 
 /*
  * Create a GUI context. Internally initializes SDL, creates a window
- * and renderer, and applies the default theme (Win9x).
+ * and renderer, and applies the default theme (Windows95).
  *
  * title     — window title (UTF-8)
  * width, height — initial window dimensions
@@ -165,9 +165,10 @@ void           sdlgui_get_window_size(sdlgui_t gui, int* w, int* h);
    Theme presets
    ═══════════════════════════════════════════════════════════════ */
 
-/* Default after sdlgui_create() is Win9x. Swappable at runtime. */
+/* Default after sdlgui_create() is Windows95 (bevel). Swappable at runtime. */
 
-void sdlgui_theme_win9x(sdlgui_t gui);
+void sdlgui_theme_win9x(sdlgui_t gui);      /* alias for sdlgui_theme_windows95 */
+void sdlgui_theme_windows95(sdlgui_t gui);
 void sdlgui_theme_dark(sdlgui_t gui);
 void sdlgui_theme_light(sdlgui_t gui);
 void sdlgui_theme_high_contrast(sdlgui_t gui);

@@ -14,12 +14,12 @@ typedef void* sdlgui_element_t;  /* dowolny widget (GUIElement*) */
 
 | Funkcja | Opis |
 |---------|------|
-| `sdlgui_t sdlgui_create(const char* title, int width, int height, int resizable)` | Tworzy kontekst: inicjalizuje SDL, tworzy okno i renderer, nakłada domyślny motyw (Win9x). `resizable`: `0` = stały rozmiar, `1` = okno z możliwością zmiany rozmiaru. Zwraca `NULL` przy błędzie |
+| `sdlgui_t sdlgui_create(const char* title, int width, int height, int resizable)` | Tworzy kontekst: inicjalizuje SDL, tworzy okno i renderer, nakłada domyślny motyw (Windows95). `resizable`: `0` = stały rozmiar, `1` = okno z możliwością zmiany rozmiaru. Zwraca `NULL` przy błędzie |
 | `sdlgui_t sdlgui_create_gpu(const char* title, int width, int height, int resizable)` | Tworzy kontekst z **rendererem GPU (Vulkan/SPIR-V)** — wymagany, aby `ShaderPanel` faktycznie uruchamiał shadery. Zwraca `NULL` przy błędzie (np. brak sterownika Vulkan) |
 | `SDL_GPUDevice* sdlgui_get_gpu_device(sdlgui_t gui)` | Urządzenie GPU kontekstu, lub `NULL` dla kontekstu CPU. Przydatne do budowy/kompilacji shaderów SPIR-V przed `sdlgui_shader_panel_set_shader()` |
 | `void sdlgui_destroy(sdlgui_t gui)` | Niszczy kontekst i zwalnia zasoby SDL. **Wszystkie uchwyty elementów stają się nieważne** |
 
-Po `sdlgui_create()` motywem domyślnym jest Win9x — można go zmienić w każdej
+Po `sdlgui_create()` motywem domyślnym jest Windows95 — można go zmienić w każdej
 chwili (patrz niżej).
 
 ## Pętla zdarzeń
@@ -43,7 +43,8 @@ powoduje wyciek elementów z `sdlgui_element_mark_for_deletion()`.
 
 | Funkcja | Opis |
 |---------|------|
-| `void sdlgui_theme_win9x(sdlgui_t gui)` | Klasyczny Windows 95/98 (domyślny) |
+| `void sdlgui_theme_windows95(sdlgui_t gui)` | Autentyczny Windows 95/98 z fazami 3D (domyślny) |
+| `void sdlgui_theme_win9x(sdlgui_t gui)` | Alias dla `sdlgui_theme_windows95` (kompatybilność) |
 | `void sdlgui_theme_dark(sdlgui_t gui)` | Ciemny (dark mode) |
 | `void sdlgui_theme_light(sdlgui_t gui)` | Jasny, nowoczesny |
 | `void sdlgui_theme_high_contrast(sdlgui_t gui)` | Wysoki kontrast, duże fonty |

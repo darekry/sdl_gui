@@ -5,6 +5,7 @@
 #include "theme.hpp"
 #include "panel.hpp"
 #include "button.hpp"
+#include "checkbox.hpp"
 #include "constants.hpp"
 
 // Regression: widgets must actually render pixels (ScopedRenderTarget clip restore
@@ -163,4 +164,57 @@ TEST_CASE("Direct child of rotated parent renders", "[render][pixel][rotation]")
     REQUIRE(px[0] == 255);
     REQUIRE(px[1] == 0);
     REQUIRE(px[2] == 0);
+}
+
+// Win9x-unifikacja: Checkbox na domyślnym (Windows95) motywie rysuje białe
+// pudełko z fazą Sunken. Box 30x30 na (10,10): środek (25,25) biały,
+// róg zewnętrzny TL (10,10) szary (Shadow), róg BR (39,39) biały (Highlight),
+// róg wewnętrzny TL (11,11) czarny (DarkShadow) — odróżnia Sunken od
+// płaskiego białego wypełnienia.
+TEST_CASE("Checkbox renders white sunken box", "[render][pixel][theme]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.handleResize(320, 240);
+
+    auto box = std::make_unique<Checkbox>(manager, 10, 10, 30, 30);
+    manager.addElement(std::move(box));
+
+    manager.update();
+    manager.cleanup();
+    manager.render();
+
+    auto readPixel = [&](int x, int y) {
+        SDL_Rect r{x, y, 1, 1};
+        SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
+        REQUIRE(surf != nullptr);
+        Uint8* p = (Uint8*)surf->pixels;
+        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        SDL_DestroySurface(surf);
+        return result;
+    };
+
+    auto center = readPixel(25, 25);
+    REQUIRE(center[3] > 200);
+    REQUIRE(center[0] == 255);
+    REQUIRE(center[1] == 255);
+    REQUIRE(center[2] == 255);
+
+    auto outerTL = readPixel(10, 10);
+    REQUIRE(outerTL[3] > 200);
+    REQUIRE(outerTL[0] == 128);
+    REQUIRE(outerTL[1] == 128);
+    REQUIRE(outerTL[2] == 128);
+
+    auto innerTL = readPixel(11, 11);
+    REQUIRE(innerTL[3] > 200);
+    REQUIRE(innerTL[0] == 0);
+    REQUIRE(innerTL[1] == 0);
+    REQUIRE(innerTL[2] == 0);
+
+    auto outerBR = readPixel(39, 39);
+    REQUIRE(outerBR[3] > 200);
+    REQUIRE(outerBR[0] == 255);
+    REQUIRE(outerBR[1] == 255);
+    REQUIRE(outerBR[2] == 255);
 }

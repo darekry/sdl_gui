@@ -20,6 +20,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
 
         Theme light_theme = ThemePresets::createLightTheme();
         Theme dark_theme = ThemePresets::createDarkTheme();
+        Theme win95_theme = ThemePresets::createWindows95Theme();
         manager.setTheme(light_theme);
 
         auto main_panel = std::make_unique<Panel>(manager, 50, 50, 700, 500);
@@ -41,7 +42,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         main_panel->addChild(std::make_unique<Label>(manager, 20, 165, "Themed Slider"));
         main_panel->addChild(std::make_unique<Slider>(manager, 20, 190, 200, 30, 0, 100, 50, Orientation::Horizontal));
 
-        auto radio_group = std::make_unique<RadioGroup>(manager, 480, 20, 200, 100);
+        auto radio_group = std::make_unique<RadioGroup>(manager, 480, 20, 200, 140);
         
         auto radio_light = std::make_unique<RadioButton>(manager, 10, 10, 180, 30);
         radio_light->addChild(std::make_unique<Label>(manager, 5, 5, "Light Theme"));
@@ -55,9 +56,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
             if (selected) manager.setTheme(dark_theme);
         });
 
+        auto radio_win95 = std::make_unique<RadioButton>(manager, 10, 90, 180, 30);
+        radio_win95->addChild(std::make_unique<Label>(manager, 5, 5, "Win95 Theme"));
+        radio_win95->setOnChange([&, win95_theme]([[maybe_unused]] RadioButton* rb, bool selected){
+            if (selected) manager.setTheme(win95_theme);
+        });
+
         radio_light->setSelected(true);
         radio_group->addChild(std::move(radio_light));
         radio_group->addChild(std::move(radio_dark));
+        radio_group->addChild(std::move(radio_win95));
         
         main_panel->addChild(std::move(radio_group));
         manager.addElement(std::move(main_panel));

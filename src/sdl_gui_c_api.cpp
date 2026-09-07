@@ -227,7 +227,12 @@ void sdlgui_get_window_size(sdlgui_t gui, int* w, int* h) {
 
 void sdlgui_theme_win9x(sdlgui_t gui) {
     auto* ctx = unwrap_ctx(gui);
-    ctx->getGUIManager().setTheme(ThemePresets::createWin9xTheme());
+    ctx->getGUIManager().setTheme(ThemePresets::createWindows95Theme());
+}
+
+void sdlgui_theme_windows95(sdlgui_t gui) {
+    auto* ctx = unwrap_ctx(gui);
+    ctx->getGUIManager().setTheme(ThemePresets::createWindows95Theme());
 }
 
 void sdlgui_theme_dark(sdlgui_t gui) {

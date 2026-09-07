@@ -19,6 +19,7 @@ int main(int, char*[]) {
 
         Theme light = ThemePresets::createLightTheme();
         Theme dark = ThemePresets::createDarkTheme();
+        Theme win95 = ThemePresets::createWindows95Theme();
         gui.setTheme(light);
 
         auto mainPanel = std::make_unique<Panel>(gui, 20, 20, 760, 460);
@@ -38,7 +39,7 @@ int main(int, char*[]) {
         auto themePanel = std::make_unique<Panel>(gui, 380, 10, 350, 240);
         themePanel->addChild(std::make_unique<Label>(gui, 10, 10, "Switch Theme"));
 
-        auto radioGroup = std::make_unique<RadioGroup>(gui, 10, 50, 300, 80);
+        auto radioGroup = std::make_unique<RadioGroup>(gui, 10, 50, 300, 110);
         auto radioLight = std::make_unique<RadioButton>(gui, 10, 10, 250, 30);
         radioLight->addChild(std::make_unique<Label>(gui, 5, 5, "Light Theme"));
         radioLight->setSelected(true);
@@ -46,8 +47,12 @@ int main(int, char*[]) {
         auto radioDark = std::make_unique<RadioButton>(gui, 10, 40, 250, 30);
         radioDark->addChild(std::make_unique<Label>(gui, 5, 5, "Dark Theme"));
         radioDark->setOnChange([&, dark](RadioButton*, bool sel) { if (sel) gui.setTheme(dark); });
+        auto radioWin95 = std::make_unique<RadioButton>(gui, 10, 70, 250, 30);
+        radioWin95->addChild(std::make_unique<Label>(gui, 5, 5, "Win95 Theme"));
+        radioWin95->setOnChange([&, win95](RadioButton*, bool sel) { if (sel) gui.setTheme(win95); });
         radioGroup->addChild(std::move(radioLight));
         radioGroup->addChild(std::move(radioDark));
+        radioGroup->addChild(std::move(radioWin95));
         themePanel->addChild(std::move(radioGroup));
         mainPanel->addChild(std::move(themePanel));
         gui.addElement(std::move(mainPanel));

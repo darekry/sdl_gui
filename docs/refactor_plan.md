@@ -273,7 +273,9 @@ filtrowana w 3 miejscach • resize nie płynący `Window→GUIManager` automaty
   na `palette::win95`, `tooltip::…`.
 - `gui_context.hpp:9-33` — 3 ctory duplikujące `setTheme+setWindowSize`;
   `GUIContext::run` ukrywa kolejność `processEvent→update→cleanup→render`.
-- `ThemePresets::createWin9xTheme` vs `createWindows95Theme` — dwa presety Win95.
+- ~~`ThemePresets::createWin9xTheme` vs `createWindows95Theme` — dwa presety Win95~~
+  (zrealizowane 2026-09-07: kanon `createWindows95Theme`, `createWin9xTheme`
+  to alias; patrz `docs/win9x_theme_unification.md`).
 - `gui.cpp:192 setSize` zawsze `markDirty()` (brak early-out przy tym samym
   rozmiarze); `setParent()` invaliduje cache ale nie dirty — jedna metoda
   `moveTo(parent,x,y)`.

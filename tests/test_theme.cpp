@@ -1,6 +1,7 @@
 #include "../lib/catch_amalgamated.hpp"
 
 #include "../src/theme.hpp"
+#include "../src/theme_presets.hpp"
 #include "../src/style.hpp"
 
 TEST_CASE("Theme functionality", "[theme]") {
@@ -164,20 +165,22 @@ TEST_CASE("Theme functionality", "[theme]") {
 
     SECTION("Default theme has per-state Button styles") {
         Theme theme = Theme::createDefaultTheme();
-        
+
         Style normalBtn = theme.getStyle(ComponentType::Button, ElementState::Normal);
         REQUIRE(normalBtn.borderRadius.has_value());
         REQUIRE(*normalBtn.borderRadius == 0);
-        
+
         Style hoverBtn = theme.getStyle(ComponentType::Button, ElementState::Hover);
         REQUIRE(hoverBtn.backgroundColor.has_value());
         // Hover should have different/lighter background
         REQUIRE(hoverBtn.backgroundColor->r > normalBtn.backgroundColor->r);
-        
+
         Style pressedBtn = theme.getStyle(ComponentType::Button, ElementState::Pressed);
         REQUIRE(pressedBtn.backgroundColor.has_value());
-        // Pressed should have darker background
-        REQUIRE(pressedBtn.backgroundColor->r < normalBtn.backgroundColor->r);
+        // Pressed keeps the same background — only the bevel flips to Sunken
+        REQUIRE(pressedBtn.backgroundColor == normalBtn.backgroundColor);
+        REQUIRE(pressedBtn.borderColorOuterTopLeft == SDL_Color{128, 128, 128, 255});
+        REQUIRE(pressedBtn.borderColorInnerTopLeft == SDL_Color{0, 0, 0, 255});
     }
 }
 
@@ -218,7 +221,7 @@ TEST_CASE("Windows95 theme", "[theme][bevel]") {
     SECTION("ProgressBar uses navy fill on sunken white field") {
         Style progress = theme.getStyle(ComponentType::ProgressBar, ElementState::Normal);
         REQUIRE(progress.backgroundColor == SDL_Color{255, 255, 255, 255});
-        REQUIRE(progress.borderColor == SDL_Color{0, 0, 128, 255});
+        REQUIRE(progress.fillColor == SDL_Color{0, 0, 128, 255});
         REQUIRE(progress.borderColorInnerTopLeft == SDL_Color{0, 0, 0, 255});
     }
 
@@ -243,6 +246,52 @@ TEST_CASE("Windows95 theme", "[theme][bevel]") {
     SECTION("Hover state falls back to defined styles") {
         Style sliderHover = theme.getStyle(ComponentType::Slider, ElementState::Hover);
         REQUIRE(sliderHover.backgroundColor == SDL_Color{192, 192, 192, 255});
-        REQUIRE(sliderHover.borderColor == SDL_Color{128, 128, 128, 255});
+        REQUIRE(sliderHover.thumbColor == SDL_Color{128, 128, 128, 255});
+    }
+
+    SECTION("Checkbox has white sunken box") {
+        Style box = theme.getStyle(ComponentType::Checkbox, ElementState::Normal);
+        REQUIRE(box.backgroundColor == SDL_Color{255, 255, 255, 255});
+        REQUIRE(box.borderColorOuterTopLeft == SDL_Color{128, 128, 128, 255});
+        REQUIRE(box.borderColorInnerTopLeft == SDL_Color{0, 0, 0, 255});
+    }
+
+    SECTION("Checkbox Disabled keeps sunken box with gray check") {
+        Style disabled = theme.getStyle(ComponentType::Checkbox, ElementState::Disabled);
+        REQUIRE(disabled.backgroundColor == SDL_Color{255, 255, 255, 255});
+        REQUIRE(disabled.borderColorOuterTopLeft == SDL_Color{128, 128, 128, 255});
+        REQUIRE(disabled.textColor == SDL_Color{128, 128, 128, 255});
+    }
+
+    SECTION("DialogBox and FileDialog are flat Face windows") {
+        Style dialog = theme.getStyle(ComponentType::DialogBox, ElementState::Normal);
+        REQUIRE(dialog.backgroundColor == SDL_Color{192, 192, 192, 255});
+        REQUIRE_FALSE(dialog.borderColorOuterTopLeft.has_value());
+        Style file = theme.getStyle(ComponentType::FileDialog, ElementState::Normal);
+        REQUIRE(file.backgroundColor == SDL_Color{192, 192, 192, 255});
+        REQUIRE_FALSE(file.borderColorOuterTopLeft.has_value());
+    }
+}
+
+TEST_CASE("Win9x alias parity", "[theme]") {
+    Theme throughAlias = ThemePresets::createWin9xTheme();
+    Theme canonical = ThemePresets::createWindows95Theme();
+    Theme def = Theme::createDefaultTheme();
+
+    const ComponentType types[] = {
+        ComponentType::Button, ComponentType::Panel, ComponentType::TextInput,
+        ComponentType::Checkbox, ComponentType::Slider, ComponentType::ProgressBar,
+        ComponentType::DialogBox,
+    };
+    const ElementState states[] = {
+        ElementState::Normal, ElementState::Hover,
+        ElementState::Pressed, ElementState::Disabled,
+    };
+    for (ComponentType t : types) {
+        for (ElementState s : states) {
+            INFO("type=" << static_cast<int>(t) << " state=" << static_cast<int>(s));
+            REQUIRE(throughAlias.getStyle(t, s) == canonical.getStyle(t, s));
+            REQUIRE(def.getStyle(t, s) == canonical.getStyle(t, s));
+        }
     }
 }

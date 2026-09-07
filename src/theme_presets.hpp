@@ -13,249 +13,16 @@ inline Style withBevel(Style style, BevelType type) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Windows 9x (classic Win95/98 look)
+// Windows 9x — deprecated alias for createWindows95Theme() (see below).
+// It used to be a separate preset with a flat-border imitation of the same
+// look; now it simply delegates to the canonical bevel preset. Kept for
+// source compatibility; new code uses createWindows95Theme().
 // ═══════════════════════════════════════════════════════════════════
 
+inline Theme createWindows95Theme(); // defined below (canonical preset)
+
 inline Theme createWin9xTheme() {
-    Theme theme;
-
-    constexpr SDL_Color kBtnShadow    {128, 128, 128, 255};
-    constexpr SDL_Color kBtnDarkShadow {64, 64, 64, 255};
-    constexpr SDL_Color kWindowBg     {192, 192, 192, 255};
-    constexpr SDL_Color kWindowText   {0, 0, 0, 255};
-    constexpr SDL_Color kWhite        {255, 255, 255, 255};
-    constexpr SDL_Color kHighlight    {0, 0, 128, 255};
-    constexpr SDL_Color kHighlightText {255, 255, 255, 255};
-    constexpr SDL_Color k3dShadow     {128, 128, 128, 255};
-    constexpr SDL_Color kDisabledText {128, 128, 128, 255};
-
-    Style defaultStyle;
-    defaultStyle.backgroundColor = kWindowBg;
-    defaultStyle.textColor = kWindowText;
-    defaultStyle.borderColor = k3dShadow;
-    defaultStyle.borderWidth = 0;
-    defaultStyle.borderRadius = 0;
-    defaultStyle.fontSize = 14;
-    defaultStyle.fontName = constants::kDefaultFontPath;
-    theme.setDefaultStyle(defaultStyle);
-
-    // Button
-    {
-        Style s;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        theme.setStyle(ComponentType::Button, ElementState::Normal, s);
-
-        s.backgroundColor = {223, 223, 223, 255};
-        theme.setStyle(ComponentType::Button, ElementState::Hover, s);
-
-        s.backgroundColor = {160, 160, 160, 255};
-        s.borderColor = kBtnDarkShadow;
-        theme.setStyle(ComponentType::Button, ElementState::Pressed, s);
-
-        s = Style{};
-        s.backgroundColor = {192, 192, 192, 255};
-        s.textColor = kDisabledText;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.borderColor = {160, 160, 160, 255};
-        theme.setStyle(ComponentType::Button, ElementState::Disabled, s);
-    }
-
-    // Panel
-    {
-        Style s;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.backgroundColor = kWindowBg;
-        theme.setStyle(ComponentType::Panel, ElementState::Normal, s);
-    }
-
-    // TextInput - sunken 3D look
-    {
-        Style s;
-        s.backgroundColor = kWhite;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.borderColor = kBtnShadow;
-        s.textColor = kWindowText;
-        theme.setStyle(ComponentType::TextInput, ElementState::Normal, s);
-
-        s.borderColor = kHighlight;
-        theme.setStyle(ComponentType::TextInput, ElementState::Hover, s);
-
-        s = Style{};
-        s.backgroundColor = {212, 208, 200, 255};
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.borderColor = {160, 160, 160, 255};
-        s.textColor = kDisabledText;
-        theme.setStyle(ComponentType::TextInput, ElementState::Disabled, s);
-    }
-
-    // TextArea
-    {
-        Style s;
-        s.backgroundColor = kWhite;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.borderColor = kBtnShadow;
-        s.textColor = kWindowText;
-        theme.setStyle(ComponentType::TextArea, ElementState::Normal, s);
-
-        s.borderColor = kHighlight;
-        theme.setStyle(ComponentType::TextArea, ElementState::Hover, s);
-
-        s = Style{};
-        s.backgroundColor = {212, 208, 200, 255};
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.borderColor = {160, 160, 160, 255};
-        s.textColor = kDisabledText;
-        theme.setStyle(ComponentType::TextArea, ElementState::Disabled, s);
-    }
-
-    // Checkbox
-    {
-        Style s;
-        s.textColor = kWindowText;
-        s.fontSize = 14;
-        theme.setStyle(ComponentType::Checkbox, ElementState::Normal, s);
-    }
-
-    // RadioButton
-    {
-        Style s;
-        s.textColor = kWindowText;
-        s.fontSize = 14;
-        theme.setStyle(ComponentType::RadioButton, ElementState::Normal, s);
-    }
-
-    // Label
-    {
-        Style s;
-        s.textColor = kWindowText;
-        s.backgroundColor = {0, 0, 0, 0}; // transparent
-        s.fontSize = 14;
-        theme.setStyle(ComponentType::Label, ElementState::Normal, s);
-    }
-
-    // Slider
-    {
-        Style s;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.backgroundColor = kWindowBg;
-        theme.setStyle(ComponentType::Slider, ElementState::Normal, s);
-    }
-
-    // RangeSlider
-    {
-        Style s;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.backgroundColor = kWindowBg;
-        theme.setStyle(ComponentType::RangeSlider, ElementState::Normal, s);
-    }
-
-    // ProgressBar
-    {
-        Style s;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.backgroundColor = kWhite;
-        s.borderColor = {0, 0, 128, 255};
-        theme.setStyle(ComponentType::ProgressBar, ElementState::Normal, s);
-    }
-
-    // StringGrid
-    {
-        Style s;
-        s.backgroundColor = kWhite;
-        s.textColor = kWindowText;
-        s.borderColor = kBtnShadow;
-        s.borderWidth = 1;
-        s.borderRadius = 0;
-        theme.setStyle(ComponentType::StringGrid, ElementState::Normal, s);
-    }
-
-    // ListView
-    {
-        Style s;
-        s.backgroundColor = kWhite;
-        s.textColor = kWindowText;
-        s.borderColor = kBtnShadow;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        theme.setStyle(ComponentType::ListView, ElementState::Normal, s);
-    }
-
-    // ComboBox
-    {
-        Style s;
-        s.backgroundColor = kWhite;
-        s.textColor = kWindowText;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.borderColor = kBtnShadow;
-        theme.setStyle(ComponentType::ComboBox, ElementState::Normal, s);
-
-        s.borderColor = kHighlight;
-        theme.setStyle(ComponentType::ComboBox, ElementState::Hover, s);
-    }
-
-    // TabControl
-    {
-        Style s;
-        s.backgroundColor = kWindowBg;
-        s.borderWidth = 1;
-        s.borderRadius = 0;
-        s.textColor = kWindowText;
-        theme.setStyle(ComponentType::TabControl, ElementState::Normal, s);
-    }
-
-    // ContextMenu
-    {
-        Style s;
-        s.backgroundColor = kWhite;
-        s.textColor = kWindowText;
-        s.borderWidth = 1;
-        s.borderRadius = 0;
-        s.borderColor = kBtnShadow;
-        theme.setStyle(ComponentType::ContextMenu, ElementState::Normal, s);
-
-        s.backgroundColor = kHighlight;
-        s.textColor = kHighlightText;
-        theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, s);
-    }
-
-    // ScrollArea
-    {
-        Style s;
-        s.backgroundColor = kWindowBg;
-        s.borderWidth = 1;
-        s.borderRadius = 0;
-        theme.setStyle(ComponentType::ScrollArea, ElementState::Normal, s);
-    }
-
-    // AnimatedImage
-    {
-        Style s;
-        s.backgroundColor = kWindowBg;
-        theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
-    }
-
-    // Canvas
-    {
-        Style s;
-        s.backgroundColor = kWhite;
-        s.borderWidth = 2;
-        s.borderRadius = 0;
-        s.borderColor = kBtnShadow;
-        theme.setStyle(ComponentType::Canvas, ElementState::Normal, s);
-    }
-
-    return theme;
+    return createWindows95Theme();
 }
 
 
@@ -267,11 +34,13 @@ inline Theme createWin9xTheme() {
 inline Theme createWindows95Theme() {
     Theme theme;
 
+    // Single source of truth: system colors live in constants.hpp.
+    // Aliases below exist only for readability of the preset body.
     constexpr SDL_Color kWindowText    {0, 0, 0, 255};
-    constexpr SDL_Color kWhite         {255, 255, 255, 255};
-    constexpr SDL_Color kHighlightText {255, 255, 255, 255};
-    constexpr SDL_Color kNavy          {0, 0, 128, 255};
-    constexpr SDL_Color kDisabledText  {128, 128, 128, 255};
+    constexpr SDL_Color kWhite         = constants::kWin95Highlight;
+    constexpr SDL_Color kHighlightText = constants::kWin95Highlight;
+    constexpr SDL_Color kNavy          = constants::kWin95Navy;
+    constexpr SDL_Color kDisabledText  = constants::kWin95Shadow;
 
     Style defaultStyle;
     defaultStyle.backgroundColor = constants::kWin95Face;
@@ -353,18 +122,18 @@ inline Theme createWindows95Theme() {
         theme.setStyle(ComponentType::StringGrid, ElementState::Normal, s);
     }
 
-    // ProgressBar: white background + Sunken; borderColor = fill color (navy)
+    // ProgressBar: white background + Sunken; fillColor = fill color (navy).
     {
         Style s = sunkenField(kWhite);
-        s.borderColor = kNavy;
+        s.fillColor = kNavy;
         theme.setStyle(ComponentType::ProgressBar, ElementState::Normal, s);
     }
 
-    // Slider: track drawn by the widget; borderColor = thumb color
+    // Slider: track drawn by the widget from backgroundColor; thumbColor = thumb.
     {
         Style s;
         s.backgroundColor = constants::kWin95Face;
-        s.borderColor = constants::kWin95Shadow;
+        s.thumbColor = constants::kWin95Shadow;
         s.borderRadius = 0;
         theme.setStyle(ComponentType::Slider, ElementState::Normal, s);
     }
@@ -372,20 +141,27 @@ inline Theme createWindows95Theme() {
     {
         Style s;
         s.backgroundColor = constants::kWin95Face;
-        s.borderColor = constants::kWin95Shadow;
+        s.thumbColor = constants::kWin95Shadow;
         s.borderRadius = 0;
         theme.setStyle(ComponentType::RangeSlider, ElementState::Normal, s);
     }
 
-    // Checkbox / RadioButton: text only (boxes drawn by the widget)
+    // Checkbox: white box + Sunken bevel. The widget draws the check mark
+    // in textColor (black via the default style, gray when disabled).
+    // Hover/Pressed fall back to Normal — real Win95 boxes don't highlight.
+    {
+        theme.setStyle(ComponentType::Checkbox, ElementState::Normal, sunkenField(kWhite));
+        Style d = sunkenField(kWhite);
+        d.textColor = kDisabledText;
+        theme.setStyle(ComponentType::Checkbox, ElementState::Disabled, d);
+    }
+
+    // RadioButton: text only (the circle is drawn by the widget in textColor).
     {
         Style s;
         s.textColor = kWindowText;
         s.fontSize = 14;
-        theme.setStyle(ComponentType::Checkbox, ElementState::Normal, s);
-
-        Style r = s;
-        theme.setStyle(ComponentType::RadioButton, ElementState::Normal, r);
+        theme.setStyle(ComponentType::RadioButton, ElementState::Normal, s);
     }
 
     // Label: transparent
@@ -406,6 +182,19 @@ inline Theme createWindows95Theme() {
         theme.setStyle(ComponentType::ScrollArea, ElementState::Normal, s);
         theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
     }
+
+    // DialogBox / FileDialog: flat window background, like Panel.
+    {
+        Style s;
+        s.backgroundColor = constants::kWin95Face;
+        s.borderRadius = 0;
+        theme.setStyle(ComponentType::DialogBox, ElementState::Normal, s);
+        theme.setStyle(ComponentType::FileDialog, ElementState::Normal, s);
+    }
+
+    // Intentionally unset (fall back to the default style above):
+    // RadioGroup, Cursor, ArcContainer, ShaderPanel, GUIElement, Unknown.
+    // They carry no Win95-specific chrome.
 
     // ContextMenu: white with shadow, navy selection
     {
