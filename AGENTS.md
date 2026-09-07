@@ -43,7 +43,7 @@ SDL GUI to lekka biblioteka GUI oparta na SDL3. Cel: ułatwić tworzenie narzęd
 src/           — implementacja (C++23, moduły)
 src/composite/ — gotowe dialogi
 src/editor/    — edytor wizualny GUI
-examples/      — 49 przykładów (00–48); examples/c/ — 10 przykładów C
+examples/      — 65 przykładów (00–64); examples/c/ — 10 przykładów C
 tests/         — 43 binarki testowe (Catch2)
 docs/          — release/ (kanon end-user → dist/docs/), refactor_plan.md, archive/ (nieaktualne)
 skills/sdl-gui/ — skill agenta (SKILL.md + references/); `./nob release` kopiuje do dist/skills/
@@ -276,7 +276,7 @@ Zasoby muszą być dostępne przez `pkg-config sdl3 sdl3-image sdl3-ttf`. `PKG_C
 - **Parsery (3)**: JsonParser, SGMLParser, LayoutParser (fixture'y w `tests/data/` — `layout.json`, `layout.xml`, `widgets.json`, `win95_bevel.json/xml`, `bad.*`)
 - **C API (1)**: test_sdl_gui_c_api (Phase 0+1+2+3; + pixel test renderowania kursora — pozycja myszy ze syntetycznego motion eventu, bez warpowania wskaźnika)
 
-Testy integracyjne: 49 przykładów (`examples/`, 00–48) + 10 przykładów C (`examples/c/`) do manualnej weryfikacji wizualnej.
+Testy integracyjne: 65 przykładów (`examples/`, 00–64) + 10 przykładów C (`examples/c/`) do manualnej weryfikacji wizualnej.
 
 ## Powtarzalne zadania
 
@@ -331,6 +331,19 @@ Uruchom: `./nob test`
   (>10 wpisów), przenieś najstarsze do osobnego pliku CHANGELOG.md.
   ═══════════════════════════════════════════════════════════════════
 -->
+
+### 6 nowych przykładów 59–64: proste gry + 3rd-party (2026-09-07)
+- **Co**: 4 gry bez nowych zależności — 59_snake (siatka 20x14 Paneli, strzałki/WASD, slider kroków/s, repaint tylko na kroku logiki), 60_minesweeper (9x9 Buttonów + Label-faces jak Button nie ma setText; LPM z flood-fill, PPM flaga przez `setOnRightClickCallback`), 61_breakout (mysz steruje paletką, fizyka kulki `dt`, cegły chowane przez `setVisible(false)` żeby surowe wskaźniki nie wisiały, slider prędkości), 62_memory (16 kart, mismatch wraca po 700 ms przez deadline w pętli, restart tasuje `std::shuffle`). 2 przykłady 3rd-party: 63_mixer_beeps (SDL3_mixer: syntezowane WAV-y sinus w pamięci → `MIX_LoadAudio_IO` + `MIX_PlayAudio`, slider → `MIX_SetMixerGain`, klawisze 1/2/3), 64_highscores_sqlite (systemowy sqlite3: `TextInput` + slider wyniku → INSERT, TOP 5 w multiline-Label, `highscores.db` w cwd).
+- **Lekcje buildowe**: (1) zero dodatkowych include'ów STL (`<deque>`/`<vector>`/`<algorithm>`/`<random>` też sypią `requires clause differs` — wszystko jest w `std.hpp`); (2) callbacki klików MUSZĄ brać `GUIElement*` (lambdy `[](){}` się nie konwertują); (3) `MIX_DestroyMixer` PRZED końcem `try` — dtor `SDLApp` woła `SDL_Quit` i niszczenie miksera po nim to SEGV w `MIX_StopAllTracks` (złapane ASan-em).
+- **nob.c**: opt-in zależności per przykład (reszta binarek szczupła) — `*mixer*` dostaje flagi z `pkg-config sdl3-mixer`, `*sqlite*` dostaje `-lsqlite3` (sqlite3-dev już w systemie, nic nie instalowano); `cc -o nob nob.c` po edycji.
+- Efekt: testów nie ruszano (lib bez zmian), 65/65 przykładów się buduje, smoke headless 59–64 (timeout = pętla chodziła; 64 utworzył `highscores.db`, 63 po fixie czysty ASan na dummy-audio).
+- Zmienione pliki: examples/59_snake.cpp … examples/64_highscores_sqlite.cpp (nowe), nob.c, AGENTS.md, docs/index.md, skills/sdl-gui/SKILL.md (liczniki 59→65)
+
+### 10 nowych przykładów 49–58: slidery sterują wszystkim (2026-09-07)
+- **Co**: 10 przykładów 100–170 linii, każdy pokazuje nietypową, prostą interakcję ze sliderami: 49_arc_sliders (3 poziome slidery obrócone na łuku przez `ArcContainer::addChildAtAngle(rotate=true)` mieszają RGB podglądu; środkowy stoi pionowo), 50_servo_panel (slidery X/Y/rotacja jeżdżą panelem jak serwami wprost przez `setPosition/setRotation`), 51_bounce_lab (ręczna integracja `dt` z `SDL_GetTicks`: slider prędkości w px/s + slider rozmiaru kulki + pauza), 52_range_remap (`RangeSlider` definiuje okno [lo,hi], zwykły slider mapuje 0–100 w to okno, `ProgressBar` pokazuje wynik), 53_smooth_follow (wzór "smooth follow" bez AnimationManagera: `cur += (target-cur)*min(1,dt*speed)`), 54_brush_mixer (slidery R/G/B przezbrajają `Canvas::setPenColor` na żywo + swatch + Clear), 55_gravity_box (pionowy slider grawitacji + slider tłumienia odbicia, fizyka w pętli), 56_dial_morph (slider kąta kręci wskazówką przez `setRotationCenter`, slider promienia woła `ArcContainer::setRadius` na żywo), 57_text_scaler (slidery rozmiaru/rotacji/jasności labelki przez jeden wspólny `refresh()` budujący pełny `Style`), 58_equalizer (5 par pionowy slider + pionowy `ProgressBar` jako VU-metry z wobble `sin`, `ElementRef` w wektorach).
+- **Lekcja buildowa**: nie doklejać `#include <vector>`/`<cmath>` — `std.hpp` już je zawiera, a mieszanie z modułami (`import std`) sypie `requires clause differs` w libc++.
+- Efekt: testów nie ruszano (kod lib bez zmian), 59/59 przykładów się buduje (`./nob examples` zielone), smoke headless 49/55/58 (4 s każdy, `SDL_GUI_HIDDEN=1`, exit przez timeout = pętla chodziła, zero crashy).
+- Zmienione pliki: examples/49_arc_sliders.cpp … examples/58_equalizer.cpp (nowe), AGENTS.md, docs/index.md, skills/sdl-gui/SKILL.md (liczniki 49→59)
 
 ### Unifikacja Win9x → Windows95 + checkbox Win95 (2026-09-07)
 - **Co**: jeden kanoniczny preset Win95 — `createWin9xTheme()` to teraz cienki alias wołający `createWindows95Theme()` (bez `[[deprecated]]`, żeby nie zaśmiecać buildu warningami z C-API; sama adnotacja słowna), `Theme::createDefaultTheme()` deleguje do kanonu. Paleta kanonu podpięta pod `constants::kWin95*` (nowe `kWin95Navy`), kolory-widma `{64}/{160}/{212,208,200}` wycięte. Checkbox dostał wygląd Win95: białe pudełko + Sunken, check w `textColor` (Normal czarny via default, Disabled szary z zachowanym sunken — Hover/Pressed fallbackują do Normal jak w oryginale). Domknięte pokrycie: jawne flat-Face `DialogBox`/`FileDialog` + komentarz o świadomie pominiętych typach. Koniec nadużycia `borderColor`: Slider/RangeSlider → `thumbColor`, ProgressBar → `fillColor` (te same piksele przez fallback, poprawna semantyka). C-API: nowe `sdlgui_theme_windows95()`, `sdlgui_theme_win9x()` to alias. Przykłady 27/28 dostały trzeci radio "Win95".

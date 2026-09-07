@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CXX "clang++-20"
-#define CC "clang-20"
+#define CXX "clang++-24"
+#define CC "clang-24"
 
 #define SRC_DIR "src"
 #define OUTPUT_DIR "output"
@@ -16,8 +16,8 @@
 #define MODULE_CACHE_DIR "modules_cache"
 #define EXAMPLES_DIR "examples"
 
-#define STD_MODULE_SRC "/usr/lib/llvm-20/share/libc++/v1/std.cppm"
-#define STD_COMPAT_MODULE_SRC "/usr/lib/llvm-20/share/libc++/v1/std.compat.cppm"
+#define STD_MODULE_SRC "/usr/lib/llvm-24/share/libc++/v1/std.cppm"
+#define STD_COMPAT_MODULE_SRC "/usr/lib/llvm-24/share/libc++/v1/std.compat.cppm"
 
 // ========== PRECOMPILED FLAGS ==========
 
@@ -75,6 +75,8 @@ static Nob_Cmd g_debug = {0};
 static Nob_Cmd g_release = {0};
 static Nob_Cmd g_sdl3_cflags = {0};  // SDL3 compile flags from pkg-config
 static Nob_Cmd g_sdl3_libs = {0};    // SDL3 link flags from pkg-config
+static Nob_Cmd g_mixer_cflags = {0}; // SDL3_mixer flags, only for *mixer* examples
+static Nob_Cmd g_mixer_libs = {0};
 static Nob_Compdb g_compdb = {0};    // compile_commands.json entries
 static bool g_initialized = false;
 
@@ -103,6 +105,8 @@ static void init_globals(void) {
     nob_da_append_many(&g_release, release_flags, NOB_ARRAY_LEN(release_flags));
     pkg_config_cmd(&g_sdl3_cflags, "sdl3 sdl3-image sdl3-ttf --cflags");
     pkg_config_cmd(&g_sdl3_libs, "sdl3 sdl3-image sdl3-ttf --libs");
+    pkg_config_cmd(&g_mixer_cflags, "sdl3-mixer --cflags");
+    pkg_config_cmd(&g_mixer_libs, "sdl3-mixer --libs");
     g_initialized = true;
 }
 
@@ -610,6 +614,14 @@ static bool build_examples(bool release) {
             nob_cmd_append(&cmd, *obj);
         }
         cmd_add_sdl3(&cmd);
+        // Opt-in third-party deps per example (keeps other binaries lean).
+        if (strstr(*src, "mixer") != NULL) {
+            nob_cmd_extend(&cmd, &g_mixer_cflags);
+            nob_cmd_extend(&cmd, &g_mixer_libs);
+        }
+        if (strstr(*src, "sqlite") != NULL) {
+            nob_cmd_append(&cmd, "-lsqlite3");
+        }
         
         // Add to compile_commands.json BEFORE running
         nob_compdb_add(&g_compdb, &cmd, *src, .output = exe);
@@ -1360,7 +1372,7 @@ static bool build_release(void) {
             // (the user doesn't need src/ or lib/).
             nob_cmd_append(&cmd, "-I" DIST_DIR);
             nob_cmd_append(&cmd, "-o", standalone_exe, standalone_src, DIST_DIR "/libsdl_gui.a");
-            cmd_add_sdl3(&cmd);
+        cmd_add_sdl3(&cmd);
             if (!nob_cmd_run(&cmd)) return false;
         }
     }

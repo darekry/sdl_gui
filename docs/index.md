@@ -52,7 +52,7 @@ prawdy dla odbiorców biblioteki (nie mają dostępu do `src/`).
 |-----------|-------------|
 | `src/` | Library implementation (C++23) |
 | `src/composite/` | DialogBox, MessageBox, FileDialog |
-| `examples/` | 49 example applications (00–48) |
+| `examples/` | 65 example applications (00–64) |
 | `tests/` | Unit tests (Catch2) |
 | `docs/` | Documentation (EN/PL) |
 | `docs/release/` | End-user docs, copied to `dist/docs/` by `./nob release` |
