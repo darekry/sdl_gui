@@ -442,7 +442,8 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
         SDL_SetRenderClipRect(renderer, &clipped_rect);
         drawDirect(renderer);
         SDL_SetRenderClipRect(renderer, &parent_clip_rect);
-        m_isDirty = false;
+        // Bez czyszczenia m_isDirty: direct-widget przerysowuje się co klatkę
+        // z natury, flaga nie znaczy tu "cache aktualny".
     } else {
         if (m_isDirty) {
             renderToCache();
@@ -456,6 +457,12 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                     : SDL_FPoint{static_cast<float>(m_width) / 2.0f, static_cast<float>(m_height) / 2.0f};
                 SDL_RenderTextureRotated(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
                                  m_rotation, &center, SDL_FLIP_NONE);
+                // Fokus rotuje się razem z treścią, ale z OSOBNEJ tekstury
+                // (m_focusTexture) — zmiana fokusu nie unieważnia cache'a.
+                if (hasKeyboardFocus() && m_focusTexture) {
+                    SDL_RenderTextureRotated(renderer, m_focusTexture.get(), nullptr, &dst_rect,
+                                     m_rotation, &center, SDL_FLIP_NONE);
+                }
             } else {
                 SDL_Rect src_rect;
                 src_rect.x = clipped_rect.x - abs_pos.x;
@@ -463,12 +470,9 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 src_rect.w = clipped_rect.w;
                 src_rect.h = clipped_rect.h;
                 RenderTexture(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
-            }
-            if (m_rotation == 0.0 && hasKeyboardFocus()) {
-                const Style& focusStyle = getComposedStyle(m_state);
-                drawRoundedRectBorder(renderer, SDLRectToFRect(abs_pos.x, abs_pos.y, m_width, m_height),
-                                      static_cast<float>(focusStyle.borderRadius.value_or(0)),
-                                      ColorToFColor(constants::kFocusOutlineColor), 1.0f);
+                if (hasKeyboardFocus()) {
+                    renderFocusOverlay(renderer);
+                }
             }
         }
     }
@@ -480,11 +484,61 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 child->render(renderer, child_clip_rect);
             }
         }
+    } else {
+        // Rotowany rodzic wpieka zwykłe dzieci we własną teksturę (patrz
+        // renderToCache). Direct-dzieci rysują w absolutnych współrzędnych
+        // co klatkę — nie da się ich wpiec, więc renderują się osobno
+        // (bez rotacji; wcześniej były niewidzialne).
+        for (auto& child : m_children) {
+            if (child->isVisible() && child->wantsDirectRender()) {
+                child->render(renderer, child_clip_rect);
+            }
+        }
     }
 }
 
 void GUIElement::renderOverlay(SDL_Renderer* renderer) {
     render(renderer);
+}
+
+void GUIElement::renderFocusOverlay(SDL_Renderer* renderer) {
+    // Nie mylić z renderOverlay() (warstwa overlay-stacka: tooltip/menu).
+    // Obrys fokusu klawiatury dla elementów NIEROTOWANYCH: rysowany poza
+    // cache'em, co klatkę, w osiach ekranu. Rotowane elementy używają
+    // m_focusTexture blitowanej z tą samą rotacją (patrz render).
+    const Style& focusStyle = getComposedStyle(m_state);
+    const auto abs_pos = getAbsolutePosition();
+    drawRoundedRectBorder(renderer, SDLRectToFRect(abs_pos.x, abs_pos.y, m_width, m_height),
+                          static_cast<float>(focusStyle.borderRadius.value_or(0)),
+                          ColorToFColor(constants::kFocusOutlineColor), 1.0f);
+}
+
+// Buduje m_focusTexture (sam obrys, lokalne współrzędne) albo ją czyści.
+// Niezmiennik: tekstura istnieje wtedy i tylko wtedy, gdy element jest
+// rotowany — nierotowane rysują obrys bezpośrednio (renderFocusOverlay).
+void GUIElement::rebuildFocusTexture(SDL_Renderer* renderer) {
+    if (m_rotation == 0.0) {
+        m_focusTexture.reset();
+        return;
+    }
+    SharedTexture focusTex(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+                                              SDL_TEXTUREACCESS_TARGET, m_width, m_height),
+                           SDLTextureDeleter());
+    if (!focusTex) {
+        m_focusTexture.reset();
+        return;
+    }
+    SDL_SetTextureBlendMode(focusTex.get(), SDL_BLENDMODE_BLEND);
+    {
+        ScopedRenderTarget focusScope(renderer, focusTex.get());
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_RenderClear(renderer);
+        const Style& focusStyle = getComposedStyle(m_state);
+        drawRoundedRectBorder(renderer, SDLRectToFRect(0, 0, m_width, m_height),
+                              static_cast<float>(focusStyle.borderRadius.value_or(0)),
+                              ColorToFColor(constants::kFocusOutlineColor), 1.0f);
+    }
+    m_focusTexture = std::move(focusTex);
 }
 
 void GUIElement::renderToCache() {
@@ -503,6 +557,7 @@ void GUIElement::renderToCache() {
                 key, m_width, m_height, [this](SDL_Renderer* r) { draw(r); });
             m_cacheKey = key;
         }
+        m_focusTexture.reset(); // nierotowany: obrys idzie bezpośrednio
         m_isDirty = false;
         return;
     }
@@ -526,28 +581,33 @@ void GUIElement::renderToCache() {
         draw(renderer);
 
         if (m_rotation != 0.0) {
-            if (hasKeyboardFocus()) {
-                const Style& focusStyle = getComposedStyle(m_state);
-                drawRoundedRectBorder(renderer, SDLRectToFRect(0, 0, m_width, m_height),
-                                      static_cast<float>(focusStyle.borderRadius.value_or(0)),
-                                      ColorToFColor(constants::kFocusOutlineColor), 1.0f);
-            }
+            // Wpiekanie dzieci to kompozycja, nie rotacja cache'a.
             SDL_SetRenderTarget(renderer, nullptr);
             for (auto& child : m_children) {
-                if (child->isVisible() && child->m_isDirty) {
+                if (child->isVisible() && !child->wantsDirectRender() && child->m_isDirty) {
                     child->renderToCache();
                 }
             }
 
             SDL_SetRenderTarget(renderer, tex.get());
             for (auto& child : m_children) {
-                if (child->isVisible() && child->m_cachedTexture) {
+                if (child->isVisible() && !child->wantsDirectRender() && child->m_cachedTexture) {
                     SDL_Rect childDst = {child->m_x, child->m_y, child->m_width, child->m_height};
                     RenderTexture(renderer, child->m_cachedTexture.get(), childDst);
+                    // Fokus dziecka wpieka się razem z nim (jak jego treść) —
+                    // obraca się potem sztywno z całym poddrzewem.
+                    if (child->hasKeyboardFocus() && child->m_focusTexture) {
+                        RenderTexture(renderer, child->m_focusTexture.get(), childDst);
+                    }
                 }
             }
         }
     }
+
+    // Obrys fokusu rotowanego trzymamy w osobnej teksturze (nie w cache'u
+    // treści), więc zmiana fokusu go nie unieważnia. Odbudowa razem z cache'em
+    // — te same inputy (rozmiar, styl) unieważniają oba.
+    rebuildFocusTexture(renderer);
 
     m_cachedTexture = std::move(tex);
     m_isDirty = false;

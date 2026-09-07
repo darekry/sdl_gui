@@ -157,6 +157,11 @@ SDL_Point getRotationCenter() const;
 ```
 
 Obraca zawartość elementu wokół środka (`{-1, -1}` = środek elementu).
+Rotacja dotyczy tylko blita tekstury: dzieci zwykłe są wpiekane w teksturę
+rodzica, a dzieci direct-render (`wantsDirectRender`, np. Canvas) rysują się
+osobno bez rotacji. Obrys fokusu rotuje się razem z treścią, ale trzymany jest
+w osobnej teksturze poza cache'em treści — zmiana fokusu go nie unieważnia.
+(Nierotowane rysują obrys bezpośrednio, bez tekstur.)
 
 ### Fokus klawiatury
 

@@ -166,6 +166,13 @@ public:
 protected:
     void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
 
+    // Obrys fokusu klawiatury dla elementów nierotowanych (direct draw,
+    // poza cache'em). Rotowane używają m_focusTexture (patrz render).
+    // Nie mylić z renderOverlay() — tamto to warstwa overlay-stacka.
+    void renderFocusOverlay(SDL_Renderer* renderer);
+    // Odbudowa m_focusTexture (woła renderToCache; no-op dla nierotowanych).
+    void rebuildFocusTexture(SDL_Renderer* renderer);
+
     // Brudzi wyłącznie rotowanych przodków (precyzyjny dirty, plaster 5).
     void markBakedAncestorsDirty();
 
@@ -220,6 +227,10 @@ protected:
     bool m_isDirty = true;
         SharedTexture m_cachedTexture;
         uint64_t m_cacheKey = 0;
+        // Sam obrys fokusu (lokalne współrzędne), blitowany z tą samą rotacją
+        // co treść. Istnieje tylko dla rotowanych; nierotowane rysują obrys
+        // bezpośrednio (renderFocusOverlay). Odbudowa w renderToCache().
+        SharedTexture m_focusTexture;
         std::array<std::optional<Style>, 4> m_localStyles;
         // Resolved-style cache (StyleResolver phase 1): merged
         // local+theme+default per state, valid while theme epoch and

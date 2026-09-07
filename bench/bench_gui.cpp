@@ -369,7 +369,7 @@ SectionResult runFrameLoop(GUIManager& mgr, SDL_Renderer* renderer, int widgets,
                                         c.x + s->getWidth() / 2, y));
             events += 3;
         }
-        // co 5. klatkę zmiana tekstu jednej labelki + znak do rotowanego inputa
+        // co 5. klatkę zmiana tekstu jednej labelki + znak do inputa
         if (!scene.labels.empty() && frame % 5 == 0) {
             scene.labels[labelIdx++ % scene.labels.size()]->setText("F" + std::to_string(frame));
         }

@@ -9,8 +9,9 @@
 > testami (`./nob test`) i zbudowanymi przykładami (`./nob examples`).
 > Punkt 6 realizowany plastrami (patrz `AGENTS.md` → „Render punkt 6"):
 > plaster 1 (OverlayStack cache), plaster 2 (TextShaper), plaster 3 (koniec
-> mutacji w draw() — ComboBox/ContextMenu eager) i plaster 4 (LRU bajtowe)
-> zrobione 2026-09-06; została rotacja/blit.
+> mutacji w draw() — ComboBox/ContextMenu eager), plaster 4 (LRU bajtowe),
+> plaster 5 (precyzyjny dirty) i plaster 6 (rotacja/blit + fokus poza cache)
+> zrobione 2026-09-06; **punkt 6 ZAMKNIĘTY**.
 
 ## TL;DR — 6 zmian strukturalnych
 
