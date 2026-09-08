@@ -13,6 +13,7 @@
 #include "panel.hpp"
 #include "label.hpp"
 #include "button.hpp"
+#include "ui_helpers.hpp"
 
 #include "std.hpp"
 
@@ -37,13 +38,12 @@ int main(int, char**) {
         box->setStyle(ElementState::Normal, boxStyle);
         guiManager.addElement(std::move(box));
 
-        auto ball = std::make_unique<Panel>(guiManager, static_cast<int>(kBallX), kY0 + 10, kBall, kBall);
+        auto [ball, ballRef] = addTracked(
+            guiManager, std::make_unique<Panel>(guiManager, static_cast<int>(kBallX), kY0 + 10, kBall, kBall));
         ball->setBackgroundColor(ElementState::Normal, {140, 170, 240, 255});
         Style ballStyle;
         ballStyle.borderRadius = kBall / 2;
         ball->setStyle(ElementState::Normal, ballStyle);
-        auto ballRef = guiManager.makeRef(ball.get());
-        guiManager.addElement(std::move(ball));
 
         float gravity = 18.0f; // slider units -> px/s^2 via kScale
         float damping = 0.85f; // fraction of velocity kept per bounce
@@ -51,39 +51,28 @@ int main(int, char**) {
         float vy = 0.0f;
         constexpr float kScale = 30.0f;
 
-        auto status = std::make_unique<Label>(guiManager, kX0, 20, "", 16);
-        auto statusRef = guiManager.makeRef(status.get());
-        guiManager.addElement(std::move(status));
+        auto [status, statusRef] = addTracked(
+            guiManager, std::make_unique<Label>(guiManager, kX0, 20, "", 16));
 
         auto gravSlider = std::make_unique<Slider>(guiManager, 590, 60, 36, 320,
                                                    0, 40, 18, Orientation::Vertical);
         gravSlider->setTooltip("Gravity");
-        gravSlider->setOnChangeCallback([&gravity](GUIElement* e) {
-            auto* s = static_cast<Slider*>(e);
-            if (s) gravity = static_cast<float>(s->getValue());
-        });
+        bindSliderValue(*gravSlider, gravity);
         guiManager.addElement(std::move(gravSlider));
 
         auto dampSlider = std::make_unique<Slider>(guiManager, 660, 60, 36, 320,
                                                    40, 99, 85, Orientation::Vertical);
         dampSlider->setTooltip("Bounce kept (%)");
-        dampSlider->setOnChangeCallback([&damping](GUIElement* e) {
-            auto* s = static_cast<Slider*>(e);
-            if (s) damping = s->getValue() / 100.0f;
-        });
+        bindSliderValue(*dampSlider, damping, 0.01f);
         guiManager.addElement(std::move(dampSlider));
 
-        auto labG = std::make_unique<Label>(guiManager, 580, 390, "Gravity", 15);
-        auto labD = std::make_unique<Label>(guiManager, 650, 390, "Bounce", 15);
-        guiManager.addElement(std::move(labG));
-        guiManager.addElement(std::move(labD));
+        addLabel(guiManager, 580, 390, "Gravity", 15);
+        addLabel(guiManager, 650, 390, "Bounce", 15);
 
-        auto dropBtn = std::make_unique<Button>(guiManager, 580, 440, 150, 44, "Drop");
-        dropBtn->setOnClickCallback([&y, &vy, kY0](GUIElement*) {
+        addButton(guiManager, 580, 440, 150, 44, "Drop", [&y, &vy, kY0](GUIElement*) {
             y = kY0 + 10.0f;
             vy = 0.0f;
         });
-        guiManager.addElement(std::move(dropBtn));
 
         Uint64 last = SDL_GetTicks();
         bool quit = false;

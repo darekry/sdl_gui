@@ -13,6 +13,7 @@
 #include "button.hpp"
 #include "panel.hpp"
 #include "label.hpp"
+#include "ui_helpers.hpp"
 #include "composite/file_dialog.hpp"
 
 #include "std.hpp"
@@ -37,14 +38,12 @@ int main(int, char**) {
         titleLabel->setPosition(280, 30);
         mainPanel->addChild(std::move(titleLabel));
 
-        auto statusLabel = std::make_unique<Label>(guiManager, 50, 350,
-            "Selected file: (none)", 16);
-        auto statusLabelRef = guiManager.makeRef(statusLabel.get());
-        mainPanel->addChild(std::move(statusLabel));
+        auto [statusLabel, statusLabelRef] = addTracked(
+            *mainPanel, std::make_unique<Label>(guiManager, 50, 350, "Selected file: (none)", 16));
 
         // Button: Open File Dialog
-        auto btnOpen = std::make_unique<Button>(guiManager, 100, 100, 200, 40, "Open File...");
-        btnOpen->setOnClickCallback([&guiManager, statusLabelRef](GUIElement*) {
+        addButton(*mainPanel, 100, 100, 200, 40, "Open File...",
+                  [&guiManager, statusLabelRef](GUIElement*) {
             FileDialog::createOpen(
                 guiManager,
                 "Open File",
@@ -56,11 +55,10 @@ int main(int, char**) {
                 }
             );
         });
-        mainPanel->addChild(std::move(btnOpen));
 
         // Button: Save File Dialog
-        auto btnSave = std::make_unique<Button>(guiManager, 320, 100, 200, 40, "Save File...");
-        btnSave->setOnClickCallback([&guiManager, statusLabelRef](GUIElement*) {
+        addButton(*mainPanel, 320, 100, 200, 40, "Save File...",
+                  [&guiManager, statusLabelRef](GUIElement*) {
             FileDialog::createSave(
                 guiManager,
                 "Save File",
@@ -72,11 +70,10 @@ int main(int, char**) {
                 }
             );
         });
-        mainPanel->addChild(std::move(btnSave));
 
         // Button: Open with filter
-        auto btnFiltered = std::make_unique<Button>(guiManager, 540, 100, 200, 40, "Open *.cpp...");
-        btnFiltered->setOnClickCallback([&guiManager, statusLabelRef](GUIElement*) {
+        addButton(*mainPanel, 540, 100, 200, 40, "Open *.cpp...",
+                  [&guiManager, statusLabelRef](GUIElement*) {
             FileDialog::createOpen(
                 guiManager,
                 "Open C++ Source",
@@ -90,7 +87,6 @@ int main(int, char**) {
                 "*.cpp"
             );
         });
-        mainPanel->addChild(std::move(btnFiltered));
 
         auto infoLabel = std::make_unique<Label>(guiManager, 50, 200,
             "Left panel: directories (double-click to navigate)\n"

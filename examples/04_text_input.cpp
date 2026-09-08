@@ -5,6 +5,7 @@
 #include "panel.hpp"
 #include "theme.hpp"
 #include "sdl_app.hpp"
+#include "ui_helpers.hpp"
 
 #include "std.hpp"
 
@@ -22,19 +23,10 @@ int main(int, char**) {
 
         // Panel with background, border and rounded corners
         auto panel = std::make_unique<Panel>(guiManager, 200, 100, 400, 160);
-        Style panelStyle;
-        panelStyle.backgroundColor = {50, 52, 64, 255};
-        panelStyle.borderColor = {98, 114, 164, 255};
-        panelStyle.borderWidth = 2;
-        panelStyle.borderRadius = 10;
-        panel->setStyle(ElementState::Normal, panelStyle);
+        styleCard(*panel);
 
         // Title label above the input
-        auto title = std::make_unique<Label>(guiManager, 20, 20, "Text Input Example", 22);
-        Style titleStyle;
-        titleStyle.textColor = {255, 255, 255, 255};
-        title->setStyle(ElementState::Normal, titleStyle);
-        panel->addChild(std::move(title));
+        addLabel(*panel, 20, 20, "Text Input Example", 22, SDL_Color{255, 255, 255, 255});
 
         // Text input with tooltip and enter-press callback
         auto textInput = std::make_unique<TextInput>(guiManager, 20, 60, 360, 40);

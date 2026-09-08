@@ -5,6 +5,7 @@
 #include "panel.hpp"
 #include "theme.hpp"
 #include "sdl_app.hpp"
+#include "ui_helpers.hpp"
 
 #include "std.hpp"
 
@@ -18,44 +19,25 @@ int main(int, char**) {
         GUIManager guiManager(renderer, Viewport{SCREEN_WIDTH, SCREEN_HEIGHT});
         guiManager.setTheme(Theme::createDefaultTheme());
         // Panel with border and rounded corners
-        auto panel = std::make_unique<Panel>(guiManager, 200, 80, 400, 250);
-        Style panelStyle;
-        panelStyle.backgroundColor = {50, 52, 64, 255};
-        panelStyle.borderColor = {98, 114, 164, 255};
-        panelStyle.borderWidth = 2;
-        panelStyle.borderRadius = 10;
-        panel->setStyle(ElementState::Normal, panelStyle);
+        Panel* panel = addDarkPanel(guiManager, 200, 80, 400, 250);
         // White text style shared by labels
-        Style lightText;
-        lightText.textColor = {255, 255, 255, 255};
+        const SDL_Color lightText{255, 255, 255, 255};
         // Title label
-        auto title = std::make_unique<Label>(guiManager, 20, 20, "Checkbox Example", 22);
-        title->setStyle(ElementState::Normal, lightText);
-        panel->addChild(std::move(title));
+        addLabel(*panel, 20, 20, "Checkbox Example", 22, lightText);
 
         // First checkbox with tooltip
-        auto checkbox1 = std::make_unique<Checkbox>(guiManager, 20, 70, 24, 24);
-        checkbox1->setTooltip("Toggle this option");
-        checkbox1->setOnChange([](Checkbox*, bool isChecked) {
+        LabeledCheckbox cb1 = addLabeledCheckbox(*panel, 20, 70, "Check me!", 24, 16, lightText);
+        cb1.box->setTooltip("Toggle this option");
+        cb1.box->setOnChange([](Checkbox*, bool isChecked) {
             LOG_INFO("Checkbox", "Checkbox 1 state: {}", isChecked ? "Checked" : "Unchecked");
         });
-        panel->addChild(std::move(checkbox1));
-        auto label1 = std::make_unique<Label>(guiManager, 55, 72, "Check me!", 16);
-        label1->setStyle(ElementState::Normal, lightText);
-        panel->addChild(std::move(label1));
 
         // Second checkbox with tooltip
-        auto checkbox2 = std::make_unique<Checkbox>(guiManager, 20, 115, 24, 24);
-        checkbox2->setTooltip("Toggle this option");
-        checkbox2->setOnChange([](Checkbox*, bool isChecked) {
+        LabeledCheckbox cb2 = addLabeledCheckbox(*panel, 20, 115, "Also check me", 24, 16, lightText);
+        cb2.box->setTooltip("Toggle this option");
+        cb2.box->setOnChange([](Checkbox*, bool isChecked) {
             LOG_INFO("Checkbox", "Checkbox 2 state: {}", isChecked ? "Checked" : "Unchecked");
         });
-        panel->addChild(std::move(checkbox2));
-        auto label2 = std::make_unique<Label>(guiManager, 55, 117, "Also check me", 16);
-        label2->setStyle(ElementState::Normal, lightText);
-        panel->addChild(std::move(label2));
-
-        guiManager.addElement(std::move(panel));
 
         bool quit = false;
         SDL_Event e;

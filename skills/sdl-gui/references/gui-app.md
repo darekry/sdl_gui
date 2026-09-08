@@ -61,7 +61,7 @@ a rect constructor (e.g. `Label`) become children via
 | One-line input | `TextInput` (Enter, input lock, focus) | widgets/TextInput.md |
 | Multi-line text / logs | `TextArea` | widgets/TextArea.md |
 | On/off options | `Checkbox`, `RadioButton` + `RadioGroup` | widgets/Checkbox.md |
-| Numeric options | `Slider`, `RangeSlider` (mirror value into a label with `linkLabel` from `ui_helpers.hpp`) | widgets/Slider.md |
+| Numeric options | `Slider`, `RangeSlider` (value→label via `linkLabel`, value→variable via `bindSliderValue`, multi-slider `onAnyChange`; builders in `ui_helpers.hpp`: `addTracked`, `addButton`/`addLabel`, `styleCard`, `addLabeledCheckbox`, `makeGrid`, status bars) | widgets/Slider.md |
 | Single choice from a list | `ComboBox` (callback: public field `on_selection_changed`) | widgets/ComboBox.md |
 | Item lists (files, logs) | `ListView` (`addItem`, `setOnRowClick`, `setOnRowActivate`) | widgets/ListView.md |
 | Tables | `StringGrid` (sorting, selection, cell editing) | widgets/StringGrid.md |

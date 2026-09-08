@@ -13,6 +13,7 @@
 #include "slider.hpp"
 #include "panel.hpp"
 #include "label.hpp"
+#include "ui_helpers.hpp"
 #include "button.hpp"
 
 #include "std.hpp"
@@ -35,13 +36,12 @@ int main(int, char**) {
         box->setStyle(ElementState::Normal, boxStyle);
         guiManager.addElement(std::move(box));
 
-        auto ball = std::make_unique<Panel>(guiManager, 100, 150, 24, 24);
+        auto [ball, ballRef] = addTracked(
+            guiManager, std::make_unique<Panel>(guiManager, 100, 150, 24, 24));
         ball->setBackgroundColor(ElementState::Normal, {120, 200, 120, 255});
         Style ballStyle;
         ballStyle.borderRadius = 12;
         ball->setStyle(ElementState::Normal, ballStyle);
-        auto ballRef = guiManager.makeRef(ball.get());
-        guiManager.addElement(std::move(ball));
 
         float bx = 100.0f, by = 150.0f;
         float vx = 160.0f, vy = 120.0f;
@@ -49,9 +49,8 @@ int main(int, char**) {
         int ballSize = 24;
         bool paused = false;
 
-        auto status = std::make_unique<Label>(guiManager, 20, 20, "", 16);
-        auto statusRef = guiManager.makeRef(status.get());
-        guiManager.addElement(std::move(status));
+        auto [status, statusRef] = addTracked(
+            guiManager, std::make_unique<Label>(guiManager, 20, 20, "", 16));
 
         auto refreshStatus = [&]() {
             if (!statusRef) return;

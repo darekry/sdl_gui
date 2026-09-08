@@ -23,6 +23,7 @@
 #include "theme.hpp"
 #include "theme_presets.hpp"
 #include "sdl_app.hpp"
+#include "ui_helpers.hpp"
 #include "std.hpp"
 
 const int SCREEN_WIDTH = 800;
@@ -154,33 +155,28 @@ int main(int, char**) {
             }
         }
 
-        // === Bottom status bar ===
-        auto bottomBar = std::make_unique<Panel>(guiManager, 0, SCREEN_HEIGHT - 70,
-                                                  SCREEN_WIDTH, 70);
-        bottomBar->setBackgroundColor(ElementState::Normal, {12, 14, 22, 255});
-        bottomBar->setBorder(ElementState::Normal, {30, 34, 50, 255}, 1);
+        // === Bottom status bar (shell from helper, extra hints as children) ===
+        StatusBar bottom = makeBottomBar(guiManager, SCREEN_WIDTH, SCREEN_HEIGHT, 70, "Movies", 20);
+        bottom.bar->setBackgroundColor(ElementState::Normal, {12, 14, 22, 255});
+        bottom.bar->setBorder(ElementState::Normal, {30, 34, 50, 255}, 1);
+        bottom.label->setTextColor(ElementState::Normal, kTVAccent);
+        bottom.label->setPosition(28, 32);
+        Label* statusPtr = bottom.label;
 
         auto statusTitle = std::make_unique<Label>(guiManager, 28, 10, "Navigation:", 14);
         statusTitle->setTextColor(ElementState::Normal, kTVTextDim);
-        bottomBar->addChild(std::move(statusTitle));
-
-        auto statusLabel = std::make_unique<Label>(guiManager, 28, 32, "Movies", 20);
-        statusLabel->setTextColor(ElementState::Normal, kTVAccent);
-        Label* statusPtr = statusLabel.get();
-        bottomBar->addChild(std::move(statusLabel));
+        bottom.bar->addChild(std::move(statusTitle));
 
         auto hintLabel = std::make_unique<Label>(guiManager, 28, 54,
             "ARROWS = Navigate  |  ENTER = OK  |  ESC = Back", 12);
         hintLabel->setTextColor(ElementState::Normal, {90, 95, 110, 255});
-        bottomBar->addChild(std::move(hintLabel));
+        bottom.bar->addChild(std::move(hintLabel));
 
         auto focusInfo = std::make_unique<Label>(guiManager, SCREEN_WIDTH - 380, 20,
             "Selected: Movies  [Enter = Open, Esc = Back]", 13);
         focusInfo->setTextColor(ElementState::Normal, kTVTextDim);
         Label* focusPtr = focusInfo.get();
-        bottomBar->addChild(std::move(focusInfo));
-
-        guiManager.addElement(std::move(bottomBar));
+        bottom.bar->addChild(std::move(focusInfo));
 
         // --- State ---
         Tile* currentFocus = nullptr;

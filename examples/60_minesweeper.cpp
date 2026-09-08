@@ -10,6 +10,7 @@
 #include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "theme.hpp"
+#include "ui_helpers.hpp"
 #include "panel.hpp"
 #include "label.hpp"
 #include "button.hpp"
@@ -117,15 +118,13 @@ int main(int, char**) {
             updateStatus();
         };
 
+        auto faces = faceGrid(*field, kN, kN, kCell, kCell, 0, 0, 0, 20);
         for (int y = 0; y < kN; ++y) {
             for (int x = 0; x < kN; ++x) {
-                auto btn = std::make_unique<Button>(guiManager, x * kCell + 1, y * kCell + 1,
-                                                    kCell - 2, kCell - 2, "");
-                auto face = std::make_unique<Label>(guiManager, 12, 6, "", 20);
-                grid[y][x].face = face.get();
-                btn->addChild(std::move(face));
-                btn->setOnClickCallback([x, y, &reveal](GUIElement*) { reveal(x, y); });
-                btn->setOnRightClickCallback([x, y, &grid, &gameOver, &updateStatus](GUIElement*, int, int) {
+                grid[y][x].btn = faces[y][x].button;
+                grid[y][x].face = faces[y][x].face;
+                grid[y][x].btn->setOnClickCallback([x, y, &reveal](GUIElement*) { reveal(x, y); });
+                grid[y][x].btn->setOnRightClickCallback([x, y, &grid, &gameOver, &updateStatus](GUIElement*, int, int) {
                     if (gameOver) return;
                     Cell& c = grid[y][x];
                     if (c.revealed) return;
@@ -138,8 +137,6 @@ int main(int, char**) {
                     }
                     updateStatus();
                 });
-                grid[y][x].btn = btn.get();
-                field->addChild(std::move(btn));
             }
         }
         guiManager.addElement(std::move(field));

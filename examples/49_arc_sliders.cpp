@@ -14,6 +14,7 @@
 #include "slider.hpp"
 #include "panel.hpp"
 #include "label.hpp"
+#include "ui_helpers.hpp"
 
 #include "std.hpp"
 
@@ -24,21 +25,18 @@ int main(int, char**) {
         GUIManager guiManager(renderer, Viewport{800, 600});
         guiManager.setTheme(Theme::createDefaultTheme());
 
-        auto info = std::make_unique<Label>(guiManager, 10, 10,
-            "Sliders rotated on an arc: R (-50 deg), G (0 deg = vertical), B (+50 deg)", 16);
-        guiManager.addElement(std::move(info));
+        addLabel(guiManager, 10, 10,
+                 "Sliders rotated on an arc: R (-50 deg), G (0 deg = vertical), B (+50 deg)", 16);
 
-        auto preview = std::make_unique<Panel>(guiManager, 330, 230, 140, 140);
+        auto [preview, previewRef] = addTracked(
+            guiManager, std::make_unique<Panel>(guiManager, 330, 230, 140, 140));
         Style previewStyle;
         previewStyle.borderWidth = 2;
         previewStyle.borderRadius = 12;
         preview->setStyle(ElementState::Normal, previewStyle);
-        auto previewRef = guiManager.makeRef(preview.get());
-        guiManager.addElement(std::move(preview));
 
-        auto readout = std::make_unique<Label>(guiManager, 315, 385, "", 18);
-        auto readoutRef = guiManager.makeRef(readout.get());
-        guiManager.addElement(std::move(readout));
+        auto [readout, readoutRef] = addTracked(
+            guiManager, std::make_unique<Label>(guiManager, 315, 385, "", 18));
 
         auto arc = std::make_unique<ArcContainer>(guiManager, 400, 300, 250, -60, 60);
 
@@ -60,15 +58,12 @@ int main(int, char**) {
             readoutRef->setText("R " + std::to_string(r) + "  G " + std::to_string(g) +
                                 "  B " + std::to_string(b));
         };
-        sliderR->setOnChangeCallback([refresh](GUIElement*) { refresh(); });
-        sliderG->setOnChangeCallback([refresh](GUIElement*) { refresh(); });
-        sliderB->setOnChangeCallback([refresh](GUIElement*) { refresh(); });
+        onAnyChange({sliderR.get(), sliderG.get(), sliderB.get()}, refresh);
 
         arc->addChildAtAngle(std::move(sliderR), -50.0f, true);
         arc->addChildAtAngle(std::move(sliderG), 0.0f, true);
         arc->addChildAtAngle(std::move(sliderB), 50.0f, true);
         guiManager.addElement(std::move(arc));
-        refresh();
 
         bool quit = false;
         SDL_Event e;

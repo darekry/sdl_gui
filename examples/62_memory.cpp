@@ -10,6 +10,7 @@
 #include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "theme.hpp"
+#include "ui_helpers.hpp"
 #include "panel.hpp"
 #include "label.hpp"
 #include "button.hpp"
@@ -116,12 +117,7 @@ int main(int, char**) {
         }
 
         auto deal = [&]() {
-            std::vector<int> syms;
-            for (int s = 0; s < 8; ++s) {
-                syms.push_back(s);
-                syms.push_back(s);
-            }
-            std::shuffle(syms.begin(), syms.end(), std::mt19937{std::random_device{}()});
+            std::vector<int> syms = shuffledPairs(8);
             for (size_t i = 0; i < cards.size(); ++i) {
                 cards[i].symbol = syms[i];
                 cards[i].open = cards[i].done = false;

@@ -100,6 +100,82 @@ zastępuje poprzednie (jak `setOnChangeCallback`). Plik `ui_helpers` to baza
 pod kolejne wolne funkcje (generatory, buildery) — dopisuj deklarację + definicję
 w `ui_helpers.cpp`, bez zależności od konkretnych aplikacji.
 
+### Generatory plansz i pasków (`ui_helpers`)
+
+Gry planszowe powtarzają trzy schematy — generatory budują je w 1–3 linijkach
+(przykłady 59_snake, 60_minesweeper, 62_memory):
+
+```cpp
+#include "ui_helpers.hpp"
+
+// Siatka paneli (dzieci rodzica; wskaźniki należą do rodzica):
+auto cell = gridPanels(*board, 20, 14, 26, 26);          // [y][x], gap/ox/oy opcjonalne
+auto top  = gridPanels(guiManager, 20, 14, 26, 26, 0, 30, 120);  // top-level
+
+// Siatka klikalnych komórek (Button nie ma setText — caption niesie Label-face):
+auto g = faceGrid(*field, 9, 9, 40, 40, 0, 0, 0, 20);    // + gap/ox/oy/faceSize
+g[y][x].button->setOnClickCallback(...);
+g[y][x].face->setText("3");                              // faces startują puste
+
+// Pasek n widgetów (kanały equalizera, rzędy kontrolek):
+auto sliders = makeStrip<Slider>(panel, 5, 90, 80, 40, 340, 125, 0,
+    [](GUIManager& m, int x, int y, int w, int h, int i) {
+        return std::make_unique<Slider>(m, x, y, w, h, 0, 100, 50, Orientation::Horizontal);
+    });
+
+// Potasowana talia par do Memory:
+std::vector<int> deck = shuffledPairs(8);                // {0,0,1,1,…,7,7} losowo
+```
+
+Faces są centrowane dla początkowego (pustego) rozmiaru — jednoznakowe
+captiony (`"3"`, `"F"`, `"*"`) zostają ~na środku; szerokie dynamiczne teksty
+wycentruj ręcznie po `setText`.
+
+### Tracked ownership, buildery i style (`ui_helpers`)
+
+Trzy najczęściej powtarzane wzorce z ~65 przykładów, zamknięte w helperach
+(przykłady 04/05/06/10/36/42/44/49/51/55):
+
+```cpp
+#include "ui_helpers.hpp"
+
+// makeRef PRZED move, w jednym kroku — koniec crashy z martwym refem:
+auto [ball, ballRef] = addTracked(guiManager, std::make_unique<Panel>(...));
+auto [child, childRef] = addTracked(*parent, std::make_unique<Label>(...));
+
+// Kanoniczny ciemny panel + captiony w jednej linijce:
+styleCard(*panel);                                            // same defaulty co dema
+Panel* card = addDarkPanel(guiManager, 200, 80, 400, 250);    // + overload z parentem
+Label* t = addLabel(*panel, 20, 20, "Tytuł", 22, SDL_Color{255,255,255,255});
+Button* b = addButton(*panel, 100, 100, 200, 40, "Open...", [&](GUIElement*) { ... });
+
+// Checkbox z captionem po prawej (kolor tylko gdy podany):
+LabeledCheckbox cb = addLabeledCheckbox(*panel, 20, 70, "Check me!", 24, 16, white);
+cb.box->setOnChange(...);
+
+// Siatka 2D z fabryką (uogólnia gridPanels/makeStrip na klawiatury, talie, tile'e):
+makeGrid<Button>(*screen, 3, 4, x0, y0, w, h, gapX, gapY,
+    [&](GUIManager& m, int c, int r, int x, int y, int w, int h) {
+        return std::make_unique<Button>(m, x, y, w, h, keys[r * 3 + c]);
+    });
+
+// Jeden refresh() na N sliderów (odpala się też natychmiast):
+onAnyChange({sliderR.get(), sliderG.get(), sliderB.get()}, refresh);
+
+// Slider → zmienna (rodzeństwo linkLabel dla celów nie-labelkowych):
+bindSliderValue(*gravSlider, gravity);          // int
+bindSliderValue(*dampSlider, damping, 0.01f);   // float ze skalą
+
+// Paski statusu (dodatkowe labele dopinaj jako dzieci bar):
+StatusBar top = makeTopBar(guiManager, screenW, 28, "carrier", 14);
+StatusBar bottom = makeBottomBar(guiManager, screenW, screenH, 70, "Movies", 20);
+// + overloady z parentem (szerokość/offset z rozmiaru rodzica)
+```
+
+Wszystkie zwrócone surowe wskaźniki należą do rodzica/managera (lifetime
+jak przy `make_unique` + `addChild`). W stored-callbackach trzymaj `ElementRef`,
+nigdy surowe wskaźniki (wyjątek: wartości kopiowane jak `key` powyżej).
+
 ## 4. Style
 
 Setterami (automatycznie oznaczają element jako brudny):

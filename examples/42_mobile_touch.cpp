@@ -18,6 +18,7 @@
 #include "gui_manager.hpp"
 #include "theme.hpp"
 #include "sdl_app.hpp"
+#include "ui_helpers.hpp"
 #include "std.hpp"
 
 const int SCREEN_WIDTH = 800;
@@ -102,12 +103,9 @@ int main(int, char**) {
         guiManager.addElement(std::move(screen));
 
         // === Status bar ===
-        auto statusBar = std::make_unique<Panel>(guiManager, 0, 0, PHONE_W, 28);
-        statusBar->setBackgroundColor(ElementState::Normal, {20, 20, 30, 255});
-        auto carrierLabel = std::make_unique<Label>(guiManager, 12, 4, "Mobile UI Demo", 12);
-        carrierLabel->setTextColor(ElementState::Normal, {200, 200, 210, 255});
-        statusBar->addChild(std::move(carrierLabel));
-        screenPtr->addChild(std::move(statusBar));
+        StatusBar carrier = makeTopBar(*screenPtr, 28, "Mobile UI Demo", 12);
+        carrier.bar->setBackgroundColor(ElementState::Normal, {20, 20, 30, 255});
+        carrier.label->setTextColor(ElementState::Normal, {200, 200, 210, 255});
 
         // === Swipe detection area ===
         auto swipeArea = std::make_unique<Panel>(guiManager, 0, 28, PHONE_W, 80);
@@ -146,29 +144,25 @@ int main(int, char**) {
         const int totalGridW = btnSize * 3 + NUMPAD_PAD * 2;
         const int numpadStartX = (PHONE_W - totalGridW) / 2;
 
-        for (int r = 0; r < NUMPAD_ROWS; ++r) {
-            for (int c = 0; c < NUMPAD_COLS; ++c) {
-                int idx = r * NUMPAD_COLS + c;
-                int bx = numpadStartX + c * (btnSize + NUMPAD_PAD);
-                int by = numpadY + r * (btnSize + NUMPAD_PAD);
-
-                auto btn = std::make_unique<Button>(guiManager, bx, by, btnSize, btnSize, keys[idx]);
-                btn->setBorderRadius(ElementState::Normal, btnSize / 2);  // Round
-                btn->setBorder(ElementState::Normal, {180, 180, 200, 255}, 1);
-                btn->setBackgroundColor(ElementState::Normal, {255, 255, 255, 255});
-                btn->setBackgroundColor(ElementState::Hover, {220, 230, 255, 255});
-                btn->setBackgroundColor(ElementState::Pressed, {170, 190, 240, 255});
-                btn->setTextColor(ElementState::Normal, {40, 40, 50, 255});
-
-                btn->setOnClickCallback([displayPtr, key = std::string(keys[idx])](GUIElement*) {
-                    std::string current(displayPtr->getText());
-                    if (current.size() < 10) {
-                        displayPtr->setText(current + key);
-                    }
-                });
-                screenPtr->addChild(std::move(btn));
-            }
-        }
+        makeGrid<Button>(*screenPtr, NUMPAD_COLS, NUMPAD_ROWS,
+                         numpadStartX, numpadY, btnSize, btnSize, NUMPAD_PAD, NUMPAD_PAD,
+                         [&](GUIManager& m, int c, int r, int x, int y, int w, int h) {
+            std::string key(keys[r * NUMPAD_COLS + c]);
+            auto btn = std::make_unique<Button>(m, x, y, w, h, key);
+            btn->setBorderRadius(ElementState::Normal, btnSize / 2);  // Round
+            btn->setBorder(ElementState::Normal, {180, 180, 200, 255}, 1);
+            btn->setBackgroundColor(ElementState::Normal, {255, 255, 255, 255});
+            btn->setBackgroundColor(ElementState::Hover, {220, 230, 255, 255});
+            btn->setBackgroundColor(ElementState::Pressed, {170, 190, 240, 255});
+            btn->setTextColor(ElementState::Normal, {40, 40, 50, 255});
+            btn->setOnClickCallback([displayPtr, key](GUIElement*) {
+                std::string current(displayPtr->getText());
+                if (current.size() < 10) {
+                    displayPtr->setText(current + key);
+                }
+            });
+            return btn;
+        });
 
         // === Clear button ===
         auto clearBtn = std::make_unique<Button>(guiManager, PHONE_W - btnSize - 20, numpadY,

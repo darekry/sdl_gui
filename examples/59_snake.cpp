@@ -10,6 +10,7 @@
 #include "sdl_app.hpp"
 #include "gui_manager.hpp"
 #include "theme.hpp"
+#include "ui_helpers.hpp"
 #include "slider.hpp"
 #include "panel.hpp"
 #include "label.hpp"
@@ -44,15 +45,10 @@ int main(int, char**) {
         board->setStyle(ElementState::Normal, boardStyle);
 
         // Raw pointers: cells live exactly as long as the board, never deleted.
-        std::vector<std::vector<Panel*>> cell(kRows, std::vector<Panel*>(kCols, nullptr));
-        for (int y = 0; y < kRows; ++y) {
-            for (int x = 0; x < kCols; ++x) {
-                auto p = std::make_unique<Panel>(guiManager, x * kCell, y * kCell, kCell, kCell);
-                p->setBackgroundColor(ElementState::Normal, kBg);
-                cell[y][x] = p.get();
-                board->addChild(std::move(p));
-            }
-        }
+        auto cell = gridPanels(*board, kCols, kRows, kCell, kCell);
+        for (int y = 0; y < kRows; ++y)
+            for (int x = 0; x < kCols; ++x)
+                cell[y][x]->setBackgroundColor(ElementState::Normal, kBg);
         guiManager.addElement(std::move(board));
 
         auto scoreLbl = std::make_unique<Label>(guiManager, kOX, 30, "score: 0", 20);
