@@ -123,3 +123,54 @@ TEST_CASE("WorldView - camera and coords", "[world_view]") {
         REQUIRE(view->getWorldHeight() == 600);
     }
 }
+
+TEST_CASE("WorldView - focus outline respects viewport clip", "[world_view][render]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.handleResize(320, 240);
+
+    auto view = std::make_unique<WorldView>(manager, 50, 50, 200, 200);
+    WorldView* viewPtr = view.get();
+    manager.addElement(std::move(view));
+    viewPtr->setWorldSize(400, 400);
+
+    auto btn = std::make_unique<Button>(manager, 0, 80, 100, 40, "edge");
+    Button* btnPtr = btn.get();
+    btnPtr->setBorderRadius(ElementState::Normal, 0);
+    viewPtr->addWorldChild(std::move(btn));
+
+    // Kamera 50px w prawo: przycisk (abs x 0..100) wystaje 50px za lewy
+    // brzeg viewportu (50..250). Górna krawędź obrysu: y = 50+80 = 130.
+    viewPtr->setCamera(50, 0);
+    manager.setKeyboardFocus(btnPtr);
+    manager.update();
+    manager.cleanup();
+    manager.render();
+
+    auto readPixel = [&](int x, int y) {
+        SDL_Rect r{x, y, 1, 1};
+        SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
+        REQUIRE(surf != nullptr);
+        Uint8* p = (Uint8*)surf->pixels;
+        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        SDL_DestroySurface(surf);
+        return result;
+    };
+
+    SECTION("focus outline outside viewport is clipped away") {
+        // (49,130): na górnej krawędzi obrysu, ale 1px na lewo od viewportu.
+        // Przed fixem renderFocusOverlay rysował bez clipa → focus-blue.
+        auto px = readPixel(49, 130);
+        bool isFocusBlue = (px[0] == 0 && px[1] == 120 && px[2] == 215);
+        REQUIRE(!isFocusBlue);
+    }
+
+    SECTION("focus outline inside viewport still draws (control)") {
+        // (60,130): ten sam obrys, ale wewnątrz viewportu.
+        auto px = readPixel(60, 130);
+        REQUIRE(px[0] == 0);
+        REQUIRE(px[1] == 120);
+        REQUIRE(px[2] == 215);
+    }
+}

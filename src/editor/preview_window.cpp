@@ -434,7 +434,9 @@ void CanvasPanel::drawGrid(SDL_Renderer* renderer) {
 }
 
 void CanvasPanel::renderOverlay(SDL_Renderer* renderer) {
-    Panel::renderOverlay(renderer);
+    // Jawny re-render (bazowy renderOverlay to no-op): podgląd edytora
+    // dorysowuje się w całości + highlight selekcji.
+    render(renderer);
     
     if (m_state.hasSelectedElement()) {
         size_t selectedIndex = m_state.getSelectedElementIndex();

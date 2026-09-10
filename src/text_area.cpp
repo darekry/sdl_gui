@@ -503,8 +503,17 @@ void TextArea::renderOverlay(SDL_Renderer* renderer) {
     int line_height = TTF_GetFontHeight(font.get());
     auto abs_pos = getAbsolutePosition();
 
-    // Set clip rect for selection and cursor rendering
-    SDL_Rect clip_rect = {abs_pos.x + 2, abs_pos.y + 2, m_width - 4, m_height - 4};
+    // Clip do własnego pola ZAWĘŻONY o clip przodków (ScrollArea/WorldView) —
+    // inaczej kursor/selekcja wystaje poza viewport.
+    SDL_Rect own_clip = {abs_pos.x + 2, abs_pos.y + 2, m_width - 4, m_height - 4};
+    SDL_Rect clip_rect = own_clip;
+    if (SDL_RenderClipEnabled(renderer)) {
+        SDL_Rect parent_clip;
+        SDL_GetRenderClipRect(renderer, &parent_clip);
+        if (!SDL_GetRectIntersection(&own_clip, &parent_clip, &clip_rect)) {
+            return; // w całości poza viewportem przodka
+        }
+    }
     SDL_SetRenderClipRect(renderer, &clip_rect);
 
     // Draw selection highlight (multi-line support, char indices)

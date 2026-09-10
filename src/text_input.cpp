@@ -119,13 +119,22 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
     auto abs_pos = getAbsolutePosition();
     int padding = 5;
     
-    // Set clip rect to match the visible text area
-    SDL_Rect clip_rect = {
+    // Clip do własnego pola tekstowego ZAWĘŻONY o clip przodków
+    // (ScrollArea/WorldView) — inaczej kursor/selekcja wystaje poza viewport.
+    SDL_Rect own_clip = {
         abs_pos.x + padding,
         abs_pos.y,
         getWidth() - 2 * padding,
         getHeight()
     };
+    SDL_Rect clip_rect = own_clip;
+    if (SDL_RenderClipEnabled(renderer)) {
+        SDL_Rect parent_clip;
+        SDL_GetRenderClipRect(renderer, &parent_clip);
+        if (!SDL_GetRectIntersection(&own_clip, &parent_clip, &clip_rect)) {
+            return; // w całości poza viewportem przodka
+        }
+    }
     SDL_SetRenderClipRect(renderer, &clip_rect);
     
     // Draw selection highlight

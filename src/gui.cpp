@@ -452,9 +452,12 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
         if (m_cachedTexture) {
             if (m_rotation != 0.0) {
                 SDL_FRect dst_rect = SDLRectToFRect(abs_pos.x, abs_pos.y, m_width, m_height);
-                SDL_FPoint center = m_rotationCenter.x >= 0 
-                    ? SDL_FPoint{static_cast<float>(m_rotationCenter.x), static_cast<float>(m_rotationCenter.y)} 
+                SDL_FPoint center = m_rotationCenter.x >= 0
+                    ? SDL_FPoint{static_cast<float>(m_rotationCenter.x), static_cast<float>(m_rotationCenter.y)}
                     : SDL_FPoint{static_cast<float>(m_width) / 2.0f, static_cast<float>(m_height) / 2.0f};
+                // Treść rotowana też musi respektować clip przodków (ScrollArea,
+                // WorldView) — SDL_RenderTextureRotated tnie po aktywnym clipie.
+                SDL_SetRenderClipRect(renderer, &clipped_rect);
                 SDL_RenderTextureRotated(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
                                  m_rotation, &center, SDL_FLIP_NONE);
                 // Fokus rotuje się razem z treścią, ale z OSOBNEJ tekstury
@@ -463,6 +466,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                     SDL_RenderTextureRotated(renderer, m_focusTexture.get(), nullptr, &dst_rect,
                                      m_rotation, &center, SDL_FLIP_NONE);
                 }
+                SDL_SetRenderClipRect(renderer, &parent_clip_rect);
             } else {
                 SDL_Rect src_rect;
                 src_rect.x = clipped_rect.x - abs_pos.x;
@@ -471,7 +475,12 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 src_rect.h = clipped_rect.h;
                 RenderTexture(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
                 if (hasKeyboardFocus()) {
+                    // Obrys fokusu rysowany bezpośrednio (poza cache'em) musi
+                    // być cięty do tego samego clipped_rect co treść — inaczej
+                    // wystaje poza viewport rodzica (ScrollArea/WorldView).
+                    SDL_SetRenderClipRect(renderer, &clipped_rect);
                     renderFocusOverlay(renderer);
+                    SDL_SetRenderClipRect(renderer, &parent_clip_rect);
                 }
             }
         }
@@ -498,7 +507,13 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
 }
 
 void GUIElement::renderOverlay(SDL_Renderer* renderer) {
-    render(renderer);
+    // No-op w bazie: obrys fokusu rysuje się już w normalnym passie render()
+    // (przycięty do clipped_rect przodków — ScrollArea/WorldView). Poprzednie
+    // render(renderer) dorysowywało TU CAŁY widget z fokusem bez clipa przodków,
+    // więc outline wystawał poza viewport (WorldView/ScrollArea). Własny overlay
+    // mają tylko widgety z treścią ponad hierarchią: TextInput/TextArea
+    // (kursor/selekcja), StringGrid (edytor komórki), Cursor, CanvasPanel.
+    (void)renderer;
 }
 
 void GUIElement::renderFocusOverlay(SDL_Renderer* renderer) {

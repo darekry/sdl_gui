@@ -332,6 +332,12 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
+### Focus-outline wystawał poza WorldView/ScrollArea (2026-09-10)
+- **Przyczyna (2×)**: (1) `renderFocusOverlay()` rysował obrys bez clipa (`gui.cpp`) — treść cięta do `clipped_rect`, obrys nie. (2) `GUIManager::render()` dorysowywał fokusowany widget drugi raz przez bazowy `renderOverlay()` (= `render()` bez clipa przodków) — cała binarka z fokusem lądowała na wierzchu poza viewportem.
+- **Fix**: obrys + rotowane blity cięte do `clipped_rect` (ustaw/odtwórz jak w `drawDirect`); bazowy `renderOverlay()` to no-op (overlay mają tylko TextInput/TextArea-kursor, StringGrid-edytor, Cursor, CanvasPanel — ten zachował jawny `render()`); clip kursora TextInput/TextArea zawężony o clip przodków.
+- Efekt: 47/47 testów (nowy regresyjny `WorldView focus-outline clip`: piksel na obrysie za viewportem nie-niebieski + kontrolny w środku niebieski), 65/65 przykładów.
+- Zmienione pliki: src/gui.{hpp,cpp}, src/text_input.cpp, src/text_area.cpp, src/editor/preview_window.cpp, tests/test_world_view.cpp
+
 ### WorldView — kamera 2D na świat gry (2026-09-10)
 - **Co**: nowy `src/world_view.{hpp,cpp}` (`WorldView : public Panel`, pan-only bez zoomu) — dzieci w world coords przez `addWorldChild`, kamera jako jeden shift contentu `(-camX,-camY)` + clip viewportu (mechanizm jak `ScrollArea`, bez sliderów). API: `setWorldSize/setCamera/panBy/centerOn`, `worldToScreen/screenToWorld`, clamp `max(0, world-view)`, `layoutChildren` re-clampuje przy resize. Cel: decoupling mapy od widoku pod `EntityWidget` (plan: `.kilo/plans/worldview-camera-plan.md` w grze). Wpięcie: `ComponentType::WorldView` (+toString/fromString), `WidgetFactory` (default `300x200`, gałąź `create` reuse `contentWidth/Height` jako world size, `knownTypes`), `nob.c` (`hpp_order` + `includes_to_remove`).
 - **Uwaga**: izometria świadomie poza zakresem — `ArcContainer::rotateChild` obraca teksturę widgetu, a iso wymaga projekcji `2:1` + depth sortu `x+y` + rombowego pickingu; zostawiony punkt zaczepienia (wymienna projekcja w `WorldView`).
