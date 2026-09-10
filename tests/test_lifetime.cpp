@@ -184,6 +184,7 @@ TEST_CASE("Lifetime - WidgetFactory single registry", "[lifetime]") {
             {"Canvas", ComponentType::Canvas},
             {"ProgressBar", ComponentType::ProgressBar},
             {"ScrollArea", ComponentType::ScrollArea},
+            {"WorldView", ComponentType::WorldView},
             {"ArcContainer", ComponentType::ArcContainer},
         };
         for (auto [name, id] : cases) {

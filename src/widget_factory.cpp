@@ -16,6 +16,7 @@
 #include "radio_group.hpp"
 #include "range_slider.hpp"
 #include "scroll_area.hpp"
+#include "world_view.hpp"
 #include "slider.hpp"
 #include "string_grid.hpp"
 #include "tab_control.hpp"
@@ -46,6 +47,7 @@ std::pair<int, int> fallbackSize(ComponentType t) {
         case ComponentType::ListView:      return {200, 200};
         case ComponentType::ProgressBar:   return {200, 30};
         case ComponentType::ScrollArea:    return {300, 200};
+        case ComponentType::WorldView:    return {300, 200};
         case ComponentType::ArcContainer:  return {200, 200};
         default:                           return {100, 50};
     }
@@ -71,6 +73,7 @@ bool constructible(ComponentType t) {
         case ComponentType::Canvas:
         case ComponentType::ProgressBar:
         case ComponentType::ScrollArea:
+        case ComponentType::WorldView:
         case ComponentType::ArcContainer:
             return true;
         default:
@@ -96,7 +99,7 @@ std::vector<std::string_view> WidgetFactory::knownTypes() {
     return {"Panel", "Button",     "Label",      "Checkbox",    "RadioButton",
             "RadioGroup", "Slider", "RangeSlider", "StringGrid", "ListView",
             "TextInput",  "TextArea", "ComboBox",  "TabControl", "AnimatedImage",
-            "Canvas",     "ProgressBar", "ScrollArea", "ArcContainer"};
+            "Canvas",     "ProgressBar", "ScrollArea", "WorldView", "ArcContainer"};
 }
 
 std::unique_ptr<GUIElement> WidgetFactory::createBare(GUIManager& manager,
@@ -300,6 +303,15 @@ std::unique_ptr<GUIElement> WidgetFactory::create(GUIManager& manager,
         case ComponentType::ArcContainer: {
             return std::make_unique<ArcContainer>(manager, x, y, p.radius,
                                                   p.startAngle, p.endAngle);
+        }
+        case ComponentType::WorldView: {
+            auto wv = std::make_unique<WorldView>(manager, x, y,
+                                                  p.w > 0 ? p.w : 300, p.h > 0 ? p.h : 200);
+            if (p.contentWidth >= 0 || p.contentHeight >= 0) {
+                wv->setWorldSize(p.contentWidth >= 0 ? p.contentWidth : wv->getWidth(),
+                                   p.contentHeight >= 0 ? p.contentHeight : wv->getHeight());
+            }
+            return wv;
         }
         default:
             return nullptr;

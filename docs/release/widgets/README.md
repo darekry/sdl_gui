@@ -40,6 +40,7 @@ Kompletna lista widgetów biblioteki SDL GUI. Każdy widget dziedziczy po
 | [ComboBox](ComboBox.md) | Rozwijana lista wyboru jednej opcji |
 | [TabControl](TabControl.md) | (Panel) Zakładki z osobnym panelem zawartości per tab |
 | [ScrollArea](ScrollArea.md) | (Panel) Przewijany obszar z dowolną zawartością |
+| [WorldView](WorldView.md) | (Panel) Kamera 2D na świat gry (pan, world coords) |
 
 ## Media i specjalne
 

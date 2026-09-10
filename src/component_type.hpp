@@ -35,6 +35,7 @@ enum class ComponentType : uint8_t {
     ArcContainer,
     ProgressBar,
     ScrollArea,
+    WorldView,
     ShaderPanel,
     DialogBox,
     FileDialog,
@@ -65,6 +66,7 @@ inline std::string_view componentTypeToString(ComponentType t) {
         case ComponentType::ArcContainer:  return "ArcContainer";
         case ComponentType::ProgressBar:   return "ProgressBar";
         case ComponentType::ScrollArea:    return "ScrollArea";
+        case ComponentType::WorldView:    return "WorldView";
         case ComponentType::ShaderPanel:   return "ShaderPanel";
         case ComponentType::DialogBox:     return "DialogBox";
         case ComponentType::FileDialog:    return "FileDialog";
@@ -94,6 +96,7 @@ inline ComponentType componentTypeFromString(std::string_view s) {
     if (s == "ArcContainer")  return ComponentType::ArcContainer;
     if (s == "ProgressBar")   return ComponentType::ProgressBar;
     if (s == "ScrollArea")    return ComponentType::ScrollArea;
+    if (s == "WorldView")     return ComponentType::WorldView;
     if (s == "ShaderPanel")   return ComponentType::ShaderPanel;
     if (s == "DialogBox")     return ComponentType::DialogBox;
     if (s == "FileDialog")    return ComponentType::FileDialog;
