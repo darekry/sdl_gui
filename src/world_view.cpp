@@ -5,11 +5,17 @@ WorldView::WorldView(GUIManager& manager, int x, int y, int width, int height)
     : Panel(manager, x, y, width, height)
     , m_worldWidth(width)
     , m_worldHeight(height) {
+    // The world layer is drawn raw (SDL) underneath; all three panels stay
+    // fully transparent so they never cover it — an opaque Panel background
+    // here hid the whole map in the game.
+    makeTransparent(this);
     auto viewport = std::make_unique<Panel>(manager, 0, 0, width, height);
     viewport->setClipChildren(true);
+    makeTransparent(viewport.get());
     m_viewport = viewport.get();
 
     auto content = std::make_unique<Panel>(manager, 0, 0, width, height);
+    makeTransparent(content.get());
     m_content = content.get();
     viewport->addChild(std::move(content));
 
@@ -66,4 +72,14 @@ void WorldView::clampCamera() {
 
 void WorldView::applyCamera() {
     m_content->setPosition(-m_camX, -m_camY);
+}
+
+void WorldView::makeTransparent(GUIElement* element) {
+    static constexpr ElementState kStates[] = {
+        ElementState::Normal, ElementState::Hover, ElementState::Pressed,
+        ElementState::Disabled};
+    static constexpr SDL_Color kTransparent{0, 0, 0, 0};
+    for (ElementState state : kStates) {
+        element->setBackgroundColor(state, kTransparent);
+    }
 }

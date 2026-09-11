@@ -20,6 +20,24 @@ selection box) must be drawn by hand with SDL3 API on the same
 Because widgets render into cached textures, an unchanged HUD costs almost
 nothing per frame; only world drawing runs every frame.
 
+### Alternative: world entities as widgets under WorldView
+
+When units need widget behavior (click selection, hover tooltips, animated
+sheets, HP overlays), keep the sim texture-free and render each entity with
+an `AnimatedImage`-based widget parented to a `WorldView` camera
+(`docs/release/widgets/WorldView.md`):
+
+- sim objects hold only a position/size/collision struct (no `SDL_Texture*`,
+  no renderer); view state (animation row, stepping, HP fraction, selection)
+  is polled per frame;
+- `WorldView::addWorldChild` puts widgets in **world coordinates**; the camera
+  (`setCamera`, clamped) translates to screen. World smaller than the view =
+  camera `(0,0)` and 1:1 layout;
+- input: convert with `screenToWorld` before hitting the sim, draw world-space
+  outlines with `worldToScreen`;
+- HUD (`Panel`/`Button`/`Label`) stays top-level; the world view is one more
+  top-level element between the background and the HUD.
+
 ## Screen flow (menu / gameplay / pause)
 
 Use `ScreenManager` with one `Screen` per phase. Create all GUI elements in

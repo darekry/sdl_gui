@@ -43,6 +43,24 @@ TEST_CASE("WorldView - construction", "[world_view]") {
         REQUIRE(view.getCamX() == 0);
         REQUIRE(view.getCamY() == 0);
     }
+    SECTION("all panels transparent — raw world layer stays visible") {
+        auto view = std::make_unique<WorldView>(manager, 0, 0, 400, 300);
+        WorldView* ptr = view.get();
+        manager.addElement(std::move(view));
+
+        static constexpr ElementState kStates[] = {
+            ElementState::Normal, ElementState::Hover, ElementState::Pressed,
+            ElementState::Disabled};
+        for (ElementState state : kStates) {
+            auto bg = ptr->getComposedStyle(state).backgroundColor;
+            REQUIRE(bg.has_value());
+            REQUIRE(bg->a == 0);
+            auto contentBg =
+                ptr->getContent()->getComposedStyle(state).backgroundColor;
+            REQUIRE(contentBg.has_value());
+            REQUIRE(contentBg->a == 0);
+        }
+    }
 }
 
 TEST_CASE("WorldView - camera and coords", "[world_view]") {

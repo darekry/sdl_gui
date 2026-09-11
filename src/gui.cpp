@@ -857,7 +857,7 @@ void GUIElement::drawBackgroundAndBorder(SDL_Renderer* renderer) {
     SDL_FRect frect = SDLRectToFRect(0, 0, m_width, m_height);
     float fradius = static_cast<float>(radius);
 
-    if (style.backgroundColor) {
+    if (style.backgroundColor && style.backgroundColor->a > 0) {
         drawRoundedFilledRect(renderer, frect, fradius, ColorToFColor(*style.backgroundColor));
     }
 

@@ -332,6 +332,12 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
+### WorldView malował kryjące tło i zakrywał mapę gry (2026-09-11)
+- **Przyczyna**: `WorldView`/viewport/content to `Panel`e z kryjącym tłem z themu — 3 warstwy przykrywały surowo rysowaną trawę (zdradzał to 1 px zielony pasek na styku z dolnym barem). Dodatkowo `drawBackgroundAndBorder` wypełniał nawet przy alfa 0, licząc na lepki blend mode renderera (nie gwarantowany).
+- **Fix**: ctor `WorldView` ustawia `{0,0,0,0}` we wszystkich 4 stanach na sobie/viewporcie/contencie (helper `makeTransparent`); `drawBackgroundAndBorder` pomija fill przy `a == 0` (determinizm + mniej filli).
+- Efekt: `test_world_view` 56 asercji (nowa sekcja przezroczystości), release zielone, gra zrelinowana.
+- Zmienione pliki: src/world_view.{hpp,cpp}, src/gui.cpp, tests/test_world_view.cpp, docs/release/widgets/WorldView.md
+
 ### Focus-outline wystawał poza WorldView/ScrollArea (2026-09-10)
 - **Przyczyna (2×)**: (1) `renderFocusOverlay()` rysował obrys bez clipa (`gui.cpp`) — treść cięta do `clipped_rect`, obrys nie. (2) `GUIManager::render()` dorysowywał fokusowany widget drugi raz przez bazowy `renderOverlay()` (= `render()` bez clipa przodków) — cała binarka z fokusem lądowała na wierzchu poza viewportem.
 - **Fix**: obrys + rotowane blity cięte do `clipped_rect` (ustaw/odtwórz jak w `drawDirect`); bazowy `renderOverlay()` to no-op (overlay mają tylko TextInput/TextArea-kursor, StringGrid-edytor, Cursor, CanvasPanel — ten zachował jawny `render()`); clip kursora TextInput/TextArea zawężony o clip przodków.

@@ -40,6 +40,7 @@ protected:
 private:
     void clampCamera();
     void applyCamera();
+    static void makeTransparent(GUIElement* element);
 
     Panel* m_viewport = nullptr;
     GUIElement* m_content = nullptr;

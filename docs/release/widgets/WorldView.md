@@ -61,6 +61,9 @@ if (key == SDLK_LEFT) view->panBy(-32, 0);
 
 ## Uwagi
 
+- `WorldView`, viewport i content mają w pełni przezroczyste tła we wszystkich
+  stanach — warstwa świata rysowana surowo (SDL) pod spodem zawsze prześwituje.
+  Nie ustawiaj im kryjącego `backgroundColor`, bo zakryjesz mapę.
 - Kamera jest clampowana — nie da się wyjechać poza mapę.
 - `setSize` widoku (resize) przelicza viewport i re-clampuje kamerę.
 - Dzieci rysują się normalnie (Z-order hierarchii); sortowanie po depth (izometria)
