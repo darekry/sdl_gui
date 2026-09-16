@@ -695,7 +695,9 @@ void StringGrid::drawDirect(SDL_Renderer* renderer) {
     int offsetX = absPos.x;
     int offsetY = absPos.y;
 
-    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, DEFAULT_FONT_SIZE);
+    auto font = m_manager.getFontManager().loadFont(
+        style.fontName.value_or(constants::kDefaultFontPath),
+        DEFAULT_FONT_SIZE);
     
     drawBackgroundAndBorder(renderer);
     
