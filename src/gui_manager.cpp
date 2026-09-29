@@ -198,6 +198,11 @@ void GUIManager::render() {
     if (cursor) {
         cursor->render(m_renderer);
     }
+
+    // Czysty stan dla kodu rysującego po GUI (świat gry) i dla RenderClear
+    // w kolejnej klatce: elementy zostawiają clip rodzica (viewport), a nie
+    // disabled. Bez tego klatka z fokusem zostawiała włączony clip.
+    SDL_SetRenderClipRect(m_renderer, nullptr);
 }
 
 void GUIManager::cleanup() {

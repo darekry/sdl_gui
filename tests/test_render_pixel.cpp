@@ -218,3 +218,73 @@ TEST_CASE("Checkbox renders white sunken box", "[render][pixel][theme]") {
     REQUIRE(outerBR[1] == 255);
     REQUIRE(outerBR[2] == 255);
 }
+
+// Klik w button z fokusem nie może gasić rodzeństwa ("klik gasi panele",
+// 2026-09-29): renderFocusOverlay ustawiał clip na clipped_rect buttona,
+// a GUIElement::render() nigdy go nie odtwarzał — po bottom barze kolejne
+// top-levele (top/side/world) renderowały się z obcym clipem i znikały.
+// Niezmiennik: render() zostawia clip rodzica, GUIManager::render()
+// zostawia clip disabled.
+TEST_CASE("Focused button does not clip siblings", "[render][pixel][focus]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.handleResize(800, 600);
+
+    auto top = std::make_unique<Panel>(manager, 0, 0, 800, 36);
+    top->setBackgroundColor(ElementState::Normal, {40, 40, 48, 255});
+    manager.addElement(std::move(top));
+
+    auto bottom = std::make_unique<Panel>(manager, 0, 420, 800, 180);
+    Panel* bottomPtr = bottom.get();
+    bottomPtr->setBackgroundColor(ElementState::Normal, {40, 40, 48, 255});
+    auto btn = std::make_unique<Button>(manager, 10, 5, 84, 80, "");
+    Button* btnPtr = btn.get();
+    bottomPtr->addChild(std::move(btn));
+    manager.addElement(std::move(bottom));
+
+    auto side = std::make_unique<Panel>(manager, 640, 36, 160, 384);
+    side->setBackgroundColor(ElementState::Normal, {40, 40, 48, 255});
+    manager.addElement(std::move(side));
+
+    auto frame = [&] {
+        manager.update();
+        manager.cleanup();
+        SDL_SetRenderDrawColor(helper.getRenderer(), 0, 0, 0, 255);
+        SDL_RenderClear(helper.getRenderer());
+        manager.render();
+        SDL_RenderPresent(helper.getRenderer());
+    };
+    auto readPixel = [&](int x, int y) {
+        SDL_Rect r{x, y, 1, 1};
+        SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
+        REQUIRE(surf != nullptr);
+        Uint8* p = (Uint8*)surf->pixels;
+        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        SDL_DestroySurface(surf);
+        return result;
+    };
+
+    for (int i = 0; i < 3; ++i) frame();
+    auto topWarm = readPixel(400, 18);
+    REQUIRE(topWarm[0] == 40);
+
+    // DOWN bierze fokus + capture, UP zwalnia capture (fokus zostaje).
+    manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 52, 465));
+    manager.processEvent(helper.createMouseEvent(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 52, 465));
+    REQUIRE(manager.getKeyboardFocus() == btnPtr);
+    for (int i = 0; i < 3; ++i) frame();
+
+    // Rodzeństwo widoczne mimo fokusu na buttonie w innym panelu.
+    auto topAfter = readPixel(400, 18);
+    REQUIRE(topAfter[0] == 40);
+    REQUIRE(topAfter[1] == 40);
+    REQUIRE(topAfter[2] == 48);
+    auto sideAfter = readPixel(720, 200);
+    REQUIRE(sideAfter[0] == 40);
+    REQUIRE(sideAfter[1] == 40);
+    REQUIRE(sideAfter[2] == 48);
+
+    // Clip nie wycieka z passa renderu.
+    REQUIRE_FALSE(SDL_RenderClipEnabled(helper.getRenderer()));
+}

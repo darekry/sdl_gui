@@ -332,6 +332,12 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
+### Klik z fokusem gasił rodzeństwo — wyciek clipa z render() (2026-09-29)
+- **Przyczyna**: `renderFocusOverlay()` to jedyna ścieżka ustawiająca clip w liściu cached — `GUIElement::render()` odtwarzał clip do rodzica tylko wokół własnych blitów, ale po pętli dzieci wychodził z clipem ostatniego dziecka. Po kliku (fokus na buttonie w bottom barze) kolejne top-levele (top/side/world) i następne klatki renderowały się z obcym clipem `bottom` i znikały (czarny ekran + tooltip). Bez fokusu (`nofocus`) clip nigdy nie był dotykany, więc bug nie występował.
+- **Fix**: niezmiennik clipa — `GUIElement::render()` na wyjściu odtwarza `parent_clip_rect`; `GUIManager::render()` na końcu wyłącza clip (`nullptr`) dla kodu rysującego po GUI i `RenderClear` kolejnej klatki.
+- Efekt: 47/47 testów (nowy regresyjny `Focused button does not clip siblings` w `test_render_pixel.cpp`: syntetyczny DOWN+UP na buttonie, piksele rodzeństwa + `RenderClipEnabled == false`), weryfikacja Xvfb na `tools/repro_bisect` i grze (klik w domek: sidebar/top/world zostają).
+- Zmienione pliki: src/gui.cpp, src/gui_manager.cpp, tests/test_render_pixel.cpp
+
 ### WorldView malował kryjące tło i zakrywał mapę gry (2026-09-11)
 - **Przyczyna**: `WorldView`/viewport/content to `Panel`e z kryjącym tłem z themu — 3 warstwy przykrywały surowo rysowaną trawę (zdradzał to 1 px zielony pasek na styku z dolnym barem). Dodatkowo `drawBackgroundAndBorder` wypełniał nawet przy alfa 0, licząc na lepki blend mode renderera (nie gwarantowany).
 - **Fix**: ctor `WorldView` ustawia `{0,0,0,0}` we wszystkich 4 stanach na sobie/viewporcie/contencie (helper `makeTransparent`); `drawBackgroundAndBorder` pomija fill przy `a == 0` (determinizm + mniej filli).

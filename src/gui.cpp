@@ -504,6 +504,13 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
             }
         }
     }
+
+    // Niezmiennik clipa: wyjście z clipem rodzica. Bez tego fokus (jedyna
+    // ścieżka ustawiająca clip w liściu cached) zostawiał clipped_rect
+    // ostatniego dziecka i obcinał całe rodzeństwo w kolejnych elementach
+    // top-level ("klik gasi panele" — top/side/world czarne po focusie
+    // buttona w bottom barze). Przywrócenie jest tanie (sam stan, bez draw).
+    SDL_SetRenderClipRect(renderer, &parent_clip_rect);
 }
 
 void GUIElement::renderOverlay(SDL_Renderer* renderer) {
