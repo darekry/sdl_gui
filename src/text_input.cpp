@@ -35,7 +35,10 @@ bool TextInput::isLocked() const {
 }
 
 void TextInput::updateTextOffset() {
-    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
+    const auto& style = getComposedStyle(m_state);
+    auto font = m_manager.getFontManager().loadFont(
+        style.fontName.value_or(constants::kDefaultFontPath),
+        style.fontSize.value_or(16));
     if (!font) return;
 
     int text_width = 0;
@@ -76,11 +79,13 @@ void TextInput::refreshTextTexture() {
 
     if (m_text.empty()) return;
 
-    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
-    if (!font) return;
-
     const auto& style = getComposedStyle(m_state);
     if (!style.textColor) return;
+
+    auto font = m_manager.getFontManager().loadFont(
+        style.fontName.value_or(constants::kDefaultFontPath),
+        style.fontSize.value_or(16));
+    if (!font) return;
 
     m_textTexture = m_manager.getTextureManager().createTextureFromText(m_text, font, *style.textColor);
 }
@@ -111,10 +116,12 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
     
     const auto& style = getComposedStyle(m_state);
     if (!style.textColor) return;
-    
-    auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
+
+    auto font = m_manager.getFontManager().loadFont(
+        style.fontName.value_or(constants::kDefaultFontPath),
+        style.fontSize.value_or(16));
     if (!font) return;
-    
+
     int line_height = TTF_GetFontHeight(font.get());
     auto abs_pos = getAbsolutePosition();
     int padding = 5;
@@ -211,8 +218,11 @@ bool TextInput::handleEvent(const SDL_Event& e) {
         }
 
         m_manager.requestFocus(this);
-        
-        auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
+
+        const auto& style = getComposedStyle(m_state);
+        auto font = m_manager.getFontManager().loadFont(
+            style.fontName.value_or(constants::kDefaultFontPath),
+            style.fontSize.value_or(16));
         if (font) {
             auto abs_pos = getAbsolutePosition();
             int click_x = static_cast<int>(e.button.x) - abs_pos.x - 5;
@@ -233,7 +243,10 @@ bool TextInput::handleEvent(const SDL_Event& e) {
 
     // Mouse motion - extend selection
     if (e.type == SDL_EVENT_MOUSE_MOTION && m_isDragging && hasKeyboardFocus()) {
-        auto font = m_manager.getFontManager().loadFont(constants::kDefaultFontPath, 16);
+        const auto& style = getComposedStyle(m_state);
+        auto font = m_manager.getFontManager().loadFont(
+            style.fontName.value_or(constants::kDefaultFontPath),
+            style.fontSize.value_or(16));
         if (font) {
             auto abs_pos = getAbsolutePosition();
             int mouse_x = static_cast<int>(e.motion.x) - abs_pos.x - 5;
