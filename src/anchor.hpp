@@ -166,3 +166,40 @@ struct Anchor {
         return Anchor{HAnchor::Right, VAnchor::Stretch, 0, topMargin, 0, bottomMargin};
     }
 };
+
+/**
+ * @brief Dock — deklaratywne dokowanie elementu do krawędzi rodzica.
+ *
+ * Używane wyłącznie przez DockLayout (src/layout.hpp):
+ * - None:   pomijany przez DockLayout (anchor nadal działa — mieszane layouty).
+ * - Top:    górny pas: pełna bieżąca szerokość, wysokość własna (z konstruktora).
+ * - Bottom: dolny pas: pełna bieżąca szerokość, wysokość własna.
+ * - Left:   lewy pas: pełna bieżąca wysokość, szerokość własna.
+ * - Right:  prawy pas: pełna bieżąca wysokość, szerokość własna.
+ * - Fill:   reszta po poprzednich (chain: każdy Fill bierze resztę po
+ *           poprzednikach, więc zwykle ostatni; kolejne dostają 0).
+ *
+ * Gdy kontener ma DockLayout, Anchor dzieci dokowanych jest ignorowany.
+ * Niewidoczne dzieci nie zjadają przestrzeni.
+ */
+enum class Dock : uint8_t { None, Top, Bottom, Left, Right, Fill };
+
+inline std::string_view dockToString(Dock d) {
+    switch (d) {
+        case Dock::Top:    return "top";
+        case Dock::Bottom: return "bottom";
+        case Dock::Left:   return "left";
+        case Dock::Right:  return "right";
+        case Dock::Fill:   return "fill";
+        default:           return "none";
+    }
+}
+
+inline Dock dockFromString(std::string_view s) {
+    if (s == "top")    return Dock::Top;
+    if (s == "bottom") return Dock::Bottom;
+    if (s == "left")   return Dock::Left;
+    if (s == "right")  return Dock::Right;
+    if (s == "fill")   return Dock::Fill;
+    return Dock::None;
+}

@@ -70,6 +70,19 @@ typedef struct {
 } sdlgui_anchor_t;
 
 /* ═══════════════════════════════════════════════════════════════════
+   Dock (edge for DockLayout — dock wins over anchor)
+   ═══════════════════════════════════════════════════════════════ */
+
+typedef enum {
+    SDLGUI_DOCK_NONE   = 0,
+    SDLGUI_DOCK_TOP    = 1,
+    SDLGUI_DOCK_BOTTOM = 2,
+    SDLGUI_DOCK_LEFT   = 3,
+    SDLGUI_DOCK_RIGHT  = 4,
+    SDLGUI_DOCK_FILL   = 5
+} sdlgui_dock_t;
+
+/* ═══════════════════════════════════════════════════════════════════
    Callback types
    ═══════════════════════════════════════════════════════════════ */
 
@@ -247,6 +260,17 @@ void        sdlgui_element_set_id(sdlgui_element_t e, const char* id);
 const char* sdlgui_element_get_id(sdlgui_element_t e);
 const char* sdlgui_element_get_type(sdlgui_element_t e);   /* "Button", "Label", "Panel", etc. */
 void        sdlgui_element_set_anchor(sdlgui_element_t e, sdlgui_anchor_t anchor);
+void        sdlgui_element_set_dock(sdlgui_element_t e, int dock);   /* sdlgui_dock_t */
+int         sdlgui_element_get_dock(sdlgui_element_t e);             /* sdlgui_dock_t */
+/*
+ * Install a DockLayout manager on a container (replaces the default
+ * AnchorLayout). spacing = px between docked strips; pads = container
+ * padding. Triggers an immediate re-layout. Pass NULL manager equivalent:
+ * there is no "clear" — set another manager or leave as-is.
+ */
+void        sdlgui_element_set_dock_layout(sdlgui_element_t e, int spacing,
+                                           int pad_left, int pad_top,
+                                           int pad_right, int pad_bottom);
 void        sdlgui_element_set_rotation(sdlgui_element_t e, double angle_degrees);
 void        sdlgui_element_mark_for_deletion(sdlgui_element_t e);
 void        sdlgui_element_set_can_get_keyboard_focus(sdlgui_element_t e, int can_focus);

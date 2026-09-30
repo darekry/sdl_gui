@@ -2,6 +2,7 @@
 #include "anchor.hpp"
 #include "arc_container.hpp"
 #include "gui_manager.hpp"
+#include "layout.hpp"
 #include "panel.hpp"
 #include "scroll_area.hpp"
 #include "tab_control.hpp"
@@ -74,7 +75,16 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
     {
         element->setAnchor(parseAnchor(node));
     }
-    
+
+    // Dock: krawędź w DockLayout rodzica (dock wygrywa z anchorem).
+    if (hasNode(node, "dock")) {
+        element->setDock(parseDock(node));
+    }
+
+    // Menedżer layoutu kontenera: layout="dock" (+ spacing/padding).
+    // Ustawiany PRZED pętlą dzieci — każdy addChild przelicza pasy na bieżąco.
+    parseLayoutManager(node, element.get());
+
     if (hasNode(node, "visible")) element->setVisible(getBool(node, "visible", true));
     if (hasNode(node, "enabled")) element->setEnabled(getBool(node, "enabled", true));
     if (hasNode(node, "tooltip")) element->setTooltip(getString(node, "tooltip"));
@@ -358,6 +368,41 @@ Anchor LayoutParser::parseAnchor(void* node)
     return Anchor::pinned(h, v,
         getInt(node, "marginLeft", 0), getInt(node, "marginTop", 0),
         getInt(node, "marginRight", 0), getInt(node, "marginBottom", 0));
+}
+
+Dock LayoutParser::parseDock(void* node) {
+    std::string mode = getString(node, "dock", "none");
+    for (auto& c : mode) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    if (mode == "top")    return Dock::Top;
+    if (mode == "bottom") return Dock::Bottom;
+    if (mode == "left")   return Dock::Left;
+    if (mode == "right")  return Dock::Right;
+    if (mode == "fill")   return Dock::Fill;
+    if (mode == "none")   return Dock::None;
+    LOG_WARNING("LayoutParser", "Unknown dock mode: {} (expected none|top|bottom|left|right|fill)", mode);
+    return Dock::None;
+}
+
+void LayoutParser::parseLayoutManager(void* node, GUIElement* element) {
+    if (!hasNode(node, "layout") || !element) {
+        return;
+    }
+    std::string layout = getString(node, "layout", "");
+    for (auto& c : layout) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    if (layout.empty() || layout == "none" || layout == "anchor") {
+        return;
+    }
+    if (layout == "dock") {
+        const int spacing = getInt(node, "spacing", 0);
+        const int uniform = getInt(node, "padding", 0);
+        const int padL = getInt(node, "padLeft", uniform);
+        const int padT = getInt(node, "padTop", uniform);
+        const int padR = getInt(node, "padRight", uniform);
+        const int padB = getInt(node, "padBottom", uniform);
+        element->setLayoutManager(std::make_unique<DockLayout>(spacing, padL, padT, padR, padB));
+        return;
+    }
+    LOG_WARNING("LayoutParser", "Unknown layout manager: {} (expected none|anchor|dock)", layout);
 }
 
 void LayoutParser::parseResources(void* resourcesNode)

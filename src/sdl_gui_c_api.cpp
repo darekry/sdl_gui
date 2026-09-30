@@ -24,6 +24,7 @@
 #include "cursor.hpp"
 #include "shader_panel.hpp"
 #include "widget_factory.hpp"
+#include "layout.hpp"
 
 #include "sdl_gui.h"
 
@@ -400,6 +401,39 @@ const char* sdlgui_element_get_type(sdlgui_element_t e) {
 
 void sdlgui_element_set_anchor(sdlgui_element_t e, sdlgui_anchor_t anchor) {
     unwrap_elem(e)->setAnchor(convert_anchor(&anchor));
+}
+
+static Dock convert_dock(int d) {
+    switch (d) {
+        case 1: return Dock::Top;
+        case 2: return Dock::Bottom;
+        case 3: return Dock::Left;
+        case 4: return Dock::Right;
+        case 5: return Dock::Fill;
+        default: return Dock::None;
+    }
+}
+
+void sdlgui_element_set_dock(sdlgui_element_t e, int dock) {
+    unwrap_elem(e)->setDock(convert_dock(dock));
+}
+
+int sdlgui_element_get_dock(sdlgui_element_t e) {
+    switch (unwrap_elem(e)->getDock()) {
+        case Dock::Top:    return 1;
+        case Dock::Bottom: return 2;
+        case Dock::Left:   return 3;
+        case Dock::Right:  return 4;
+        case Dock::Fill:   return 5;
+        default:           return 0;
+    }
+}
+
+void sdlgui_element_set_dock_layout(sdlgui_element_t e, int spacing,
+                                    int pad_left, int pad_top,
+                                    int pad_right, int pad_bottom) {
+    unwrap_elem(e)->setLayoutManager(
+        std::make_unique<DockLayout>(spacing, pad_left, pad_top, pad_right, pad_bottom));
 }
 
 void sdlgui_element_set_rotation(sdlgui_element_t e, double angle_degrees) {

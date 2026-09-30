@@ -289,6 +289,13 @@ GUIElement* GUIElement::addChild(std::unique_ptr<GUIElement> child) {
         // Dodanie dziecka nie zmienia pikseli rodzica (dziecko renderuje
         // się osobno na wierzch) — bez kaskady do root.
         markDirty(false);
+        // Kontener z własnym menedżerem (DockLayout/StackLayout/...) musi
+        // przeliczyć pasy od razu — inaczej dokowane dziecko stoi na (0,0)
+        // aż do pierwszego resize. AnchorLayout (brak menedżera) nie wymaga
+        // re-passu: dziecko pozycjonuje się niezależnie przez updateLayout.
+        if (m_layoutManager) {
+            layoutChildren();
+        }
         return raw;
     }
     return nullptr;
@@ -676,6 +683,10 @@ void GUIElement::cleanup() {
         LOG_DEBUG("GUIElement::cleanup(): Removed %zu child elements.", removed_count);
         // Usunięcie dziecka odsłania cache rodzica (nienaruszony) — bez kaskady.
         markDirty(false);
+        // Dock/Stack: zwolniona przestrzeń wraca do Fill/reszty od razu.
+        if (m_layoutManager) {
+            layoutChildren();
+        }
     }
 }
 
@@ -1006,8 +1017,21 @@ void GUIElement::setAnchor(const Anchor& anchor) {
     m_anchor = anchor;
 }
 
+void GUIElement::setDock(Dock dock) {
+    if (m_dock == dock) {
+        return;
+    }
+    m_dock = dock;
+    // Treść się nie zmienia (ten sam cache), tylko geometria rodzeństwa —
+    // tani re-layout rodzica (O(n), bez alokacji).
+    if (m_parent) {
+        m_parent->layoutChildren();
+    }
+}
+
 void GUIElement::setLayoutManager(std::unique_ptr<ILayoutManager> manager) {
     m_layoutManager = std::move(manager);
+    layoutChildren();
 }
 
 void GUIElement::layoutChildren() {

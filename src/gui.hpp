@@ -50,6 +50,10 @@ public:
     [[nodiscard]] const Anchor& getAnchor() const { return m_anchor; }
     [[nodiscard]] bool hasAnchor() const { return m_anchor.hasAnyAnchor(); }
 
+    /** Set dock edge (data for DockLayout). Triggers parent re-layout. */
+    void setDock(Dock dock);
+    [[nodiscard]] Dock getDock() const { return m_dock; }
+
     /** Custom layout manager for this container (null = default AnchorLayout) */
     void setLayoutManager(std::unique_ptr<ILayoutManager> manager);
     [[nodiscard]] ILayoutManager* getLayoutManager() const { return m_layoutManager.get(); }
@@ -197,6 +201,7 @@ protected:
     
     // === Layout data ===
     Anchor m_anchor;  // Anchor for responsive positioning (consumed by AnchorLayout)
+    Dock m_dock = Dock::None;  // Dock edge (consumed by DockLayout)
     std::unique_ptr<ILayoutManager> m_layoutManager;  // null = default AnchorLayout
 
     virtual void draw(SDL_Renderer* renderer) { drawBackgroundAndBorder(renderer); }

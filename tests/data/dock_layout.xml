@@ -1,0 +1,8 @@
+<Layout>
+  <Panel id="dock_root" x="0" y="0" width="400" height="300" layout="dock" spacing="4" padding="8">
+    <Panel id="top" x="0" y="0" width="100" height="50" dock="top" />
+    <Panel id="bottom" x="0" y="0" width="100" height="40" dock="bottom" />
+    <Panel id="left" x="0" y="0" width="60" height="100" dock="left" />
+    <Panel id="center" x="0" y="0" width="100" height="100" dock="fill" />
+  </Panel>
+</Layout>

@@ -81,6 +81,172 @@ void AnchorLayout::arrange(GUIElement& container) {
     }
 }
 
+// === DockLayout ===
+
+DockLayout::DockLayout(int spacing, int padLeft, int padTop, int padRight, int padBottom)
+    : m_spacing(spacing)
+    , m_padLeft(padLeft)
+    , m_padTop(padTop)
+    , m_padRight(padRight)
+    , m_padBottom(padBottom) {}
+
+LayoutSize DockLayout::measure(GUIElement& container, LayoutConstraints constraints) {
+    // Content size dla ScrollArea: suma w osiach dokowania + rozmiar Fill.
+    // Top/Bottom rozciągają się na szerokość (cross-axis ignorowany — zawsze
+    // pasują), Left/Right na wysokość; Fill to reszta (0 przy overflow).
+    // Z Fill: wynik = rozmiar kontenera (brak overflow → brak scrolla).
+    // Bez Fill: minimum na pasy. Spacing>0 to górne oszacowanie (bezpieczne).
+    int sumLeftW = 0, sumRightW = 0, sumTopH = 0, sumBottomH = 0;
+    int fillW = 0, fillH = 0;
+    int dockedCount = 0;
+    for (const auto& child : container.getChildren()) {
+        if (!child->isVisible()) {
+            continue;
+        }
+        switch (child->getDock()) {
+            case Dock::Top:
+                sumTopH += child->getHeight();
+                ++dockedCount;
+                break;
+            case Dock::Bottom:
+                sumBottomH += child->getHeight();
+                ++dockedCount;
+                break;
+            case Dock::Left:
+                sumLeftW += child->getWidth();
+                ++dockedCount;
+                break;
+            case Dock::Right:
+                sumRightW += child->getWidth();
+                ++dockedCount;
+                break;
+            case Dock::Fill:
+                fillW = std::max(fillW, child->getWidth());
+                fillH = std::max(fillH, child->getHeight());
+                ++dockedCount;
+                break;
+            case Dock::None:
+                break;
+        }
+    }
+    int w = m_padLeft + m_padRight + sumLeftW + sumRightW + fillW;
+    int h = m_padTop + m_padBottom + sumTopH + sumBottomH + fillH;
+    if (dockedCount > 1) {
+        w += m_spacing * (dockedCount - 1);
+        h += m_spacing * (dockedCount - 1);
+    }
+    if (constraints.maxWidth > 0) w = std::min(w, constraints.maxWidth);
+    if (constraints.maxHeight > 0) h = std::min(h, constraints.maxHeight);
+    return LayoutSize{w, h};
+}
+
+void DockLayout::arrange(GUIElement& container) {
+    const int cw = container.getWidth();
+    const int ch = container.getHeight();
+
+    int rx = m_padLeft;
+    int ry = m_padTop;
+    int rw = cw - m_padLeft - m_padRight;
+    int rh = ch - m_padTop - m_padBottom;
+    if (rw < 0) rw = 0;
+    if (rh < 0) rh = 0;
+
+    for (const auto& child : container.getChildren()) {
+        if (!child->isVisible()) {
+            continue;
+        }
+        const Dock d = child->getDock();
+        if (d == Dock::None) {
+            // Mieszane layouty: None zachowuje anchor (kompatybilność).
+            const int wBefore = child->getWidth();
+            const int hBefore = child->getHeight();
+            AnchorLayout::place(*child, cw, ch);
+            if (child->getWidth() == wBefore && child->getHeight() == hBefore) {
+                child->layoutChildren();
+            }
+            // place() → setSize() już zrecurse'ował przy zmianie rozmiaru.
+            continue;
+        }
+
+        int x = rx, y = ry, w = rw, h = rh;
+        switch (d) {
+            case Dock::Top:
+                h = child->getHeight();
+                w = rw;
+                x = rx;
+                y = ry;
+                break;
+            case Dock::Bottom:
+                h = child->getHeight();
+                w = rw;
+                x = rx;
+                y = ry + rh - h;
+                break;
+            case Dock::Left:
+                w = child->getWidth();
+                h = rh;
+                x = rx;
+                y = ry;
+                break;
+            case Dock::Right:
+                w = child->getWidth();
+                h = rh;
+                x = rx + rw - w;
+                y = ry;
+                break;
+            case Dock::Fill:
+                x = rx;
+                y = ry;
+                w = rw;
+                h = rh;
+                break;
+            case Dock::None:
+                break;
+        }
+        if (w < 0) w = 0;
+        if (h < 0) h = 0;
+
+        const int wBefore = child->getWidth();
+        const int hBefore = child->getHeight();
+        if (x != child->getX() || y != child->getY()) {
+            child->setPosition(x, y);
+        }
+        if (w != wBefore || h != hBefore) {
+            child->setSize(w, h);
+            // setSize() już woła layoutChildren() przy zmianie rozmiaru.
+        } else {
+            child->layoutChildren();
+        }
+
+        // Zjedz pas + spacing (bezwarunkowo — po ostatnim brak następcy,
+        // więc mniejsza reszta nikomu nie szkodzi; zero alokacji/lookahead).
+        switch (d) {
+            case Dock::Top:
+                ry += h + m_spacing;
+                rh -= h + m_spacing;
+                break;
+            case Dock::Bottom:
+                rh -= h + m_spacing;
+                break;
+            case Dock::Left:
+                rx += w + m_spacing;
+                rw -= w + m_spacing;
+                break;
+            case Dock::Right:
+                rw -= w + m_spacing;
+                break;
+            case Dock::Fill:
+                rw = 0;
+                rh = 0;
+                break;
+            case Dock::None:
+                break;
+        }
+        if (rw < 0) rw = 0;
+        if (rh < 0) rh = 0;
+    }
+}
+
 // === StackLayout ===
 
 StackLayout::StackLayout(Direction dir, int spacing,

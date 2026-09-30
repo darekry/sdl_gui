@@ -56,6 +56,30 @@ public:
 };
 
 /**
+ * @brief DockLayout — dokowanie do krawędzi w kolejności dzieci.
+ *
+ * - Top/Bottom: pełna bieżąca szerokość pasa, wysokość własna (getHeight()).
+ * - Left/Right: pełna bieżąca wysokość pasa, szerokość własna (getWidth()).
+ * - Fill: reszta po poprzednikach (chain — zwykle ostatni; kolejne dostają 0).
+ * - None: pomijany (anchor nadal działa — AnchorLayout::place + rekursja).
+ * - Niewidoczne pomijane, nie zjadają przestrzeni.
+ * - Anchor dzieci dokowanych ignorowany. Padding + spacing między pasami.
+ * - Ujemna reszta clampowana do 0. Zero alokacji (iteracja po getChildren()).
+ */
+class DockLayout : public ILayoutManager {
+public:
+    explicit DockLayout(int spacing = 0,
+                        int padLeft = 0, int padTop = 0, int padRight = 0, int padBottom = 0);
+
+    LayoutSize measure(GUIElement& container, LayoutConstraints constraints) override;
+    void arrange(GUIElement& container) override;
+
+private:
+    int m_spacing;
+    int m_padLeft, m_padTop, m_padRight, m_padBottom;
+};
+
+/**
  * @brief StackLayout — liniowe układanie dzieci (pasek przycisków, kolumny).
  *
  * arrange() układa WSZYSTKIE dzieci kontenera w jednym kierunku.

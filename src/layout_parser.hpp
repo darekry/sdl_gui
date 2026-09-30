@@ -3,11 +3,11 @@
 #include <SDL3/SDL_pixels.h>
 
 #include "std.hpp"
+#include "anchor.hpp"
 #include "widget_factory.hpp"
 
 class GUIManager;
 class GUIElement;
-struct Anchor;
 
 class LayoutParser
 {
@@ -40,6 +40,8 @@ private:
     // content, arc angles) — factory owns widget type knowledge.
     void fillPropsFromNode(void* node, const std::string& type, WidgetProps& props);
     Anchor parseAnchor(void* node);
+    Dock parseDock(void* node);
+    void parseLayoutManager(void* node, GUIElement* element);
     void parseResources(void* resourcesNode);
     void parseStyle(void* styleNode, GUIElement* element);
     std::optional<SDL_Color> parseColor(const std::string& colorStr);
