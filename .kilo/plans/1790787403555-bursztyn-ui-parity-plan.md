@@ -17,7 +17,8 @@ Przenieść do `sdl_gui` sprawdzone idee z BursztynUI małymi, bezpiecznymi krok
 - [ ] #6 `Spinner` + `ProgressBar::indeterminate`
 - [ ] #7 `UICommand` + `CommandList`
 - [x] #8 `ModalDialog` baza (2026-09-30: 49/49 testów, release + smoke 35/36 zielone, API bez zmian)
-- [ ] #9 `ColorDialog` (composite) — NASTĘPNY
+- [x] #9 `ColorDialog` (composite) (2026-09-30: 50/50 testów, 67 przykładów, release + smoke 67 zielone)
+- [ ] #10 `VirtualListView` (potem `VirtualGrid`) — NASTĘPNY
 - [ ] #9 `ColorDialog` (composite)
 - [ ] #10 `VirtualListView` (potem `VirtualGrid`)
 - [ ] #11 `ChartPanel`

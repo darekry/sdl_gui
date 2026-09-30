@@ -19,6 +19,10 @@ void ModalDialog::centerInViewport() {
     setPosition(x, y);
 }
 
+void ModalDialog::renderOverlay(SDL_Renderer* renderer) {
+    render(renderer);
+}
+
 bool ModalDialog::handleEvent(const SDL_Event& e) {
     if (!m_isOpen || !m_visible) return false;
 

@@ -5,6 +5,7 @@
 #include "../src/composite/file_dialog.hpp"
 #include "../src/text_input.hpp"
 #include "../src/gui_manager.hpp"
+#include "../src/theme.hpp"
 
 #include "std.hpp"
 
@@ -187,4 +188,41 @@ TEST_CASE("ModalDialog - createConfirm API unchanged", "[modal][dialog]") {
     REQUIRE(raw->getLastClickedButton() == -1);
     // Message label + 2 buttons (StackLayout strip, pinned by test_anchor).
     REQUIRE(raw->getChildren().size() == 3);
+}
+
+TEST_CASE("ModalDialog - overlay pass actually paints the dialog", "[modal][dialog][pixel]") {
+    // Regression: after the focus-outline fix made the base renderOverlay()
+    // a no-op, modals hit-tested but stayed invisible (smoke tests only
+    // check for crashes). The ModalDialog override must paint them.
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+
+    auto readPixel = [&](int x, int y) {
+        SDL_Rect r{x, y, 1, 1};
+        SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
+        REQUIRE(surf != nullptr);
+        Uint8* p = static_cast<Uint8*>(surf->pixels);
+        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        SDL_DestroySurface(surf);
+        return result;
+    };
+
+    auto dialog = DialogBox::createAlert(manager, "Hi!", "OK", nullptr, 400, 150);
+    DialogBox* raw = dialog.get();
+    manager.addElement(std::move(dialog));
+
+    manager.update();
+    manager.cleanup();
+    manager.render();
+
+    // createAlert centers 400x150 in 800x600 -> (200,225); sample well
+    // inside the dialog face, away from the message label and buttons.
+    REQUIRE(raw->getX() == 200);
+    REQUIRE(raw->getY() == 225);
+    auto px = readPixel(210, 235);
+    REQUIRE(px[3] > 200);  // opaque, not the transparent backbuffer
+    REQUIRE(px[0] == 240);
+    REQUIRE(px[1] == 240);
+    REQUIRE(px[2] == 240);
 }

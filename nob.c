@@ -1126,6 +1126,7 @@ static const char * hpp_order[] = {
     "src/composite/dialog_box.hpp",
     "src/composite/message_box.hpp",
     "src/composite/file_dialog.hpp",
+    "src/composite/color_dialog.hpp",
 };
 
 static const char * includes_to_remove[] = {
@@ -1212,6 +1213,8 @@ static const char * includes_to_remove[] = {
     "#include \"theme_presets.hpp\"",
     "#include \"composite/file_dialog.hpp\"",
     "#include \"composite/modal_dialog.hpp\"",
+    "#include \"composite/color_dialog.hpp\"",
+    "#include \"color_dialog.hpp\"",
     "#include \"modal_dialog.hpp\"",
     "#include \"file_dialog.hpp\"",
 };

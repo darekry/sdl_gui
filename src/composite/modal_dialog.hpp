@@ -33,6 +33,12 @@ public:
     /// Centers the dialog in the current viewport (manager window size).
     void centerInViewport();
 
+    // Modal dialogs paint in the overlay pass (GUIManager skips isOverlay()
+    // elements in the normal pass). Base GUIElement::renderOverlay() is a
+    // deliberate no-op since the focus-outline fix — without this override
+    // dialogs would hit-test but stay invisible.
+    void renderOverlay(SDL_Renderer* renderer) override;
+
 protected:
     bool handleEvent(const SDL_Event& e) override;
     virtual void onConfirm() {}

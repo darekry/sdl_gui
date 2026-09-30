@@ -39,6 +39,7 @@ enum class ComponentType : uint8_t {
     ShaderPanel,
     DialogBox,
     FileDialog,
+    ColorDialog,
     Count
 };
 
@@ -70,6 +71,7 @@ inline std::string_view componentTypeToString(ComponentType t) {
         case ComponentType::ShaderPanel:   return "ShaderPanel";
         case ComponentType::DialogBox:     return "DialogBox";
         case ComponentType::FileDialog:    return "FileDialog";
+        case ComponentType::ColorDialog:   return "ColorDialog";
         default:                           return "GUIElement";
     }
 }
@@ -100,6 +102,7 @@ inline ComponentType componentTypeFromString(std::string_view s) {
     if (s == "ShaderPanel")   return ComponentType::ShaderPanel;
     if (s == "DialogBox")     return ComponentType::DialogBox;
     if (s == "FileDialog")    return ComponentType::FileDialog;
+    if (s == "ColorDialog")   return ComponentType::ColorDialog;
     if (s == "GUIElement")    return ComponentType::GUIElement;
     return ComponentType::Unknown;
 }
