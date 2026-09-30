@@ -88,7 +88,7 @@ FileDialog::FileDialog(
     std::string_view title, Mode mode,
     Callback callback
 )
-    : Panel(manager, x, y, width, height)
+    : ModalDialog(manager, x, y, width, height)
     , m_mode(mode)
     , m_callback(callback)
     , m_title(title)
@@ -397,11 +397,6 @@ bool FileDialog::matchesFilter(const std::string& filename) const {
     return true;
 }
 
-void FileDialog::close() {
-    m_isOpen = false;
-    markForDeletion();
-}
-
 void FileDialog::layoutChildren() {
     // Geometria proporcjonalna do bieżącego rozmiaru (LayoutPass — dawniej
     // tylko matematyka w ctorze, łamana przy każdym resize).
@@ -456,24 +451,8 @@ void FileDialog::draw(SDL_Renderer* renderer) {
     Panel::draw(renderer);
 }
 
-bool FileDialog::handleEvent(const SDL_Event& e) {
-    if (!m_isOpen || !m_visible) return false;
-
-    if (Panel::handleEvent(e)) return true;
-
-    // Enter key in filename input confirms selection
-    if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_RETURN) {
-        confirmSelection();
-        return true;
-    }
-
-    // ESC closes dialog
-    if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
-        close();
-        return true;
-    }
-
-    return false;
+void FileDialog::onConfirm() {
+    confirmSelection();
 }
 
 ComponentType FileDialog::getComponentTypeId() const {

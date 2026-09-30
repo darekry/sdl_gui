@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../gui.hpp"
-#include "../panel.hpp"
 #include "../button.hpp"
 #include "../label.hpp"
+#include "modal_dialog.hpp"
 
 #include "std.hpp"
 
@@ -22,7 +22,7 @@
  * @endcode
  */
 
-class DialogBox : public Panel {
+class DialogBox : public ModalDialog {
 public:
     /// Dialog window types
     enum class DialogType {
@@ -123,11 +123,6 @@ public:
 
     void setTitle(std::string_view title);
 
-    /// Closes the dialog (removes the element)
-    void close();
-
-    bool isOpen() const { return m_isOpen; }
-
     DialogType getDialogType() const { return m_type; }
 
     /// Returns the index of the clicked button (-1 if none)
@@ -135,11 +130,11 @@ public:
 
     ComponentType getComponentTypeId() const override;
 
-    bool isOverlay() const override { return true; }
-
 protected:
     void draw(SDL_Renderer* renderer) override;
-    bool handleEvent(const SDL_Event& e) override;
+    // Esc → callback(-1) + close (base ModalDialog key path, no Enter action
+    // so button semantics stay unchanged — Enter is consumed as a no-op).
+    void onCancel() override;
     // Pas przycisków jako StackLayout (wycentrowany poziomy strip na dole).
     void layoutChildren() override;
 
@@ -153,7 +148,6 @@ private:
     DialogType m_type;
     DialogCallback m_callback;
     std::string m_message;
-    bool m_isOpen = true;
     int m_lastClickedButton = -1;
     
     // Title bar

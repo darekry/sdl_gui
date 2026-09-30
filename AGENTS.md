@@ -334,6 +334,16 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
+### ModalDialog — cienka baza dla DialogBox/FileDialog (2026-09-30)
+- **Refactor bez zmiany API**: nowe `src/composite/modal_dialog.{hpp,cpp}` (`ModalDialog : Panel`, `isOverlay`, `close/isOpen`, `centerInViewport`, `handleEvent`: dzieci → Esc→`onCancel` → Enter/KP_ENTER→`onConfirm`); `DialogBox`/`FileDialog` dziedziczą, ich `close/isOpen/isOverlay/Esc` usunięte (`DialogBox::onCancel` woła `callback(-1)`, `FileDialog::onConfirm=confirmSelection`, brak Enter w DialogBox = no-op). Bez nowego `ComponentType`, bez zmian w `GUIManager`.
+- Efekt: 49/49 testów (nowy `test_modal_dialog.cpp`: Esc/Enter w obu dialogach, overlay, `close→markForDeletion`, `centerInViewport`, API `createConfirm`), release + smoke 35/36 zielone.
+- Zmienione pliki: src/composite/modal_dialog.{hpp,cpp} (nowe), src/composite/dialog_box.{hpp,cpp}, src/composite/file_dialog.{hpp,cpp}, tests/test_modal_dialog.cpp (nowy), nob.c (`hpp_order` + `includes_to_remove`)
+
+### DockLayout — dokowanie do krawędzi (2026-09-30)
+- **Nowość**: `Dock` (`None/Top/Bottom/Left/Right/Fill` w `anchor.hpp`) + `DockLayout` (`src/layout.{hpp,cpp}`, chain `Fill`, skip `None`/`hidden`, padding+spacing, zero alokacji) + `setDock/getDock` w `GUIElement` (tani re-layout rodzica); parser: `dock=` per node + `layout="dock"` na kontenerze; C-API: `sdlgui_dock_t` + `set_dock/get_dock/set_dock_layout`.
+- Efekt: 48/48 testów (nowy `test_dock_layout.cpp` + fixture'y JSON/XML), przykład `66_dock_layout.cpp`, release zielone.
+- Zmienione pliki: src/anchor.hpp, src/layout.{hpp,cpp}, src/gui.{hpp,cpp}, src/layout_parser.{hpp,cpp}, src/sdl_gui.{h,c_api.cpp}, tests/test_dock_layout.cpp, examples/66_dock_layout.cpp, nob.c
+
 ### Embed bez ld + warunkowe przykłady + zalążek Windows (2026-09-21)
 - **Embed/SPIR-V bez GNU `ld`**: `build_embedded_assets`/`build_gpu_shaders` emitują generowany `.c` z tablicami bajtów (`_start` + `_size`, koniec symboli `_end` i prefiksowych problemów PE/COFF) kompilowany zwykłym `CC` — ten sam kod zadziała pod MinGW cross i natywnym Windows. Publiczne nazwy bez zmian (`g_embeddedAssets[]`, `gpu_shader::<name>(+_size)`), przykład 32/40/41 nietknięte.
 - **Warunkowość**: brak assetu / fail `glslc` to WARNING + skip (nowa tabela `example_needs()`: 32→`NEED_EMBEDDED`, 40/41→`NEED_SHADERS`, mixer/sqlite jak dotąd) zamiast kłaść cały build; embed/SPIR-V linkowane tylko tam, gdzie potrzebne (testy i bench już ich nie linkują).

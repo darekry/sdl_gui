@@ -9,14 +9,15 @@ Przenieść do `sdl_gui` sprawdzone idee z BursztynUI małymi, bezpiecznymi krok
 - Wydajność: layout i popup działają tylko w `layoutChildren()/handleResize()/addChild/showAt`, nigdy per-frame. `arrange()` = O(n), zero alokacji w pętli, `setPosition/setSize` mają early-out (istniejący). Invisible dzieci pomijane.
 
 ## Kolejka (status)
-- [ ] #1 `DockLayout` (ta iteracja, zakres full z parserem — decyzja użytkownika)
+- [x] #1 `DockLayout` (2026-09-30: commit 203523b, 48/48 testów, release zielone)
 - [ ] #2 `GridLayout`
 - [ ] #3 `FlowLayout`
 - [ ] #4 per-widget menu + dziedziczenie + `Shift+F10`/`Menu`
 - [ ] #5 `Toast` (powiadomienia) + `InfoBar`
 - [ ] #6 `Spinner` + `ProgressBar::indeterminate`
 - [ ] #7 `UICommand` + `CommandList`
-- [ ] #8 `ModalDialog` baza (refactor `DialogBox/FileDialog` bez zmiany API)
+- [x] #8 `ModalDialog` baza (2026-09-30: 49/49 testów, release + smoke 35/36 zielone, API bez zmian)
+- [ ] #9 `ColorDialog` (composite) — NASTĘPNY
 - [ ] #9 `ColorDialog` (composite)
 - [ ] #10 `VirtualListView` (potem `VirtualGrid`)
 - [ ] #11 `ChartPanel`

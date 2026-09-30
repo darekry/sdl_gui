@@ -1122,6 +1122,7 @@ static const char * hpp_order[] = {
     "src/window.hpp",
     "src/window_manager.hpp",
     "src/gui_context.hpp",
+    "src/composite/modal_dialog.hpp",
     "src/composite/dialog_box.hpp",
     "src/composite/message_box.hpp",
     "src/composite/file_dialog.hpp",
@@ -1210,6 +1211,8 @@ static const char * includes_to_remove[] = {
     "#include \"gui_context.hpp\"",
     "#include \"theme_presets.hpp\"",
     "#include \"composite/file_dialog.hpp\"",
+    "#include \"composite/modal_dialog.hpp\"",
+    "#include \"modal_dialog.hpp\"",
     "#include \"file_dialog.hpp\"",
 };
 

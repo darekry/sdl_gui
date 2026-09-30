@@ -117,7 +117,7 @@ DialogBox::DialogBox(
     DialogType type,
     DialogCallback callback
 )
-    : Panel(manager, x, y, width, height)
+    : ModalDialog(manager, x, y, width, height)
     , m_type(type)
     , m_callback(callback)
     , m_message(message)
@@ -229,11 +229,6 @@ void DialogBox::setTitle(std::string_view title) {
     markDirty();
 }
 
-void DialogBox::close() {
-    m_isOpen = false;
-    markForDeletion();
-}
-
 void DialogBox::layoutChildren() {
     // Pas przycisków: wycentrowany poziomy strip (StackLayout) na dole dialogu.
     // Wołane też przy każdym resize — przyciski zawsze wycentrowane.
@@ -257,23 +252,12 @@ void DialogBox::draw(SDL_Renderer* renderer) {
     Panel::draw(renderer);
 }
 
-bool DialogBox::handleEvent(const SDL_Event& e) {
-    if (!m_isOpen || !m_visible) return false;
-    
-    // Handle children (buttons, label)
-    if (Panel::handleEvent(e)) return true;
-    
-    // ESC closes the dialog
-    if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) {
-        m_lastClickedButton = -1;  // Cancelled
-        if (m_callback) {
-            m_callback(-1);
-        }
-        close();
-        return true;
+void DialogBox::onCancel() {
+    m_lastClickedButton = -1;  // Cancelled
+    if (m_callback) {
+        m_callback(-1);
     }
-    
-    return false;
+    close();
 }
 
 ComponentType DialogBox::getComponentTypeId() const {

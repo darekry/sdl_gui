@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../gui.hpp"
-#include "../panel.hpp"
 #include "../button.hpp"
 #include "../label.hpp"
 #include "../text_input.hpp"
 #include "../string_grid.hpp"
+#include "modal_dialog.hpp"
 
 #include "std.hpp"
 
@@ -30,7 +30,7 @@
  * ".." entry at the top of directories list navigates to parent directory.
  */
 
-class FileDialog : public Panel {
+class FileDialog : public ModalDialog {
 public:
     enum class Mode { Open, Save };
 
@@ -62,15 +62,13 @@ public:
     [[nodiscard]] const std::string& getCurrentPath() const { return m_currentPath; }
     [[nodiscard]] const std::string& getSelectedFile() const { return m_selectedFile; }
 
-    void close();
-    [[nodiscard]] bool isOpen() const { return m_isOpen; }
-
     [[nodiscard]] ComponentType getComponentTypeId() const override;
-    [[nodiscard]] bool isOverlay() const override { return true; }
 
 protected:
     void draw(SDL_Renderer* renderer) override;
-    bool handleEvent(const SDL_Event& e) override;
+    // Enter → confirmSelection (base ModalDialog key path; a focused
+    // TextInput consumes Enter itself, so this only fires when unset).
+    void onConfirm() override;
     // Proporcjonalny layout od rozmiaru dialogu + StackLayout na pasek przycisków.
     void layoutChildren() override;
 
@@ -98,7 +96,6 @@ private:
     std::string m_selectedFile;
     std::string m_filter;
     std::string m_title;
-    bool m_isOpen = true;
 
     int m_titleBarHeight = 30;
     int m_bottomBarHeight = 80;
