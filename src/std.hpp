@@ -1,10 +1,14 @@
 #pragma once
 // #define __clangd__
-#ifdef __clangd__
+#if defined(__clangd__) || defined(_WIN32)
 // ── Traditional includes for clangd ────────────────────────────────────
 // clangd has poor support for C++20 modules (especially `import std`).
 // When clangd parses the code, it sees these traditional headers.
 // When compiling with clang++-22, the `#else` branch uses modules.
+//
+// On Windows (_WIN32) modules are also off: MSVC-STL/MinGW libstdc++
+// setups don't use our precompiled libc++ std.pcm, so every TU falls
+// back to classic headers (same set clangd already validates).
 //
 // Includes are comprehensive to cover all std:: entities used across
 // the project (src/, examples/, tests/).
@@ -60,6 +64,7 @@
 // Functional & callbacks
 #include <functional>   // std::function, std::bind, std::ref
 #include <tuple>        // std::tuple, std::make_tuple, std::tie
+#include <system_error> // std::error_code (used with std::filesystem)
 
 // Types & variants
 #include <optional>     // std::optional, std::nullopt

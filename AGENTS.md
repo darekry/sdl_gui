@@ -228,11 +228,13 @@ Dla resize: okno z `SDLApp("Tytuł", 800, 600, true)` (resizable), w pętli obs�
 ### Embedded Assets
 System osadzania assetów (PNG, TTF) bezpośrednio w binarkach:
 
-1. Manifest `assets.embed` — lista plików do osadzenia
-2. `nob.c:build_embedded_assets()` — `ld -r -b binary` → `.o` z symbolami `_binary_<nazwa>_start/_end`
-3. `output/embedded_assets.hpp` — auto-generowany header z `g_embeddedAssets[]`
+1. Tabela `g_embedded_assets[]` w `nob.c` — lista plików do osadzenia
+2. `nob.c:build_embedded_assets()` — generowany `output/embedded_assets_data.c` (tablice bajtów `_binary_<nazwa>_start` + `_binary_<nazwa>_size`, bez GNU `ld` — przenośne na Windows/MinGW) → kompilowany zwykłym `CC` do `.o`
+3. `src/embedded_assets.hpp` — auto-generowany header z `g_embeddedAssets[]`
 4. `TextureManager::loadTextureFromMemory` / `FontManager::loadFontFromMemory` — `SDL_IOFromConstMem` → `IMG_Load_IO` / `TTF_OpenFontIO`
-5. Po załadowaniu działa transparentnie: `loadTexture("assets/button1.png")` zwraca cache'owany embedded asset
+5. Po zarejestrowaniu (`registerEmbeddedAssets`, przykład 32) działa transparentnie: `loadTexture("assets/button1.png")` zwraca cache'owany embedded asset
+6. Shadery GPU analogicznie: `glslc` → SPIR-V → `output/shader_spirv_data.c` + `output/gpu_shader_spirv.hpp` (nazwy `gpu_shader::<name>` bez zmian)
+7. Warunkowość: brak assetu / brak `glslc` to WARNING + skip zależnych przykładów (tabela `example_needs()`: 32→`NEED_EMBEDDED`, 40/41→`NEED_SHADERS`, `*mixer*`/`*sqlite*`), nie błąd buildu. Embed/SPIR-V linkowane tylko do binarek, które ich potrzebują — testy i bench nie linkują ich wcale
 
 ### Hover performance (kluczowe)
 
@@ -332,17 +334,13 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
-### Klik z fokusem gasił rodzeństwo — wyciek clipa z render() (2026-09-29)
-- **Przyczyna**: `renderFocusOverlay()` to jedyna ścieżka ustawiająca clip w liściu cached — `GUIElement::render()` odtwarzał clip do rodzica tylko wokół własnych blitów, ale po pętli dzieci wychodził z clipem ostatniego dziecka. Po kliku (fokus na buttonie w bottom barze) kolejne top-levele (top/side/world) i następne klatki renderowały się z obcym clipem `bottom` i znikały (czarny ekran + tooltip). Bez fokusu (`nofocus`) clip nigdy nie był dotykany, więc bug nie występował.
-- **Fix**: niezmiennik clipa — `GUIElement::render()` na wyjściu odtwarza `parent_clip_rect`; `GUIManager::render()` na końcu wyłącza clip (`nullptr`) dla kodu rysującego po GUI i `RenderClear` kolejnej klatki.
-- Efekt: 47/47 testów (nowy regresyjny `Focused button does not clip siblings` w `test_render_pixel.cpp`: syntetyczny DOWN+UP na buttonie, piksele rodzeństwa + `RenderClipEnabled == false`), weryfikacja Xvfb na `tools/repro_bisect` i grze (klik w domek: sidebar/top/world zostają).
-- Zmienione pliki: src/gui.cpp, src/gui_manager.cpp, tests/test_render_pixel.cpp
-
-### WorldView malował kryjące tło i zakrywał mapę gry (2026-09-11)
-- **Przyczyna**: `WorldView`/viewport/content to `Panel`e z kryjącym tłem z themu — 3 warstwy przykrywały surowo rysowaną trawę (zdradzał to 1 px zielony pasek na styku z dolnym barem). Dodatkowo `drawBackgroundAndBorder` wypełniał nawet przy alfa 0, licząc na lepki blend mode renderera (nie gwarantowany).
-- **Fix**: ctor `WorldView` ustawia `{0,0,0,0}` we wszystkich 4 stanach na sobie/viewporcie/contencie (helper `makeTransparent`); `drawBackgroundAndBorder` pomija fill przy `a == 0` (determinizm + mniej filli).
-- Efekt: `test_world_view` 56 asercji (nowa sekcja przezroczystości), release zielone, gra zrelinowana.
-- Zmienione pliki: src/world_view.{hpp,cpp}, src/gui.cpp, tests/test_world_view.cpp, docs/release/widgets/WorldView.md
+### Embed bez ld + warunkowe przykłady + zalążek Windows (2026-09-21)
+- **Embed/SPIR-V bez GNU `ld`**: `build_embedded_assets`/`build_gpu_shaders` emitują generowany `.c` z tablicami bajtów (`_start` + `_size`, koniec symboli `_end` i prefiksowych problemów PE/COFF) kompilowany zwykłym `CC` — ten sam kod zadziała pod MinGW cross i natywnym Windows. Publiczne nazwy bez zmian (`g_embeddedAssets[]`, `gpu_shader::<name>(+_size)`), przykład 32/40/41 nietknięte.
+- **Warunkowość**: brak assetu / fail `glslc` to WARNING + skip (nowa tabela `example_needs()`: 32→`NEED_EMBEDDED`, 40/41→`NEED_SHADERS`, mixer/sqlite jak dotąd) zamiast kłaść cały build; embed/SPIR-V linkowane tylko tam, gdzie potrzebne (testy i bench już ich nie linkują).
+- **Przenośność `src/`**: GPU-konstruktor `SDLApp` bez `dirent`/`setenv` (skan ICD przez `std::filesystem`, tylko `#ifndef _WIN32`); `std.hpp` na `_WIN32` używa klasycznych includów zamiast `import std.compat` (koniec zależności od prekompilowanego libc++ `.pcm`); `dist/sdl_gui.hpp` bez `<dirent.h>`.
+- Efekt: 47/47 testów, 65/65 przykładów, release zielone; smoke 32 headless OK; symulacja braku assetu → `32 skipped (missing optional deps)`, reszta buduje się.
+- Zmienione pliki: nob.c, src/sdl_app.hpp, src/std.hpp, src/embedded_assets.hpp (regenerowany)
+- Następny krok: toolchain Windows w `nob.c` (llvm-mingw/clang `--target=`, prefix SDL z `vendor/` przez CMake) + `download_sdl_deps.sh` do przepisania na SDL3.
 
 ### Focus-outline wystawał poza WorldView/ScrollArea (2026-09-10)
 - **Przyczyna (2×)**: (1) `renderFocusOverlay()` rysował obrys bez clipa (`gui.cpp`) — treść cięta do `clipped_rect`, obrys nie. (2) `GUIManager::render()` dorysowywał fokusowany widget drugi raz przez bazowy `renderOverlay()` (= `render()` bez clipa przodków) — cała binarka z fokusem lądowała na wierzchu poza viewportem.

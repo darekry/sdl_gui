@@ -6,7 +6,6 @@
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <stdlib.h>
-#include <dirent.h>
 #include "logger.hpp"
 
 #include "std.hpp"
@@ -117,33 +116,45 @@ public:
 
         LOG_INFO("SDLApp", "Window created");
 
+        // Portable helper: setenv() doesn't exist on Windows (_putenv_s does).
+        auto setEnvIfNeeded = [](const char* name, const std::string& value, bool overwrite) {
+#ifdef _WIN32
+            if (!overwrite && getenv(name)) return;
+            _putenv_s(name, value.c_str());
+#else
+            setenv(name, value.c_str(), overwrite ? 1 : 0);
+#endif
+        };
+
+#ifndef _WIN32
+        // Linux-only: narrow the Vulkan ICD search so SDL3 init doesn't wake
+        // slow/virtual drivers. On Windows the loader finds ICDs via registry.
         if (!getenv("VK_ICD_FILENAMES") && !getenv("VK_DRIVER_FILES")) {
             std::string icdPaths;
             auto scanIcd = [&](const char* dir) {
-                DIR* d = opendir(dir);
-                if (!d) return;
-                struct dirent* ent;
-                while ((ent = readdir(d))) {
-                    std::string_view name = ent->d_name;
-                    if (!name.ends_with(".json")) continue;
+                std::error_code ec;
+                std::filesystem::directory_iterator it(dir, ec);
+                if (ec) return;
+                for (const auto& de : it) {
+                    if (!de.is_regular_file(ec)) continue;
+                    std::string name = de.path().filename().string();
+                    std::string_view nameSv = name;
+                    if (!nameSv.ends_with(".json")) continue;
                     // skip mobile, VM, emulation, and slow SDL3-init ICDs
-                    if (name.contains("asahi") || name.contains("dzn") ||
-                        name.contains("freedreno") || name.contains("gfxstream") ||
-                        name.contains("virtio") || name.contains("hasvk") ||
-                        name.contains("radeon") || name.contains("nouveau") ||
-                        name.contains("nvidia")) continue;
+                    if (nameSv.contains("asahi") || nameSv.contains("dzn") ||
+                        nameSv.contains("freedreno") || nameSv.contains("gfxstream") ||
+                        nameSv.contains("virtio") || nameSv.contains("hasvk") ||
+                        nameSv.contains("radeon") || nameSv.contains("nouveau") ||
+                        nameSv.contains("nvidia")) continue;
                     if (!icdPaths.empty()) icdPaths += ":";
-                    icdPaths += dir;
-                    icdPaths += "/";
-                    icdPaths += name;
+                    icdPaths += de.path().string();
                 }
-                closedir(d);
             };
             scanIcd("/usr/share/vulkan/icd.d");
             scanIcd("/etc/vulkan/icd.d");
 
             if (!icdPaths.empty()) {
-                setenv("VK_ICD_FILENAMES", icdPaths.c_str(), 1);
+                setEnvIfNeeded("VK_ICD_FILENAMES", icdPaths, true);
                  LOG_INFO("SDLApp", "VK_ICD_FILENAMES={}", icdPaths);
             }
         }
@@ -151,7 +162,8 @@ public:
         // SDL3 prepares the Vulkan driver twice (VULKAN_PrepareDriver + VULKAN_CreateDevice);
         // without this the loader dlcloses the ICD in between and libGLX_nvidia.so.0 re-inits
         // (wakes the dGPU on hybrid laptops: ~1.85s per wake, ~4.5s total instead of ~2.1s).
-        setenv("VK_LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING", "1", 0);
+        setEnvIfNeeded("VK_LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING", "1", false);
+#endif
 
         t0 = SDL_GetTicks();
         SDL_PropertiesID props = SDL_CreateProperties();
