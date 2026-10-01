@@ -336,6 +336,12 @@ Uruchom: `./nob test`
   ═══════════════════════════════════════════════════════════════════
 -->
 
+### Rotacja ucięta do własnego recta — fix clippingu (2026-09-30)
+- **Przyczyna**: `18cc243` (clip focus-outline) przyciął też rotowane blity do `element_rect ∩ parent` — zwis rotacji poza własny oś-aligned rect był obcinany (białe artefakty/border w 19, 49, 50, 56).
+- **Fix**: culling + clip rotowanych liczone z rotowanego AABB (`computeRotatedAABB`, 4 rogi wokół `rotationCenter`/środka, floor/ceil) przeciętego z clipem przodków — szanuje viewport (ScrollArea/WorldView), nie ucina zwisu; nierotowane i direct bez zmian.
+- Efekt: 50/50 testów (nowy regresyjny `Rotated content is not clipped to unrotated rect` w `test_render_pixel.cpp`: piksel w zwisie rotacji; na starym kodzie FAIL), 67/67 przykładów, smoke 19/49/50/56 headless czysty.
+- Zmienione pliki: src/gui.cpp, tests/test_render_pixel.cpp
+
 ### ColorDialog — modalny picker RGB/HSV (2026-09-30)
 - **Nowość**: `src/composite/color_dialog.{hpp,cpp}` (`ColorDialog : ModalDialog`, `create()` jak `FileDialog`): 3x Slider RGB + 3x H/S/V + HEX `TextInput` + preview old/new + 12 presetów + OK/Cancel; sync dwukierunkowy z guardem `m_syncing` (setValue/setText wołają callbacki synchronicznie), konwersje int-math tylko w event path, zły HEX ignorowany. `ComponentType::ColorDialog` dopisany (bez fabryki — precedens pozostałych dialogów).
 - Efekt: 50/50 testów (nowy `test_color_dialog.cpp`: roundtrip RGB↔HSV, guard/sync, HEX, preset-klik, OK/Cancel, Enter), 67 przykładów (`67_color_dialog.cpp`), release + smoke zielone.

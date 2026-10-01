@@ -166,6 +166,46 @@ TEST_CASE("Direct child of rotated parent renders", "[render][pixel][rotation]")
     REQUIRE(px[2] == 0);
 }
 
+// Regresja clippingu przy rotacji (przykład 19, 2026-09-30): rotowana treść
+// była cięta do własnego oś-aligned rect (element_rect ∩ parent), co obcinało
+// rogi/bordery wystające poza niego. Panel 50x30 na (100,100), obrót 90°:
+// rotowany AABB to 30x50 na (110,90). Piksel (125,95) leży W rotowanym obrysie,
+// ale POZA nierotowanym rectem (y<100) — przed fixem był transparentny.
+TEST_CASE("Rotated content is not clipped to unrotated rect", "[render][pixel][rotation]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.handleResize(320, 240);
+
+    auto panel = std::make_unique<Panel>(manager, 100, 100, 50, 30);
+    panel->setBackgroundColor(ElementState::Normal, {70, 130, 180, 255});
+    panel->setBorderRadius(ElementState::Normal, 0);
+    panel->setBorder(ElementState::Normal, {0, 0, 0, 0}, 0);
+    panel->setRotation(90.0);
+    manager.addElement(std::move(panel));
+
+    manager.update();
+    manager.cleanup();
+    manager.render();
+
+    auto readPixel = [&](int x, int y) {
+        SDL_Rect r{x, y, 1, 1};
+        SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
+        REQUIRE(surf != nullptr);
+        Uint8* p = (Uint8*)surf->pixels;
+        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        SDL_DestroySurface(surf);
+        return result;
+    };
+
+    // Zwis rotacji poza własny rect: pełne tło panelu.
+    auto px = readPixel(125, 95);
+    REQUIRE(px[3] > 200);
+    REQUIRE(px[0] == 70);
+    REQUIRE(px[1] == 130);
+    REQUIRE(px[2] == 180);
+}
+
 // Win9x-unifikacja: Checkbox na domyślnym (Windows95) motywie rysuje białe
 // pudełko z fazą Sunken. Box 30x30 na (10,10): środek (25,25) biały,
 // róg zewnętrzny TL (10,10) szary (Shadow), róg BR (39,39) biały (Highlight),

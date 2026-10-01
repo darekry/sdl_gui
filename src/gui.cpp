@@ -38,6 +38,43 @@ namespace {
     }
 
     SDL_FPoint zeroTexCoord(float, float) { return {0, 0}; }
+
+    // Oś-aligned bounding box rotowanego prostokąta (do cullingu i clipa).
+    // Rotacja SDL jest clockwise, ale AABB zależy tylko od |cos|/|sin|,
+    // więc znak nie ma znaczenia — liczymy standardową macierzą.
+    SDL_Rect computeRotatedAABB(int absX, int absY, int w, int h,
+                                double angleDeg, SDL_FPoint centerLocal) {
+        constexpr double kDegToRad = 3.141592653589793 / 180.0;
+        const double rad = angleDeg * kDegToRad;
+        const double c = std::cos(rad);
+        const double s = std::sin(rad);
+        const double cx = static_cast<double>(absX) + static_cast<double>(centerLocal.x);
+        const double cy = static_cast<double>(absY) + static_cast<double>(centerLocal.y);
+        const double xs[4] = {static_cast<double>(absX),
+                              static_cast<double>(absX + w),
+                              static_cast<double>(absX + w),
+                              static_cast<double>(absX)};
+        const double ys[4] = {static_cast<double>(absY),
+                              static_cast<double>(absY),
+                              static_cast<double>(absY + h),
+                              static_cast<double>(absY + h)};
+        double minX = 1e30, maxX = -1e30, minY = 1e30, maxY = -1e30;
+        for (int i = 0; i < 4; ++i) {
+            const double dx = xs[i] - cx;
+            const double dy = ys[i] - cy;
+            const double rx = cx + dx * c - dy * s;
+            const double ry = cy + dx * s + dy * c;
+            minX = std::min(minX, rx);
+            maxX = std::max(maxX, rx);
+            minY = std::min(minY, ry);
+            maxY = std::max(maxY, ry);
+        }
+        const int ix = static_cast<int>(std::floor(minX));
+        const int iy = static_cast<int>(std::floor(minY));
+        return SDL_Rect{ix, iy,
+                        static_cast<int>(std::ceil(maxX)) - ix,
+                        static_cast<int>(std::ceil(maxY)) - iy};
+    }
 }
 
 void drawRoundedFilledRect(SDL_Renderer* renderer, SDL_FRect rect, float radius, SDL_FColor color) {
@@ -441,8 +478,25 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
     SDL_Rect element_rect = {abs_pos.x, abs_pos.y, m_width, m_height};
     SDL_Rect clipped_rect;
 
-    if (!SDL_GetRectIntersection(&element_rect, &parent_clip_rect, &clipped_rect)) {
-        return; // Element is completely outside the clip area
+    // Rotowana treść wystaje poza własny oś-aligned rect — cięcie jej do
+    // element_rect ∩ parent (regresja z 18cc243: obcięte rogi/bordery w 19,
+    // 49, 56) jest za ciasne. Cull + clip liczymy z rotowanego AABB
+    // przeciętego z clipem przodków: szanuje viewport (ScrollArea/WorldView),
+    // a nie ucina zwisu rotacji.
+    const bool isRotatedBlit = (m_rotation != 0.0) && !wantsDirectRender();
+    if (isRotatedBlit) {
+        SDL_FPoint centerLocal = m_rotationCenter.x >= 0
+            ? SDL_FPoint{static_cast<float>(m_rotationCenter.x), static_cast<float>(m_rotationCenter.y)}
+            : SDL_FPoint{static_cast<float>(m_width) / 2.0f, static_cast<float>(m_height) / 2.0f};
+        const SDL_Rect rotAABB =
+            computeRotatedAABB(abs_pos.x, abs_pos.y, m_width, m_height, m_rotation, centerLocal);
+        if (!SDL_GetRectIntersection(&rotAABB, &parent_clip_rect, &clipped_rect)) {
+            return; // Cały rotowany obrys poza clipem przodków
+        }
+    } else {
+        if (!SDL_GetRectIntersection(&element_rect, &parent_clip_rect, &clipped_rect)) {
+            return; // Element is completely outside the clip area
+        }
     }
 
     if (wantsDirectRender()) {
@@ -462,8 +516,9 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 SDL_FPoint center = m_rotationCenter.x >= 0
                     ? SDL_FPoint{static_cast<float>(m_rotationCenter.x), static_cast<float>(m_rotationCenter.y)}
                     : SDL_FPoint{static_cast<float>(m_width) / 2.0f, static_cast<float>(m_height) / 2.0f};
-                // Treść rotowana też musi respektować clip przodków (ScrollArea,
-                // WorldView) — SDL_RenderTextureRotated tnie po aktywnym clipie.
+                // Clip = rotowany AABB ∩ clip przodków (policzony wyżej):
+                // szanuje viewport (ScrollArea/WorldView), a nie ucina zwisu
+                // rotacji poza własny oś-aligned rect. SDL tnie po aktywnym clipie.
                 SDL_SetRenderClipRect(renderer, &clipped_rect);
                 SDL_RenderTextureRotated(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
                                  m_rotation, &center, SDL_FLIP_NONE);
