@@ -128,7 +128,9 @@ TEST_CASE("ModalDialog - FileDialog Enter confirms save", "[modal][filedialog]")
     bool consumed = manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_RETURN));
 
     REQUIRE(consumed);
-    REQUIRE(got == (tmp / "out.txt").string());
+    // Compare as fs::path: FileDialog joins with '/' while native
+    // tmp.string() uses '\' on Windows; path equality normalizes both.
+    REQUIRE(fs::path(got) == tmp / "out.txt");
     REQUIRE(!raw->isOpen());
     REQUIRE(raw->isMarkedForDeletion());
 

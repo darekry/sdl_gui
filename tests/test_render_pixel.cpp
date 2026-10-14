@@ -34,8 +34,7 @@ TEST_CASE("Rendering produces opaque widget pixels", "[render][pixel]") {
         SDL_Rect r{x, y, 1, 1};
         SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
         REQUIRE(surf != nullptr);
-        Uint8* p = (Uint8*)surf->pixels;
-        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        auto result = readbackPixel(surf);
         SDL_DestroySurface(surf);
         return result;
     };
@@ -85,8 +84,7 @@ TEST_CASE("Focus outline rotates with content", "[render][pixel][rotation]") {
         SDL_Rect r{x, y, 1, 1};
         SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
         REQUIRE(surf != nullptr);
-        Uint8* p = (Uint8*)surf->pixels;
-        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        auto result = readbackPixel(surf);
         SDL_DestroySurface(surf);
         return result;
     };
@@ -155,8 +153,7 @@ TEST_CASE("Direct child of rotated parent renders", "[render][pixel][rotation]")
     SDL_Rect r{170, 170, 1, 1};
     SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
     REQUIRE(surf != nullptr);
-    Uint8* p = (Uint8*)surf->pixels;
-    auto px = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+    auto px = readbackPixel(surf);
     SDL_DestroySurface(surf);
 
     // Środek dziecka: czerwień direct-render, nie niebieskie tło rodzica.
@@ -192,8 +189,7 @@ TEST_CASE("Rotated content is not clipped to unrotated rect", "[render][pixel][r
         SDL_Rect r{x, y, 1, 1};
         SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
         REQUIRE(surf != nullptr);
-        Uint8* p = (Uint8*)surf->pixels;
-        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        auto result = readbackPixel(surf);
         SDL_DestroySurface(surf);
         return result;
     };
@@ -228,8 +224,7 @@ TEST_CASE("Checkbox renders white sunken box", "[render][pixel][theme]") {
         SDL_Rect r{x, y, 1, 1};
         SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
         REQUIRE(surf != nullptr);
-        Uint8* p = (Uint8*)surf->pixels;
-        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        auto result = readbackPixel(surf);
         SDL_DestroySurface(surf);
         return result;
     };
@@ -299,8 +294,7 @@ TEST_CASE("Focused button does not clip siblings", "[render][pixel][focus]") {
         SDL_Rect r{x, y, 1, 1};
         SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
         REQUIRE(surf != nullptr);
-        Uint8* p = (Uint8*)surf->pixels;
-        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        auto result = readbackPixel(surf);
         SDL_DestroySurface(surf);
         return result;
     };

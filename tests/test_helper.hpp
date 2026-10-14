@@ -8,8 +8,19 @@
 #include <string>
 #include <string_view>
 #include <memory>
+#include <array>
 
 #include "../src/texture_manager.hpp" // SharedTexture alias
+
+// Read one pixel back as true R/G/B/A on every backend.
+// SDL_RenderReadPixels byte order is backend-dependent (RGBA on OpenGL,
+// BGRA on Direct3D); raw p[0..3] reads assert the wrong channels on D3D.
+// SDL_ReadSurfacePixel converts through the surface format instead.
+inline std::array<Uint8, 4> readbackPixel(SDL_Surface* surf) {
+    Uint8 r = 0, g = 0, b = 0, a = 0;
+    SDL_ReadSurfacePixel(surf, 0, 0, &r, &g, &b, &a);
+    return {r, g, b, a};
+}
 
 // Forward declarations (keep pointers compatible)
 class GUIManager;

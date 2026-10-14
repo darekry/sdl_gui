@@ -170,8 +170,7 @@ TEST_CASE("WorldView - focus outline respects viewport clip", "[world_view][rend
         SDL_Rect r{x, y, 1, 1};
         SDL_Surface* surf = SDL_RenderReadPixels(helper.getRenderer(), &r);
         REQUIRE(surf != nullptr);
-        Uint8* p = (Uint8*)surf->pixels;
-        auto result = std::array<Uint8, 4>{p[0], p[1], p[2], p[3]};
+        auto result = readbackPixel(surf);
         SDL_DestroySurface(surf);
         return result;
     };
