@@ -114,6 +114,28 @@ public:
     void setVisible(bool visible) { m_visible = visible; }
     [[nodiscard]] bool isVisible() const { return m_visible; }
     [[nodiscard]] bool isHovered() const { return m_isHovered; }
+    // Transient per-element opacity (0 = invisible, 1 = opaque). Unlike Style
+    // colors it is NOT themed/per-state: it is animation state, applied at
+    // blit time (SDL_SetTextureAlphaMod around the cached-texture blit), so
+    // changing it never rebuilds the render cache. Effective opacity is the
+    // product over the parent chain, so fading a container fades its children.
+    // NOTE: direct-render widgets (wantsDirectRender: Canvas, StringGrid,
+    // ShaderPanel, ...) draw every frame outside the cache and do NOT pick
+    // this up unless their drawDirect() consults getEffectiveOpacity().
+    void setOpacity(float opacity);
+    [[nodiscard]] float getOpacity() const { return m_opacity; }
+    [[nodiscard]] float getEffectiveOpacity() const;
+    // Fade own (+inherited, for children) opacity to 0 over durationMs, then
+    // invoke onComplete. Driven by chained GUIManager::after() ticks holding
+    // an ElementRef: safe when the element is deleted mid-fade (ticks become
+    // no-ops). onComplete runs on the update() thread; calling
+    // markForDeletion() there is safe (only flags; cleanup() erases later).
+    void fadeOut(uint32_t durationMs, std::function<void()> onComplete = nullptr,
+                 std::function<float(float)> easing = Easing::linear);
+    // fadeOut() + markForDeletion() at the end. Disables input up front so
+    // the fading element cannot be clicked again.
+    void fadeOutAndDelete(uint32_t durationMs,
+                          std::function<float(float)> easing = Easing::linear);
     void setState(ElementState newState);
     [[nodiscard]] ElementState getState() const { return m_state; }
     void setStyle(ElementState state, Style style);
@@ -251,6 +273,9 @@ protected:
             return static_cast<size_t>(state);
         }
         ElementState m_state = ElementState::Normal;
+    // Blit-time opacity multiplier, see setOpacity(). Not part of the render
+    // cache key (never baked into pixels).
+    float m_opacity = 1.0f;
     std::vector<std::unique_ptr<GUIElement>> m_children;
     
     double m_rotation = 0.0;

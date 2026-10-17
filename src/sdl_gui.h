@@ -809,6 +809,137 @@ size_t           sdlgui_list_view_get_item_text_buf(sdlgui_element_t e, size_t i
 size_t           sdlgui_combo_box_get_item_text_buf(sdlgui_element_t e, size_t index,
                                                    char* buf, size_t buf_len);
 
+/* ═══════════════════════════════════════════════════════════════════
+   Dialogs (DialogBox / FileDialog / ColorDialog / MessageBox)
+   ═══════════════════════════════════════════════════════════════ */
+
+/*
+ * Dialog callbacks.
+ *
+ * button_index — clicked button (0-based). -1 means the dialog was
+ *   cancelled via Esc (DialogBox::onCancel path).
+ * confirmed — 1 when the "yes" button (index 0) was clicked, 0 otherwise
+ *   (includes Esc cancellation, which reports index -1).
+ * path — full selected path, valid only during callback execution.
+ * color — the confirmed color (alpha always 255).
+ */
+typedef void (*sdlgui_dialog_button_callback_t)(sdlgui_element_t element, int button_index, void* userdata);
+typedef void (*sdlgui_dialog_confirm_callback_t)(sdlgui_element_t element, int confirmed, void* userdata);
+typedef void (*sdlgui_file_dialog_callback_t)(sdlgui_element_t element, const char* path, void* userdata);
+typedef void (*sdlgui_color_dialog_callback_t)(sdlgui_element_t element, SDL_Color color, void* userdata);
+
+/*
+ * Simple void callback (no element): used by MessageBox info/error/
+ * warning/custom, which carry no result value.
+ */
+typedef void (*sdlgui_simple_callback_t)(void* userdata);
+
+/*
+ * Dialog type IDs returned by sdlgui_dialog_box_get_type().
+ */
+typedef enum {
+    SDLGUI_DIALOG_TYPE_CONFIRM = 0,
+    SDLGUI_DIALOG_TYPE_ALERT   = 1,
+    SDLGUI_DIALOG_TYPE_CUSTOM  = 2
+} sdlgui_dialog_type_t;
+
+/*
+ * Modal base — works on any dialog handle (DialogBox, FileDialog,
+ * ColorDialog, MessageBox result). Wrong-type handle is a no-op
+ * (close/center) or returns 0 (is_open) + sdlgui_last_error().
+ */
+void sdlgui_dialog_close(sdlgui_element_t e);
+int  sdlgui_dialog_is_open(sdlgui_element_t e);
+void sdlgui_dialog_center(sdlgui_element_t e);
+
+/*
+ * DialogBox — modal composite (Panel + message Label + Buttons).
+ *
+ * All four factories center the dialog in the viewport and add it to
+ * the manager as a top-level overlay (no parent param — dialogs are
+ * always top-level). width/height <= 0 selects the C++ default
+ * (confirm/custom 400x150, alert 350x120, with_title 400x180).
+ * NULL message/title/labels fall back to "" (confirm labels fall back
+ * to "Tak"/"Nie", alert label to "OK").
+ * custom/with_title with button_count == 0 returns NULL + last error.
+ */
+sdlgui_element_t sdlgui_dialog_box_create_confirm(sdlgui_t gui, const char* message,
+                                                  const char* yes_label, const char* no_label,
+                                                  sdlgui_dialog_confirm_callback_t cb, void* userdata,
+                                                  int width, int height);
+sdlgui_element_t sdlgui_dialog_box_create_alert(sdlgui_t gui, const char* message,
+                                                 const char* ok_label,
+                                                 sdlgui_dialog_button_callback_t cb, void* userdata,
+                                                 int width, int height);
+sdlgui_element_t sdlgui_dialog_box_create_custom(sdlgui_t gui, const char* message,
+                                                 const char** button_labels, size_t button_count,
+                                                 sdlgui_dialog_button_callback_t cb, void* userdata,
+                                                 int width, int height);
+sdlgui_element_t sdlgui_dialog_box_create_with_title(sdlgui_t gui, const char* title,
+                                                      const char* message,
+                                                      const char** button_labels, size_t button_count,
+                                                      sdlgui_dialog_button_callback_t cb, void* userdata,
+                                                      int width, int height);
+void             sdlgui_dialog_box_set_message(sdlgui_element_t e, const char* message);
+void             sdlgui_dialog_box_set_title(sdlgui_element_t e, const char* title);
+int              sdlgui_dialog_box_get_last_clicked(sdlgui_element_t e);  /* -1 = none/cancelled */
+int              sdlgui_dialog_box_get_type(sdlgui_element_t e);          /* sdlgui_dialog_type_t, -1 on error */
+
+/*
+ * FileDialog — modal file picker (title bar + dir/file grids +
+ * filename input + Open/Cancel). Centered, top-level, already added
+ * to the manager on return. NULL title/start_path/filter fall back to
+ * "" (empty start path = current working directory, "*" / "*.*" = all
+ * files). The callback fires only on confirm with an existing file
+ * (Open) or any non-empty name (Save); Esc/Cancel closes without
+ * firing. path is valid only during callback execution.
+ */
+sdlgui_element_t sdlgui_file_dialog_create_open(sdlgui_t gui, const char* title,
+                                                const char* start_path, const char* filter,
+                                                sdlgui_file_dialog_callback_t cb, void* userdata);
+sdlgui_element_t sdlgui_file_dialog_create_save(sdlgui_t gui, const char* title,
+                                                const char* start_path, const char* filter,
+                                                sdlgui_file_dialog_callback_t cb, void* userdata);
+void             sdlgui_file_dialog_set_current_path(sdlgui_element_t e, const char* path);
+const char*      sdlgui_file_dialog_get_current_path(sdlgui_element_t e);
+size_t           sdlgui_file_dialog_get_current_path_buf(sdlgui_element_t e, char* buf, size_t buf_len);
+const char*      sdlgui_file_dialog_get_selected_file(sdlgui_element_t e);
+size_t           sdlgui_file_dialog_get_selected_file_buf(sdlgui_element_t e, char* buf, size_t buf_len);
+
+/*
+ * ColorDialog — modal RGB/HSV picker (6 sliders + HEX input + old/new
+ * preview + 12 presets + OK/Cancel). Centered (460x560), top-level.
+ * NULL title falls back to "". The callback fires only on OK (Enter
+ * or OK button); Cancel/Esc closes without firing.
+ */
+sdlgui_element_t sdlgui_color_dialog_create(sdlgui_t gui, const char* title,
+                                             SDL_Color initial,
+                                             sdlgui_color_dialog_callback_t cb, void* userdata);
+void             sdlgui_color_dialog_set_color(sdlgui_element_t e, SDL_Color color);
+SDL_Color        sdlgui_color_dialog_get_color(sdlgui_element_t e);
+SDL_Color        sdlgui_color_dialog_get_initial(sdlgui_element_t e);
+
+/*
+ * MessageBox — one-shot static helpers (DialogBox::createWithTitle /
+ * createConfirm + addElement). Each call creates, centers and shows a
+ * new top-level dialog and returns its handle (type "DialogBox").
+ * Callbacks are optional (may be NULL). show_question fires on_yes on
+ * "Yes" and on_no on "No"/Esc; the rest fire once on button click or
+ * Esc (treated as dismissal).
+ */
+sdlgui_element_t sdlgui_message_box_show_info(sdlgui_t gui, const char* message,
+                                              sdlgui_simple_callback_t cb, void* userdata);
+sdlgui_element_t sdlgui_message_box_show_error(sdlgui_t gui, const char* message,
+                                               sdlgui_simple_callback_t cb, void* userdata);
+sdlgui_element_t sdlgui_message_box_show_warning(sdlgui_t gui, const char* message,
+                                                 sdlgui_simple_callback_t cb, void* userdata);
+sdlgui_element_t sdlgui_message_box_show_question(sdlgui_t gui, const char* message,
+                                                  sdlgui_simple_callback_t on_yes, void* yes_userdata,
+                                                  sdlgui_simple_callback_t on_no, void* no_userdata);
+sdlgui_element_t sdlgui_message_box_show_custom(sdlgui_t gui, const char* title,
+                                                const char* message, const char* button_text,
+                                                sdlgui_simple_callback_t cb, void* userdata);
+
 #ifdef __cplusplus
 }
 #endif

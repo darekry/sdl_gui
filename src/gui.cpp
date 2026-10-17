@@ -39,6 +39,42 @@ namespace {
 
     SDL_FPoint zeroTexCoord(float, float) { return {0, 0}; }
 
+    // Blit-time opacity: temporarily overrides a texture's alpha modulation,
+    // restores the previous value on scope exit. No-op (zero SDL calls) for
+    // full opacity. Safe with the shared render cache: rendering is
+    // single-threaded and every blit site sets the mod explicitly, so no
+    // modulation state leaks into a sibling sharing the same SDL_Texture.
+    struct ScopedTextureAlpha {
+        ScopedTextureAlpha(SDL_Texture* tex, Uint8 alpha) : m_tex(nullptr), m_old(255) {
+            if (!tex || alpha == 255) {
+                return;
+            }
+            m_tex = tex;
+            SDL_GetTextureAlphaMod(tex, &m_old);
+            SDL_SetTextureAlphaMod(tex, alpha);
+        }
+        ~ScopedTextureAlpha() {
+            if (m_tex) {
+                SDL_SetTextureAlphaMod(m_tex, m_old);
+            }
+        }
+        ScopedTextureAlpha(const ScopedTextureAlpha&) = delete;
+        ScopedTextureAlpha& operator=(const ScopedTextureAlpha&) = delete;
+    private:
+        SDL_Texture* m_tex;
+        Uint8 m_old;
+    };
+
+    Uint8 opacityToAlpha(float opacity) {
+        if (opacity >= 1.0f) {
+            return 255;
+        }
+        if (opacity <= 0.0f) {
+            return 0;
+        }
+        return static_cast<Uint8>(opacity * 255.0f);
+    }
+
     // Oś-aligned bounding box rotowanego prostokąta (do cullingu i clipa).
     // Rotacja SDL jest clockwise, ale AABB zależy tylko od |cos|/|sin|,
     // więc znak nie ma znaczenia — liczymy standardową macierzą.
@@ -510,7 +546,12 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
             renderToCache();
         }
 
-        if (m_cachedTexture) {
+        if (m_cachedTexture && getEffectiveOpacity() > 0.0f) {
+            // Blit-time opacity (setOpacity/fadeOut): whole widget — frame,
+            // fill, baked texture, text — fades as one via texture modulation.
+            // Children of a non-rotated parent render separately and apply
+            // their own (inherited) opacity in their own render() call.
+            const Uint8 alphaMod = opacityToAlpha(getEffectiveOpacity());
             if (m_rotation != 0.0) {
                 SDL_FRect dst_rect = SDLRectToFRect(abs_pos.x, abs_pos.y, m_width, m_height);
                 SDL_FPoint center = m_rotationCenter.x >= 0
@@ -520,11 +561,15 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 // szanuje viewport (ScrollArea/WorldView), a nie ucina zwisu
                 // rotacji poza własny oś-aligned rect. SDL tnie po aktywnym clipie.
                 SDL_SetRenderClipRect(renderer, &clipped_rect);
-                SDL_RenderTextureRotated(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
-                                 m_rotation, &center, SDL_FLIP_NONE);
+                {
+                    ScopedTextureAlpha contentAlpha(m_cachedTexture.get(), alphaMod);
+                    SDL_RenderTextureRotated(renderer, m_cachedTexture.get(), nullptr, &dst_rect,
+                                     m_rotation, &center, SDL_FLIP_NONE);
+                }
                 // Fokus rotuje się razem z treścią, ale z OSOBNEJ tekstury
                 // (m_focusTexture) — zmiana fokusu nie unieważnia cache'a.
                 if (hasKeyboardFocus() && m_focusTexture) {
+                    ScopedTextureAlpha focusAlpha(m_focusTexture.get(), alphaMod);
                     SDL_RenderTextureRotated(renderer, m_focusTexture.get(), nullptr, &dst_rect,
                                      m_rotation, &center, SDL_FLIP_NONE);
                 }
@@ -535,7 +580,10 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 src_rect.y = clipped_rect.y - abs_pos.y;
                 src_rect.w = clipped_rect.w;
                 src_rect.h = clipped_rect.h;
-                RenderTexture(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
+                {
+                    ScopedTextureAlpha contentAlpha(m_cachedTexture.get(), alphaMod);
+                    RenderTexture(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
+                }
                 if (hasKeyboardFocus()) {
                     // Obrys fokusu rysowany bezpośrednio (poza cache'em) musi
                     // być cięty do tego samego clipped_rect co treść — inaczej
@@ -592,9 +640,16 @@ void GUIElement::renderFocusOverlay(SDL_Renderer* renderer) {
     // m_focusTexture blitowanej z tą samą rotacją (patrz render).
     const Style& focusStyle = getComposedStyle(m_state);
     const auto abs_pos = getAbsolutePosition();
+    // Focus outline fades together with the widget (direct draw, outside the
+    // cache, so the effective opacity is applied to the color here).
+    SDL_Color outline = constants::kFocusOutlineColor;
+    const float eff = getEffectiveOpacity();
+    if (eff < 1.0f) {
+        outline.a = static_cast<Uint8>(static_cast<float>(outline.a) * eff);
+    }
     drawRoundedRectBorder(renderer, SDLRectToFRect(abs_pos.x, abs_pos.y, m_width, m_height),
                           static_cast<float>(focusStyle.borderRadius.value_or(0)),
-                          ColorToFColor(constants::kFocusOutlineColor), 1.0f);
+                          ColorToFColor(outline), 1.0f);
 }
 
 // Buduje m_focusTexture (sam obrys, lokalne współrzędne) albo ją czyści.
@@ -674,13 +729,25 @@ void GUIElement::renderToCache() {
             }
 
             SDL_SetRenderTarget(renderer, tex.get());
+            // Child opacity relative to this parent (not the full effective
+            // chain): the parent's own modulation is applied again when this
+            // baked texture is blitted in render(), so using the full chain
+            // here would square the ancestors' contribution.
+            const float parentEff = getEffectiveOpacity();
             for (auto& child : m_children) {
                 if (child->isVisible() && !child->wantsDirectRender() && child->m_cachedTexture) {
                     SDL_Rect childDst = {child->m_x, child->m_y, child->m_width, child->m_height};
-                    RenderTexture(renderer, child->m_cachedTexture.get(), childDst);
+                    const float relEff =
+                        (parentEff > 0.0f) ? child->getEffectiveOpacity() / parentEff : 0.0f;
+                    const Uint8 childAlpha = opacityToAlpha(relEff);
+                    {
+                        ScopedTextureAlpha childMod(child->m_cachedTexture.get(), childAlpha);
+                        RenderTexture(renderer, child->m_cachedTexture.get(), childDst);
+                    }
                     // Fokus dziecka wpieka się razem z nim (jak jego treść) —
                     // obraca się potem sztywno z całym poddrzewem.
                     if (child->hasKeyboardFocus() && child->m_focusTexture) {
+                        ScopedTextureAlpha childFocusMod(child->m_focusTexture.get(), childAlpha);
                         RenderTexture(renderer, child->m_focusTexture.get(), childDst);
                     }
                 }
@@ -898,6 +965,84 @@ void GUIElement::setFillColor(ElementState state, SDL_Color color) {
     m_localStyles[idx]->fillColor = color;
     invalidateResolvedCache();
     markDirty();
+}
+
+void GUIElement::setOpacity(float opacity) {
+    const float clamped = std::clamp(opacity, 0.0f, 1.0f);
+    if (clamped == m_opacity) {
+        return;
+    }
+    m_opacity = clamped;
+    // Blit-time only: own cache stays valid (no markDirty — a 200 ms fade
+    // must not rebuild the texture every frame). Rotated ancestors bake this
+    // element into their own texture, so they must re-composite.
+    markBakedAncestorsDirty();
+}
+
+float GUIElement::getEffectiveOpacity() const {
+    float eff = m_opacity;
+    for (const GUIElement* p = m_parent; p != nullptr; p = p->m_parent) {
+        eff *= p->m_opacity;
+        if (eff <= 0.0f) {
+            return 0.0f;
+        }
+    }
+    return eff;
+}
+
+void GUIElement::fadeOut(uint32_t durationMs, std::function<void()> onComplete,
+                         std::function<float(float)> easing) {
+    if (!easing) {
+        easing = Easing::linear;
+    }
+    if (durationMs == 0) {
+        setOpacity(0.0f);
+        if (onComplete) {
+            onComplete();
+        }
+        return;
+    }
+    // Chained single-shot ticks (not AnimationManager raw pointers, not a
+    // repeating timer): the ElementRef goes null when the element is deleted
+    // mid-fade and the chain simply stops — no dangling writes, no cancel.
+    ElementRef<GUIElement> ref = m_manager.makeRef(this);
+    const Uint64 startTime = SDL_GetTicks();
+    const float startOpacity = m_opacity;
+    auto tick = std::make_shared<std::function<void()>>();
+    constexpr uint32_t kFadeTickMs = 16;
+    *tick = [ref, startTime, startOpacity, durationMs, onComplete, easing, tick]() {
+        GUIElement* self = ref.get();
+        if (!self) {
+            return; // Deleted mid-fade: stop chaining.
+        }
+        const Uint64 now = SDL_GetTicks();
+        const float t = static_cast<float>(now - startTime) / static_cast<float>(durationMs);
+        if (t >= 1.0f) {
+            self->setOpacity(0.0f);
+            if (onComplete) {
+                // Runs on the update() thread. markForDeletion() here is safe:
+                // it only flags; cleanup() erases after the frame.
+                onComplete();
+            }
+            return;
+        }
+        self->setOpacity(startOpacity * (1.0f - easing(t)));
+        self->getManager().after(kFadeTickMs, *tick);
+    };
+    m_manager.after(kFadeTickMs, *tick);
+}
+
+void GUIElement::fadeOutAndDelete(uint32_t durationMs, std::function<float(float)> easing) {
+    setEnabled(false);
+    if (hasKeyboardFocus()) {
+        m_manager.setKeyboardFocus(nullptr);
+    }
+    ElementRef<GUIElement> ref = m_manager.makeRef(this);
+    fadeOut(durationMs, [ref]() {
+        if (GUIElement* self = ref.get()) {
+            self->markForDeletion();
+        }
+    }, std::move(easing));
 }
 
 void drawBevelFrame(SDL_Renderer* renderer, SDL_Rect rect, int thickness, SDL_Color topLeftColor, SDL_Color bottomRightColor) {

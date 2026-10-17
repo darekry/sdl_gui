@@ -25,11 +25,17 @@
 #include "shader_panel.hpp"
 #include "widget_factory.hpp"
 #include "layout.hpp"
+#include "composite/modal_dialog.hpp"
+#include "composite/dialog_box.hpp"
+#include "composite/file_dialog.hpp"
+#include "composite/color_dialog.hpp"
+#include "composite/message_box.hpp"
 
 #include "sdl_gui.h"
 
 #include <cassert>
 #include <cstring>
+#include <memory>
 
 /* ═══════════════════════════════════════════════════════════
    Internal context
@@ -1604,6 +1610,482 @@ sdlgui_element_t sdlgui_create_widget(sdlgui_t gui, sdlgui_element_t parent,
         return nullptr;
     }
     return add_element(ctx, parent, std::move(widget));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Dialogs: DialogBox / FileDialog / ColorDialog / MessageBox
+   ═══════════════════════════════════════════════════════════════════ */
+
+void sdlgui_dialog_close(sdlgui_element_t e) {
+    GUIElement* base = unwrap_elem(e);
+    if (!base) {
+        set_c_error("sdlgui_dialog_close: null element handle");
+        return;
+    }
+    auto* dlg = dynamic_cast<ModalDialog*>(base);
+    if (!dlg) {
+        set_c_error(std::string("sdlgui_dialog_close: type mismatch (handle is ") +
+                    std::string(componentTypeToString(base->getComponentTypeId())) + ")");
+        return;
+    }
+    g_lastError.clear();
+    dlg->close();
+}
+
+int sdlgui_dialog_is_open(sdlgui_element_t e) {
+    GUIElement* base = unwrap_elem(e);
+    if (!base) {
+        set_c_error("sdlgui_dialog_is_open: null element handle");
+        return 0;
+    }
+    auto* dlg = dynamic_cast<ModalDialog*>(base);
+    if (!dlg) {
+        set_c_error(std::string("sdlgui_dialog_is_open: type mismatch (handle is ") +
+                    std::string(componentTypeToString(base->getComponentTypeId())) + ")");
+        return 0;
+    }
+    g_lastError.clear();
+    return dlg->isOpen() ? 1 : 0;
+}
+
+void sdlgui_dialog_center(sdlgui_element_t e) {
+    GUIElement* base = unwrap_elem(e);
+    if (!base) {
+        set_c_error("sdlgui_dialog_center: null element handle");
+        return;
+    }
+    auto* dlg = dynamic_cast<ModalDialog*>(base);
+    if (!dlg) {
+        set_c_error(std::string("sdlgui_dialog_center: type mismatch (handle is ") +
+                    std::string(componentTypeToString(base->getComponentTypeId())) + ")");
+        return;
+    }
+    g_lastError.clear();
+    dlg->centerInViewport();
+}
+
+/* ── DialogBox ── */
+
+sdlgui_element_t sdlgui_dialog_box_create_confirm(sdlgui_t gui, const char* message,
+                                                  const char* yes_label, const char* no_label,
+                                                  sdlgui_dialog_confirm_callback_t cb, void* userdata,
+                                                  int width, int height) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_dialog_box_create_confirm: null context");
+        return nullptr;
+    }
+    if (width <= 0) width = 400;
+    if (height <= 0) height = 150;
+    // Slot trick: the factory callback needs the dialog handle, which only
+    // exists after the factory returns. The shared slot outlives this call
+    // via the lambda's copy (freed with the dialog) — no per-dialog leak.
+    auto slot = std::make_shared<DialogBox*>(nullptr);
+    auto dlg = DialogBox::createConfirm(
+        ctx->getGUIManager(),
+        message ? message : "",
+        yes_label ? yes_label : "Tak",
+        no_label ? no_label : "Nie",
+        [cb, userdata, slot](bool confirmed) {
+            DialogBox* d = slot ? *slot : nullptr;
+            if (cb) cb(wrap_elem(d), confirmed ? 1 : 0, userdata);
+        },
+        width, height);
+    if (!dlg) {
+        set_c_error("sdlgui_dialog_box_create_confirm: factory failed");
+        return nullptr;
+    }
+    *slot = dlg.get();
+    g_lastError.clear();
+    return add_element(ctx, nullptr, std::move(dlg));
+}
+
+sdlgui_element_t sdlgui_dialog_box_create_alert(sdlgui_t gui, const char* message,
+                                                const char* ok_label,
+                                                sdlgui_dialog_button_callback_t cb, void* userdata,
+                                                int width, int height) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_dialog_box_create_alert: null context");
+        return nullptr;
+    }
+    if (width <= 0) width = 350;
+    if (height <= 0) height = 120;
+    auto slot = std::make_shared<DialogBox*>(nullptr);
+    auto dlg = DialogBox::createAlert(
+        ctx->getGUIManager(),
+        message ? message : "",
+        ok_label ? ok_label : "OK",
+        [cb, userdata, slot](int index) {
+            DialogBox* d = slot ? *slot : nullptr;
+            if (cb) cb(wrap_elem(d), index, userdata);
+        },
+        width, height);
+    if (!dlg) {
+        set_c_error("sdlgui_dialog_box_create_alert: factory failed");
+        return nullptr;
+    }
+    *slot = dlg.get();
+    g_lastError.clear();
+    return add_element(ctx, nullptr, std::move(dlg));
+}
+
+namespace {
+// Shared helper: converts a C label array to std::vector<std::string>.
+// Returns false + error on empty input (caller returns nullptr).
+bool copy_c_labels(const char** labels, size_t count, const char* fn,
+                   std::vector<std::string>& out) {
+    if (count == 0 || !labels) {
+        set_c_error(std::string(fn) + ": no button labels");
+        return false;
+    }
+    out.clear();
+    out.reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+        out.emplace_back(labels[i] ? labels[i] : "");
+    }
+    return true;
+}
+}  // namespace
+
+sdlgui_element_t sdlgui_dialog_box_create_custom(sdlgui_t gui, const char* message,
+                                                 const char** button_labels, size_t button_count,
+                                                 sdlgui_dialog_button_callback_t cb, void* userdata,
+                                                 int width, int height) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_dialog_box_create_custom: null context");
+        return nullptr;
+    }
+    std::vector<std::string> labels;
+    if (!copy_c_labels(button_labels, button_count,
+                       "sdlgui_dialog_box_create_custom", labels)) {
+        return nullptr;
+    }
+    if (width <= 0) width = 400;
+    if (height <= 0) height = 150;
+    auto slot = std::make_shared<DialogBox*>(nullptr);
+    auto dlg = DialogBox::createCustom(
+        ctx->getGUIManager(),
+        message ? message : "",
+        labels,
+        [cb, userdata, slot](int index) {
+            DialogBox* d = slot ? *slot : nullptr;
+            if (cb) cb(wrap_elem(d), index, userdata);
+        },
+        width, height);
+    if (!dlg) {
+        set_c_error("sdlgui_dialog_box_create_custom: factory failed");
+        return nullptr;
+    }
+    *slot = dlg.get();
+    g_lastError.clear();
+    return add_element(ctx, nullptr, std::move(dlg));
+}
+
+sdlgui_element_t sdlgui_dialog_box_create_with_title(sdlgui_t gui, const char* title,
+                                                     const char* message,
+                                                     const char** button_labels, size_t button_count,
+                                                     sdlgui_dialog_button_callback_t cb, void* userdata,
+                                                     int width, int height) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_dialog_box_create_with_title: null context");
+        return nullptr;
+    }
+    std::vector<std::string> labels;
+    if (!copy_c_labels(button_labels, button_count,
+                       "sdlgui_dialog_box_create_with_title", labels)) {
+        return nullptr;
+    }
+    if (width <= 0) width = 400;
+    if (height <= 0) height = 180;
+    auto slot = std::make_shared<DialogBox*>(nullptr);
+    auto dlg = DialogBox::createWithTitle(
+        ctx->getGUIManager(),
+        title ? title : "",
+        message ? message : "",
+        labels,
+        [cb, userdata, slot](int index) {
+            DialogBox* d = slot ? *slot : nullptr;
+            if (cb) cb(wrap_elem(d), index, userdata);
+        },
+        width, height);
+    if (!dlg) {
+        set_c_error("sdlgui_dialog_box_create_with_title: factory failed");
+        return nullptr;
+    }
+    *slot = dlg.get();
+    g_lastError.clear();
+    return add_element(ctx, nullptr, std::move(dlg));
+}
+
+void sdlgui_dialog_box_set_message(sdlgui_element_t e, const char* message) {
+    auto* dlg = checked_elem<DialogBox>(e, ComponentType::DialogBox, __func__);
+    if (!dlg) return;
+    dlg->setMessage(message ? message : "");
+}
+
+void sdlgui_dialog_box_set_title(sdlgui_element_t e, const char* title) {
+    auto* dlg = checked_elem<DialogBox>(e, ComponentType::DialogBox, __func__);
+    if (!dlg) return;
+    dlg->setTitle(title ? title : "");
+}
+
+int sdlgui_dialog_box_get_last_clicked(sdlgui_element_t e) {
+    auto* dlg = checked_elem<DialogBox>(e, ComponentType::DialogBox, __func__);
+    return dlg ? dlg->getLastClickedButton() : -1;
+}
+
+int sdlgui_dialog_box_get_type(sdlgui_element_t e) {
+    auto* dlg = checked_elem<DialogBox>(e, ComponentType::DialogBox, __func__);
+    if (!dlg) return -1;
+    switch (dlg->getDialogType()) {
+        case DialogBox::DialogType::Confirm: return SDLGUI_DIALOG_TYPE_CONFIRM;
+        case DialogBox::DialogType::Alert:   return SDLGUI_DIALOG_TYPE_ALERT;
+        case DialogBox::DialogType::Custom:  return SDLGUI_DIALOG_TYPE_CUSTOM;
+    }
+    return SDLGUI_DIALOG_TYPE_CUSTOM;
+}
+
+/* ── FileDialog ── */
+
+sdlgui_element_t sdlgui_file_dialog_create_open(sdlgui_t gui, const char* title,
+                                                const char* start_path, const char* filter,
+                                                sdlgui_file_dialog_callback_t cb, void* userdata) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_file_dialog_create_open: null context");
+        return nullptr;
+    }
+    auto slot = std::make_shared<FileDialog*>(nullptr);
+    FileDialog* raw = FileDialog::createOpen(
+        ctx->getGUIManager(),
+        title ? title : "",
+        [cb, userdata, slot](const std::string& path) {
+            FileDialog* d = slot ? *slot : nullptr;
+            if (cb) cb(wrap_elem(d), path.c_str(), userdata);
+        },
+        start_path ? start_path : "",
+        filter ? filter : "*.*");
+    if (!raw) {
+        set_c_error("sdlgui_file_dialog_create_open: factory failed");
+        return nullptr;
+    }
+    *slot = raw;
+    g_lastError.clear();
+    return wrap_elem(raw);
+}
+
+sdlgui_element_t sdlgui_file_dialog_create_save(sdlgui_t gui, const char* title,
+                                                const char* start_path, const char* filter,
+                                                sdlgui_file_dialog_callback_t cb, void* userdata) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_file_dialog_create_save: null context");
+        return nullptr;
+    }
+    auto slot = std::make_shared<FileDialog*>(nullptr);
+    FileDialog* raw = FileDialog::createSave(
+        ctx->getGUIManager(),
+        title ? title : "",
+        [cb, userdata, slot](const std::string& path) {
+            FileDialog* d = slot ? *slot : nullptr;
+            if (cb) cb(wrap_elem(d), path.c_str(), userdata);
+        },
+        start_path ? start_path : "",
+        filter ? filter : "*.*");
+    if (!raw) {
+        set_c_error("sdlgui_file_dialog_create_save: factory failed");
+        return nullptr;
+    }
+    *slot = raw;
+    g_lastError.clear();
+    return wrap_elem(raw);
+}
+
+void sdlgui_file_dialog_set_current_path(sdlgui_element_t e, const char* path) {
+    auto* dlg = checked_elem<FileDialog>(e, ComponentType::FileDialog, __func__);
+    if (!dlg) return;
+    dlg->setCurrentPath(path ? path : "");
+}
+
+const char* sdlgui_file_dialog_get_current_path(sdlgui_element_t e) {
+    // Legacy: pointer to internal storage, stable until the next
+    // setCurrentPath(). Prefer the _buf variant.
+    auto* dlg = checked_elem<FileDialog>(e, ComponentType::FileDialog, __func__);
+    if (!dlg) return "";
+    return dlg->getCurrentPath().c_str();
+}
+
+size_t sdlgui_file_dialog_get_current_path_buf(sdlgui_element_t e, char* buf, size_t buf_len) {
+    auto* dlg = checked_elem<FileDialog>(e, ComponentType::FileDialog, __func__);
+    if (!dlg) {
+        if (buf && buf_len > 0) buf[0] = '\0';
+        return 0;
+    }
+    return copy_c_string(dlg->getCurrentPath(), buf, buf_len);
+}
+
+const char* sdlgui_file_dialog_get_selected_file(sdlgui_element_t e) {
+    // Legacy: pointer to internal storage. Prefer the _buf variant.
+    auto* dlg = checked_elem<FileDialog>(e, ComponentType::FileDialog, __func__);
+    if (!dlg) return "";
+    return dlg->getSelectedFile().c_str();
+}
+
+size_t sdlgui_file_dialog_get_selected_file_buf(sdlgui_element_t e, char* buf, size_t buf_len) {
+    auto* dlg = checked_elem<FileDialog>(e, ComponentType::FileDialog, __func__);
+    if (!dlg) {
+        if (buf && buf_len > 0) buf[0] = '\0';
+        return 0;
+    }
+    return copy_c_string(dlg->getSelectedFile(), buf, buf_len);
+}
+
+/* ── ColorDialog ── */
+
+sdlgui_element_t sdlgui_color_dialog_create(sdlgui_t gui, const char* title,
+                                            SDL_Color initial,
+                                            sdlgui_color_dialog_callback_t cb, void* userdata) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_color_dialog_create: null context");
+        return nullptr;
+    }
+    auto slot = std::make_shared<ColorDialog*>(nullptr);
+    ColorDialog* raw = ColorDialog::create(
+        ctx->getGUIManager(),
+        title ? title : "",
+        initial,
+        [cb, userdata, slot](SDL_Color color) {
+            ColorDialog* d = slot ? *slot : nullptr;
+            if (cb) cb(wrap_elem(d), color, userdata);
+        });
+    if (!raw) {
+        set_c_error("sdlgui_color_dialog_create: factory failed");
+        return nullptr;
+    }
+    *slot = raw;
+    g_lastError.clear();
+    return wrap_elem(raw);
+}
+
+void sdlgui_color_dialog_set_color(sdlgui_element_t e, SDL_Color color) {
+    auto* dlg = checked_elem<ColorDialog>(e, ComponentType::ColorDialog, __func__);
+    if (!dlg) return;
+    dlg->setColor(color);
+}
+
+SDL_Color sdlgui_color_dialog_get_color(sdlgui_element_t e) {
+    auto* dlg = checked_elem<ColorDialog>(e, ComponentType::ColorDialog, __func__);
+    if (!dlg) return SDL_Color{0, 0, 0, 255};
+    return dlg->getColor();
+}
+
+SDL_Color sdlgui_color_dialog_get_initial(sdlgui_element_t e) {
+    auto* dlg = checked_elem<ColorDialog>(e, ComponentType::ColorDialog, __func__);
+    if (!dlg) return SDL_Color{0, 0, 0, 255};
+    return dlg->getInitial();
+}
+
+/* ── MessageBox ── */
+
+sdlgui_element_t sdlgui_message_box_show_info(sdlgui_t gui, const char* message,
+                                              sdlgui_simple_callback_t cb, void* userdata) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_message_box_show_info: null context");
+        return nullptr;
+    }
+    GUIElement* raw = MessageBox::showInfo(
+        ctx->getGUIManager(), message ? message : "",
+        cb ? [cb, userdata]() { cb(userdata); } : std::function<void()>(nullptr));
+    if (!raw) {
+        set_c_error("sdlgui_message_box_show_info: factory failed");
+        return nullptr;
+    }
+    g_lastError.clear();
+    return wrap_elem(raw);
+}
+
+sdlgui_element_t sdlgui_message_box_show_error(sdlgui_t gui, const char* message,
+                                               sdlgui_simple_callback_t cb, void* userdata) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_message_box_show_error: null context");
+        return nullptr;
+    }
+    GUIElement* raw = MessageBox::showError(
+        ctx->getGUIManager(), message ? message : "",
+        cb ? [cb, userdata]() { cb(userdata); } : std::function<void()>(nullptr));
+    if (!raw) {
+        set_c_error("sdlgui_message_box_show_error: factory failed");
+        return nullptr;
+    }
+    g_lastError.clear();
+    return wrap_elem(raw);
+}
+
+sdlgui_element_t sdlgui_message_box_show_warning(sdlgui_t gui, const char* message,
+                                                 sdlgui_simple_callback_t cb, void* userdata) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_message_box_show_warning: null context");
+        return nullptr;
+    }
+    GUIElement* raw = MessageBox::showWarning(
+        ctx->getGUIManager(), message ? message : "",
+        cb ? [cb, userdata]() { cb(userdata); } : std::function<void()>(nullptr));
+    if (!raw) {
+        set_c_error("sdlgui_message_box_show_warning: factory failed");
+        return nullptr;
+    }
+    g_lastError.clear();
+    return wrap_elem(raw);
+}
+
+sdlgui_element_t sdlgui_message_box_show_question(sdlgui_t gui, const char* message,
+                                                  sdlgui_simple_callback_t on_yes, void* yes_userdata,
+                                                  sdlgui_simple_callback_t on_no, void* no_userdata) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_message_box_show_question: null context");
+        return nullptr;
+    }
+    GUIElement* raw = MessageBox::showQuestion(
+        ctx->getGUIManager(), message ? message : "",
+        on_yes ? [on_yes, yes_userdata]() { on_yes(yes_userdata); } : std::function<void()>(nullptr),
+        on_no ? [on_no, no_userdata]() { on_no(no_userdata); } : std::function<void()>(nullptr));
+    if (!raw) {
+        set_c_error("sdlgui_message_box_show_question: factory failed");
+        return nullptr;
+    }
+    g_lastError.clear();
+    return wrap_elem(raw);
+}
+
+sdlgui_element_t sdlgui_message_box_show_custom(sdlgui_t gui, const char* title,
+                                                const char* message, const char* button_text,
+                                                sdlgui_simple_callback_t cb, void* userdata) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_message_box_show_custom: null context");
+        return nullptr;
+    }
+    GUIElement* raw = MessageBox::showCustom(
+        ctx->getGUIManager(),
+        title ? title : "",
+        message ? message : "",
+        button_text ? button_text : "OK",
+        MessageBox::IconType::None,
+        cb ? [cb, userdata]() { cb(userdata); } : std::function<void()>(nullptr));
+    if (!raw) {
+        set_c_error("sdlgui_message_box_show_custom: factory failed");
+        return nullptr;
+    }
+    g_lastError.clear();
+    return wrap_elem(raw);
 }
 
 } // extern "C"

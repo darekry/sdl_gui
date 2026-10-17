@@ -440,6 +440,88 @@ na kontekście CPU renderuje się jak zwykły panel, a shadery są ignorowane.
 | `void sdlgui_shader_panel_set_uniform_time(sdlgui_element_t e, float time)` | Uniform czasu (kanał x koloru wierzchołków) |
 | `void sdlgui_shader_panel_set_uniform_mouse(sdlgui_element_t e, float x, float y)` | Uniform pozycji myszy (kanały y/z) |
 
+### DialogBox
+
+Modalny dialog (Panel + Label z komunikatem + przyciski). Wszystkie cztery
+fabryki centrują dialog w viewporcie i dodają go do managera jako top-level
+overlay (brak parametru `parent` — dialogi zawsze są top-level).
+`width/height <= 0` wybiera domyślny rozmiar C++ (confirm/custom 400x150,
+alert 350x120, with_title 400x180). `NULL` jako message/title/labelki daje
+`""` (labele confirmu defaultują do `"Tak"`/`"Nie"`, alerta do `"OK"`).
+`custom`/`with_title` z `button_count == 0` zwraca `NULL` + błąd.
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_element_t sdlgui_dialog_box_create_confirm(sdlgui_t gui, const char* message, const char* yes_label, const char* no_label, sdlgui_dialog_confirm_callback_t cb, void* userdata, int width, int height)` | Dialog Tak/Nie; callback dostaje `confirmed = 1` dla przycisku 0, `0` wpp. (też przy Esc) |
+| `sdlgui_element_t sdlgui_dialog_box_create_alert(sdlgui_t gui, const char* message, const char* ok_label, sdlgui_dialog_button_callback_t cb, void* userdata, int width, int height)` | Dialog z jednym przyciskiem; callback dostaje indeks (`-1` przy Esc) |
+| `sdlgui_element_t sdlgui_dialog_box_create_custom(sdlgui_t gui, const char* message, const char** button_labels, size_t button_count, sdlgui_dialog_button_callback_t cb, void* userdata, int width, int height)` | Dialog z własnymi przyciskami |
+| `sdlgui_element_t sdlgui_dialog_box_create_with_title(sdlgui_t gui, const char* title, const char* message, const char** button_labels, size_t button_count, sdlgui_dialog_button_callback_t cb, void* userdata, int width, int height)` | Jak custom + pasek tytułu |
+| `void sdlgui_dialog_box_set_message(sdlgui_element_t e, const char* message)` | Zmiana komunikatu |
+| `void sdlgui_dialog_box_set_title(sdlgui_element_t e, const char* title)` | Zmiana/utworzenie tytułu |
+| `int sdlgui_dialog_box_get_last_clicked(sdlgui_element_t e)` | Indeks klikniętego przycisku (`-1` = brak / Esc) |
+| `int sdlgui_dialog_box_get_type(sdlgui_element_t e)` | `0` = Confirm, `1` = Alert, `2` = Custom, `-1` przy błędzie |
+
+### Modal base (wspólne dla dialogów)
+
+Działa na każdym uchwycie dialogu (DialogBox, FileDialog, ColorDialog,
+wynik MessageBox). Zły typ to no-op / bezpieczny default + komunikat w
+`sdlgui_last_error()`.
+
+| Funkcja | Opis |
+|---------|------|
+| `void sdlgui_dialog_close(sdlgui_element_t e)` | Zamyka dialog (usunięcie przy następnym `sdlgui_cleanup()`) |
+| `int sdlgui_dialog_is_open(sdlgui_element_t e)` | Czy dialog jest otwarty |
+| `void sdlgui_dialog_center(sdlgui_element_t e)` | Centruje dialog w viewporcie |
+
+### FileDialog
+
+Modalny picker plików (pasek tytułu + siatki katalogów/plików + pole nazwy
++ Open/Cancel). Wycentrowany, top-level, dodany do managera już przy
+zwrocie. `NULL` jako title/start_path/filter daje `""` (pusty start path =
+bieżący katalog roboczy, `"*"` / `"*.*"` = wszystkie pliki). Callback
+odpala tylko przy potwierdzeniu z istniejącym plikiem (Open) lub niepustą
+nazwą (Save); Esc/Cancel zamyka bez callbacka. `path` ważny tylko w trakcie
+callbacka.
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_element_t sdlgui_file_dialog_create_open(sdlgui_t gui, const char* title, const char* start_path, const char* filter, sdlgui_file_dialog_callback_t cb, void* userdata)` | Dialog otwierania |
+| `sdlgui_element_t sdlgui_file_dialog_create_save(sdlgui_t gui, const char* title, const char* start_path, const char* filter, sdlgui_file_dialog_callback_t cb, void* userdata)` | Dialog zapisywania |
+| `void sdlgui_file_dialog_set_current_path(sdlgui_element_t e, const char* path)` | Zmiana katalogu |
+| `const char* sdlgui_file_dialog_get_current_path(sdlgui_element_t e)` | Bieżący katalog (ważny do następnego `set_current_path`) |
+| `size_t sdlgui_file_dialog_get_current_path_buf(sdlgui_element_t e, char* buf, size_t buf_len)` | Jw. do bufora wywołującego |
+| `const char* sdlgui_file_dialog_get_selected_file(sdlgui_element_t e)` | Wybrany plik |
+| `size_t sdlgui_file_dialog_get_selected_file_buf(sdlgui_element_t e, char* buf, size_t buf_len)` | Jw. do bufora wywołującego |
+
+### ColorDialog
+
+Modalny picker koloru (6 suwaków RGB/HSV + HEX + podgląd old/new + 12
+presetów + OK/Cancel). Rozmiar 460x560, wycentrowany, top-level.
+`NULL` jako title daje `""`. Callback odpala tylko przy OK (przycisk lub
+Enter); Cancel/Esc zamyka bez callbacka.
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_element_t sdlgui_color_dialog_create(sdlgui_t gui, const char* title, SDL_Color initial, sdlgui_color_dialog_callback_t cb, void* userdata)` | Tworzy picker z kolorem początkowym |
+| `void sdlgui_color_dialog_set_color(sdlgui_element_t e, SDL_Color color)` | Programowa zmiana koloru (odświeża suwaki/HEX/podgląd) |
+| `SDL_Color sdlgui_color_dialog_get_color(sdlgui_element_t e)` | Bieżący kolor |
+| `SDL_Color sdlgui_color_dialog_get_initial(sdlgui_element_t e)` | Kolor początkowy (podgląd "old") |
+
+### MessageBox
+
+Jednorazowe helpery (tworzą, centrują i pokazują nowy top-level dialog,
+typ `"DialogBox"`). Callbacki opcjonalne (mogą być `NULL`). `show_question`
+odpala `on_yes` przy "Tak" i `on_no` przy "Nie"/Esc; reszta odpala raz przy
+kliknięciu lub Esc (traktowany jako dismissal).
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_element_t sdlgui_message_box_show_info(sdlgui_t gui, const char* message, sdlgui_simple_callback_t cb, void* userdata)` | Informacja |
+| `sdlgui_element_t sdlgui_message_box_show_error(sdlgui_t gui, const char* message, sdlgui_simple_callback_t cb, void* userdata)` | Błąd |
+| `sdlgui_element_t sdlgui_message_box_show_warning(sdlgui_t gui, const char* message, sdlgui_simple_callback_t cb, void* userdata)` | Ostrzeżenie |
+| `sdlgui_element_t sdlgui_message_box_show_question(sdlgui_t gui, const char* message, sdlgui_simple_callback_t on_yes, void* yes_userdata, sdlgui_simple_callback_t on_no, void* no_userdata)` | Pytanie Tak/Nie |
+| `sdlgui_element_t sdlgui_message_box_show_custom(sdlgui_t gui, const char* title, const char* message, const char* button_text, sdlgui_simple_callback_t cb, void* userdata)` | Własny tytuł/przycisk |
+
 ## Callbacki
 
 | Typ | Sygnatura | Używany przez |
@@ -453,6 +535,11 @@ na kontekście CPU renderuje się jak zwykły panel, a shadery są ignorowane.
 | `sdlgui_anim_callback_t` | `void (*)(void* userdata)` | Pętle i zakończenia animacji |
 | `sdlgui_context_menu_callback_t` | `void (*)(void* userdata)` | Pozycje ContextMenu (bez elementu i indeksu) |
 | `sdlgui_cursor_state_callback_t` | `void (*)(sdlgui_element_t element, sdlgui_cursor_state_t state, void* userdata)` | Cursor — zmiana stanu |
+| `sdlgui_dialog_button_callback_t` | `void (*)(sdlgui_element_t element, int button_index, void* userdata)` | DialogBox alert/custom/with_title (`-1` = Esc) |
+| `sdlgui_dialog_confirm_callback_t` | `void (*)(sdlgui_element_t element, int confirmed, void* userdata)` | DialogBox confirm (`1` = Tak, `0` = Nie/Esc) |
+| `sdlgui_file_dialog_callback_t` | `void (*)(sdlgui_element_t element, const char* path, void* userdata)` | FileDialog — **path ważny tylko w trakcie callbacka** |
+| `sdlgui_color_dialog_callback_t` | `void (*)(sdlgui_element_t element, SDL_Color color, void* userdata)` | ColorDialog (tylko OK) |
+| `sdlgui_simple_callback_t` | `void (*)(void* userdata)` | MessageBox info/error/warning/custom/question |
 
 Wzorzec ustawiania: `sdlgui_<widget>_set_on_<event>(element, cb, userdata)` —
 `userdata` jest dowolnym wskaźnikiem przekazywanym z powrotem do callbacka
@@ -469,6 +556,11 @@ Wzorzec ustawiania: `sdlgui_<widget>_set_on_<event>(element, cb, userdata)` —
 - **Cursor**: `sdlgui_cursor_create` instaluje kursor w GUI (własność
   GUIManagera, nie jest top-level w `m_elements`). Kolejne
   `sdlgui_cursor_create` zastępuje i niszczy poprzedni.
+- **Dialogi**: fabryki `sdlgui_dialog_box_*`, `sdlgui_file_dialog_*`,
+  `sdlgui_color_dialog_*` i `sdlgui_message_box_*` tworzą top-level overlay
+  (własność GUIManagera, brak parametru `parent`). `sdlgui_dialog_close()`
+  oznacza do usunięcia (wykonane przez `sdlgui_cleanup()`); po zamknięciu +
+  cleanup uchwyt staje się dangling jak każdy inny.
 - Uchwyt elementu jest surowym wskaźnikiem. Staje się **dangling** po:
   `sdlgui_element_mark_for_deletion()` + `sdlgui_cleanup()`, po
   `sdlgui_destroy()` oraz po zniszczeniu rodzica.
@@ -497,6 +589,8 @@ Funkcje zwracające `const char*` dają wskaźnik do wewnętrznego `std::string`
 | `sdlgui_text_input_get_text` | do następnego `sdlgui_text_input_set_text` |
 | `sdlgui_text_area_get_text` | do następnego `sdlgui_text_area_set_text` |
 | `sdlgui_list_view_get_item_text` | do modyfikacji/usunięcia pozycji |
+| `sdlgui_file_dialog_get_current_path` | do następnego `set_current_path` |
+| `sdlgui_file_dialog_get_selected_file` | do następnej zmiany selekcji |
 | `sdlgui_string_grid_get_cell` | do modyfikacji/wyczyszczenia komórki |
 | `sdlgui_element_get_id` | do następnej modyfikacji ID |
 | `sdlgui_element_get_type` | stały (nazwa typu) |
@@ -511,6 +605,8 @@ zwracają liczbę bajtów bez NUL-a):
   `sdlgui_text_area_get_text_buf`
 - `sdlgui_list_view_get_item_text_buf`,
   `sdlgui_combo_box_get_item_text_buf`
+- `sdlgui_file_dialog_get_current_path_buf`,
+  `sdlgui_file_dialog_get_selected_file_buf`
 
 ## Kompilacja i linkowanie
 

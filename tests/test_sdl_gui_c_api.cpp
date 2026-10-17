@@ -2,6 +2,7 @@
 
 #include "test_helper.hpp"
 #include "../src/gui_manager.hpp"
+#include "../src/gui_context.hpp"
 #include "../src/sdl_app.hpp"
 #include "../src/theme_presets.hpp"
 #include "../src/button.hpp"
@@ -11,6 +12,9 @@
 #include "../src/checkbox.hpp"
 #include "../src/text_input.hpp"
 #include "../src/list_view.hpp"
+#include "../src/composite/dialog_box.hpp"
+#include "../src/composite/file_dialog.hpp"
+#include "../src/composite/color_dialog.hpp"
 
 extern "C" {
 #include "../src/sdl_gui.h"
@@ -1778,6 +1782,406 @@ TEST_CASE("C API - ShaderPanel", "[c_api][shader_panel]") {
 
     SECTION("render on CPU context") {
         sdlgui_render(gui);
+    }
+
+    sdlgui_destroy(gui);
+}
+
+/* ════════════════════════════════════════════════════
+   Dialogs: DialogBox / FileDialog / ColorDialog / MessageBox
+   ════════════════════════════════════════════════════════════ */
+
+namespace {
+
+/* Clicks the center of a top-level dialog's n-th Button child via C events. */
+void click_dialog_button(sdlgui_t gui, sdlgui_element_t dlg, int button_index) {
+    auto* raw = (GUIElement*)dlg;
+    int seen = -1;
+    for (auto& child : raw->getChildren()) {
+        auto* btn = dynamic_cast<Button*>(child.get());
+        if (!btn) continue;
+        if (++seen != button_index) continue;
+        int cx = raw->getX() + btn->getX() + btn->getWidth() / 2;
+        int cy = raw->getY() + btn->getY() + btn->getHeight() / 2;
+        SDL_Event down = {};
+        down.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+        down.button.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+        down.button.button = SDL_BUTTON_LEFT;
+        down.button.clicks = 1;
+        down.button.x = (float)cx;
+        down.button.y = (float)cy;
+        sdlgui_process_event(gui, &down);
+        SDL_Event up = {};
+        up.type = SDL_EVENT_MOUSE_BUTTON_UP;
+        up.button.type = SDL_EVENT_MOUSE_BUTTON_UP;
+        up.button.button = SDL_BUTTON_LEFT;
+        up.button.clicks = 1;
+        up.button.x = (float)cx;
+        up.button.y = (float)cy;
+        sdlgui_process_event(gui, &up);
+        return;
+    }
+    FAIL("dialog button index out of range");
+}
+
+}  // namespace
+
+TEST_CASE("C API - DialogBox confirm/alert", "[c_api][dialog]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    SECTION("create_confirm defaults") {
+        int confirmed = -1;
+        sdlgui_element_t received = nullptr;
+        struct Data { int* c; sdlgui_element_t* e; };
+        Data d = {&confirmed, &received};
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_confirm(
+            gui, "Sure?", nullptr, nullptr,
+            [](sdlgui_element_t elem, int value, void* data) {
+                auto* p = (Data*)data;
+                *p->c = value;
+                *p->e = elem;
+            },
+            &d, 0, 0);
+        REQUIRE(dlg != nullptr);
+        REQUIRE(std::strcmp(sdlgui_element_get_type(dlg), "DialogBox") == 0);
+        REQUIRE(sdlgui_dialog_box_get_type(dlg) == SDLGUI_DIALOG_TYPE_CONFIRM);
+        REQUIRE(sdlgui_dialog_box_get_last_clicked(dlg) == -1);
+        REQUIRE(sdlgui_dialog_is_open(dlg) == 1);
+        REQUIRE(sdlgui_element_is_alive(gui, dlg) == 1);
+    }
+
+    SECTION("yes button fires confirm callback with element") {
+        int confirmed = -1;
+        sdlgui_element_t received = nullptr;
+        struct Data { int* c; sdlgui_element_t* e; };
+        Data d = {&confirmed, &received};
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_confirm(
+            gui, "Sure?", "Yes", "No",
+            [](sdlgui_element_t elem, int value, void* data) {
+                auto* p = (Data*)data;
+                *p->c = value;
+                *p->e = elem;
+            },
+            &d, 0, 0);
+        REQUIRE(dlg != nullptr);
+
+        click_dialog_button(gui, dlg, 0); /* "Yes" */
+        REQUIRE(confirmed == 1);
+        REQUIRE(received == dlg);
+        REQUIRE(sdlgui_dialog_box_get_last_clicked(dlg) == 0);
+        REQUIRE(sdlgui_dialog_is_open(dlg) == 0);
+    }
+
+    SECTION("no button reports confirmed=0, index=1") {
+        int confirmed = -1;
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_confirm(
+            gui, "Sure?", "Yes", "No",
+            [](sdlgui_element_t /*elem*/, int value, void* data) {
+                *(int*)data = value;
+            },
+            &confirmed, 0, 0);
+        click_dialog_button(gui, dlg, 1); /* "No" */
+        REQUIRE(confirmed == 0);
+        REQUIRE(sdlgui_dialog_box_get_last_clicked(dlg) == 1);
+    }
+
+    SECTION("Esc cancels with confirmed=0 and index -1") {
+        TestHelper helper;
+        int confirmed = -1;
+        int lastClicked = 42;
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_confirm(
+            gui, "Sure?", "Yes", "No",
+            [](sdlgui_element_t /*elem*/, int value, void* data) {
+                *(int*)data = value;
+            },
+            &confirmed, 0, 0);
+        REQUIRE(dlg != nullptr);
+        /* Esc needs keyboard focus on the dialog (same as C++ tests). */
+        ((GUIContext*)gui)->getGUIManager().setKeyboardFocus((GUIElement*)dlg);
+        SDL_Event esc = helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_ESCAPE);
+        sdlgui_process_event(gui, &esc);
+        REQUIRE(confirmed == 0);
+        REQUIRE(sdlgui_dialog_box_get_last_clicked(dlg) == -1);
+        REQUIRE(sdlgui_dialog_is_open(dlg) == 0);
+        (void)lastClicked;
+    }
+
+    SECTION("create_alert with custom size") {
+        int clicked = 42;
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_alert(
+            gui, "Boom", "OK",
+            [](sdlgui_element_t elem, int index, void* data) {
+                (void)elem;
+                *(int*)data = index;
+            },
+            &clicked, 350, 120);
+        REQUIRE(dlg != nullptr);
+        REQUIRE(sdlgui_dialog_box_get_type(dlg) == SDLGUI_DIALOG_TYPE_ALERT);
+        click_dialog_button(gui, dlg, 0);
+        REQUIRE(clicked == 0);
+    }
+
+    SECTION("set_message and set_title") {
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_alert(
+            gui, "Old", "OK", nullptr, nullptr, 0, 0);
+        REQUIRE(dlg != nullptr);
+        sdlgui_dialog_box_set_message(dlg, "New message");
+        sdlgui_dialog_box_set_title(dlg, "New title");
+        /* Title is created lazily — find it among Label children. */
+        auto* raw = (DialogBox*)(GUIElement*)dlg;
+        bool foundTitle = false, foundMsg = false;
+        for (auto& child : raw->getChildren()) {
+            if (child->getComponentTypeId() != ComponentType::Label) continue;
+            std::string t(((Label*)child.get())->getText());
+            if (t == "New title") foundTitle = true;
+            if (t == "New message") foundMsg = true;
+        }
+        REQUIRE(foundTitle);
+        REQUIRE(foundMsg);
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - DialogBox custom/with_title", "[c_api][dialog]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    SECTION("create_custom with three buttons") {
+        const char* labels[] = {"A", "B", "C"};
+        int clicked = -99;
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_custom(
+            gui, "Pick", labels, 3,
+            [](sdlgui_element_t elem, int index, void* data) {
+                (void)elem;
+                *(int*)data = index;
+            },
+            &clicked, 0, 0);
+        REQUIRE(dlg != nullptr);
+        REQUIRE(sdlgui_dialog_box_get_type(dlg) == SDLGUI_DIALOG_TYPE_CUSTOM);
+        click_dialog_button(gui, dlg, 2);
+        REQUIRE(clicked == 2);
+        REQUIRE(sdlgui_dialog_box_get_last_clicked(dlg) == 2);
+    }
+
+    SECTION("create_custom with zero buttons fails") {
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_custom(
+            gui, "Pick", nullptr, 0, nullptr, nullptr, 0, 0);
+        REQUIRE(dlg == nullptr);
+        REQUIRE(std::strlen(sdlgui_last_error()) > 0);
+    }
+
+    SECTION("create_with_title") {
+        const char* labels[] = {"OK", "Cancel"};
+        int clicked = -99;
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_with_title(
+            gui, "Title", "Body", labels, 2,
+            [](sdlgui_element_t elem, int index, void* data) {
+                (void)elem;
+                *(int*)data = index;
+            },
+            &clicked, 0, 0);
+        REQUIRE(dlg != nullptr);
+        REQUIRE(sdlgui_dialog_box_get_type(dlg) == SDLGUI_DIALOG_TYPE_CUSTOM);
+        click_dialog_button(gui, dlg, 1);
+        REQUIRE(clicked == 1);
+    }
+
+    SECTION("close/center/is_open + wrong-type guard") {
+        sdlgui_element_t dlg = sdlgui_dialog_box_create_alert(
+            gui, "Hi", "OK", nullptr, nullptr, 0, 0);
+        REQUIRE(sdlgui_dialog_is_open(dlg) == 1);
+        sdlgui_dialog_center(dlg); /* recenters — no crash */
+        sdlgui_dialog_close(dlg);
+        REQUIRE(sdlgui_dialog_is_open(dlg) == 0);
+
+        sdlgui_element_t btn = sdlgui_button_create(gui, nullptr, 0, 0, 50, 20, "X");
+        sdlgui_dialog_close(btn); /* no-op + error, no crash */
+        REQUIRE(std::strlen(sdlgui_last_error()) > 0);
+        REQUIRE(sdlgui_dialog_is_open(btn) == 0);
+        sdlgui_dialog_box_get_type(btn); /* -1 + error */
+        REQUIRE(sdlgui_dialog_box_get_type(btn) == -1);
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - FileDialog", "[c_api][dialog]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    SECTION("create_open in temp dir") {
+        namespace fs = std::filesystem;
+        fs::path tmp = fs::temp_directory_path() / "capi_file_dialog_test";
+        fs::create_directories(tmp);
+        sdlgui_element_t dlg = sdlgui_file_dialog_create_open(
+            gui, "Open", tmp.string().c_str(), "*.*", nullptr, nullptr);
+        REQUIRE(dlg != nullptr);
+        REQUIRE(std::strcmp(sdlgui_element_get_type(dlg), "FileDialog") == 0);
+        REQUIRE(sdlgui_dialog_is_open(dlg) == 1);
+
+        char buf[1024];
+        size_t n = sdlgui_file_dialog_get_current_path_buf(dlg, buf, sizeof buf);
+        REQUIRE(n > 0);
+        REQUIRE(std::string(buf) == tmp.string());
+        REQUIRE(std::string(sdlgui_file_dialog_get_current_path(dlg)) == tmp.string());
+
+        /* Nothing selected yet. */
+        REQUIRE(std::string(sdlgui_file_dialog_get_selected_file(dlg)) == "");
+        char sel[64];
+        REQUIRE(sdlgui_file_dialog_get_selected_file_buf(dlg, sel, sizeof sel) == 0);
+        REQUIRE(std::string(sel) == "");
+    }
+
+    SECTION("set_current_path roundtrip") {
+        namespace fs = std::filesystem;
+        fs::path tmp = fs::temp_directory_path() / "capi_file_dialog_test2";
+        fs::create_directories(tmp);
+        sdlgui_element_t dlg = sdlgui_file_dialog_create_save(
+            gui, "Save", nullptr, nullptr, nullptr, nullptr);
+        REQUIRE(dlg != nullptr);
+        sdlgui_file_dialog_set_current_path(dlg, tmp.string().c_str());
+        REQUIRE(std::string(sdlgui_file_dialog_get_current_path(dlg)) == tmp.string());
+    }
+
+    SECTION("wrong-type guard") {
+        sdlgui_element_t lbl = sdlgui_label_create(gui, nullptr, 0, 0, "X", -1);
+        sdlgui_file_dialog_set_current_path(lbl, "/tmp");
+        REQUIRE(std::strlen(sdlgui_last_error()) > 0);
+        REQUIRE(std::string(sdlgui_file_dialog_get_current_path(lbl)) == "");
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - ColorDialog", "[c_api][dialog]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    SECTION("create + get/set color") {
+        SDL_Color red{255, 0, 0, 255};
+        sdlgui_element_t dlg = sdlgui_color_dialog_create(gui, "Pick", red, nullptr, nullptr);
+        REQUIRE(dlg != nullptr);
+        REQUIRE(std::strcmp(sdlgui_element_get_type(dlg), "ColorDialog") == 0);
+        REQUIRE(sdlgui_dialog_is_open(dlg) == 1);
+
+        SDL_Color got = sdlgui_color_dialog_get_color(dlg);
+        REQUIRE(got.r == 255);
+        REQUIRE(got.g == 0);
+        REQUIRE(got.b == 0);
+
+        SDL_Color init = sdlgui_color_dialog_get_initial(dlg);
+        REQUIRE(init.r == 255);
+
+        SDL_Color green{0, 255, 0, 255};
+        sdlgui_color_dialog_set_color(dlg, green);
+        got = sdlgui_color_dialog_get_color(dlg);
+        REQUIRE(got.g == 255);
+        REQUIRE(got.r == 0);
+        /* Initial stays untouched by set_color. */
+        init = sdlgui_color_dialog_get_initial(dlg);
+        REQUIRE(init.r == 255);
+    }
+
+    SECTION("OK button fires color callback with element") {
+        SDL_Color blue{0, 0, 255, 255};
+        SDL_Color received{0, 0, 0, 255};
+        int fired = 0;
+        sdlgui_element_t gotElem = nullptr;
+        struct Data { SDL_Color* c; int* f; sdlgui_element_t* e; };
+        Data d = {&received, &fired, &gotElem};
+        sdlgui_element_t dlg = sdlgui_color_dialog_create(
+            gui, "Pick", blue,
+            [](sdlgui_element_t elem, SDL_Color color, void* data) {
+                auto* p = (Data*)data;
+                *p->c = color;
+                *p->f = 1;
+                *p->e = elem;
+            },
+            &d);
+        REQUIRE(dlg != nullptr);
+
+        /* OK is the second-to-last Button child (OK, Cancel at the end). */
+        auto* raw = (GUIElement*)dlg;
+        int btnCount = 0;
+        for (auto& child : raw->getChildren())
+            if (dynamic_cast<Button*>(child.get())) ++btnCount;
+        REQUIRE(btnCount >= 2);
+        click_dialog_button(gui, dlg, btnCount - 2); /* OK */
+        REQUIRE(fired == 1);
+        REQUIRE(gotElem == dlg);
+        REQUIRE(received.r == 0);
+        REQUIRE(received.g == 0);
+        REQUIRE(received.b == 255);
+        REQUIRE(sdlgui_dialog_is_open(dlg) == 0);
+    }
+
+    SECTION("wrong-type guard") {
+        sdlgui_element_t lbl = sdlgui_label_create(gui, nullptr, 0, 0, "X", -1);
+        sdlgui_color_dialog_set_color(lbl, SDL_Color{1, 2, 3, 255});
+        REQUIRE(std::strlen(sdlgui_last_error()) > 0);
+        SDL_Color c = sdlgui_color_dialog_get_color(lbl);
+        REQUIRE(c.r == 0);
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - MessageBox", "[c_api][dialog]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    SECTION("show_info/error/warning/custom") {
+        sdlgui_element_t info = sdlgui_message_box_show_info(gui, "Info msg", nullptr, nullptr);
+        REQUIRE(info != nullptr);
+        REQUIRE(std::strcmp(sdlgui_element_get_type(info), "DialogBox") == 0);
+        REQUIRE(sdlgui_dialog_is_open(info) == 1);
+
+        int errFired = 0;
+        sdlgui_element_t err = sdlgui_message_box_show_error(
+            gui, "Err msg",
+            [](void* data) { *(int*)data = 1; }, &errFired);
+        REQUIRE(err != nullptr);
+
+        sdlgui_element_t warn = sdlgui_message_box_show_warning(gui, "Warn msg", nullptr, nullptr);
+        REQUIRE(warn != nullptr);
+
+        sdlgui_element_t custom = sdlgui_message_box_show_custom(
+            gui, "Title", "Body", "Close", nullptr, nullptr);
+        REQUIRE(custom != nullptr);
+    }
+
+    SECTION("info callback fires on button click") {
+        int fired = 0;
+        sdlgui_element_t info = sdlgui_message_box_show_info(
+            gui, "Click OK",
+            [](void* data) { *(int*)data = 1; }, &fired);
+        REQUIRE(info != nullptr);
+        click_dialog_button(gui, info, 0);
+        REQUIRE(fired == 1);
+        REQUIRE(sdlgui_dialog_is_open(info) == 0);
+    }
+
+    SECTION("show_question yes/no paths") {
+        int yes = 0, no = 0;
+        sdlgui_element_t q1 = sdlgui_message_box_show_question(
+            gui, "Really?",
+            [](void* data) { *(int*)data = 1; }, &yes,
+            [](void* data) { *(int*)data = 1; }, &no);
+        REQUIRE(q1 != nullptr);
+        click_dialog_button(gui, q1, 0); /* "Tak" */
+        REQUIRE(yes == 1);
+        REQUIRE(no == 0);
+
+        yes = 0; no = 0;
+        sdlgui_element_t q2 = sdlgui_message_box_show_question(
+            gui, "Really?",
+            [](void* data) { *(int*)data = 1; }, &yes,
+            [](void* data) { *(int*)data = 1; }, &no);
+        click_dialog_button(gui, q2, 1); /* "Nie" */
+        REQUIRE(yes == 0);
+        REQUIRE(no == 1);
     }
 
     sdlgui_destroy(gui);
