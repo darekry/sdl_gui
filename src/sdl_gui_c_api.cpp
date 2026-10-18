@@ -165,6 +165,15 @@ sdlgui_t sdlgui_create(const char* title, int width, int height, int resizable) 
     }
 }
 
+sdlgui_t sdlgui_attach(SDL_Renderer* renderer, int width, int height) {
+    try {
+        if (!renderer || width <= 0 || height <= 0) return nullptr;
+        return new CContext(renderer, width, height);
+    } catch (...) {
+        return nullptr;
+    }
+}
+
 void sdlgui_destroy(sdlgui_t gui) {
     if (!gui) return;
     delete unwrap_ctx(gui);

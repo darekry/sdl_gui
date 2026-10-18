@@ -156,7 +156,20 @@ typedef enum {
 sdlgui_t sdlgui_create(const char* title, int width, int height, int resizable);
 
 /*
+ * Attach to an externally owned renderer (game engine's own window).
+ * Does NOT call SDL_CreateWindow/SDL_CreateRenderer/TTF_Init — the caller
+ * must have initialized SDL/TTF and created the renderer. Returns NULL on
+ * failure (null renderer or non-positive dimensions).
+ * sdlgui_destroy() on an attached context frees only the GUI, the caller's
+ * window/renderer stay alive. All other loop calls work unchanged:
+ * sdlgui_get_renderer/process_event/update/cleanup/render/handle_resize.
+ */
+sdlgui_t sdlgui_attach(SDL_Renderer* renderer, int width, int height);
+
+/*
  * Destroy the GUI context and release all SDL resources.
+ * Attached contexts (sdlgui_attach) free only the GUI — the externally
+ * owned window/renderer are left untouched.
  * All element handles become invalid.
  */
 void     sdlgui_destroy(sdlgui_t gui);
