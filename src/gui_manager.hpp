@@ -22,6 +22,7 @@ class Theme;
 class Panel;
 class Label;
 class ContextMenu;
+class MenuBar;
 struct ContextMenuItem;
 
 template<typename T>
@@ -128,6 +129,12 @@ public:
     void setTheme(Theme theme);
     Theme& getTheme();
 
+    // Global menu bar: receives Alt/F10/mnemonics/shortcuts before focused
+    // widgets (standard Win32 accelerator order). The first MenuBar added to
+    // the manager registers itself; nullptr clears (resolves dead bars).
+    void setMenuBar(MenuBar* menuBar);
+    [[nodiscard]] MenuBar* getMenuBar() const;
+
     GUIElement* findElementAt(int x, int y);
 
     void captureMouse(GUIElement* element);
@@ -154,6 +161,8 @@ public:
     // Dynamic overlay flip (StringGrid::start/stopEditing) — the element is
     // already in m_elements, only the cached overlay view needs a rebuild.
     void notifyOverlayChanged() { m_overlayStack.markDirty(); }
+    // Topmost visible overlay (dialog / editor / menu popup), or nullptr.
+    GUIElement* getActiveOverlay() const;
 
     // === Generational lifetime (point 5: SlotMap + ElementHandle) ===
     //
@@ -188,6 +197,27 @@ private:
     [[nodiscard]] GUIElement* resolveSlot(ElementHandle handle) const;
 
     std::vector<std::unique_ptr<GUIElement>> m_elements;
+    // Elements created from inside processEvent() (e.g. a MenuBar action
+    // adding a submenu creates its popup) are registered immediately but
+    // appended to m_elements only after the event-propagation loop ends.
+    // Appending during that loop would invalidate its reverse iterators.
+    int m_eventDepth = 0;
+    std::vector<std::unique_ptr<GUIElement>> m_pendingElements;
+    void drainPendingElements();
+
+    // RAII event scope: tracks nesting and drains pending elements when the
+    // outermost processEvent() returns (including early returns).
+    struct EventScope {
+        explicit EventScope(GUIManager& manager) : m_manager(manager) { ++m_manager.m_eventDepth; }
+        ~EventScope() {
+            if (--m_manager.m_eventDepth == 0) m_manager.drainPendingElements();
+        }
+        EventScope(const EventScope&) = delete;
+        EventScope& operator=(const EventScope&) = delete;
+    private:
+        GUIManager& m_manager;
+    };
+
     // Overlay views (non-owning cache over m_elements, see overlay_stack.hpp).
     // Ownership and Z-order stay in m_elements; this only accelerates the
     // overlay-side paths (overlay render pass, getActiveOverlay, focus).
@@ -197,6 +227,8 @@ private:
     // m_contextMenuHandle (auto-null after destroy) — never a stale raw*.
     ElementHandle m_contextMenuHandle;
     ContextMenu* m_contextMenuCache = nullptr;
+    // Global MenuBar (resolved through its handle; auto-null after destroy).
+    ElementHandle m_menuBarHandle;
 
     // Tooltip: single persistent panel, toggled with setVisible().
     // (Old code ping-ponged ownership between two unique_ptrs via move().)
@@ -219,7 +251,6 @@ private:
     Theme m_theme;
     
     void collectFocusableElements(std::vector<GUIElement*>& out) const;
-    GUIElement* getActiveOverlay() const;
     // Rebuild overlay views when dirty (add/detach/cleanup/dynamic flip).
     void ensureOverlayCache() const;
     

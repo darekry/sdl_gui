@@ -17,6 +17,8 @@
 #include "../src/text_input.hpp"
 #include "../src/arc_container.hpp"
 #include "../src/scroll_area.hpp"
+#include "../src/menu_bar.hpp"
+#include "../src/menu_item.hpp"
 
 #include <string>
 
@@ -202,5 +204,70 @@ TEST_CASE("LayoutParser - bevel styles", "[layout_parser][bevel]") {
         REQUIRE(wellStyle.borderColorOuterBottomRight == constants::kWin95Highlight);
         REQUIRE(wellStyle.borderColorInnerTopLeft == constants::kWin95DarkShadow);
         REQUIRE(wellStyle.borderColorInnerBottomRight == constants::kWin95Light);
+    }
+}
+
+TEST_CASE("LayoutParser - MenuBar tree", "[layout_parser][menu]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    JsonParser parser(manager);
+
+    auto root = parser.loadLayout("tests/data/menu.json");
+    REQUIRE(root != nullptr);
+    REQUIRE(root->getChildren().size() == 1);
+
+    auto* bar = dynamic_cast<MenuBar*>(root->getChildren()[0].get());
+    REQUIRE(bar != nullptr);
+    manager.addElement(std::move(root));
+
+    // Nested menu bars still become the window's global accelerator handler.
+    REQUIRE(manager.getMenuBar() == bar);
+
+    REQUIRE(bar->getMenuCount() == 2);
+    MenuItem* file = bar->getMenu(0);
+    REQUIRE(file != nullptr);
+    REQUIRE(file->text == "&File");
+    REQUIRE(file->itemCount() == 5);
+
+    SECTION("items carry shortcut, command, separator and enabled state") {
+        MenuItem* save = file->itemAt(0);
+        REQUIRE(save != nullptr);
+        REQUIRE(save->text == "&Save Game");
+        REQUIRE(save->shortcut == "Ctrl+S");
+        REQUIRE(save->shortcutKey == SDLK_S);
+        REQUIRE(save->command == "file.save");
+
+        REQUIRE(file->itemAt(1)->separator);
+        REQUIRE_FALSE(file->itemAt(2)->enabled);
+    }
+
+    SECTION("nested submenus parse recursively (check and radio)") {
+        MenuItem* options = file->itemAt(3);
+        REQUIRE(options->hasSubmenu());
+        REQUIRE(options->itemCount() == 2);
+        REQUIRE(options->itemAt(0)->check == MenuCheck::Check);
+        REQUIRE(options->itemAt(0)->checked);
+        REQUIRE_FALSE(options->itemAt(1)->checked);
+
+        MenuItem* units = file->itemAt(4);
+        REQUIRE(units->itemCount() == 2);
+        REQUIRE(units->itemAt(0)->check == MenuCheck::Radio);
+        REQUIRE(units->itemAt(0)->checked);
+        REQUIRE_FALSE(units->itemAt(1)->checked);
+
+        REQUIRE(bar->getPopupFor(file) != nullptr);
+        REQUIRE(bar->getPopupFor(options) != nullptr);
+        REQUIRE(bar->getPopupFor(units) != nullptr);
+    }
+
+    SECTION("command ids dispatch through the bar handler") {
+        std::string dispatched;
+        bar->setCommandHandler([&dispatched](std::string_view command) {
+            dispatched = std::string(command);
+        });
+
+        manager.processEvent(helper.createKeyEvent(SDL_EVENT_KEY_DOWN, SDLK_S, SDL_KMOD_CTRL));
+        REQUIRE(dispatched == "file.save");
+        REQUIRE_FALSE(bar->isMenuOpen());
     }
 }

@@ -212,6 +212,40 @@ inline Theme createWindows95Theme() {
         theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, h);
     }
 
+    // MenuBar / MenuPopup: flat face strip, white dropdown, navy selection
+    {
+        Style s;
+        s.backgroundColor = constants::kWin95Face;
+        s.textColor = kWindowText;
+        s.borderRadius = 0;
+        s.borderWidth = 0;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Normal, s);
+
+        Style h = s;
+        h.backgroundColor = kNavy;
+        h.textColor = kHighlightText;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Hover, h);
+
+        Style d = s;
+        d.textColor = kDisabledText;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Disabled, d);
+
+        Style p = s;
+        p.backgroundColor = kWhite;
+        p.borderColor = constants::kWin95Shadow;
+        p.borderWidth = 1;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Normal, p);
+
+        Style ph = p;
+        ph.backgroundColor = kNavy;
+        ph.textColor = kHighlightText;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Hover, ph);
+
+        Style pd = p;
+        pd.textColor = kDisabledText;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Disabled, pd);
+    }
+
     return theme;
 }
 
@@ -433,6 +467,41 @@ inline Theme createLightTheme() {
         s.backgroundColor = kAccent;
         s.textColor = kWhite;
         theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, s);
+    }
+
+    // MenuBar / MenuPopup
+    {
+        Style s;
+        s.backgroundColor = kPanelBg;
+        s.textColor = kText;
+        s.borderWidth = 0;
+        s.borderRadius = 0;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Normal, s);
+
+        Style h = s;
+        h.backgroundColor = kAccent;
+        h.textColor = kWhite;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Hover, h);
+
+        Style d = s;
+        d.textColor = kDisabledText;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Disabled, d);
+
+        Style p = s;
+        p.backgroundColor = kWhite;
+        p.borderColor = kBorder;
+        p.borderWidth = 1;
+        p.borderRadius = 0;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Normal, p);
+
+        Style ph = p;
+        ph.backgroundColor = kAccent;
+        ph.textColor = kWhite;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Hover, ph);
+
+        Style pd = p;
+        pd.textColor = kDisabledText;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Disabled, pd);
     }
 
     // ScrollArea
@@ -684,6 +753,41 @@ inline Theme createDarkTheme() {
         theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, s);
     }
 
+    // MenuBar / MenuPopup
+    {
+        Style s;
+        s.backgroundColor = kPanelBg;
+        s.textColor = kText;
+        s.borderWidth = 0;
+        s.borderRadius = 0;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Normal, s);
+
+        Style h = s;
+        h.backgroundColor = kAccent;
+        h.textColor = kWhite;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Hover, h);
+
+        Style d = s;
+        d.textColor = kDisabledText;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Disabled, d);
+
+        Style p = s;
+        p.backgroundColor = kInputBg;
+        p.borderColor = kBorder;
+        p.borderWidth = 1;
+        p.borderRadius = 0;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Normal, p);
+
+        Style ph = p;
+        ph.backgroundColor = kAccent;
+        ph.textColor = kWhite;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Hover, ph);
+
+        Style pd = p;
+        pd.textColor = kDisabledText;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Disabled, pd);
+    }
+
     // ScrollArea
     {
         Style s;
@@ -931,6 +1035,39 @@ inline Theme createHighContrastTheme() {
         s.backgroundColor = kYellow;
         s.textColor = kBlack;
         theme.setStyle(ComponentType::ContextMenu, ElementState::Hover, s);
+    }
+
+    // MenuBar / MenuPopup
+    {
+        Style s;
+        s.backgroundColor = kBlack;
+        s.textColor = kWhite;
+        s.borderWidth = 2;
+        s.borderRadius = 0;
+        s.borderColor = kWhite;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Normal, s);
+
+        Style h = s;
+        h.backgroundColor = kYellow;
+        h.textColor = kBlack;
+        theme.setStyle(ComponentType::MenuBar, ElementState::Hover, h);
+
+        Style d = s;
+        d.textColor = {128, 128, 128, 255};
+        theme.setStyle(ComponentType::MenuBar, ElementState::Disabled, d);
+
+        Style p = s;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Normal, p);
+
+        Style ph = p;
+        ph.backgroundColor = kYellow;
+        ph.textColor = kBlack;
+        ph.borderColor = kYellow;
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Hover, ph);
+
+        Style pd = p;
+        pd.textColor = {128, 128, 128, 255};
+        theme.setStyle(ComponentType::MenuPopup, ElementState::Disabled, pd);
     }
 
     // ScrollArea

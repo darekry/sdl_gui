@@ -28,7 +28,7 @@ SDL GUI to lekka biblioteka GUI oparta na SDL3. Cel: ułatwić tworzenie narzęd
 | Warstwa | Elementy |
 |---------|----------|
 | **Core** | GUIManager (kontekst, renderowanie), GUIElement (hierarchia + cache tekstur), TextEditable (selekcja, clipboard) |
-| **Widgety (23)** | Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, RangeSlider, StringGrid, ListView, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu, Cursor, ArcContainer, ProgressBar, ScrollArea, WorldView, ShaderPanel |
+| **Widgety (24)** | Panel, Button, Label, Checkbox, RadioButton, RadioGroup, Slider, RangeSlider, StringGrid, ListView, TextInput, TextArea, ComboBox, TabControl, AnimatedImage, Canvas, ContextMenu, MenuBar, Cursor, ArcContainer, ProgressBar, ScrollArea, WorldView, ShaderPanel |
 | **Composite** | ModalDialog (baza), DialogBox, MessageBox, FileDialog, ColorDialog (`src/composite/`) |
 | **Editor** | EditorWindow, EditorState, PreviewWindow, LayoutImporter, LayoutExporter (`src/editor/`) |
 | **Ekrany/okna** | ScreenManager (gry), WindowManager (wiele okien systemowych) |
@@ -43,8 +43,8 @@ SDL GUI to lekka biblioteka GUI oparta na SDL3. Cel: ułatwić tworzenie narzęd
 src/           — implementacja (C++23, moduły)
 src/composite/ — gotowe dialogi
 src/editor/    — edytor wizualny GUI
-examples/      — 68 przykładów (00–67); examples/c/ — 10 przykładów C
-tests/         — 50 binarek testowych (Catch2)
+examples/      — 69 przykładów (00–68); examples/c/ — 10 przykładów C
+tests/         — 52 binarki testowe (Catch2)
 docs/          — release/ (kanon end-user → dist/docs/), refactor_plan.md, archive/ (nieaktualne)
 skills/sdl-gui/ — skill agenta (SKILL.md + references/); `./nob release` kopiuje do dist/skills/
 lib/           — Catch2 amalgamated, tinyxml2
@@ -271,7 +271,7 @@ Zasoby muszą być dostępne przez `pkg-config sdl3 sdl3-image sdl3-ttf`. `PKG_C
 - **Framework**: Catch2 (amalgamated: `lib/catch_amalgamated.hpp`)
 - **Helper**: `tests/test_helper.hpp/cpp` — headless SDL init (okno tworzone jako `SDL_WINDOW_HIDDEN`), `createMouseEvent()`, `createKeyboardEvent()`
 - **Uruchamianie**: `./nob test` uruchamia binarki testowe **równolegle** (dynamiczna kolejka, domyślnie `min(16, nprocs)` zadań; `NOB_TEST_JOBS=<n>` zmienia limit). Output każdego testu trafia do `output/test_logs/<nazwa>.log` — przy porażce wypisywany jest ogon logu. Okna SDL w testach są ukrywane przez zmienną `SDL_GUI_HIDDEN=1` (ustawianą przez runnera; respektują ją `SDLApp`, `Window` i `WindowManager`).
-- **Widgety testowane (23)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, Label, ListView, Panel, RadioButton, RadioGroup, Slider, RangeSlider, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor, ArcContainer, ProgressBar, ScrollArea, WorldView, ShaderPanel (CPU)
+- **Widgety testowane (24)**: Button, Checkbox, ComboBox, Canvas, ContextMenu, MenuBar, Label, ListView, Panel, RadioButton, RadioGroup, Slider, RangeSlider, StringGrid, TabControl, TextArea, TextInput, AnimatedImage, Cursor, ArcContainer, ProgressBar, ScrollArea, WorldView, ShaderPanel (CPU)
 - **Composite (2)**: ModalDialog, ColorDialog
 - **Menedżery (4)**: FontManager, TextureManager, TimerManager, AnimationManager
 - **Systemy (11)**: GUIElement, GUIManager, Theme, Easing, UTF8, Anchor (enum H/V + marginesy px, presety, Viewport NonZero, LayoutPass, StackLayout, DockLayout), Style, TextEditable (bazowa klasa przez podklasę testową), RenderCache, RenderPixel (pikselowa walidacja renderowania), Performance
@@ -335,6 +335,16 @@ Uruchom: `./nob test`
   (>10 wpisów), przenieś najstarsze do osobnego pliku CHANGELOG.md.
   ═══════════════════════════════════════════════════════════════════
 -->
+
+### MenuBar + MenuPopup — pasek menu w stylu Win32 (2026-10-20)
+- **Nowość**: `src/menu_item.hpp` (model drzewa: `text` z mnemonikami `&`, `shortcut`, `command`, `action`, `enabled`, `separator`, `MenuCheck::{None,Check,Radio}`, `submenu` na `unique_ptr` — stabilne adresy węzłów; builder chain `addItem/addSubmenu/addSeparator/setShortcut/setChecked/setRadio/setEnabled/setCommand`), `src/menu_popup.{hpp,cpp}` (jedna rozwijana lista: kolumna checkmarków, skróty wyrównane do prawej, strzałki podmenu, separator etched, hover navy, disabled gray; własne rysowanie na cache, `canShareRenderCache=false`), `src/menu_bar.{hpp,cpp}` (tytuły + otwieranie, hover-switch, Alt+mnemonik, F10 menu mode, ←/→/↑/↓/Enter/Esc, skróty globalne, mnemoniki pozycji w otwartym menu, przywracanie fokusu).
+- **Z-order bez mutacji w evencie**: popupy to top-level overlaye (`isOverlay`, `renderOverlay → render`) pre-tworzone przy dodaniu pierwszego dziecka węzła (hook `MenuItem::onItemAdded`), więc otwieranie menu nie robi `addElement` w trakcie iteracji `GUIManager::processEvent`. Popup odświeża metryki przy każdym otwarciu; podmenu odwraca się przy prawej krawędzi, popupy clampują się do okna.
+- **GUIManager**: `setMenuBar()/getMenuBar()` (pierwszy dodany `MenuBar` — top-level lub dziecko layoutu — rejestruje się sam; ręcznie nadpisuje), globalny hook klawiszy przed routingiem fokusu (F10/Alt/mnemoniki/skróty, pomijany gdy aktywny overlay nie jest popupem menu), `getActiveOverlay()` publiczne, nowy wirtual `GUIElement::wantsFocusOutline()` (menu bierze fokus do nawigacji, ale nie rysuje niebieskiej ramki).
+- **Theme/Factory/Parser**: `ComponentType::{MenuBar,MenuPopup}`, style we wszystkich 4 presetach (Win95: face/white/navy + disabled gray), `WidgetFactory` (`MenuBar`, default 800×auto), JSON: `{"type":"MenuBar","menus":[{"text":"&File","items":[{"text":"…","shortcut":"Ctrl+S","command":"…","checked":true,"radio":true,"enabled":false,"separator":true,"items":[…]}]}]}` + `parseMenuItems()` i `MenuBar::setCommandHandler` dla `command`.
+- **Po review (crash/UAF)**: `GUIManager` kolejkuje `addElement` wywołane w trakcie `processEvent` (`m_eventDepth` + `m_pendingElements`, drain po powrocie z pętli propagacji) — budowa menu z akcji nie invaliduje reverse-iteratorów `m_elements`; `MenuPopup::detachItems()` przed `clearMenus()`/dtorem zeruje wskaźnik modelu (popupy żyją do `cleanup()`); parser skrótów odrzuca `F>12` przed przepełnieniem `int`.
+- Efekt: **52/52 testów** (nowy `tests/test_menu_bar.cpp`: model/mnemoniki/skróty, mysz, check/radio, podmenu + flip, klawiatura, Alt/F10/Ctrl+S, focus restore, command handler, deferred menu mutation, clearMenus detach, pixel test paska i popupu; `tests/test_layout_parser.cpp` + fixture `tests/data/menu.json`), **68/68 przykładów** (`examples/68_menu_bar.cpp` — Civilization-like: File/Options z checkami, Edit/Orders/... , content Panel pod paskiem), smoke headless czysty.
+- Ograniczenia v1: brak ikon w pozycjach, brak przewijania długich menu, podmenu otwiera się natychmiast (bez delay), brak C API/eksportera edytora dla drzewa menu, brak globalnego content-insetu (panel treści anchored pod paskiem).
+- Zmienione pliki: src/menu_item.hpp (nowy), src/menu_popup.{hpp,cpp} (nowe), src/menu_bar.{hpp,cpp} (nowe), src/gui.{hpp,cpp}, src/gui_manager.{hpp,cpp}, src/component_type.hpp, src/theme_presets.hpp, src/widget_factory.cpp, src/layout_parser.{hpp,cpp}, nob.c, tests/test_menu_bar.cpp (nowy), tests/test_layout_parser.cpp, tests/data/menu.json (nowy), examples/68_menu_bar.cpp (nowy), docs/release/widgets/MenuBar.md (nowy), docs/release/widgets/README.md, docs/index.md
 
 ### nob_win.c — build pod Windows na llvm-mingw (2026-10-14)
 - **Co**: nowy `nob_win.c` (port `nob.c`: te same targety `examples/test/bench/release/non_unity/clean`) na toolchainu llvm-mingw (clang + sysroot + libc++ w jednym zipie, bez VS/MSYS2): brak modułów (klasyczne includy przez `_WIN32` w `std.hpp`), brak sanitizerów/`-march`/`-flto` w v1, toolchain wykrywany z `%LLVM_MINGW%` → `vendor/llvm-mingw/` → PATH (`x86_64-w64-mingw32-clang++`, fail-fast przez `--version`), flagi SDL z auto-detekcji układu mingw `vendor/win64/*/<triple>/{include,lib,bin}` (`-I/-L`, link `-lSDL3... -lwinmm -limm32 -lversion -lsetupapi`, bez `pkg-config`), wyjścia `.obj/.exe`, `dist/sdl_gui_static.lib` (llvm-ar) + `dist/sdl_gui.dll` z jawnym `--out-implib dist/sdl_gui.lib`, DLL kopiowane obok exe, testy bez wrappera `env` (`SDL_GUI_HIDDEN` przez `SetEnvironmentVariableA`), `rm -rf/cp/mkdir -p` zastąpione `rm_rf_win()` + API `nob.h`, NEED_MIXER/SQLITE jako skip (nie fatal). Nowy `tools/install_win_deps.ps1` (GitHub API latest → llvm-mingw `ucrt-x86_64` do `vendor/llvm-mingw/` + `*-devel-*-mingw.zip` do `vendor/win64/`, zastępuje martwy skrypt SDL2; VS Build Tools niepotrzebne). Budowa toola: `vendor/llvm-mingw/bin/x86_64-w64-mingw32-clang.exe -o nob_win.exe nob_win.c` (bez `NOB_GO_REBUILD_URSELF`, bo woła nieistniejący `cc`).

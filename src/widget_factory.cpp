@@ -10,6 +10,7 @@
 #include "gui_manager.hpp"
 #include "label.hpp"
 #include "list_view.hpp"
+#include "menu_bar.hpp"
 #include "panel.hpp"
 #include "progress_bar.hpp"
 #include "radio_button.hpp"
@@ -49,6 +50,7 @@ std::pair<int, int> fallbackSize(ComponentType t) {
         case ComponentType::ScrollArea:    return {300, 200};
         case ComponentType::WorldView:    return {300, 200};
         case ComponentType::ArcContainer:  return {200, 200};
+        case ComponentType::MenuBar:       return {800, 24};
         default:                           return {100, 50};
     }
 }
@@ -75,6 +77,7 @@ bool constructible(ComponentType t) {
         case ComponentType::ScrollArea:
         case ComponentType::WorldView:
         case ComponentType::ArcContainer:
+        case ComponentType::MenuBar:
             return true;
         default:
             return false;
@@ -99,7 +102,8 @@ std::vector<std::string_view> WidgetFactory::knownTypes() {
     return {"Panel", "Button",     "Label",      "Checkbox",    "RadioButton",
             "RadioGroup", "Slider", "RangeSlider", "StringGrid", "ListView",
             "TextInput",  "TextArea", "ComboBox",  "TabControl", "AnimatedImage",
-            "Canvas",     "ProgressBar", "ScrollArea", "WorldView", "ArcContainer"};
+            "Canvas",     "ProgressBar", "ScrollArea", "WorldView", "ArcContainer",
+            "MenuBar"};
 }
 
 std::unique_ptr<GUIElement> WidgetFactory::createBare(GUIManager& manager,
@@ -303,6 +307,10 @@ std::unique_ptr<GUIElement> WidgetFactory::create(GUIManager& manager,
         case ComponentType::ArcContainer: {
             return std::make_unique<ArcContainer>(manager, x, y, p.radius,
                                                   p.startAngle, p.endAngle);
+        }
+        case ComponentType::MenuBar: {
+            return std::make_unique<MenuBar>(manager, x, y,
+                                             p.w > 0 ? p.w : 800, p.h);
         }
         case ComponentType::WorldView: {
             auto wv = std::make_unique<WorldView>(manager, x, y,

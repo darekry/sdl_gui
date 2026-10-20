@@ -8,6 +8,7 @@
 
 class GUIManager;
 class GUIElement;
+struct MenuItem;
 
 class LayoutParser
 {
@@ -39,6 +40,9 @@ private:
     // the editor preview). Structural children stay here (tabs, scroll
     // content, arc angles) — factory owns widget type knowledge.
     void fillPropsFromNode(void* node, const std::string& type, WidgetProps& props);
+    // Recursive MenuBar tree: menus[] -> items[] -> nested items[]
+    // (text/shortcut/checked/radio/enabled/separator/command).
+    void parseMenuItems(void* node, const std::string& key, MenuItem& parent);
     Anchor parseAnchor(void* node);
     Dock parseDock(void* node);
     void parseLayoutManager(void* node, GUIElement* element);

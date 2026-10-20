@@ -1,0 +1,47 @@
+{
+  "root": {
+    "type": "Panel",
+    "x": 0,
+    "y": 0,
+    "width": 800,
+    "height": 600,
+    "children": [
+      {
+        "type": "MenuBar",
+        "x": 0,
+        "y": 0,
+        "width": 800,
+        "menus": [
+          {
+            "text": "&File",
+            "items": [
+              { "text": "&Save Game", "shortcut": "Ctrl+S", "command": "file.save" },
+              { "separator": true },
+              { "text": "&Disabled", "enabled": false },
+              {
+                "text": "&Options",
+                "items": [
+                  { "text": "&Sound", "checked": true, "command": "options.sound" },
+                  { "text": "&Music", "checked": false, "command": "options.music" }
+                ]
+              },
+              {
+                "text": "&Units",
+                "items": [
+                  { "text": "&Metric", "radio": true, "checked": true, "command": "units.metric" },
+                  { "text": "&Imperial", "radio": true, "checked": false, "command": "units.imperial" }
+                ]
+              }
+            ]
+          },
+          {
+            "text": "&Help",
+            "items": [
+              { "text": "&About", "command": "help.about" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -3,6 +3,7 @@
 #include "arc_container.hpp"
 #include "gui_manager.hpp"
 #include "layout.hpp"
+#include "menu_bar.hpp"
 #include "panel.hpp"
 #include "scroll_area.hpp"
 #include "tab_control.hpp"
@@ -133,6 +134,19 @@ std::unique_ptr<GUIElement> LayoutParser::parseNode(void* node)
                     panel->addChild(std::move(c));
                 sa->setContent(std::move(panel));
             }
+        }
+    }
+    else if (type == "MenuBar")
+    {
+        auto* bar = static_cast<MenuBar*>(element.get());
+        if (isArray(node, "menus"))
+        {
+            forEachInArray(node, "menus", [this, bar](void* menuNode) {
+                MenuItem& menu = bar->addMenu(getString(menuNode, "text", "Menu"));
+                if (isArray(menuNode, "items")) {
+                    parseMenuItems(menuNode, "items", menu);
+                }
+            });
         }
     }
     else if (type == "TabControl")
@@ -337,6 +351,33 @@ void LayoutParser::fillPropsFromNode(void* node, const std::string& type, Widget
             p.selectedIndex = getInt(node, "selectedIndex", -1);
         }
     }
+}
+
+void LayoutParser::parseMenuItems(void* node, const std::string& key, MenuItem& parent) {
+    forEachInArray(node, key, [this, &parent](void* itemNode) {
+        if (getBool(itemNode, "separator", false)) {
+            parent.addSeparator();
+            return;
+        }
+
+        MenuItem& item = parent.addItem(getString(itemNode, "text", ""), nullptr,
+                                        getBool(itemNode, "enabled", true));
+        const std::string command = getString(itemNode, "command", "");
+        if (!command.empty()) item.setCommand(command);
+        if (hasNode(itemNode, "shortcut")) item.setShortcut(getString(itemNode, "shortcut", ""));
+
+        const bool radio = getBool(itemNode, "radio", false);
+        const bool checked = getBool(itemNode, "checked", false);
+        if (radio) {
+            item.setRadio(checked);
+        } else if (hasNode(itemNode, "checked")) {
+            item.setChecked(checked);
+        }
+
+        if (isArray(itemNode, "items")) {
+            parseMenuItems(itemNode, "items", item);
+        }
+    });
 }
 
 Anchor LayoutParser::parseAnchor(void* node)

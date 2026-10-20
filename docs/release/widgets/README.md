@@ -52,6 +52,7 @@ Kompletna lista widgetów biblioteki SDL GUI. Każdy widget dziedziczy po
 | [ArcContainer](ArcContainer.md) | Układa dzieci na łuku (np. menu kołowe, radary) |
 | [ShaderPanel](ShaderPanel.md) | Panel z shaderem fragmentowym (wymaga GPU/Vulkan) |
 | [ContextMenu](ContextMenu.md) | Menu kontekstowe po kliknięciu prawym przyciskiem |
+| [MenuBar](MenuBar.md) | Górny pasek menu (Win32): podmenu, check/radio, skróty, mnemoniki, Alt/F10 |
 
 ## Kompozyty (gotowe dialogi)
 

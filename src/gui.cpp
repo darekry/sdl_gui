@@ -1,4 +1,5 @@
 #include "label.hpp"
+#include "menu_bar.hpp"
 #include "gui.hpp"
 #include "gui_manager.hpp"
 #include "layout.hpp"
@@ -359,6 +360,11 @@ GUIElement* GUIElement::addChild(std::unique_ptr<GUIElement> child) {
         raw->invalidateAbsPosCache();
         m_children.push_back(std::move(child));
         raw->updateLayout(m_width, m_height);
+        // A MenuBar nested in a layout root (Panel) is still the window's
+        // global accelerator handler; first one wins.
+        if (raw->getComponentTypeId() == ComponentType::MenuBar && !m_manager.getMenuBar()) {
+            m_manager.setMenuBar(static_cast<MenuBar*>(raw));
+        }
         // Dodanie dziecka nie zmienia pikseli rodzica (dziecko renderuje
         // się osobno na wierzch) — bez kaskady do root.
         markDirty(false);
@@ -568,7 +574,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 }
                 // Fokus rotuje się razem z treścią, ale z OSOBNEJ tekstury
                 // (m_focusTexture) — zmiana fokusu nie unieważnia cache'a.
-                if (hasKeyboardFocus() && m_focusTexture) {
+                if (hasKeyboardFocus() && wantsFocusOutline() && m_focusTexture) {
                     ScopedTextureAlpha focusAlpha(m_focusTexture.get(), alphaMod);
                     SDL_RenderTextureRotated(renderer, m_focusTexture.get(), nullptr, &dst_rect,
                                      m_rotation, &center, SDL_FLIP_NONE);
@@ -584,7 +590,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                     ScopedTextureAlpha contentAlpha(m_cachedTexture.get(), alphaMod);
                     RenderTexture(renderer, m_cachedTexture.get(), &src_rect, &clipped_rect);
                 }
-                if (hasKeyboardFocus()) {
+                if (hasKeyboardFocus() && wantsFocusOutline()) {
                     // Obrys fokusu rysowany bezpośrednio (poza cache'em) musi
                     // być cięty do tego samego clipped_rect co treść — inaczej
                     // wystaje poza viewport rodzica (ScrollArea/WorldView).
@@ -656,7 +662,7 @@ void GUIElement::renderFocusOverlay(SDL_Renderer* renderer) {
 // Niezmiennik: tekstura istnieje wtedy i tylko wtedy, gdy element jest
 // rotowany — nierotowane rysują obrys bezpośrednio (renderFocusOverlay).
 void GUIElement::rebuildFocusTexture(SDL_Renderer* renderer) {
-    if (m_rotation == 0.0) {
+    if (m_rotation == 0.0 || !wantsFocusOutline()) {
         m_focusTexture.reset();
         return;
     }
@@ -746,7 +752,7 @@ void GUIElement::renderToCache() {
                     }
                     // Fokus dziecka wpieka się razem z nim (jak jego treść) —
                     // obraca się potem sztywno z całym poddrzewem.
-                    if (child->hasKeyboardFocus() && child->m_focusTexture) {
+                    if (child->hasKeyboardFocus() && child->wantsFocusOutline() && child->m_focusTexture) {
                         ScopedTextureAlpha childFocusMod(child->m_focusTexture.get(), childAlpha);
                         RenderTexture(renderer, child->m_focusTexture.get(), childDst);
                     }

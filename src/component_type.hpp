@@ -31,6 +31,8 @@ enum class ComponentType : uint8_t {
     AnimatedImage,
     Canvas,
     ContextMenu,
+    MenuBar,
+    MenuPopup,
     Cursor,
     ArcContainer,
     ProgressBar,
@@ -63,6 +65,8 @@ inline std::string_view componentTypeToString(ComponentType t) {
         case ComponentType::AnimatedImage: return "AnimatedImage";
         case ComponentType::Canvas:        return "Canvas";
         case ComponentType::ContextMenu:   return "ContextMenu";
+        case ComponentType::MenuBar:       return "MenuBar";
+        case ComponentType::MenuPopup:     return "MenuPopup";
         case ComponentType::Cursor:        return "Cursor";
         case ComponentType::ArcContainer:  return "ArcContainer";
         case ComponentType::ProgressBar:   return "ProgressBar";
@@ -94,6 +98,8 @@ inline ComponentType componentTypeFromString(std::string_view s) {
     if (s == "AnimatedImage") return ComponentType::AnimatedImage;
     if (s == "Canvas")        return ComponentType::Canvas;
     if (s == "ContextMenu")   return ComponentType::ContextMenu;
+    if (s == "MenuBar")       return ComponentType::MenuBar;
+    if (s == "MenuPopup")     return ComponentType::MenuPopup;
     if (s == "Cursor")        return ComponentType::Cursor;
     if (s == "ArcContainer")  return ComponentType::ArcContainer;
     if (s == "ProgressBar")   return ComponentType::ProgressBar;

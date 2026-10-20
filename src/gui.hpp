@@ -155,6 +155,9 @@ public:
     // Whether the 3D bevel branch applies. Widgets without frames
     // (Label/Cursor/...) return false so bevel colors are ignored.
     virtual bool supportsBevel() const { return true; }
+    // Keyboard-focus outline. Menus opt out: they own focus for key routing
+    // (arrows/Enter/Esc) but draw their own highlight instead of an outline.
+    virtual bool wantsFocusOutline() const { return true; }
     void markForDeletion();
     // Precyzyjny dirty (punkt 6, plaster 5): cached texture zależy tylko od
     // własnych inputów draw() — dzieci renderują się osobno na wierzch.

@@ -5,6 +5,7 @@
 #include "panel.hpp"
 #include "label.hpp"
 #include "context_menu.hpp"
+#include "menu_bar.hpp"
 
 #include "constants.hpp"
 #include "std.hpp"
@@ -48,14 +49,33 @@ GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
     if (element) {
         auto* raw_ptr = element.get();
         registerElement(raw_ptr);
-        m_elements.push_back(std::move(element));
-        m_overlayStack.markDirty();
+        if (m_eventDepth > 0) {
+            // Created from an event callback: defer the append so the
+            // propagation loop's reverse iterators stay valid.
+            m_pendingElements.push_back(std::move(element));
+        } else {
+            m_elements.push_back(std::move(element));
+            m_overlayStack.markDirty();
+        }
         // Viewport jest zawsze NonZero — kotwice aplikowane od razu, bez
         // czekania na pierwszy resize (koniec elementów na (0,0) po dodaniu).
         raw_ptr->updateLayout(m_windowWidth, m_windowHeight);
+        // First top-level MenuBar becomes the global accelerator handler.
+        if (raw_ptr->getComponentTypeId() == ComponentType::MenuBar && !getMenuBar()) {
+            m_menuBarHandle = getHandle(raw_ptr);
+        }
         return raw_ptr;
     }
     return nullptr;
+}
+
+void GUIManager::drainPendingElements() {
+    if (m_pendingElements.empty()) return;
+    for (auto& element : m_pendingElements) {
+        m_elements.push_back(std::move(element));
+    }
+    m_pendingElements.clear();
+    m_overlayStack.markDirty();
 }
 
 std::unique_ptr<GUIElement> GUIManager::detachElement(GUIElement* element) {
@@ -72,6 +92,7 @@ std::unique_ptr<GUIElement> GUIManager::detachElement(GUIElement* element) {
 }
 
 bool GUIManager::processEvent(const SDL_Event& event) {
+    EventScope eventScope(*this);
     // Mouse position service (point 1c): single feed for the cursor, first in
     // the pipeline — covers propagation, capture and unconsumed paths alike.
     if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
@@ -100,6 +121,13 @@ bool GUIManager::processEvent(const SDL_Event& event) {
     }
     // 2. Keyboard events
     else if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP || event.type == SDL_EVENT_TEXT_INPUT) {
+        // Global menu accelerators run before focus routing (Win32 order):
+        // Alt/F10 and menu shortcuts work regardless of the focused widget.
+        if (event.type != SDL_EVENT_TEXT_INPUT) {
+            if (MenuBar* menuBar = getMenuBar()) {
+                if (menuBar->handleGlobalKey(event)) return true;
+            }
+        }
         if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_TAB) {
             focusNextElement(!(event.key.mod & SDL_KMOD_SHIFT));
             return true;
@@ -382,6 +410,14 @@ void GUIManager::setTheme(Theme theme) {
 
 Theme& GUIManager::getTheme() {
     return m_theme;
+}
+
+void GUIManager::setMenuBar(MenuBar* menuBar) {
+    m_menuBarHandle = menuBar ? getHandle(menuBar) : ElementHandle{};
+}
+
+MenuBar* GUIManager::getMenuBar() const {
+    return static_cast<MenuBar*>(resolve(m_menuBarHandle));
 }
 
 void GUIManager::captureMouse(GUIElement* element) {
