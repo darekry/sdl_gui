@@ -647,6 +647,60 @@ void             sdlgui_context_menu_hide(sdlgui_element_t e);
 int              sdlgui_context_menu_is_visible(sdlgui_element_t e);
 
 /* ═══════════════════════════════════════════════════════════════════
+   Phase 2: MenuBar (Win32-style menu strip)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/*
+ * MenuBar owns the whole menu tree. Item handles are stable until
+ * sdlgui_menu_bar_clear() or bar destruction — after that they are invalid.
+ *
+ * Items carry command id strings instead of callbacks. Set one handler per
+ * bar; it receives the bar handle and the command id (valid only during the
+ * call). Check/radio state is updated before the command fires, so the
+ * handler can query it with sdlgui_menu_item_is_checked().
+ *
+ * height <= 0 -> auto height from the theme font.
+ */
+typedef void* sdlgui_menu_item_t;   /* MenuItem*, owned by the MenuBar */
+
+typedef void (*sdlgui_menu_command_callback_t)(sdlgui_element_t bar,
+                                               const char* command,
+                                               void* userdata);
+
+typedef enum {
+    SDLGUI_MENU_CHECK_NONE  = 0,
+    SDLGUI_MENU_CHECK       = 1,
+    SDLGUI_MENU_RADIO       = 2
+} sdlgui_menu_check_t;
+
+sdlgui_element_t sdlgui_menu_bar_create(sdlgui_t gui, sdlgui_element_t parent,
+                                        int x, int y, int w, int h);
+void             sdlgui_menu_bar_set_on_command(sdlgui_element_t bar,
+                                                sdlgui_menu_command_callback_t cb,
+                                                void* userdata);
+sdlgui_menu_item_t sdlgui_menu_bar_add_menu(sdlgui_element_t bar, const char* text);
+void             sdlgui_menu_bar_open_menu(sdlgui_element_t bar, int index);
+void             sdlgui_menu_bar_close(sdlgui_element_t bar);
+int              sdlgui_menu_bar_is_open(sdlgui_element_t bar);
+int              sdlgui_menu_bar_get_menu_count(sdlgui_element_t bar);
+int              sdlgui_menu_bar_get_height(sdlgui_element_t bar);
+void             sdlgui_menu_bar_clear(sdlgui_element_t bar);
+
+sdlgui_menu_item_t sdlgui_menu_item_add_item(sdlgui_menu_item_t parent,
+                                             const char* text,
+                                             const char* command);
+sdlgui_menu_item_t sdlgui_menu_item_add_submenu(sdlgui_menu_item_t parent,
+                                                const char* text);
+void               sdlgui_menu_item_add_separator(sdlgui_menu_item_t parent);
+void               sdlgui_menu_item_set_shortcut(sdlgui_menu_item_t item,
+                                                 const char* shortcut);
+void               sdlgui_menu_item_set_enabled(sdlgui_menu_item_t item, int enabled);
+void               sdlgui_menu_item_set_check_type(sdlgui_menu_item_t item,
+                                                   sdlgui_menu_check_t type);
+void               sdlgui_menu_item_set_checked(sdlgui_menu_item_t item, int checked);
+int                sdlgui_menu_item_is_checked(sdlgui_menu_item_t item);
+
+/* ═══════════════════════════════════════════════════════════════════
    Phase 3: GPU context (Vulkan + SDL_CreateGPURenderer)
    ═══════════════════════════════════════════════════════════════════ */
 

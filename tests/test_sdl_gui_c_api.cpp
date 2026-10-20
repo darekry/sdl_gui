@@ -1283,6 +1283,78 @@ TEST_CASE("C API - ContextMenu creation and items", "[c_api][context_menu]") {
 }
 
 /* ════════════════════════════════════════════════════
+   Phase 2: MenuBar
+   ════════════════════════════════════════════════════ */
+
+static void test_menu_command_cb(sdlgui_element_t bar, const char* command, void* userdata) {
+    (void)bar;
+    if (auto* out = static_cast<std::string*>(userdata)) {
+        *out = command ? command : "";
+    }
+}
+
+TEST_CASE("C API - MenuBar tree, checks and commands", "[c_api][menu_bar]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    sdlgui_element_t bar = sdlgui_menu_bar_create(gui, nullptr, 0, 0, 800, 0);
+    REQUIRE(bar != nullptr);
+    REQUIRE(std::strcmp(sdlgui_element_get_type(bar), "MenuBar") == 0);
+    REQUIRE(sdlgui_menu_bar_get_height(bar) > 0);
+
+    sdlgui_menu_item_t file = sdlgui_menu_bar_add_menu(bar, "&File");
+    REQUIRE(file != nullptr);
+
+    sdlgui_menu_item_t save = sdlgui_menu_item_add_item(file, "&Save Game", "file.save");
+    REQUIRE(save != nullptr);
+    sdlgui_menu_item_set_shortcut(save, "Ctrl+S");
+
+    sdlgui_menu_item_add_separator(file);
+
+    sdlgui_menu_item_t options = sdlgui_menu_item_add_submenu(file, "&Options");
+    REQUIRE(options != nullptr);
+    sdlgui_menu_item_t sound = sdlgui_menu_item_add_item(options, "&Sound", "options.sound");
+    REQUIRE(sound != nullptr);
+    sdlgui_menu_item_set_check_type(sound, SDLGUI_MENU_CHECK);
+    sdlgui_menu_item_set_checked(sound, 1);
+    REQUIRE(sdlgui_menu_item_is_checked(sound) == 1);
+
+    sdlgui_menu_item_t quiet = sdlgui_menu_item_add_item(options, "&Quiet", "options.quiet");
+    sdlgui_menu_item_set_check_type(quiet, SDLGUI_MENU_CHECK);
+    REQUIRE(sdlgui_menu_item_is_checked(quiet) == 0);
+
+    sdlgui_menu_item_t disabled = sdlgui_menu_item_add_item(file, "&Disabled", "file.disabled");
+    sdlgui_menu_item_set_enabled(disabled, 0);
+
+    REQUIRE(sdlgui_menu_bar_get_menu_count(bar) == 1);
+
+    std::string dispatched;
+    sdlgui_menu_bar_set_on_command(bar, test_menu_command_cb, &dispatched);
+
+    SDL_Event event{};
+    event.type = SDL_EVENT_KEY_DOWN;
+    event.key.type = SDL_EVENT_KEY_DOWN;
+    event.key.key = SDLK_S;
+    event.key.mod = SDL_KMOD_CTRL;
+    REQUIRE(sdlgui_process_event(gui, &event));
+    REQUIRE(dispatched == "file.save");
+
+    sdlgui_menu_bar_open_menu(bar, 0);
+    REQUIRE(sdlgui_menu_bar_is_open(bar) == 1);
+    sdlgui_menu_bar_close(bar);
+    REQUIRE(sdlgui_menu_bar_is_open(bar) == 0);
+
+    sdlgui_menu_bar_open_menu(bar, 0);
+    REQUIRE(sdlgui_menu_bar_is_open(bar) == 1);
+    sdlgui_menu_bar_clear(bar);
+    REQUIRE(sdlgui_menu_bar_get_menu_count(bar) == 0);
+    REQUIRE(sdlgui_menu_bar_is_open(bar) == 0);
+
+    sdlgui_cleanup(gui);
+    sdlgui_destroy(gui);
+}
+
+/* ════════════════════════════════════════════════════
    Phase 2: Dynamic reparenting (add_child)
    ════════════════════════════════════════════════════ */
 

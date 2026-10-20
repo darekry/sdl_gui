@@ -383,6 +383,54 @@ typedef enum {
 | `void sdlgui_context_menu_hide(sdlgui_element_t e)` | Ukrywa |
 | `int sdlgui_context_menu_is_visible(sdlgui_element_t e)` | Czy widoczne |
 
+### MenuBar
+
+Pasek menu w stylu Win32 (File/Edit/… + rozwijane listy, podmenu, check/radio,
+mnemoniki, skróty). Drzewo menu jest własnością paska; uchwyty
+`sdlgui_menu_item_t` są ważne do `sdlgui_menu_bar_clear()` albo zniszczenia
+paska. Pozycje nie mają własnych callbacków — noszą identyfikator komendy
+(odpowiednik `WM_COMMAND`), a jeden handler ustawia się na pasku.
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_element_t sdlgui_menu_bar_create(sdlgui_t gui, sdlgui_element_t parent, int x, int y, int w, int h)` | Tworzy pasek. `h <= 0` = wysokość automatyczna z fontu motywu |
+| `void sdlgui_menu_bar_set_on_command(sdlgui_element_t bar, sdlgui_menu_command_callback_t cb, void* userdata)` | Ustawia handler komend (`cb == NULL` czyści) |
+| `sdlgui_menu_item_t sdlgui_menu_bar_add_menu(sdlgui_element_t bar, const char* text)` | Dodaje menu najwyższego poziomu; `&File` = mnemonik |
+| `void sdlgui_menu_bar_open_menu(sdlgui_element_t bar, int index)` | Otwiera menu po indeksie |
+| `void sdlgui_menu_bar_close(sdlgui_element_t bar)` | Zamyka wszystkie poziomy |
+| `int sdlgui_menu_bar_is_open(sdlgui_element_t bar)` | Czy menu jest otwarte |
+| `int sdlgui_menu_bar_get_menu_count(sdlgui_element_t bar)` | Liczba menu najwyższego poziomu |
+| `int sdlgui_menu_bar_get_height(sdlgui_element_t bar)` | Wysokość paska (do ustawienia panelu treści pod nim) |
+| `void sdlgui_menu_bar_clear(sdlgui_element_t bar)` | Czyści całe drzewo; uchwyty pozycji stają się nieważne |
+| `sdlgui_menu_item_t sdlgui_menu_item_add_item(sdlgui_menu_item_t parent, const char* text, const char* command)` | Dodaje pozycję; `command` może być `NULL` |
+| `sdlgui_menu_item_t sdlgui_menu_item_add_submenu(sdlgui_menu_item_t parent, const char* text)` | Dodaje podmenu |
+| `void sdlgui_menu_item_add_separator(sdlgui_menu_item_t parent)` | Separator |
+| `void sdlgui_menu_item_set_shortcut(sdlgui_menu_item_t item, const char* shortcut)` | Wyświetla skrót i rejestruje akcelerator (`Ctrl+S`, `F10`, …) |
+| `void sdlgui_menu_item_set_enabled(sdlgui_menu_item_t item, int enabled)` | Włącz/wyłącz pozycję |
+| `void sdlgui_menu_item_set_check_type(sdlgui_menu_item_t item, sdlgui_menu_check_t type)` | `SDLGUI_MENU_CHECK_NONE/CHECK/RADIO` |
+| `void sdlgui_menu_item_set_checked(sdlgui_menu_item_t item, int checked)` | Ustawia zaznaczenie (zwykła pozycja staje się checkiem) |
+| `int sdlgui_menu_item_is_checked(sdlgui_menu_item_t item)` | Czy zaznaczone (dla check/radio) |
+
+```c
+static void on_command(sdlgui_element_t bar, const char* cmd, void* data) {
+    (void)bar;
+    if (strcmp(cmd, "file.save") == 0) save();
+}
+
+sdlgui_element_t bar = sdlgui_menu_bar_create(gui, NULL, 0, 0, 800, 0);
+sdlgui_element_set_anchor(bar,
+    (sdlgui_anchor_t){SDLGUI_H_STRETCH, SDLGUI_V_TOP, 0, 0, 0, 0});
+sdlgui_menu_item_t file = sdlgui_menu_bar_add_menu(bar, "&File");
+sdlgui_menu_item_t save_item = sdlgui_menu_item_add_item(file, "&Save", "file.save");
+sdlgui_menu_item_set_shortcut(save_item, "Ctrl+S");
+sdlgui_menu_bar_set_on_command(bar, on_command, app);
+
+int bar_h = sdlgui_menu_bar_get_height(bar);
+/* panel treści: anchor stretch + top = bar_h */
+```
+
+Pełny przykład: `examples/c/12_menu_bar.c`.
+
 ### RangeSlider
 
 Podwójny suwak zakresu — wybiera przedział `[lower, upper]` między `min` i
@@ -534,6 +582,7 @@ kliknięciu lub Esc (traktowany jako dismissal).
 | `sdlgui_timer_callback_t` | `void (*)(sdlgui_element_t element, void* userdata)` | Timery (`sdlgui_add_timer`) |
 | `sdlgui_anim_callback_t` | `void (*)(void* userdata)` | Pętle i zakończenia animacji |
 | `sdlgui_context_menu_callback_t` | `void (*)(void* userdata)` | Pozycje ContextMenu (bez elementu i indeksu) |
+| `sdlgui_menu_command_callback_t` | `void (*)(sdlgui_element_t bar, const char* command, void* userdata)` | MenuBar — **command ważny tylko w trakcie callbacka** |
 | `sdlgui_cursor_state_callback_t` | `void (*)(sdlgui_element_t element, sdlgui_cursor_state_t state, void* userdata)` | Cursor — zmiana stanu |
 | `sdlgui_dialog_button_callback_t` | `void (*)(sdlgui_element_t element, int button_index, void* userdata)` | DialogBox alert/custom/with_title (`-1` = Esc) |
 | `sdlgui_dialog_confirm_callback_t` | `void (*)(sdlgui_element_t element, int confirmed, void* userdata)` | DialogBox confirm (`1` = Tak, `0` = Nie/Esc) |

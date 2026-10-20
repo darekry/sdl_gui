@@ -20,6 +20,8 @@
 #include "arc_container.hpp"
 #include "tab_control.hpp"
 #include "context_menu.hpp"
+#include "menu_bar.hpp"
+#include "menu_item.hpp"
 #include "range_slider.hpp"
 #include "cursor.hpp"
 #include "shader_panel.hpp"
@@ -87,6 +89,16 @@ size_t copy_c_string(const std::string& src, char* buf, size_t len) {
     if (n > 0) std::memcpy(buf, src.data(), n);
     buf[n] = '\0';
     return n;
+}
+
+// MenuItem handles are raw pointers owned by the MenuBar tree. The C API
+// documents their validity window (until clear/destroy); only null is checked.
+MenuItem* unwrap_menu_item(sdlgui_menu_item_t item, const char* fn) {
+    if (!item) {
+        set_c_error(std::string(fn) + ": null menu item handle");
+        return nullptr;
+    }
+    return static_cast<MenuItem*>(item);
 }
 
 }  // namespace
@@ -1377,6 +1389,136 @@ void sdlgui_context_menu_hide(sdlgui_element_t e) {
 
 int sdlgui_context_menu_is_visible(sdlgui_element_t e) {
     return static_cast<ContextMenu*>(unwrap_elem(e))->isVisible() ? 1 : 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 2: MenuBar
+   ═══════════════════════════════════════════════════════════════════ */
+
+sdlgui_element_t sdlgui_menu_bar_create(sdlgui_t gui, sdlgui_element_t parent,
+                                        int x, int y, int w, int h) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_menu_bar_create: null gui");
+        return nullptr;
+    }
+    auto bar = std::make_unique<MenuBar>(ctx->getGUIManager(), x, y, w, h);
+    return add_element(ctx, parent, std::move(bar));
+}
+
+void sdlgui_menu_bar_set_on_command(sdlgui_element_t bar,
+                                    sdlgui_menu_command_callback_t cb,
+                                    void* userdata) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    if (!menu) return;
+    if (!cb) {
+        menu->setCommandHandler(nullptr);
+        return;
+    }
+    menu->setCommandHandler([bar, cb, userdata](std::string_view command) {
+        const std::string text(command);
+        cb(bar, text.c_str(), userdata);
+    });
+}
+
+sdlgui_menu_item_t sdlgui_menu_bar_add_menu(sdlgui_element_t bar, const char* text) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    if (!menu) return nullptr;
+    return static_cast<sdlgui_menu_item_t>(&menu->addMenu(text ? text : ""));
+}
+
+void sdlgui_menu_bar_open_menu(sdlgui_element_t bar, int index) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    if (!menu || index < 0) return;
+    menu->openMenu(static_cast<size_t>(index));
+}
+
+void sdlgui_menu_bar_close(sdlgui_element_t bar) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    if (!menu) return;
+    menu->closeMenus();
+}
+
+int sdlgui_menu_bar_is_open(sdlgui_element_t bar) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    return (menu && menu->isMenuOpen()) ? 1 : 0;
+}
+
+int sdlgui_menu_bar_get_menu_count(sdlgui_element_t bar) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    return menu ? static_cast<int>(menu->getMenuCount()) : 0;
+}
+
+int sdlgui_menu_bar_get_height(sdlgui_element_t bar) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    return menu ? menu->getHeight() : 0;
+}
+
+void sdlgui_menu_bar_clear(sdlgui_element_t bar) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    if (!menu) return;
+    menu->clearMenus();
+}
+
+sdlgui_menu_item_t sdlgui_menu_item_add_item(sdlgui_menu_item_t parent,
+                                             const char* text,
+                                             const char* command) {
+    auto* node = unwrap_menu_item(parent, __func__);
+    if (!node) return nullptr;
+    MenuItem& item = node->addItem(text ? text : "");
+    if (command && *command) item.setCommand(command);
+    return static_cast<sdlgui_menu_item_t>(&item);
+}
+
+sdlgui_menu_item_t sdlgui_menu_item_add_submenu(sdlgui_menu_item_t parent,
+                                                const char* text) {
+    auto* node = unwrap_menu_item(parent, __func__);
+    if (!node) return nullptr;
+    return static_cast<sdlgui_menu_item_t>(&node->addSubmenu(text ? text : ""));
+}
+
+void sdlgui_menu_item_add_separator(sdlgui_menu_item_t parent) {
+    auto* node = unwrap_menu_item(parent, __func__);
+    if (!node) return;
+    node->addSeparator();
+}
+
+void sdlgui_menu_item_set_shortcut(sdlgui_menu_item_t item, const char* shortcut) {
+    auto* node = unwrap_menu_item(item, __func__);
+    if (!node) return;
+    node->setShortcut(shortcut ? shortcut : "");
+}
+
+void sdlgui_menu_item_set_enabled(sdlgui_menu_item_t item, int enabled) {
+    auto* node = unwrap_menu_item(item, __func__);
+    if (!node) return;
+    node->enabled = enabled != 0;
+}
+
+void sdlgui_menu_item_set_check_type(sdlgui_menu_item_t item,
+                                     sdlgui_menu_check_t type) {
+    auto* node = unwrap_menu_item(item, __func__);
+    if (!node) return;
+    switch (type) {
+        case SDLGUI_MENU_CHECK_NONE: node->check = MenuCheck::None; break;
+        case SDLGUI_MENU_CHECK:      node->check = MenuCheck::Check; break;
+        case SDLGUI_MENU_RADIO:      node->check = MenuCheck::Radio; break;
+        default:
+            set_c_error("sdlgui_menu_item_set_check_type: invalid check type");
+            break;
+    }
+}
+
+void sdlgui_menu_item_set_checked(sdlgui_menu_item_t item, int checked) {
+    auto* node = unwrap_menu_item(item, __func__);
+    if (!node) return;
+    if (node->check == MenuCheck::None) node->check = MenuCheck::Check;
+    node->checked = checked != 0;
+}
+
+int sdlgui_menu_item_is_checked(sdlgui_menu_item_t item) {
+    auto* node = unwrap_menu_item(item, __func__);
+    return (node && node->checked) ? 1 : 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

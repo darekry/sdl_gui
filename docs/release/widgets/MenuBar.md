@@ -108,6 +108,14 @@ długich menu, podmenu otwiera się natychmiast przy hover (bez opóźnienia).
 Zmiany tekstu/stanu modelu po otwarciu menu wymagają `MenuPopup::refresh()`
 (`menu->getPopupFor(&item)`); przed otwarciem popup odświeża się sam.
 
+## C API
+
+Odpowiednik w `sdl_gui.h`: `sdlgui_menu_bar_create()`, `sdlgui_menu_bar_add_menu()`,
+`sdlgui_menu_item_add_item/add_submenu/add_separator()`, `set_shortcut/set_checked/set_radio`
+oraz jeden handler komend (`sdlgui_menu_bar_set_on_command`) zamiast per-pozycja
+callbacków. Pełny opis: [c_api.md](../c_api.md#menubar), przykład:
+`examples/c/12_menu_bar.c`.
+
 ## JSON (LayoutParser)
 
 ```json
