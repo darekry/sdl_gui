@@ -694,6 +694,9 @@ sdlgui_menu_item_t sdlgui_menu_item_add_submenu(sdlgui_menu_item_t parent,
 void               sdlgui_menu_item_add_separator(sdlgui_menu_item_t parent);
 void               sdlgui_menu_item_set_shortcut(sdlgui_menu_item_t item,
                                                  const char* shortcut);
+/* Display-only variant: draws the shortcut but registers no accelerator. */
+void               sdlgui_menu_item_set_shortcut_display(sdlgui_menu_item_t item,
+                                                         const char* shortcut);
 void               sdlgui_menu_item_set_enabled(sdlgui_menu_item_t item, int enabled);
 void               sdlgui_menu_item_set_check_type(sdlgui_menu_item_t item,
                                                    sdlgui_menu_check_t type);

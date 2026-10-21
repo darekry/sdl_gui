@@ -240,6 +240,16 @@ struct MenuItem {
         return *this;
     }
 
+    // Display-only shortcut: the text is drawn right-aligned like setShortcut,
+    // but no global accelerator is registered. For apps that own the key
+    // handling themselves (Win16-style accelerators handled by the game loop).
+    MenuItem& setShortcutDisplay(std::string_view shortcutText) {
+        shortcut = shortcutText;
+        shortcutKey = SDLK_UNKNOWN;
+        shortcutMod = SDL_KMOD_NONE;
+        return *this;
+    }
+
     MenuItem& setCommand(std::string_view commandId) {
         command = commandId;
         return *this;

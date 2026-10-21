@@ -1489,6 +1489,12 @@ void sdlgui_menu_item_set_shortcut(sdlgui_menu_item_t item, const char* shortcut
     node->setShortcut(shortcut ? shortcut : "");
 }
 
+void sdlgui_menu_item_set_shortcut_display(sdlgui_menu_item_t item, const char* shortcut) {
+    auto* node = unwrap_menu_item(item, __func__);
+    if (!node) return;
+    node->setShortcutDisplay(shortcut ? shortcut : "");
+}
+
 void sdlgui_menu_item_set_enabled(sdlgui_menu_item_t item, int enabled) {
     auto* node = unwrap_menu_item(item, __func__);
     if (!node) return;
