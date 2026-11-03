@@ -9,7 +9,7 @@ prawdy dla odbiorców biblioteki (nie mają dostępu do `src/`).
 - [Getting Started](release/getting_started.md) — instalacja SDL3, kompilacja, linkowanie, Hello World
 - [Fundamenty (core)](release/core.md) — GUIElement, GUIManager, ElementRef, cykl życia
 - [Wzorce użycia](release/patterns.md) — zalecane wzorce i typowe pułapki
-- [Widgety](release/widgets/README.md) — 23 widgety (Button, Slider, StringGrid, TextArea, MenuBar, ShaderPanel, ...)
+- [Widgety](release/widgets/README.md) — 26 widgetów (Button, Slider, StringGrid, TextArea, MenuBar, MenuList, FormDialog, CustomControl, ShaderPanel, ...)
 - [Kompozyty](release/composites.md) — DialogBox, MessageBox, FileDialog
 - [Menedżery](release/managers.md) — FontManager, TextureManager, TimerManager, AnimationManager, ScreenManager, WindowManager
 - [Zasoby](release/resources.md) — Style/Theme, Anchor, SDLApp, GUIContext, parsery, logowanie
@@ -37,6 +37,7 @@ prawdy dla odbiorców biblioteki (nie mają dostępu do `src/`).
 ## Technical Documentation (aktualne)
 
 - [Plan dużego refaktoru](refactor_plan.md) — status prac strukturalnych (Event, Layout, Style, TextModel, Lifetime, Factory)
+- [CivLin — propozycje API i widgetów](civlin-port-proposals.md) — zmiany w sdl_gui ułatwiające port Civ1 (geometria, FormDialog, MenuList, hooki draw/event)
 
 ## Archiwum techniczne (`docs/archive/` — zrealizowane propozycje, tylko historyczne)
 

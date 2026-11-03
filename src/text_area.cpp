@@ -205,6 +205,10 @@ bool TextArea::handleEvent(const SDL_Event& e) {
         return false;
     }
 
+    if (dispatchEventHook(e)) {
+        return true;
+    }
+
     // Mouse button down - start potential drag or position cursor
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && contains(e.button.x, e.button.y)) {
         // Right button: default text editing context menu instead of starting a drag

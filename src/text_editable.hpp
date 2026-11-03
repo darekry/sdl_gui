@@ -39,6 +39,16 @@ public:
     virtual void setLocked(bool locked);
     virtual bool isLocked() const;
 
+    // Maximum content length in UTF-8 characters (0 = unlimited). Enforced on
+    // typing, paste and setText; truncation is codepoint-safe.
+    void setMaxLength(size_t max_length);
+    [[nodiscard]] size_t getMaxLength() const { return m_maxLength; }
+
+    // Per-codepoint filter for typing and paste. Returning false rejects the
+    // character. setText() is programmatic and bypasses the filter.
+    void setCharFilter(std::function<bool(unsigned)> filter);
+    [[nodiscard]] bool hasCharFilter() const { return static_cast<bool>(m_charFilter); }
+
     // Focus handling
     void onFocusGained() override;
     void onFocusLost() override;
@@ -72,6 +82,10 @@ protected:
     // Locked state
     bool m_locked = false;
 
+    // Input constraints (see setMaxLength/setCharFilter)
+    size_t m_maxLength = 0;
+    std::function<bool(unsigned)> m_charFilter;
+
     // Default context menu toggle
     bool m_contextMenuEnabled = true;
     
@@ -96,6 +110,13 @@ protected:
     
     // Remove the selected range and place the cursor at its start
     void deleteSelection();
+
+    // Applies the char filter and max-length capacity to an insertion string.
+    // capacity = SIZE_MAX means unlimited.
+    [[nodiscard]] std::string sanitizeInsertion(std::string_view input,
+                                                size_t capacity) const;
+    // Max additional characters allowed right now (SIZE_MAX when unlimited).
+    [[nodiscard]] size_t remainingCapacity() const;
     
     // Virtual methods for subclass-specific behavior
     virtual void updateTextOffset() = 0;

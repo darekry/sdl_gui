@@ -744,3 +744,133 @@ int main(void) {
 Kolejność w pętli jest taka sama jak w C++: `process_event` → `update` →
 `cleanup` → `render`. Pominięcie `update()` psuje tooltipy, pominięcie
 `cleanup()` powoduje wyciek elementów.
+
+## Parity P0/P1 (CivLin)
+
+### Geometria, drzewo, widoczność, focus
+
+| Funkcja | Opis |
+|---------|------|
+| `void sdlgui_element_get_rect(sdlgui_element_t e, sdlgui_rect_t* out)` | Prostokąt lokalny (`x/y` = pozycja względem rodzica) |
+| `void sdlgui_element_get_absolute_rect(sdlgui_element_t e, sdlgui_rect_t* out)` | Prostokąt w oknie (`getAbsolutePosition()` + rozmiar) |
+| `int sdlgui_element_get_visible(sdlgui_element_t e)` | Widoczność samego elementu |
+| `int sdlgui_element_is_shown(sdlgui_element_t e)` | Widoczność efektywna: element **i wszyscy przodkowie** |
+| `int sdlgui_element_get_enabled(sdlgui_element_t e)` | Flaga enabled |
+| `sdlgui_element_t sdlgui_element_get_parent(sdlgui_element_t e)` | Rodzic lub `NULL` |
+| `size_t sdlgui_element_get_child_count(sdlgui_element_t e)` | Liczba dzieci |
+| `sdlgui_element_t sdlgui_element_get_child(sdlgui_element_t e, size_t i)` | Dziecko; poza zakresem `NULL` + `last_error` |
+| `sdlgui_element_t sdlgui_element_find_by_id(sdlgui_element_t e, const char* id)` | DFS w poddrzewie (self + dzieci) |
+| `int sdlgui_element_request_focus(sdlgui_element_t e)` | `1`/`0`; odrzuca disabled i ukryte (także przez przodka) |
+| `sdlgui_element_t sdlgui_get_focused_element(sdlgui_t gui)` | Aktualny fokus lub `NULL` |
+| `void sdlgui_focus_next(sdlgui_t gui, int forward)` | Następny/poprzedni fokusowalny element |
+| `void sdlgui_get_window_rect(sdlgui_t gui, sdlgui_rect_t* out)` | `{0,0,window_w,window_h}` |
+
+`sdlgui_rect_t` to `{ int x, y, w, h; }`. Recty są aktualne po
+`updateLayout`/resize — elementy dodane przez `add_child` już go przeszły.
+
+### Control ID
+
+| Funkcja | Opis |
+|---------|------|
+| `void sdlgui_element_set_control_id(sdlgui_element_t e, int id)` | Zakres `0..0xffff`; poza zakresem błąd, bez zmiany |
+| `int sdlgui_element_get_control_id(sdlgui_element_t e)` | `-1` = nieustawiony |
+| `sdlgui_element_t sdlgui_element_find_by_control_id(sdlgui_element_t e, int id)` | DFS w poddrzewie, pierwsze trafienie |
+
+### Metryki tekstu i Label
+
+| Funkcja | Opis |
+|---------|------|
+| `int sdlgui_measure_text(sdlgui_t, const char*, int font_size, int* w, int* h, int* line_h)` | Dzieli po `\n`; `w` = najszersza linia, `h` = linie × `line_height`; pusty tekst → `0/line_height` |
+| `int sdlgui_get_font_metrics(sdlgui_t, int font_size, int* line_h, int* ascent, int* descent)` | Metryki fontu domyślnego motywu |
+| `void sdlgui_label_set_alignment(sdlgui_element_t e, int h, int v)` | `h`: 0=left,1=center,2=right; `v`: 0=top,1=middle,2=bottom |
+| `void sdlgui_label_set_font_size(sdlgui_element_t e, int font_size)` | `-1` = rozmiar z motywu |
+| `size_t sdlgui_button_get_label_buf(sdlgui_element_t e, char* buf, size_t len)` | Etykieta przycisku do bufora wywołującego |
+
+`font_size <= 0` w `measure_text`/`get_font_metrics` oznacza rozmiar z
+domyślnego stylu motywu.
+
+### MenuBar: integer command id
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_menu_item_t sdlgui_menu_item_add_item_id(parent, text, id)` | Item z `commandId` |
+| `void sdlgui_menu_bar_set_on_command_id(bar, cb, userdata)` | Handler `(bar, int id, userdata)` |
+| `void sdlgui_menu_item_set_text(item, text)` | Zmiana tekstu odświeża metryki popupu |
+| `size_t sdlgui_menu_item_get_text_buf(item, buf, len)` | Tekst itemu do bufora |
+| `sdlgui_menu_item_t sdlgui_menu_item_find_by_id(bar, id)` | DFS po podmenu; `NULL` + `last_error` |
+
+Kolejność aktywacji: `action` → `commandId` → string `command`.
+
+### Kursor: surface i kursor systemowy
+
+| Funkcja | Opis |
+|---------|------|
+| `void sdlgui_cursor_set_surface(e, state, SDL_Surface*, hx, hy)` | Kopiuje piksele do tekstury; surface pozostaje własnością wywołującego; wraca do trybu overlay |
+| `void sdlgui_cursor_set_system(e, SDL_SystemCursor)` | Pokazuje kursor systemowy, wyłącza overlay |
+| `int sdlgui_cursor_is_system(e)` | `1` w trybie systemowym |
+
+### Hooki draw/event i CustomControl
+
+| Funkcja | Opis |
+|---------|------|
+| `void sdlgui_element_set_draw_hook(e, phase, cb, userdata)` | `BEFORE/REPLACE/AFTER`; każdy hook wymusza direct render (bez cache) |
+| `void sdlgui_element_clear_draw_hooks(e)` | Usuwa wszystkie fazy |
+| `void sdlgui_element_set_event_hook(e, cb, userdata)` | Przed propagacją do dzieci; `1` konsumuje |
+| `void sdlgui_element_clear_event_hook(e)` | Usuwa hook |
+| `void sdlgui_element_notify_command(e, int id)` | `WM_COMMAND` do najbliższego `FormDialog` |
+| `sdlgui_element_t sdlgui_custom_control_create(gui, parent, x,y,w,h, paint, event, userdata)` | Fokusowalny owner-draw panel |
+
+Callback draw dostaje renderer, prostokąt lokalny `{0,0,w,h}` i clip
+przodków w współrzędnych lokalnych (rysowanie lokalne). Element z hookiem
+nie używa cache'u; rotacja + hook to udokumentowane ograniczenie.
+
+### FormDialog i runner modalny
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_form_create(gui, title, x,y,w,h)` | Nowy formularz (overlay, top-level) |
+| `sdlgui_form_add_widget(form, id, child)` | Przepina element top-level + nadaje control id |
+| `sdlgui_form_add_static/button/edit/custom(...)` | Tworzy i rejestruje element |
+| `sdlgui_form_find_item(form, id)` | Element po control id |
+| `sdlgui_form_get_item_rect(form, id, out)` | Prostokąt lokalny itemu |
+| `sdlgui_form_set_item_visible/enabled/text/rect(...)` | Modyfikacja itemu (`1`/`0`) |
+| `sdlgui_form_end(form, result)` / `sdlgui_form_get_result` / `sdlgui_form_is_closed` | Wynik i stan |
+| `sdlgui_form_set_on_command(form, cb, userdata)` | `(form, id, userdata)` |
+| `sdlgui_form_create_from_items(...)` | Budowa z `sdlgui_form_item_desc_t[]` |
+| `void sdlgui_dialog_close_with_result(e, result)` | Działa na dowolnym `ModalDialog` |
+| `int sdlgui_modal_run(gui, dialog, opts, result_out)` | Pętla modalna |
+
+`sdlgui_modal_options_t`: `keep_background`, `clear_r/g/b`, `cancel_key`,
+`cancel_result`, `frame_cb`, `event_filter`, `userdata`. Runner pompuje
+`SDL_PollEvent` → `process_event` → `update` → `cleanup` → render/present aż
+do zamknięcia dialogu; wynik jest kopiowany **przed** `cleanup()`. Działa
+też z `sdlgui_attach`.
+
+### MenuList
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_menu_list_create(gui, parent, x,y,w,h, title, items, count)` | Lista modalna (`sdlgui_menu_list_item_t`) |
+| `sdlgui_menu_list_set_columns(e, n)` | Pozycje w wierszu (row-major) |
+| `sdlgui_menu_list_set_title_width(e, px)` | Minimalna szerokość nagłówka |
+| `sdlgui_menu_list_set_disabled_mask(e, uint32_t)` | Bit `i` wyłącza pozycję `i` |
+| `sdlgui_menu_list_set_preselect(e, id)` | Preselekcja po id |
+| `sdlgui_menu_list_set_cancel_id(e, id)` | Id zwracane przez Esc |
+| `sdlgui_menu_list_set_timer_ms(e, ms)` | Timer (0 = wyłączony) |
+| `int sdlgui_menu_list_get_selected_id(e)` | Ostatni wybór / id anulowania |
+| `sdlgui_menu_list_set_on_select(e, cb, userdata)` | Klik/Enter/Esc |
+| `sdlgui_menu_list_set_row_callback(e, cb, userdata)` | Własny render wiersza |
+| `sdlgui_menu_list_set_on_tick(e, cb, userdata)` | Callback timera |
+
+### TextInput: limit i filtr
+
+| Funkcja | Opis |
+|---------|------|
+| `void sdlgui_text_input_set_max_length(e, size_t)` | Limit w znakach UTF-8 (0 = brak) |
+| `void sdlgui_text_input_set_char_filter(e, cb, userdata)` | Filtr per codepoint (wpisywanie i wklejanie) |
+| `void sdlgui_text_input_set_on_key(e, cb, userdata)` | Hook klawisza przed edycją; `1` konsumuje |
+| `void sdlgui_text_input_set_cursor_pos(e, size_t)` | Pozycja kursora w znakach |
+| `void sdlgui_text_input_set_selection(e, start, end)` | Selekcja w znakach, przycinana |
+
+`locked` nadal wygrywa: zablokowany input nie woła `on_key` i nie przyjmuje
+wpisywania.

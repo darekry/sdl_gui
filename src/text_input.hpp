@@ -12,6 +12,15 @@ public:
     // TextInput-specific callbacks
     void setOnTextChanged(const std::function<void(TextInput*)>& callback);
     void setOnEnterPressed(const std::function<void(TextInput*)>& callback);
+
+    // Key hook: fires at the top of handleEvent() for KEY_DOWN after the
+    // locked/enabled/visible guard. Returning true consumes the key. Locked
+    // input never reaches the hook (read-only wins).
+    using OnKeyCallback = std::function<bool(const SDL_KeyboardEvent&)>;
+    void setOnKey(OnKeyCallback callback) { m_onKey = std::move(callback); }
+
+    // Char-index cursor placement (clamped to the text length).
+    void setCursorPos(size_t char_pos);
     
     // Locked state (override shared TextEditable implementation)
     void setLocked(bool locked) override;
@@ -35,4 +44,5 @@ private:
     
     std::function<void(TextInput*)> m_onTextChanged;
     std::function<void(TextInput*)> m_onEnterPressed;
+    OnKeyCallback m_onKey;
 };

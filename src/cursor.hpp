@@ -22,6 +22,15 @@ public:
     ~Cursor() override;
 
     void setCursorTexture(CursorState state, const std::string& path, int hotspotX = 0, int hotspotY = 0);
+    // Builds the cursor texture from caller-owned surface pixels (the surface
+    // is not adopted and may be freed immediately). Switches back to overlay
+    // mode when the previous state was a system cursor.
+    void setCursorSurface(CursorState state, SDL_Surface* surface,
+                          int hotspotX = 0, int hotspotY = 0);
+    // Shows a native SDL system cursor and disables overlay drawing. Any later
+    // setCursorTexture/setCursorSurface returns to overlay mode.
+    void setSystemCursor(SDL_SystemCursor cursor);
+    [[nodiscard]] bool isSystemCursor() const { return m_systemMode; }
     
     void setAnimatedCursor(CursorState state, const std::string& path, int totalFrames, int rows = 1, 
                           float fps = 12.0f, int hotspotX = 0, int hotspotY = 0);
@@ -78,6 +87,7 @@ private:
 
     void renderCursor(SDL_Renderer* renderer, const CursorData& data, int mouseX, int mouseY);
     SDL_Rect getSrcRect(const CursorData& data) const;
+    void clearSystemCursor();
 
     static constexpr size_t kNumCursorStates = 9;
     std::array<std::optional<CursorData>, kNumCursorStates> m_cursors;
@@ -88,5 +98,7 @@ private:
     int m_mouseX = 0;
     int m_mouseY = 0;
     bool m_hasMousePos = false;
+    bool m_systemMode = false;
+    SDL_Cursor* m_systemCursor = nullptr;
     std::function<void(CursorState)> m_onStateChanged;
 };

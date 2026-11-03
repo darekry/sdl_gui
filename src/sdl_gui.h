@@ -297,6 +297,80 @@ void        sdlgui_element_set_can_get_keyboard_focus(sdlgui_element_t e, int ca
 int         sdlgui_element_add_child(sdlgui_element_t parent, sdlgui_element_t child);
 
 /* ═══════════════════════════════════════════════════════════════════
+   Geometry, tree, visibility, focus, control ids (parity P0)
+   ═══════════════════════════════════════════════════════════════ */
+
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+} sdlgui_rect_t;
+
+/*
+ * Local rect (x/y = m_x/m_y, unreachable through the old API) and absolute
+ * rect (getAbsolutePosition() + size). Both read the current layout state;
+ * call them after updateLayout/resize (elements added with add_child already
+ * went through it).
+ */
+void sdlgui_element_get_rect(sdlgui_element_t e, sdlgui_rect_t* out);
+void sdlgui_element_get_absolute_rect(sdlgui_element_t e, sdlgui_rect_t* out);
+
+int  sdlgui_element_get_visible(sdlgui_element_t e);
+/* 1 only when the element AND all ancestors are visible. */
+int  sdlgui_element_is_shown(sdlgui_element_t e);
+int  sdlgui_element_get_enabled(sdlgui_element_t e);
+
+sdlgui_element_t sdlgui_element_get_parent(sdlgui_element_t e);
+size_t           sdlgui_element_get_child_count(sdlgui_element_t e);
+sdlgui_element_t sdlgui_element_get_child(sdlgui_element_t e, size_t index);
+
+/* DFS search inside the element's subtree (self included). NULL + last_error. */
+sdlgui_element_t sdlgui_element_find_by_id(sdlgui_element_t e, const char* id);
+
+/*
+ * Keyboard focus. request_focus returns 1 on success, 0 when the element
+ * cannot take focus, is disabled or is hidden (including via an ancestor).
+ */
+int              sdlgui_element_request_focus(sdlgui_element_t e);
+sdlgui_element_t sdlgui_get_focused_element(sdlgui_t gui);
+void             sdlgui_focus_next(sdlgui_t gui, int forward);
+
+/* Window rect in pixels: {0, 0, window_w, window_h}. */
+void sdlgui_get_window_rect(sdlgui_t gui, sdlgui_rect_t* out);
+
+/*
+ * Dialog control ids (Win16 DLGITEM ids). Valid range 0..0xffff; out of
+ * range is rejected with last_error and leaves the element unchanged.
+ * find_by_control_id searches the element's subtree, first DFS match.
+ */
+void             sdlgui_element_set_control_id(sdlgui_element_t e, int control_id);
+int              sdlgui_element_get_control_id(sdlgui_element_t e);
+sdlgui_element_t sdlgui_element_find_by_control_id(sdlgui_element_t e, int control_id);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Text metrics + Label alignment
+   ═══════════════════════════════════════════════════════════════════ */
+
+/*
+ * Measures text with the default theme font (or font_size when > 0).
+ * Multi-line text is split on '\n'; width = widest line, height = lines *
+ * line_height (line_height = TTF_GetFontHeight). Empty text returns
+ * 0/line_height without touching TTF layout. Any out pointer may be NULL.
+ * Returns 0 when the font cannot be loaded (outputs zeroed).
+ */
+int sdlgui_measure_text(sdlgui_t gui, const char* text, int font_size,
+                        int* width, int* height, int* line_height);
+int sdlgui_get_font_metrics(sdlgui_t gui, int font_size,
+                            int* line_height, int* ascent, int* descent);
+
+/* h/v accept TextHAlign/TextVAlign: 0=left/top, 1=center/middle, 2=right/bottom. */
+void sdlgui_label_set_alignment(sdlgui_element_t e, int h, int v);
+void sdlgui_label_set_font_size(sdlgui_element_t e, int font_size);
+/* Button label via Button::getText(); caller buffer semantics. */
+size_t sdlgui_button_get_label_buf(sdlgui_element_t e, char* buf, size_t buf_len);
+
+/* ═══════════════════════════════════════════════════════════════════
    Anchor factories
    ═══════════════════════════════════════════════════════════════ */
 
@@ -667,6 +741,11 @@ typedef void (*sdlgui_menu_command_callback_t)(sdlgui_element_t bar,
                                                const char* command,
                                                void* userdata);
 
+/* Integer command id callback (Win16 command parity). */
+typedef void (*sdlgui_menu_command_id_callback_t)(sdlgui_element_t bar,
+                                                  int command_id,
+                                                  void* userdata);
+
 typedef enum {
     SDLGUI_MENU_CHECK_NONE  = 0,
     SDLGUI_MENU_CHECK       = 1,
@@ -702,6 +781,22 @@ void               sdlgui_menu_item_set_check_type(sdlgui_menu_item_t item,
                                                    sdlgui_menu_check_t type);
 void               sdlgui_menu_item_set_checked(sdlgui_menu_item_t item, int checked);
 int                sdlgui_menu_item_is_checked(sdlgui_menu_item_t item);
+
+/*
+ * Integer command ids: activation order is action -> commandId -> dispatch
+ * string, so items with an id do not fire the string command handler.
+ * Changing text/enabled/check re-measures titles and refreshes popups.
+ */
+sdlgui_menu_item_t sdlgui_menu_item_add_item_id(sdlgui_menu_item_t parent,
+                                                const char* text, int command_id);
+void               sdlgui_menu_bar_set_on_command_id(sdlgui_element_t bar,
+                                                     sdlgui_menu_command_id_callback_t cb,
+                                                     void* userdata);
+void               sdlgui_menu_item_set_text(sdlgui_menu_item_t item, const char* text);
+size_t             sdlgui_menu_item_get_text_buf(sdlgui_menu_item_t item,
+                                                 char* buf, size_t buf_len);
+/* DFS (including submenus) for hasCommandId == command_id; NULL + last_error. */
+sdlgui_menu_item_t sdlgui_menu_item_find_by_id(sdlgui_element_t bar, int command_id);
 
 /* ═══════════════════════════════════════════════════════════════════
    Phase 3: GPU context (Vulkan + SDL_CreateGPURenderer)
@@ -798,6 +893,21 @@ void sdlgui_cursor_set_animated_texture(sdlgui_element_t e, sdlgui_cursor_state_
                                         const char* path, int total_frames, int rows,
                                         float fps, int hotspot_x, int hotspot_y);
 
+/*
+ * Build the cursor from caller-owned surface pixels (copied into a texture;
+ * the surface is not adopted and may be freed immediately). Returns to
+ * overlay mode, hiding any system cursor.
+ */
+void sdlgui_cursor_set_surface(sdlgui_element_t e, sdlgui_cursor_state_t state,
+                               SDL_Surface* surface, int hotspot_x, int hotspot_y);
+
+/*
+ * Show a native SDL system cursor (SDL_SystemCursor) and stop drawing the
+ * overlay. set_texture/set_surface/animated switch back to overlay mode.
+ */
+void sdlgui_cursor_set_system(sdlgui_element_t e, SDL_SystemCursor cursor);
+int  sdlgui_cursor_is_system(sdlgui_element_t e);
+
 void  sdlgui_cursor_set_state(sdlgui_element_t e, sdlgui_cursor_state_t state);
 int   sdlgui_cursor_get_state(sdlgui_element_t e);
 void  sdlgui_cursor_set_offset(sdlgui_element_t e, int offset_x, int offset_y);
@@ -878,6 +988,200 @@ size_t           sdlgui_list_view_get_item_text_buf(sdlgui_element_t e, size_t i
                                                    char* buf, size_t buf_len);
 size_t           sdlgui_combo_box_get_item_text_buf(sdlgui_element_t e, size_t index,
                                                    char* buf, size_t buf_len);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Parity P1: draw/event hooks + CustomControl
+   ═══════════════════════════════════════════════════════════════════ */
+
+typedef enum {
+    SDLGUI_DRAW_BEFORE  = 0,
+    SDLGUI_DRAW_REPLACE = 1,
+    SDLGUI_DRAW_AFTER   = 2
+} sdlgui_draw_phase_t;
+
+/*
+ * Draw callback runs in ELEMENT-LOCAL coordinates: local_rect is
+ * {0,0,w,h} and clip_rect is the ancestors' clip translated to local
+ * space. Installing any draw hook switches the element to the direct path
+ * (no render cache) and disables rotation for it.
+ */
+typedef void (*sdlgui_draw_callback_t)(sdlgui_element_t e, SDL_Renderer* renderer,
+                                       const sdlgui_rect_t* local_rect,
+                                       const sdlgui_rect_t* clip_rect,
+                                       void* userdata);
+
+/*
+ * Event callback fires before child propagation. Mouse events get element
+ * local x/y, other events 0/0. Returning 1 consumes the event.
+ */
+typedef int (*sdlgui_event_callback_t)(sdlgui_element_t e, const SDL_Event* event,
+                                       int local_x, int local_y, void* userdata);
+
+void sdlgui_element_set_draw_hook(sdlgui_element_t e, sdlgui_draw_phase_t phase,
+                                  sdlgui_draw_callback_t cb, void* userdata);
+void sdlgui_element_clear_draw_hooks(sdlgui_element_t e);
+void sdlgui_element_set_event_hook(sdlgui_element_t e, sdlgui_event_callback_t cb,
+                                   void* userdata);
+void sdlgui_element_clear_event_hook(sdlgui_element_t e);
+/* Routes command_id to the nearest FormDialog's on_command (WM_COMMAND). */
+void sdlgui_element_notify_command(sdlgui_element_t e, int command_id);
+
+/* Focusable owner-draw panel; paint == REPLACE hook, event == event hook. */
+sdlgui_element_t sdlgui_custom_control_create(sdlgui_t gui, sdlgui_element_t parent,
+                                               int x, int y, int w, int h,
+                                               sdlgui_draw_callback_t paint,
+                                               sdlgui_event_callback_t event,
+                                               void* userdata);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Parity P1: FormDialog
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Command callback: (form, item_id, userdata). */
+typedef void (*sdlgui_form_command_callback_t)(sdlgui_element_t form, int item_id,
+                                               void* userdata);
+
+sdlgui_element_t sdlgui_form_create(sdlgui_t gui, const char* title,
+                                    int x, int y, int w, int h);
+/*
+ * Reparents a top-level element (created with parent == NULL) into the form
+ * and assigns its control id. Returns the element or NULL + last_error.
+ */
+sdlgui_element_t sdlgui_form_add_widget(sdlgui_element_t form, int id,
+                                        sdlgui_element_t child);
+sdlgui_element_t sdlgui_form_add_static(sdlgui_element_t form, int id,
+                                        const char* text, int x, int y, int w, int h);
+sdlgui_element_t sdlgui_form_add_button(sdlgui_element_t form, int id,
+                                        const char* text, int x, int y, int w, int h);
+sdlgui_element_t sdlgui_form_add_edit(sdlgui_element_t form, int id,
+                                      const char* text, int x, int y, int w, int h);
+sdlgui_element_t sdlgui_form_add_custom(sdlgui_element_t form, int id,
+                                        int x, int y, int w, int h);
+sdlgui_element_t sdlgui_form_find_item(sdlgui_element_t form, int id);
+int              sdlgui_form_get_item_rect(sdlgui_element_t form, int id,
+                                           sdlgui_rect_t* out);
+int              sdlgui_form_set_item_visible(sdlgui_element_t form, int id, int visible);
+int              sdlgui_form_set_item_enabled(sdlgui_element_t form, int id, int enabled);
+int              sdlgui_form_set_item_text(sdlgui_element_t form, int id, const char* text);
+int              sdlgui_form_set_item_rect(sdlgui_element_t form, int id,
+                                           int x, int y, int w, int h);
+void             sdlgui_form_end(sdlgui_element_t form, int result);
+int              sdlgui_form_get_result(sdlgui_element_t form);
+int              sdlgui_form_is_closed(sdlgui_element_t form);
+void             sdlgui_form_set_on_command(sdlgui_element_t form,
+                                            sdlgui_form_command_callback_t cb,
+                                            void* userdata);
+
+/* Description-driven construction (CivLin translates its DLGTEMPLATE). */
+typedef enum {
+    SDLGUI_FORM_ITEM_STATIC = 0,
+    SDLGUI_FORM_ITEM_BUTTON = 1,
+    SDLGUI_FORM_ITEM_EDIT   = 2,
+    SDLGUI_FORM_ITEM_CUSTOM = 3
+} sdlgui_form_item_type_t;
+
+typedef struct {
+    int id;
+    int type;        /* sdlgui_form_item_type_t */
+    const char* text;
+    int x, y, w, h;
+} sdlgui_form_item_desc_t;
+
+sdlgui_element_t sdlgui_form_create_from_items(sdlgui_t gui, const char* title,
+                                               int x, int y, int w, int h,
+                                               const sdlgui_form_item_desc_t* items,
+                                               size_t count);
+
+/* Works on any ModalDialog (FormDialog stores the result; DialogBox closes). */
+void sdlgui_dialog_close_with_result(sdlgui_element_t e, int result);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Parity P1: modal runner
+   ═══════════════════════════════════════════════════════════════════ */
+
+typedef struct {
+    int keep_background;          /* 0 = clear, 1 = keep last frame */
+    int clear_r, clear_g, clear_b;
+    int cancel_key;               /* SDL_Keycode; 0 = none */
+    int cancel_result;            /* result for Esc/quit (default -1) */
+    void (*frame_cb)(void* userdata);
+    int  (*event_filter)(const SDL_Event* e, void* userdata); /* 1 = consumed */
+    void* userdata;
+} sdlgui_modal_options_t;
+
+/*
+ * Pumps SDL_PollEvent → process_event → update → cleanup → render →
+ * SDL_RenderPresent until the dialog closes (form_end / dialog_close).
+ * Works with sdlgui_attach (uses the manager's renderer, not SDLApp::run).
+ * The result is copied before cleanup(), so result_out stays valid even when
+ * the dialog is destroyed by the final cleanup. Returns the result code.
+ */
+int sdlgui_modal_run(sdlgui_t gui, sdlgui_element_t dialog,
+                     const sdlgui_modal_options_t* opts, int* result_out);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Parity P1: MenuList
+   ═══════════════════════════════════════════════════════════════════ */
+
+typedef struct {
+    const char* text;   /* copied at create; NULL = "" */
+    int id;
+    int enabled;
+} sdlgui_menu_list_item_t;
+
+typedef void (*sdlgui_menu_list_select_cb_t)(sdlgui_element_t e, int item_id,
+                                             const char* text, void* userdata);
+typedef void (*sdlgui_menu_list_row_cb_t)(sdlgui_element_t e,
+                                          SDL_Renderer* renderer,
+                                          const sdlgui_rect_t* row_rect,
+                                          const char* text, int item_id,
+                                          int selected, int enabled,
+                                          void* userdata);
+typedef void (*sdlgui_menu_list_tick_cb_t)(sdlgui_element_t e, void* userdata);
+
+sdlgui_element_t sdlgui_menu_list_create(sdlgui_t gui, sdlgui_element_t parent,
+                                          int x, int y, int w, int h,
+                                          const char* title,
+                                          const sdlgui_menu_list_item_t* items,
+                                          size_t count);
+void sdlgui_menu_list_set_columns(sdlgui_element_t e, int columns);
+void sdlgui_menu_list_set_title_width(sdlgui_element_t e, int px);
+void sdlgui_menu_list_set_disabled_mask(sdlgui_element_t e, uint32_t mask);
+void sdlgui_menu_list_set_preselect(sdlgui_element_t e, int item_id);
+void sdlgui_menu_list_set_cancel_id(sdlgui_element_t e, int item_id);
+void sdlgui_menu_list_set_timer_ms(sdlgui_element_t e, uint32_t ms);
+int  sdlgui_menu_list_get_selected_id(sdlgui_element_t e);
+void sdlgui_menu_list_set_on_select(sdlgui_element_t e,
+                                    sdlgui_menu_list_select_cb_t cb,
+                                    void* userdata);
+void sdlgui_menu_list_set_row_callback(sdlgui_element_t e,
+                                       sdlgui_menu_list_row_cb_t cb,
+                                       void* userdata);
+void sdlgui_menu_list_set_on_tick(sdlgui_element_t e,
+                                  sdlgui_menu_list_tick_cb_t cb,
+                                  void* userdata);
+
+/* ═══════════════════════════════════════════════════════════════════
+   Parity P1: TextInput extensions
+   ═══════════════════════════════════════════════════════════════ */
+
+/* max_length in UTF-8 characters; 0 = unlimited. Overlong input is truncated. */
+void sdlgui_text_input_set_max_length(sdlgui_element_t e, size_t max_length);
+/* char_filter gets a Unicode codepoint; returning 0 rejects the character. */
+void sdlgui_text_input_set_char_filter(sdlgui_element_t e,
+                                       int (*filter)(unsigned codepoint, void* userdata),
+                                       void* userdata);
+/*
+ * on_key fires at the start of handleEvent (after locked/enabled/visible).
+ * Returning 1 consumes the key. Locked input never reaches the hook.
+ */
+void sdlgui_text_input_set_on_key(sdlgui_element_t e,
+                                  int (*cb)(sdlgui_element_t e,
+                                            const SDL_KeyboardEvent* key,
+                                            void* userdata),
+                                  void* userdata);
+void sdlgui_text_input_set_cursor_pos(sdlgui_element_t e, size_t char_pos);
+void sdlgui_text_input_set_selection(sdlgui_element_t e, size_t start, size_t end);
 
 /* ═══════════════════════════════════════════════════════════════════
    Dialogs (DialogBox / FileDialog / ColorDialog / MessageBox)

@@ -28,7 +28,12 @@ public:
 
     /// Closes the dialog (removes the element on next cleanup()).
     void close();
+    /// Closes and stores the result code read by getResult().
+    void closeWithResult(int result);
     [[nodiscard]] bool isOpen() const { return m_isOpen; }
+    /// Result code (default -1). Valid until the dialog is destroyed; read it
+    /// before the owning cleanup() pass drops the element.
+    [[nodiscard]] int getResult() const { return m_result; }
 
     /// Centers the dialog in the current viewport (manager window size).
     void centerInViewport();
@@ -45,4 +50,5 @@ protected:
     virtual void onCancel() { close(); }
 
     bool m_isOpen = true;
+    int m_result = -1;
 };

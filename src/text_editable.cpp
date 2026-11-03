@@ -3,15 +3,89 @@
 #include "context_menu.hpp"
 #include "utf8_utils.hpp"
 
+#include "std.hpp"
+
+namespace {
+
+unsigned decodeCodepoint(const char* data, size_t length) {
+    if (length == 0) return 0;
+    const auto* bytes = reinterpret_cast<const unsigned char*>(data);
+    if (length == 1) return bytes[0];
+    if (length == 2) {
+        return (static_cast<unsigned>(bytes[0] & 0x1F) << 6) |
+               static_cast<unsigned>(bytes[1] & 0x3F);
+    }
+    if (length == 3) {
+        return (static_cast<unsigned>(bytes[0] & 0x0F) << 12) |
+               (static_cast<unsigned>(bytes[1] & 0x3F) << 6) |
+               static_cast<unsigned>(bytes[2] & 0x3F);
+    }
+    if (length == 4) {
+        return (static_cast<unsigned>(bytes[0] & 0x07) << 18) |
+               (static_cast<unsigned>(bytes[1] & 0x3F) << 12) |
+               (static_cast<unsigned>(bytes[2] & 0x3F) << 6) |
+               static_cast<unsigned>(bytes[3] & 0x3F);
+    }
+    return bytes[0];
+}
+
+}  // namespace
+
 TextEditable::TextEditable(GUIManager& manager, int x, int y, int w, int h)
     : GUIElement(manager, x, y, w, h) {
     setCanGetKeyboardFocus(true);
     markDirty();
 }
 
+void TextEditable::setMaxLength(size_t max_length) {
+    m_maxLength = max_length;
+    if (m_maxLength > 0 && utf8::charCount(m_text) > m_maxLength) {
+        setText(m_text);
+    }
+}
+
+void TextEditable::setCharFilter(std::function<bool(unsigned)> filter) {
+    m_charFilter = std::move(filter);
+}
+
+size_t TextEditable::remainingCapacity() const {
+    if (m_maxLength == 0) {
+        return SIZE_MAX;
+    }
+    const size_t current = utf8::charCount(m_text);
+    return current >= m_maxLength ? 0 : m_maxLength - current;
+}
+
+std::string TextEditable::sanitizeInsertion(std::string_view input,
+                                            size_t capacity) const {
+    std::string out;
+    out.reserve(input.size());
+    size_t byte = 0;
+    size_t accepted = 0;
+    while (byte < input.size()) {
+        if (accepted >= capacity) break;
+        const size_t length = utf8::charByteLength(
+            static_cast<unsigned char>(input[byte]));
+        const size_t safeLength = std::min(length, input.size() - byte);
+        const unsigned codepoint = decodeCodepoint(input.data() + byte, safeLength);
+        if (m_charFilter && !m_charFilter(codepoint)) {
+            byte += safeLength;
+            continue;
+        }
+        out.append(input.data() + byte, safeLength);
+        ++accepted;
+        byte += safeLength;
+    }
+    return out;
+}
+
 void TextEditable::setText(std::string_view newText) {
-    if (m_text != newText) {
-        m_text = newText;
+    std::string sanitized(newText);
+    if (m_maxLength > 0 && utf8::charCount(sanitized) > m_maxLength) {
+        sanitized = utf8::substrChars(sanitized, 0, m_maxLength);
+    }
+    if (m_text != sanitized) {
+        m_text = std::move(sanitized);
         m_cursorPos = std::min(m_cursorPos, utf8::charCount(m_text));
         updateTextOffset();
         refreshTextTexture();
@@ -206,9 +280,13 @@ bool TextEditable::handleClipboardPaste() {
         char* clipboard = SDL_GetClipboardText();
         if (clipboard) {
             deleteSelection();
-            size_t cursorByte = utf8::charToByteIndex(m_text, m_cursorPos);
-            m_text.insert(cursorByte, clipboard);
-            m_cursorPos += utf8::charCount(clipboard);
+            const std::string filtered =
+                sanitizeInsertion(clipboard, remainingCapacity());
+            if (!filtered.empty()) {
+                size_t cursorByte = utf8::charToByteIndex(m_text, m_cursorPos);
+                m_text.insert(cursorByte, filtered);
+                m_cursorPos += utf8::charCount(filtered);
+            }
             updateTextOffset();
             refreshTextTexture();
             markNeedsUpdate();
@@ -271,9 +349,13 @@ bool TextEditable::handleBackspaceWithSelection() {
 
 void TextEditable::handleTextInputWithSelection(const char* text) {
     deleteSelection();
-    size_t cursorByte = utf8::charToByteIndex(m_text, m_cursorPos);
-    m_text.insert(cursorByte, text);
-    m_cursorPos += utf8::charCount(text);
+    const std::string filtered = sanitizeInsertion(
+        text ? std::string_view(text) : std::string_view(), remainingCapacity());
+    if (!filtered.empty()) {
+        size_t cursorByte = utf8::charToByteIndex(m_text, m_cursorPos);
+        m_text.insert(cursorByte, filtered);
+        m_cursorPos += utf8::charCount(filtered);
+    }
     updateTextOffset();
     refreshTextTexture();
     markNeedsUpdate();

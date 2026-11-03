@@ -87,6 +87,21 @@ void MenuBar::setCommandHandler(std::function<void(std::string_view)> handler) {
     m_commandHandler = std::move(handler);
 }
 
+void MenuBar::setCommandIdHandler(std::function<void(int)> handler) {
+    m_commandIdHandler = std::move(handler);
+}
+
+void MenuBar::refreshMenus() {
+    measureTitles();
+    for (auto& entry : m_popups) {
+        MenuPopup* popup = entry.second;
+        if (popup && m_manager.isElementAlive(popup)) {
+            popup->refresh();
+        }
+    }
+    markDirty();
+}
+
 MenuPopup* MenuBar::popupAt(size_t stackIndex) const {
     return stackIndex < m_popupStack.size() ? m_popupStack[stackIndex] : nullptr;
 }
@@ -110,6 +125,7 @@ void MenuBar::attachMenuHooks(MenuItem& node) {
     // exactly when a node gains its first child — including nested submenus
     // built after addMenu("&File"). Setup-time only: creates top-level
     // elements, so don't build menus from inside a running event callback.
+    node.onChanged = [this]() { refreshMenus(); };
     node.onItemAdded = [this](MenuItem& parent, MenuItem& child) {
         attachMenuHooks(child);
         if (parent.submenu.size() == 1) {
@@ -509,7 +525,7 @@ bool MenuBar::dispatchShortcut(const SDL_Event& e) {
             if (item->isSelectable() && item->shortcutKey != SDLK_UNKNOWN &&
                 item->shortcutKey == e.key.key &&
                 static_cast<SDL_Keymod>(item->shortcutMod & kModMask) == mod &&
-                (item->action || !item->command.empty())) {
+                (item->action || item->hasCommandId || !item->command.empty())) {
                 found = item.get();
                 return;
             }
@@ -530,8 +546,11 @@ void MenuBar::fireItem(const MenuItem& item) {
     auto action = item.action;
     auto command = item.command;
     auto handler = m_commandHandler;
+    auto idHandler = m_commandIdHandler;
     if (action) {
         action();
+    } else if (item.hasCommandId && idHandler) {
+        idHandler(item.commandId);
     } else if (!command.empty() && handler) {
         handler(command);
     }

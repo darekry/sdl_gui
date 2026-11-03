@@ -42,7 +42,15 @@ GUIManager::GUIManager(SDL_Renderer* renderer, Viewport viewport)
     LOG_INFO("GUIManager", "createDefaultTexture: {}ms", SDL_GetTicks() - t0);
 }
 
-GUIManager::~GUIManager() = default;
+GUIManager::~GUIManager() {
+    // Destroy elements while the manager services (timer/animation managers)
+    // are still alive: widget destructors stop their timers/animation entries.
+    // Without this, member destruction order (services live before m_elements
+    // in declaration order, so they die first) would crash such destructors.
+    m_pendingElements.clear();
+    m_elements.clear();
+    cursor.reset();
+}
 
 
 GUIElement* GUIManager::addElement(std::unique_ptr<GUIElement> element) {
@@ -462,7 +470,7 @@ bool GUIManager::requestFocus(GUIElement* element) {
         setKeyboardFocus(nullptr);
         return true;
     }
-    if (!element->canGetKeyboardFocus() || !element->isEnabled() || !element->isVisible() || !isElementAlive(element)) {
+    if (!element->canGetKeyboardFocus() || !element->isEnabled() || !element->isEffectivelyVisible() || !isElementAlive(element)) {
         return false;
     }
     setKeyboardFocus(element);
@@ -612,7 +620,9 @@ void GUIManager::getWindowSize(int& width, int& height) const {
 
 void GUIManager::collectFocusableElements(std::vector<GUIElement*>& out) const {
     std::function<void(GUIElement*)> collect = [&](GUIElement* element) {
-        if (!element->isVisible()) return;
+        // Ancestors are checked too: a child of a hidden parent must not be
+        // focusable (isVisible() only reports the element itself).
+        if (!element->isEffectivelyVisible()) return;
         if (element->canGetKeyboardFocus()) {
             out.push_back(element);
         }

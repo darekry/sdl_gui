@@ -1,6 +1,7 @@
 #include "gui_context.hpp"
 #include "theme_presets.hpp"
 #include "easing.hpp"
+#include "constants.hpp"
 #include "button.hpp"
 #include "label.hpp"
 #include "panel.hpp"
@@ -27,7 +28,10 @@
 #include "shader_panel.hpp"
 #include "widget_factory.hpp"
 #include "layout.hpp"
+#include "custom_control.hpp"
+#include "menu_list.hpp"
 #include "composite/modal_dialog.hpp"
+#include "composite/form_dialog.hpp"
 #include "composite/dialog_box.hpp"
 #include "composite/file_dialog.hpp"
 #include "composite/color_dialog.hpp"
@@ -485,6 +489,310 @@ int sdlgui_element_add_child(sdlgui_element_t parent, sdlgui_element_t child) {
         return 0;
     }
     return -1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Geometry, tree, visibility, focus, control ids
+   ═══════════════════════════════════════════════════════════ */
+
+void sdlgui_element_get_rect(sdlgui_element_t e, sdlgui_rect_t* out) {
+    if (!out) return;
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_get_rect: null element handle");
+        return;
+    }
+    out->x = elem->getX();
+    out->y = elem->getY();
+    out->w = elem->getWidth();
+    out->h = elem->getHeight();
+}
+
+void sdlgui_element_get_absolute_rect(sdlgui_element_t e, sdlgui_rect_t* out) {
+    if (!out) return;
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_get_absolute_rect: null element handle");
+        return;
+    }
+    const SDL_Point abs = elem->getAbsolutePosition();
+    out->x = abs.x;
+    out->y = abs.y;
+    out->w = elem->getWidth();
+    out->h = elem->getHeight();
+}
+
+int sdlgui_element_get_visible(sdlgui_element_t e) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_get_visible: null element handle");
+        return 0;
+    }
+    return elem->isVisible() ? 1 : 0;
+}
+
+int sdlgui_element_is_shown(sdlgui_element_t e) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_is_shown: null element handle");
+        return 0;
+    }
+    return elem->isEffectivelyVisible() ? 1 : 0;
+}
+
+int sdlgui_element_get_enabled(sdlgui_element_t e) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_get_enabled: null element handle");
+        return 0;
+    }
+    return elem->isEnabled() ? 1 : 0;
+}
+
+sdlgui_element_t sdlgui_element_get_parent(sdlgui_element_t e) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_get_parent: null element handle");
+        return nullptr;
+    }
+    return wrap_elem(elem->getParent());
+}
+
+size_t sdlgui_element_get_child_count(sdlgui_element_t e) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_get_child_count: null element handle");
+        return 0;
+    }
+    return elem->getChildCount();
+}
+
+sdlgui_element_t sdlgui_element_get_child(sdlgui_element_t e, size_t index) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_get_child: null element handle");
+        return nullptr;
+    }
+    GUIElement* child = elem->getChild(index);
+    if (!child) {
+        set_c_error("sdlgui_element_get_child: index out of range");
+        return nullptr;
+    }
+    return wrap_elem(child);
+}
+
+sdlgui_element_t sdlgui_element_find_by_id(sdlgui_element_t e, const char* id) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_find_by_id: null element handle");
+        return nullptr;
+    }
+    GUIElement* found = elem->findById(id ? id : "");
+    if (!found) {
+        set_c_error("sdlgui_element_find_by_id: id not found");
+        return nullptr;
+    }
+    return wrap_elem(found);
+}
+
+int sdlgui_element_request_focus(sdlgui_element_t e) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_request_focus: null element handle");
+        return 0;
+    }
+    if (!elem->getManager().requestFocus(elem)) {
+        set_c_error("sdlgui_element_request_focus: element cannot take focus "
+                    "(disabled, hidden or not focusable)");
+        return 0;
+    }
+    return 1;
+}
+
+sdlgui_element_t sdlgui_get_focused_element(sdlgui_t gui) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_get_focused_element: null gui handle");
+        return nullptr;
+    }
+    return wrap_elem(ctx->getGUIManager().getKeyboardFocus());
+}
+
+void sdlgui_focus_next(sdlgui_t gui, int forward) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_focus_next: null gui handle");
+        return;
+    }
+    ctx->getGUIManager().focusNextElement(forward != 0);
+}
+
+void sdlgui_get_window_rect(sdlgui_t gui, sdlgui_rect_t* out) {
+    if (!out) return;
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_get_window_rect: null gui handle");
+        return;
+    }
+    int w = 0;
+    int h = 0;
+    ctx->getGUIManager().getWindowSize(w, h);
+    out->x = 0;
+    out->y = 0;
+    out->w = w;
+    out->h = h;
+}
+
+void sdlgui_element_set_control_id(sdlgui_element_t e, int control_id) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_set_control_id: null element handle");
+        return;
+    }
+    if (control_id < 0 || control_id > 0xffff) {
+        set_c_error("sdlgui_element_set_control_id: control id out of range (0..0xffff)");
+        return;
+    }
+    elem->setControlId(control_id);
+}
+
+int sdlgui_element_get_control_id(sdlgui_element_t e) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_get_control_id: null element handle");
+        return -1;
+    }
+    return elem->getControlId();
+}
+
+sdlgui_element_t sdlgui_element_find_by_control_id(sdlgui_element_t e, int control_id) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_find_by_control_id: null element handle");
+        return nullptr;
+    }
+    GUIElement* found = elem->findByControlId(control_id);
+    if (!found) {
+        set_c_error("sdlgui_element_find_by_control_id: control id not found");
+        return nullptr;
+    }
+    return wrap_elem(found);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Text metrics + Label alignment
+   ═══════════════════════════════════════════════════════════ */
+
+namespace {
+
+struct DefaultFontSelection {
+    std::string path;
+    int size = 0;
+    explicit DefaultFontSelection(GUIManager& manager, int font_size) {
+        const Style& style = manager.getTheme().getDefaultStyle();
+        path = style.fontName.value_or(constants::kDefaultFontPath);
+        size = font_size > 0 ? font_size : style.fontSize.value_or(16);
+    }
+};
+
+}  // namespace
+
+int sdlgui_measure_text(sdlgui_t gui, const char* text, int font_size,
+                        int* width, int* height, int* line_height) {
+    if (width) *width = 0;
+    if (height) *height = 0;
+    if (line_height) *line_height = 0;
+
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_measure_text: null gui handle");
+        return 0;
+    }
+    auto& manager = ctx->getGUIManager();
+    const DefaultFontSelection selection(manager, font_size);
+    auto font = manager.getFontManager().loadFont(selection.path, selection.size);
+    if (!font) {
+        set_c_error("sdlgui_measure_text: could not load default font");
+        return 0;
+    }
+
+    const int lineHeight = TTF_GetFontHeight(font.get());
+    if (line_height) *line_height = lineHeight;
+
+    const std::string_view source = text ? std::string_view(text) : std::string_view();
+    if (source.empty()) {
+        if (height) *height = lineHeight;
+        return 1;
+    }
+
+    int maxWidth = 0;
+    int lines = 0;
+    size_t start = 0;
+    while (true) {
+        const size_t end = source.find('\n', start);
+        std::string_view line = (end == std::string_view::npos)
+            ? source.substr(start)
+            : source.substr(start, end - start);
+        while (!line.empty() && line.back() == '\r') {
+            line.remove_suffix(1);
+        }
+        if (!line.empty()) {
+            int lineWidth = 0;
+            if (TTF_GetStringSize(font.get(), line.data(), line.size(), &lineWidth, nullptr)) {
+                maxWidth = std::max(maxWidth, lineWidth);
+            }
+        }
+        ++lines;
+        if (end == std::string_view::npos) break;
+        start = end + 1;
+    }
+
+    if (width) *width = maxWidth;
+    if (height) *height = lines * lineHeight;
+    return 1;
+}
+
+int sdlgui_get_font_metrics(sdlgui_t gui, int font_size,
+                            int* line_height, int* ascent, int* descent) {
+    if (line_height) *line_height = 0;
+    if (ascent) *ascent = 0;
+    if (descent) *descent = 0;
+
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_get_font_metrics: null gui handle");
+        return 0;
+    }
+    auto& manager = ctx->getGUIManager();
+    const DefaultFontSelection selection(manager, font_size);
+    if (!manager.getFontManager().getFontMetrics(selection.path, selection.size,
+                                                 line_height, ascent, descent)) {
+        set_c_error("sdlgui_get_font_metrics: could not load default font");
+        return 0;
+    }
+    return 1;
+}
+
+void sdlgui_label_set_alignment(sdlgui_element_t e, int h, int v) {
+    auto* label = checked_elem<Label>(e, ComponentType::Label, __func__);
+    if (!label) return;
+    if (h < 0 || h > 2 || v < 0 || v > 2) {
+        set_c_error("sdlgui_label_set_alignment: alignment out of range (0..2)");
+        return;
+    }
+    label->setAlignment(static_cast<TextHAlign>(h), static_cast<TextVAlign>(v));
+}
+
+void sdlgui_label_set_font_size(sdlgui_element_t e, int font_size) {
+    auto* label = checked_elem<Label>(e, ComponentType::Label, __func__);
+    if (!label) return;
+    label->setFontSize(font_size);
+}
+
+size_t sdlgui_button_get_label_buf(sdlgui_element_t e, char* buf, size_t buf_len) {
+    auto* button = checked_elem<Button>(e, ComponentType::Button, __func__);
+    if (!button) return 0;
+    return copy_c_string(button->getText(), buf, buf_len);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1498,7 +1806,7 @@ void sdlgui_menu_item_set_shortcut_display(sdlgui_menu_item_t item, const char* 
 void sdlgui_menu_item_set_enabled(sdlgui_menu_item_t item, int enabled) {
     auto* node = unwrap_menu_item(item, __func__);
     if (!node) return;
-    node->enabled = enabled != 0;
+    node->setEnabled(enabled != 0);
 }
 
 void sdlgui_menu_item_set_check_type(sdlgui_menu_item_t item,
@@ -1511,8 +1819,9 @@ void sdlgui_menu_item_set_check_type(sdlgui_menu_item_t item,
         case SDLGUI_MENU_RADIO:      node->check = MenuCheck::Radio; break;
         default:
             set_c_error("sdlgui_menu_item_set_check_type: invalid check type");
-            break;
+            return;
     }
+    node->notifyChanged();
 }
 
 void sdlgui_menu_item_set_checked(sdlgui_menu_item_t item, int checked) {
@@ -1520,11 +1829,70 @@ void sdlgui_menu_item_set_checked(sdlgui_menu_item_t item, int checked) {
     if (!node) return;
     if (node->check == MenuCheck::None) node->check = MenuCheck::Check;
     node->checked = checked != 0;
+    node->notifyChanged();
 }
 
 int sdlgui_menu_item_is_checked(sdlgui_menu_item_t item) {
     auto* node = unwrap_menu_item(item, __func__);
     return (node && node->checked) ? 1 : 0;
+}
+
+sdlgui_menu_item_t sdlgui_menu_item_add_item_id(sdlgui_menu_item_t parent,
+                                                const char* text, int command_id) {
+    auto* node = unwrap_menu_item(parent, __func__);
+    if (!node) return nullptr;
+    MenuItem& item = node->addItem(text ? text : "");
+    item.setCommandId(command_id);
+    return static_cast<sdlgui_menu_item_t>(&item);
+}
+
+void sdlgui_menu_bar_set_on_command_id(sdlgui_element_t bar,
+                                       sdlgui_menu_command_id_callback_t cb,
+                                       void* userdata) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    if (!menu) return;
+    if (!cb) {
+        menu->setCommandIdHandler(nullptr);
+        return;
+    }
+    menu->setCommandIdHandler([bar, cb, userdata](int command_id) {
+        cb(bar, command_id, userdata);
+    });
+}
+
+void sdlgui_menu_item_set_text(sdlgui_menu_item_t item, const char* text) {
+    auto* node = unwrap_menu_item(item, __func__);
+    if (!node) return;
+    node->setText(text ? text : "");
+}
+
+size_t sdlgui_menu_item_get_text_buf(sdlgui_menu_item_t item,
+                                     char* buf, size_t buf_len) {
+    auto* node = unwrap_menu_item(item, __func__);
+    if (!node) return 0;
+    return copy_c_string(node->text, buf, buf_len);
+}
+
+sdlgui_menu_item_t sdlgui_menu_item_find_by_id(sdlgui_element_t bar, int command_id) {
+    auto* menu = checked_elem<MenuBar>(bar, ComponentType::MenuBar, __func__);
+    if (!menu) return nullptr;
+
+    std::function<MenuItem*(MenuItem*)> walk = [&](MenuItem* node) -> MenuItem* {
+        if (!node) return nullptr;
+        if (node->hasCommandId && node->commandId == command_id) return node;
+        for (auto& child : node->submenu) {
+            if (MenuItem* found = walk(child.get())) return found;
+        }
+        return nullptr;
+    };
+
+    for (size_t i = 0; i < menu->getMenuCount(); ++i) {
+        if (MenuItem* found = walk(menu->getMenu(i))) {
+            return static_cast<sdlgui_menu_item_t>(found);
+        }
+    }
+    set_c_error("sdlgui_menu_item_find_by_id: command id not found");
+    return nullptr;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1650,6 +2018,28 @@ void sdlgui_cursor_set_animated_texture(sdlgui_element_t e, sdlgui_cursor_state_
                                         float fps, int hotspot_x, int hotspot_y) {
     static_cast<Cursor*>(unwrap_elem(e))->setAnimatedCursor(
         convert_cursor_state(state), path ? path : "", total_frames, rows, fps, hotspot_x, hotspot_y);
+}
+
+void sdlgui_cursor_set_surface(sdlgui_element_t e, sdlgui_cursor_state_t state,
+                               SDL_Surface* surface, int hotspot_x, int hotspot_y) {
+    auto* cursor = checked_elem<Cursor>(e, ComponentType::Cursor, __func__);
+    if (!cursor) return;
+    if (!surface) {
+        set_c_error("sdlgui_cursor_set_surface: null surface");
+        return;
+    }
+    cursor->setCursorSurface(convert_cursor_state(state), surface, hotspot_x, hotspot_y);
+}
+
+void sdlgui_cursor_set_system(sdlgui_element_t e, SDL_SystemCursor cursor) {
+    auto* c = checked_elem<Cursor>(e, ComponentType::Cursor, __func__);
+    if (!c) return;
+    c->setSystemCursor(cursor);
+}
+
+int sdlgui_cursor_is_system(sdlgui_element_t e) {
+    auto* c = checked_elem<Cursor>(e, ComponentType::Cursor, __func__);
+    return (c && c->isSystemCursor()) ? 1 : 0;
 }
 
 void sdlgui_cursor_set_state(sdlgui_element_t e, sdlgui_cursor_state_t state) {
@@ -2243,6 +2633,543 @@ sdlgui_element_t sdlgui_message_box_show_custom(sdlgui_t gui, const char* title,
     }
     g_lastError.clear();
     return wrap_elem(raw);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Parity P1: draw/event hooks + CustomControl
+   ═══════════════════════════════════════════════════════════ */
+
+void sdlgui_element_set_draw_hook(sdlgui_element_t e, sdlgui_draw_phase_t phase,
+                                  sdlgui_draw_callback_t cb, void* userdata) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_set_draw_hook: null element handle");
+        return;
+    }
+    if (phase < SDLGUI_DRAW_BEFORE || phase > SDLGUI_DRAW_AFTER) {
+        set_c_error("sdlgui_element_set_draw_hook: invalid phase");
+        return;
+    }
+    const DrawPhase internal = static_cast<DrawPhase>(phase);
+    if (!cb) {
+        elem->setDrawHook(internal, nullptr, nullptr);
+        return;
+    }
+    elem->setDrawHook(internal,
+        [e, cb, userdata](SDL_Renderer* renderer, const SDL_Rect& local_rect,
+                          const SDL_Rect& clip_rect, void*) {
+            const sdlgui_rect_t rect{local_rect.x, local_rect.y,
+                                     local_rect.w, local_rect.h};
+            const sdlgui_rect_t clip{clip_rect.x, clip_rect.y,
+                                     clip_rect.w, clip_rect.h};
+            cb(e, renderer, &rect, &clip, userdata);
+        }, userdata);
+}
+
+void sdlgui_element_clear_draw_hooks(sdlgui_element_t e) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_clear_draw_hooks: null element handle");
+        return;
+    }
+    elem->clearDrawHooks();
+}
+
+void sdlgui_element_set_event_hook(sdlgui_element_t e, sdlgui_event_callback_t cb,
+                                   void* userdata) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_set_event_hook: null element handle");
+        return;
+    }
+    if (!cb) {
+        elem->clearEventHook();
+        return;
+    }
+    elem->setEventHook(
+        [e, cb, userdata](const SDL_Event& event, int local_x, int local_y, void*) {
+            return cb(e, &event, local_x, local_y, userdata) != 0;
+        }, userdata);
+}
+
+void sdlgui_element_clear_event_hook(sdlgui_element_t e) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_clear_event_hook: null element handle");
+        return;
+    }
+    elem->clearEventHook();
+}
+
+void sdlgui_element_notify_command(sdlgui_element_t e, int command_id) {
+    auto* elem = unwrap_elem(e);
+    if (!elem) {
+        set_c_error("sdlgui_element_notify_command: null element handle");
+        return;
+    }
+    elem->notifyCommand(command_id);
+}
+
+sdlgui_element_t sdlgui_custom_control_create(sdlgui_t gui, sdlgui_element_t parent,
+                                               int x, int y, int w, int h,
+                                               sdlgui_draw_callback_t paint,
+                                               sdlgui_event_callback_t event,
+                                               void* userdata) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_custom_control_create: null context");
+        return nullptr;
+    }
+    auto control = std::make_unique<CustomControl>(ctx->getGUIManager(), x, y, w, h);
+    CustomControl* raw = control.get();
+    sdlgui_element_t handle = add_element(ctx, parent, std::move(control));
+    if (paint) {
+        sdlgui_element_set_draw_hook(handle, SDLGUI_DRAW_REPLACE, paint, userdata);
+    }
+    if (event) {
+        sdlgui_element_set_event_hook(handle, event, userdata);
+    }
+    g_lastError.clear();
+    (void)raw;
+    return handle;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Parity P1: FormDialog
+   ═══════════════════════════════════════════════════════════ */
+
+sdlgui_element_t sdlgui_form_create(sdlgui_t gui, const char* title,
+                                    int x, int y, int w, int h) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_form_create: null context");
+        return nullptr;
+    }
+    auto form = std::make_unique<FormDialog>(ctx->getGUIManager(), x, y, w, h,
+                                             title ? title : "");
+    return add_element(ctx, nullptr, std::move(form));
+}
+
+sdlgui_element_t sdlgui_form_add_widget(sdlgui_element_t form_handle, int id,
+                                        sdlgui_element_t child_handle) {
+    auto* form = checked_elem<FormDialog>(form_handle, ComponentType::FormDialog, __func__);
+    if (!form) return nullptr;
+    auto* child = unwrap_elem(child_handle);
+    if (!child) {
+        set_c_error("sdlgui_form_add_widget: null child handle");
+        return nullptr;
+    }
+    if (child->getParent() != nullptr) {
+        set_c_error("sdlgui_form_add_widget: child is not a top-level element");
+        return nullptr;
+    }
+    auto owned = child->getManager().detachElement(child);
+    if (!owned) {
+        set_c_error("sdlgui_form_add_widget: could not detach child from manager");
+        return nullptr;
+    }
+    GUIElement* added = form->addWidget(id, std::move(owned));
+    if (!added) {
+        set_c_error("sdlgui_form_add_widget: addWidget failed");
+        return nullptr;
+    }
+    g_lastError.clear();
+    return wrap_elem(added);
+}
+
+sdlgui_element_t sdlgui_form_add_static(sdlgui_element_t form, int id,
+                                        const char* text, int x, int y, int w, int h) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return f ? wrap_elem(f->addStatic(id, text ? text : "", x, y, w, h)) : nullptr;
+}
+
+sdlgui_element_t sdlgui_form_add_button(sdlgui_element_t form, int id,
+                                        const char* text, int x, int y, int w, int h) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return f ? wrap_elem(f->addButton(id, text ? text : "", x, y, w, h)) : nullptr;
+}
+
+sdlgui_element_t sdlgui_form_add_edit(sdlgui_element_t form, int id,
+                                      const char* text, int x, int y, int w, int h) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return f ? wrap_elem(f->addEdit(id, text ? text : "", x, y, w, h)) : nullptr;
+}
+
+sdlgui_element_t sdlgui_form_add_custom(sdlgui_element_t form, int id,
+                                        int x, int y, int w, int h) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return f ? wrap_elem(f->addCustom(id, x, y, w, h)) : nullptr;
+}
+
+sdlgui_element_t sdlgui_form_find_item(sdlgui_element_t form, int id) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    if (!f) return nullptr;
+    GUIElement* found = f->findItem(id);
+    if (!found) {
+        set_c_error("sdlgui_form_find_item: control id not found");
+        return nullptr;
+    }
+    return wrap_elem(found);
+}
+
+int sdlgui_form_get_item_rect(sdlgui_element_t form, int id, sdlgui_rect_t* out) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    if (!f || !out) return 0;
+    if (!f->findItem(id)) {
+        set_c_error("sdlgui_form_get_item_rect: control id not found");
+        return 0;
+    }
+    const SDL_Rect rect = f->getItemRect(id);
+    out->x = rect.x;
+    out->y = rect.y;
+    out->w = rect.w;
+    out->h = rect.h;
+    g_lastError.clear();
+    return 1;
+}
+
+int sdlgui_form_set_item_visible(sdlgui_element_t form, int id, int visible) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return (f && f->setItemVisible(id, visible != 0)) ? 1 : 0;
+}
+
+int sdlgui_form_set_item_enabled(sdlgui_element_t form, int id, int enabled) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return (f && f->setItemEnabled(id, enabled != 0)) ? 1 : 0;
+}
+
+int sdlgui_form_set_item_text(sdlgui_element_t form, int id, const char* text) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return (f && f->setItemText(id, text ? text : "")) ? 1 : 0;
+}
+
+int sdlgui_form_set_item_rect(sdlgui_element_t form, int id,
+                              int x, int y, int w, int h) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return (f && f->setItemRect(id, x, y, w, h)) ? 1 : 0;
+}
+
+void sdlgui_form_end(sdlgui_element_t form, int result) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    if (!f) return;
+    f->end(result);
+}
+
+int sdlgui_form_get_result(sdlgui_element_t form) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return f ? f->getResult() : -1;
+}
+
+int sdlgui_form_is_closed(sdlgui_element_t form) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    return (f && f->isClosed()) ? 1 : 0;
+}
+
+void sdlgui_form_set_on_command(sdlgui_element_t form,
+                                sdlgui_form_command_callback_t cb,
+                                void* userdata) {
+    auto* f = checked_elem<FormDialog>(form, ComponentType::FormDialog, __func__);
+    if (!f) return;
+    if (!cb) {
+        f->setOnCommand(nullptr);
+        return;
+    }
+    f->setOnCommand([form, cb, userdata](int id) { cb(form, id, userdata); });
+}
+
+sdlgui_element_t sdlgui_form_create_from_items(sdlgui_t gui, const char* title,
+                                               int x, int y, int w, int h,
+                                               const sdlgui_form_item_desc_t* items,
+                                               size_t count) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_form_create_from_items: null context");
+        return nullptr;
+    }
+    auto form = std::make_unique<FormDialog>(ctx->getGUIManager(), x, y, w, h,
+                                             title ? title : "");
+    FormDialog* raw = form.get();
+    GUIElement* handle = ctx->getGUIManager().addElement(std::move(form));
+    (void)handle;
+
+    for (size_t i = 0; i < count; ++i) {
+        const sdlgui_form_item_desc_t& desc = items[i];
+        const char* text = desc.text ? desc.text : "";
+        switch (desc.type) {
+            case SDLGUI_FORM_ITEM_STATIC:
+                raw->addStatic(desc.id, text, desc.x, desc.y, desc.w, desc.h);
+                break;
+            case SDLGUI_FORM_ITEM_BUTTON:
+                raw->addButton(desc.id, text, desc.x, desc.y, desc.w, desc.h);
+                break;
+            case SDLGUI_FORM_ITEM_EDIT:
+                raw->addEdit(desc.id, text, desc.x, desc.y, desc.w, desc.h);
+                break;
+            case SDLGUI_FORM_ITEM_CUSTOM:
+                raw->addCustom(desc.id, desc.x, desc.y, desc.w, desc.h);
+                break;
+            default:
+                set_c_error("sdlgui_form_create_from_items: invalid item type");
+                break;
+        }
+    }
+    g_lastError.clear();
+    return wrap_elem(raw);
+}
+
+void sdlgui_dialog_close_with_result(sdlgui_element_t e, int result) {
+    auto* dialog = dynamic_cast<ModalDialog*>(unwrap_elem(e));
+    if (!dialog) {
+        set_c_error("sdlgui_dialog_close_with_result: element is not a ModalDialog");
+        return;
+    }
+    dialog->closeWithResult(result);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Parity P1: modal runner
+   ═══════════════════════════════════════════════════════════ */
+
+int sdlgui_modal_run(sdlgui_t gui, sdlgui_element_t dialog_handle,
+                     const sdlgui_modal_options_t* opts, int* result_out) {
+    auto* ctx = unwrap_ctx(gui);
+    auto* dialog = dynamic_cast<ModalDialog*>(unwrap_elem(dialog_handle));
+    if (!ctx || !dialog) {
+        set_c_error("sdlgui_modal_run: null context or dialog is not a ModalDialog");
+        if (result_out) *result_out = -1;
+        return -1;
+    }
+
+    auto& manager = ctx->getGUIManager();
+    SDL_Renderer* renderer = manager.getRenderer();
+    const int cancel_key = opts ? opts->cancel_key : 0;
+    const int cancel_result = opts ? opts->cancel_result : -1;
+    void* userdata = opts ? opts->userdata : nullptr;
+
+    int result = cancel_result;
+
+    while (true) {
+        bool closed = false;
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (opts && opts->event_filter &&
+                opts->event_filter(&event, userdata)) {
+                continue;
+            }
+            if (event.type == SDL_EVENT_QUIT) {
+                dialog->closeWithResult(cancel_result);
+                result = cancel_result;
+                closed = true;
+                break;
+            }
+            if (cancel_key != 0 && event.type == SDL_EVENT_KEY_DOWN &&
+                event.key.key == static_cast<SDL_Keycode>(cancel_key)) {
+                dialog->closeWithResult(cancel_result);
+                result = cancel_result;
+                closed = true;
+                break;
+            }
+            manager.processEvent(event);
+            if (!dialog->isOpen()) {
+                result = dialog->getResult();
+                closed = true;
+                break;
+            }
+        }
+
+        if (opts && opts->frame_cb) {
+            opts->frame_cb(userdata);
+        }
+        manager.update();
+
+        // Capture the result BEFORE cleanup: cleanup may destroy the dialog.
+        if (!dialog->isOpen()) {
+            result = dialog->getResult();
+            closed = true;
+        }
+
+        manager.cleanup();
+
+        if (closed) {
+            break;
+        }
+
+        if (opts && !opts->keep_background) {
+            SDL_SetRenderDrawColor(renderer,
+                                   static_cast<Uint8>(opts->clear_r),
+                                   static_cast<Uint8>(opts->clear_g),
+                                   static_cast<Uint8>(opts->clear_b),
+                                   255);
+            SDL_RenderClear(renderer);
+        }
+        manager.render();
+        SDL_RenderPresent(renderer);
+    }
+
+    if (result_out) *result_out = result;
+    g_lastError.clear();
+    return result;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Parity P1: MenuList
+   ═══════════════════════════════════════════════════════════ */
+
+sdlgui_element_t sdlgui_menu_list_create(sdlgui_t gui, sdlgui_element_t parent,
+                                          int x, int y, int w, int h,
+                                          const char* title,
+                                          const sdlgui_menu_list_item_t* items,
+                                          size_t count) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_menu_list_create: null context");
+        return nullptr;
+    }
+    std::vector<MenuList::Item> entries;
+    entries.reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+        const sdlgui_menu_list_item_t& src = items[i];
+        entries.push_back(MenuList::Item{
+            src.text ? std::string(src.text) : std::string(),
+            src.id,
+            src.enabled != 0});
+    }
+    auto list = std::make_unique<MenuList>(ctx->getGUIManager(), x, y, w, h,
+                                           title ? title : "", std::move(entries));
+    return add_element(ctx, parent, std::move(list));
+}
+
+void sdlgui_menu_list_set_columns(sdlgui_element_t e, int columns) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    if (list) list->setColumns(columns);
+}
+
+void sdlgui_menu_list_set_title_width(sdlgui_element_t e, int px) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    if (list) list->setTitleWidth(px);
+}
+
+void sdlgui_menu_list_set_disabled_mask(sdlgui_element_t e, uint32_t mask) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    if (list) list->setDisabledMask(mask);
+}
+
+void sdlgui_menu_list_set_preselect(sdlgui_element_t e, int item_id) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    if (list) list->setPreselect(item_id);
+}
+
+void sdlgui_menu_list_set_cancel_id(sdlgui_element_t e, int item_id) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    if (list) list->setCancelId(item_id);
+}
+
+void sdlgui_menu_list_set_timer_ms(sdlgui_element_t e, uint32_t ms) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    if (list) list->setTimerMs(ms);
+}
+
+int sdlgui_menu_list_get_selected_id(sdlgui_element_t e) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    return list ? list->getSelectedId() : -1;
+}
+
+void sdlgui_menu_list_set_on_select(sdlgui_element_t e,
+                                    sdlgui_menu_list_select_cb_t cb,
+                                    void* userdata) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    if (!list) return;
+    if (!cb) {
+        list->setOnSelect(nullptr);
+        return;
+    }
+    list->setOnSelect([e, cb, userdata](int item_id, std::string_view text) {
+        const std::string copy(text);
+        cb(e, item_id, copy.c_str(), userdata);
+    });
+}
+
+void sdlgui_menu_list_set_row_callback(sdlgui_element_t e,
+                                       sdlgui_menu_list_row_cb_t cb,
+                                       void* userdata) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    if (!list) return;
+    if (!cb) {
+        list->setRowCallback(nullptr);
+        return;
+    }
+    list->setRowCallback([e, cb, userdata](SDL_Renderer* renderer,
+                                           const SDL_Rect& row_rect,
+                                           std::string_view text, int item_id,
+                                           bool selected, bool enabled) {
+        const sdlgui_rect_t rect{row_rect.x, row_rect.y, row_rect.w, row_rect.h};
+        const std::string copy(text);
+        cb(e, renderer, &rect, copy.c_str(), item_id,
+           selected ? 1 : 0, enabled ? 1 : 0, userdata);
+    });
+}
+
+void sdlgui_menu_list_set_on_tick(sdlgui_element_t e,
+                                  sdlgui_menu_list_tick_cb_t cb,
+                                  void* userdata) {
+    auto* list = checked_elem<MenuList>(e, ComponentType::MenuList, __func__);
+    if (!list) return;
+    if (!cb) {
+        list->setOnTick(nullptr);
+        return;
+    }
+    list->setOnTick([e, cb, userdata]() { cb(e, userdata); });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Parity P1: TextInput extensions
+   ═══════════════════════════════════════════════════════════ */
+
+void sdlgui_text_input_set_max_length(sdlgui_element_t e, size_t max_length) {
+    auto* input = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (input) input->setMaxLength(max_length);
+}
+
+void sdlgui_text_input_set_char_filter(sdlgui_element_t e,
+                                       int (*filter)(unsigned codepoint, void* userdata),
+                                       void* userdata) {
+    auto* input = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (!input) return;
+    if (!filter) {
+        input->setCharFilter(nullptr);
+        return;
+    }
+    input->setCharFilter([filter, userdata](unsigned codepoint) {
+        return filter(codepoint, userdata) != 0;
+    });
+}
+
+void sdlgui_text_input_set_on_key(sdlgui_element_t e,
+                                  int (*cb)(sdlgui_element_t e,
+                                            const SDL_KeyboardEvent* key,
+                                            void* userdata),
+                                  void* userdata) {
+    auto* input = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (!input) return;
+    if (!cb) {
+        input->setOnKey(nullptr);
+        return;
+    }
+    input->setOnKey([e, cb, userdata](const SDL_KeyboardEvent& key) {
+        return cb(e, &key, userdata) != 0;
+    });
+}
+
+void sdlgui_text_input_set_cursor_pos(sdlgui_element_t e, size_t char_pos) {
+    auto* input = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (input) input->setCursorPos(char_pos);
+}
+
+void sdlgui_text_input_set_selection(sdlgui_element_t e, size_t start, size_t end) {
+    auto* input = checked_elem<TextInput>(e, ComponentType::TextInput, __func__);
+    if (!input) return;
+    input->setSelection(start, end);
+    input->markDirty();
 }
 
 } // extern "C"

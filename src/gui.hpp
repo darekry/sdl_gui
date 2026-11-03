@@ -18,6 +18,33 @@
 class GUIManager;
 class ILayoutManager;
 
+// ---------------------------------------------------------------------------
+// Custom draw / event hooks (C API: sdlgui_element_set_draw_hook / _event_hook).
+//
+// Draw hooks switch the element to the direct-render path so the callback
+// receives a real SDL_Renderer*, its local rect {0,0,w,h} and the ancestors'
+// clip translated to local coordinates. An element carrying a draw hook is
+// never baked into the shared render cache, and rotation is ignored for it
+// (hook + rotation is a documented limitation).
+// ---------------------------------------------------------------------------
+enum class DrawPhase : uint8_t { Before = 0, Replace = 1, After = 2 };
+
+struct DrawHook {
+    using Callback = std::function<void(SDL_Renderer*, const SDL_Rect& /*rect*/,
+                                        const SDL_Rect& /*clip*/, void* /*userdata*/)>;
+    Callback callback;
+    void* userdata = nullptr;
+    [[nodiscard]] bool set() const { return static_cast<bool>(callback); }
+};
+
+struct EventHook {
+    using Callback = std::function<bool(const SDL_Event&, int /*local_x*/,
+                                        int /*local_y*/, void* /*userdata*/)>;
+    Callback callback;
+    void* userdata = nullptr;
+    [[nodiscard]] bool set() const { return static_cast<bool>(callback); }
+};
+
 class GUIElement {
 private:
     std::string tooltip;
@@ -33,6 +60,15 @@ public:
     void setTooltip(const std::string& text);
     void setID(std::string_view id);
     [[nodiscard]] std::string_view getID() const;
+    // Dialog control id (Win16 control-id parity). -1 = unset. The C API
+    // validates 0..0xffff; the C++ setter stores any value.
+    void setControlId(int id) { m_control_id = id; }
+    [[nodiscard]] int getControlId() const { return m_control_id; }
+    // First descendant (DFS, self included) whose id matches. nullptr when
+    // none. Search is scoped to this element's subtree.
+    [[nodiscard]] GUIElement* findById(std::string_view id) const;
+    // First descendant (DFS, self included) with the given control id.
+    [[nodiscard]] GUIElement* findByControlId(int control_id) const;
     [[nodiscard]] int getX() const { return m_x; }
     int getY() const { return m_y; }
     int getWidth() const { return m_width; }
@@ -179,8 +215,15 @@ public:
     void setLifetimeHandle(ElementHandle h) { m_lifetimeHandle = h; }
     [[nodiscard]] ElementHandle lifetimeHandle() const { return m_lifetimeHandle; }
     [[nodiscard]] const std::vector<std::unique_ptr<GUIElement>>& getChildren() const { return m_children; }
+    [[nodiscard]] size_t getChildCount() const { return m_children.size(); }
+    [[nodiscard]] GUIElement* getChild(size_t index) const {
+        return index < m_children.size() ? m_children[index].get() : nullptr;
+    }
     size_t countDescendants() const;
     GUIElement* findElementAt(int x, int y);
+    // m_visible AND every ancestor visible. Focus/eligibility use this so a
+    // child of a hidden container is not treated as shown.
+    [[nodiscard]] bool isEffectivelyVisible() const;
 
     // Focus and Capture API
     virtual void onFocusGained();
@@ -192,7 +235,25 @@ public:
     void setCanGetKeyboardFocus(bool canFocus);
     [[nodiscard]] bool hasKeyboardFocus() const;
 
+    // === Custom draw / event hooks ===
+    // Install/replace one phase hook. Installing any hook forces direct
+    // rendering (no cache). Pass a null callback to remove that phase.
+    void setDrawHook(DrawPhase phase, DrawHook::Callback callback, void* userdata = nullptr);
+    void clearDrawHooks();
+    [[nodiscard]] bool hasDrawHooks() const;
+    // Event hook: fires before child propagation in handleEvent(). Returning
+    // true consumes the event. Mouse events get local x/y, others 0/0.
+    void setEventHook(EventHook::Callback callback, void* userdata = nullptr);
+    void clearEventHook();
+    // Routes a command id to the nearest FormDialog ancestor (dynamic_cast).
+    // No-op when the element is not inside a form.
+    void notifyCommand(int command_id);
+
 protected:
+    // Fires the event hook (if any). Returns true when it consumed the event.
+    // Every handleEvent() override must call this first so hooks work on
+    // TextInput/TextArea/StringGrid/ListView/ModalDialog too.
+    bool dispatchEventHook(const SDL_Event& e);
     void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
 
     // Obrys fokusu klawiatury dla elementów nierotowanych (direct draw,
@@ -221,8 +282,11 @@ protected:
     void stopTimer(uint32_t timerId);
     
     std::string m_id;
+    int m_control_id = -1;
     bool m_canGetKeyboardFocus = false;
     bool m_clip_children = true;
+    std::array<DrawHook, 3> m_drawHooks{};
+    EventHook m_eventHook;
     
     // === Layout data ===
     Anchor m_anchor;  // Anchor for responsive positioning (consumed by AnchorLayout)

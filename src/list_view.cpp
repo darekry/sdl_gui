@@ -123,6 +123,10 @@ ComponentType ListView::getComponentTypeId() const {
 }
 
 bool ListView::handleEvent(const SDL_Event& e) {
+    if (dispatchEventHook(e)) {
+        return true;
+    }
+
     if (e.type == SDL_EVENT_KEY_DOWN) {
         switch (e.key.key) {
             case SDLK_LEFT:

@@ -90,6 +90,14 @@ void Label::setText(std::string_view text) {
     }
 }
 
+void Label::setFontSize(int font_size) {
+    if (m_font_size != font_size) {
+        m_font_size = font_size;
+        recalculateSize();
+        markDirty();
+    }
+}
+
 void Label::draw(SDL_Renderer* renderer) {
     if (m_text.empty()) {
         return;
@@ -112,6 +120,15 @@ void Label::draw(SDL_Renderer* renderer) {
 
     auto& textureManager = m_manager.getTextureManager();
 
+    auto alignX = [this](int contentWidth) {
+        switch (m_h_align) {
+            case TextHAlign::Center: return (m_width - contentWidth) / 2;
+            case TextHAlign::Right:  return m_width - contentWidth;
+            case TextHAlign::Left:
+            default:                 return 0;
+        }
+    };
+
     if (m_lines.size() <= 1) {
         auto textTexture = textureManager.createTextureFromText(m_text, font, resolvedStyle.textColor.value());
         if (!textTexture) {
@@ -119,19 +136,37 @@ void Label::draw(SDL_Renderer* renderer) {
             return;
         }
 
-        SDL_Rect dstRect = {0, 0, m_width, m_height};
+        const int texW = TextureWidth(textTexture.get());
+        const int texH = TextureHeight(textTexture.get());
+        int y = 0;
+        if (m_v_align == TextVAlign::Middle) {
+            y = (m_height - texH) / 2;
+        } else if (m_v_align == TextVAlign::Bottom) {
+            y = m_height - texH;
+        }
+        SDL_Rect dstRect = {alignX(texW), y, texW, texH};
         RenderTexture(renderer, textTexture.get(), dstRect);
         return;
     }
 
     int lineHeight = TTF_GetFontHeight(font.get());
+    // Multi-line block: vertical alignment applies to the whole block.
+    const int blockHeight = static_cast<int>(m_lines.size()) * lineHeight;
+    int blockY = 0;
+    if (m_v_align == TextVAlign::Middle) {
+        blockY = (m_height - blockHeight) / 2;
+    } else if (m_v_align == TextVAlign::Bottom) {
+        blockY = m_height - blockHeight;
+    }
+
     SDL_Color textColor = resolvedStyle.textColor.value();
-    int yOffset = 0;
+    int yOffset = blockY;
     for (const auto& line : m_lines) {
         if (!line.empty()) {
             auto lineTexture = textureManager.createTextureFromText(line, font, textColor);
             if (lineTexture) {
-                SDL_Rect dstRect = {0, yOffset, TextureWidth(lineTexture.get()), TextureHeight(lineTexture.get())};
+                const int texW = TextureWidth(lineTexture.get());
+                SDL_Rect dstRect = {alignX(texW), yOffset, texW, TextureHeight(lineTexture.get())};
                 RenderTexture(renderer, lineTexture.get(), dstRect);
             } else {
                 LOG_DEBUG("no shared texture");

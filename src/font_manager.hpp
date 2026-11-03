@@ -79,6 +79,11 @@ public:
 
     void getTextSize(std::string_view text, std::string_view fontPath, int fontSize, int* width, int* height);
 
+    // Font metrics in pixels. Any out pointer may be null. Returns false when
+    // the font cannot be loaded (outputs are left zeroed).
+    bool getFontMetrics(std::string_view fontPath, int fontSize,
+                        int* line_height, int* ascent, int* descent);
+
     // Get cached text width, or compute and cache it
     int getTextWidth(TTF_Font* font, std::string_view text);
     void clearTextWidthCache();

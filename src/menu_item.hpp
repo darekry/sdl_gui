@@ -175,7 +175,20 @@ struct MenuItem {
     std::string text;
     std::string shortcut;
     std::string command;
+    // Integer command id (Win16 command parity). hasCommandId distinguishes
+    // id 0 from "no id". Activation order: action -> commandId -> command.
+    int commandId = 0;
+    bool hasCommandId = false;
     std::function<void()> action;
+
+    // Fired after a mutation that affects popup metrics/drawing (text,
+    // enabled, check). MenuBar installs it to re-measure titles and refresh
+    // every popup; without it the popup keeps its stale size.
+    std::function<void()> onChanged;
+
+    void notifyChanged() {
+        if (onChanged) onChanged();
+    }
 
     bool enabled = true;
     bool separator = false;
@@ -250,25 +263,40 @@ struct MenuItem {
         return *this;
     }
 
-    MenuItem& setCommand(std::string_view commandId) {
-        command = commandId;
+    MenuItem& setCommand(std::string_view command_text) {
+        command = command_text;
+        return *this;
+    }
+
+    MenuItem& setCommandId(int id) {
+        commandId = id;
+        hasCommandId = true;
+        return *this;
+    }
+
+    MenuItem& setText(std::string_view value) {
+        text = value;
+        notifyChanged();
         return *this;
     }
 
     MenuItem& setEnabled(bool value = true) {
         enabled = value;
+        notifyChanged();
         return *this;
     }
 
     MenuItem& setChecked(bool value = true) {
         check = MenuCheck::Check;
         checked = value;
+        notifyChanged();
         return *this;
     }
 
     MenuItem& setRadio(bool value = true) {
         check = MenuCheck::Radio;
         checked = value;
+        notifyChanged();
         return *this;
     }
 

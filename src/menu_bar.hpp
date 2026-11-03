@@ -53,6 +53,13 @@ public:
 
     // Command-id fallback for items without action() (layout files, C API).
     void setCommandHandler(std::function<void(std::string_view)> handler);
+    // Integer command ids (Win16): fires after action(), before the string
+    // command handler.
+    void setCommandIdHandler(std::function<void(int)> handler);
+
+    // Re-measures titles and refreshes every popup. Called automatically from
+    // MenuItem::onChanged after text/enabled/check mutations.
+    void refreshMenus();
 
     // Called by GUIManager before focused-widget key routing (Alt/F10,
     // Alt+mnemonic, application shortcuts). Returns true when consumed.
@@ -113,5 +120,6 @@ private:
     bool m_swallowNextBarClick = false;
 
     std::function<void(std::string_view)> m_commandHandler;
+    std::function<void(int)> m_commandIdHandler;
     ElementHandle m_returnFocus;
 };

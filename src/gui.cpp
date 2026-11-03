@@ -1,6 +1,7 @@
 #include "label.hpp"
 #include "menu_bar.hpp"
 #include "gui.hpp"
+#include "composite/form_dialog.hpp"
 #include "gui_manager.hpp"
 #include "layout.hpp"
 #include "sdl_deleters.hpp"
@@ -397,9 +398,119 @@ std::string_view GUIElement::getID() const {
     return m_id;
 }
 
+GUIElement* GUIElement::findById(std::string_view id) const {
+    if (!id.empty() && m_id == id) {
+        return const_cast<GUIElement*>(this);
+    }
+    for (const auto& child : m_children) {
+        if (GUIElement* found = child->findById(id)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
+GUIElement* GUIElement::findByControlId(int control_id) const {
+    if (m_control_id == control_id) {
+        return const_cast<GUIElement*>(this);
+    }
+    for (const auto& child : m_children) {
+        if (GUIElement* found = child->findByControlId(control_id)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
+bool GUIElement::isEffectivelyVisible() const {
+    for (const GUIElement* element = this; element; element = element->m_parent) {
+        if (!element->m_visible) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void GUIElement::setDrawHook(DrawPhase phase, DrawHook::Callback callback, void* userdata) {
+    DrawHook& hook = m_drawHooks[static_cast<size_t>(phase)];
+    hook.callback = std::move(callback);
+    hook.userdata = hook.callback ? userdata : nullptr;
+    markDirty();
+}
+
+void GUIElement::clearDrawHooks() {
+    for (DrawHook& hook : m_drawHooks) {
+        hook.callback = nullptr;
+        hook.userdata = nullptr;
+    }
+    markDirty();
+}
+
+bool GUIElement::hasDrawHooks() const {
+    for (const DrawHook& hook : m_drawHooks) {
+        if (hook.set()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void GUIElement::setEventHook(EventHook::Callback callback, void* userdata) {
+    m_eventHook.callback = std::move(callback);
+    m_eventHook.userdata = m_eventHook.callback ? userdata : nullptr;
+}
+
+void GUIElement::clearEventHook() {
+    m_eventHook.callback = nullptr;
+    m_eventHook.userdata = nullptr;
+}
+
+bool GUIElement::dispatchEventHook(const SDL_Event& e) {
+    if (!m_eventHook.set()) {
+        return false;
+    }
+    int local_x = 0;
+    int local_y = 0;
+    switch (e.type) {
+        case SDL_EVENT_MOUSE_MOTION: {
+            const SDL_Point local = toLocalCoords(static_cast<int>(e.motion.x),
+                                                    static_cast<int>(e.motion.y));
+            local_x = local.x;
+            local_y = local.y;
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        case SDL_EVENT_MOUSE_BUTTON_UP: {
+            const SDL_Point local = toLocalCoords(static_cast<int>(e.button.x),
+                                                    static_cast<int>(e.button.y));
+            local_x = local.x;
+            local_y = local.y;
+            break;
+        }
+        default:
+            break;
+    }
+    return m_eventHook.callback(e, local_x, local_y, m_eventHook.userdata);
+}
+
+void GUIElement::notifyCommand(int command_id) {
+    // Walk up to the owning FormDialog (documented dynamic_cast lookup: the
+    // base cannot know about composite dialogs).
+    for (GUIElement* element = m_parent; element; element = element->m_parent) {
+        if (auto* form = dynamic_cast<FormDialog*>(element)) {
+            form->on_command(command_id);
+            return;
+        }
+    }
+}
+
 bool GUIElement::handleEvent(const SDL_Event& e) {
     if (!m_visible) {
         return false;
+    }
+
+    if (dispatchEventHook(e)) {
+        return true;
     }
 
     if (propagateToChildren(e)) {
@@ -525,7 +636,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
     // 49, 56) jest za ciasne. Cull + clip liczymy z rotowanego AABB
     // przeciętego z clipem przodków: szanuje viewport (ScrollArea/WorldView),
     // a nie ucina zwisu rotacji.
-    const bool isRotatedBlit = (m_rotation != 0.0) && !wantsDirectRender();
+    const bool isRotatedBlit = (m_rotation != 0.0) && !wantsDirectRender() && !hasDrawHooks();
     if (isRotatedBlit) {
         SDL_FPoint centerLocal = m_rotationCenter.x >= 0
             ? SDL_FPoint{static_cast<float>(m_rotationCenter.x), static_cast<float>(m_rotationCenter.y)}
@@ -541,10 +652,66 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
         }
     }
 
-    if (wantsDirectRender()) {
-        SDL_SetRenderClipRect(renderer, &clipped_rect);
-        drawDirect(renderer);
-        SDL_SetRenderClipRect(renderer, &parent_clip_rect);
+    if (wantsDirectRender() || hasDrawHooks()) {
+        if (hasDrawHooks()) {
+            // Hooks always take the direct path (never baked into the shared
+            // cache). Content is rendered into a per-frame local target so
+            // callbacks work in LOCAL coordinates: they get the local rect
+            // {0,0,w,h} and the ancestors' clip translated to local space.
+            // REPLACE suppresses the default draw; BEFORE/AFTER wrap it.
+            // Rotation is ignored for hooked elements (documented limitation).
+            SDL_Texture* target = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+                                                    SDL_TEXTUREACCESS_TARGET,
+                                                    std::max(1, m_width), std::max(1, m_height));
+            if (target) {
+                SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
+                SDL_Rect local_clip{
+                    std::max(0, clipped_rect.x - abs_pos.x),
+                    std::max(0, clipped_rect.y - abs_pos.y),
+                    std::min(clipped_rect.w, m_width),
+                    std::min(clipped_rect.h, m_height)};
+                local_clip.w = std::max(0, std::min(local_clip.w, m_width - local_clip.x));
+                local_clip.h = std::max(0, std::min(local_clip.h, m_height - local_clip.y));
+
+                {
+                    ScopedRenderTarget targetScope(renderer, target);
+                    SDL_SetRenderClipRect(renderer, &local_clip);
+                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+                    SDL_RenderClear(renderer);
+
+                    const SDL_Rect local_rect{0, 0, m_width, m_height};
+                    const DrawHook& replace = m_drawHooks[static_cast<size_t>(DrawPhase::Replace)];
+                    if (replace.set()) {
+                        replace.callback(renderer, local_rect, local_clip, replace.userdata);
+                    } else {
+                        const DrawHook& before = m_drawHooks[static_cast<size_t>(DrawPhase::Before)];
+                        const DrawHook& after = m_drawHooks[static_cast<size_t>(DrawPhase::After)];
+                        if (before.set()) {
+                            before.callback(renderer, local_rect, local_clip, before.userdata);
+                        }
+                        if (!wantsDirectRender()) {
+                            draw(renderer);
+                        } else {
+                            drawDirect(renderer);
+                        }
+                        if (after.set()) {
+                            after.callback(renderer, local_rect, local_clip, after.userdata);
+                        }
+                    }
+                    SDL_SetRenderClipRect(renderer, nullptr);
+                }
+
+                SDL_SetRenderClipRect(renderer, &clipped_rect);
+                SDL_Rect dst{abs_pos.x, abs_pos.y, m_width, m_height};
+                RenderTexture(renderer, target, dst);
+                SDL_DestroyTexture(target);
+            }
+            SDL_SetRenderClipRect(renderer, &parent_clip_rect);
+        } else {
+            SDL_SetRenderClipRect(renderer, &clipped_rect);
+            drawDirect(renderer);
+            SDL_SetRenderClipRect(renderer, &parent_clip_rect);
+        }
         // Bez czyszczenia m_isDirty: direct-widget przerysowuje się co klatkę
         // z natury, flaga nie znaczy tu "cache aktualny".
     } else {

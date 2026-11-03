@@ -19,7 +19,60 @@ Cursor::~Cursor() {
             opt->animation_id = 0;
         }
     }
+    clearSystemCursor();
     SDL_ShowCursor();
+}
+
+void Cursor::clearSystemCursor() {
+    if (m_systemCursor) {
+        SDL_DestroyCursor(m_systemCursor);
+        m_systemCursor = nullptr;
+    }
+    if (m_systemMode) {
+        // Restore the platform default; system mode hid nothing, so show the
+        // hardware cursor again and let overlay mode hide it on demand.
+        SDL_SetCursor(SDL_GetDefaultCursor());
+        SDL_ShowCursor();
+    }
+    m_systemMode = false;
+}
+
+void Cursor::setSystemCursor(SDL_SystemCursor cursor) {
+    clearSystemCursor();
+    SDL_Cursor* created = SDL_CreateSystemCursor(cursor);
+    if (!created) {
+        LOG_DEBUG("Cursor: SDL_CreateSystemCursor failed: %s", SDL_GetError());
+        return;
+    }
+    m_systemCursor = created;
+    m_systemMode = true;
+    SDL_SetCursor(m_systemCursor);
+    SDL_ShowCursor();
+}
+
+void Cursor::setCursorSurface(CursorState state, SDL_Surface* surface,
+                              int hotspotX, int hotspotY) {
+    if (!surface) {
+        return;
+    }
+    SDL_Texture* created = SDL_CreateTextureFromSurface(m_manager.getRenderer(), surface);
+    if (!created) {
+        LOG_DEBUG("Cursor: SDL_CreateTextureFromSurface failed: %s", SDL_GetError());
+        return;
+    }
+
+    auto& opt = m_cursors[static_cast<size_t>(state)];
+    if (!opt) opt.emplace();
+    CursorData& data = *opt;
+    data.texture = SharedTexture(created, SDLTextureDeleter());
+    data.hotspotX = hotspotX;
+    data.hotspotY = hotspotY;
+    data.isAnimated = false;
+    data.totalFrames = 0;
+
+    // Back to overlay mode: drop any native cursor and hide the hardware one.
+    clearSystemCursor();
+    SDL_HideCursor();
 }
 
 void Cursor::setCursorTexture(CursorState state, const std::string& path, int hotspotX, int hotspotY) {
@@ -31,6 +84,9 @@ void Cursor::setCursorTexture(CursorState state, const std::string& path, int ho
     data.hotspotY = hotspotY;
     data.isAnimated = false;
     data.totalFrames = 0;
+
+    clearSystemCursor();
+    SDL_HideCursor();
 }
 
 void Cursor::setAnimatedCursor(CursorState state, const std::string& path, int totalFrames, int rows,
@@ -75,6 +131,9 @@ void Cursor::setAnimatedCursor(CursorState state, const std::string& path, int t
         data.frameW = (data.cols > 0) ? texW / data.cols : texW;
         data.frameH = (data.rows > 0) ? texH / data.rows : texH;
     }
+
+    clearSystemCursor();
+    SDL_HideCursor();
 }
 
 void Cursor::setState(CursorState state) {
@@ -141,7 +200,14 @@ void Cursor::setVisible(bool visible) {
         return;
     }
     GUIElement::setVisible(visible);
-    if (visible) { SDL_HideCursor(); } else { SDL_ShowCursor(); };
+    if (m_systemMode) {
+        // Native cursor: visibility is owned by SDL, not by the overlay.
+        SDL_ShowCursor();
+    } else if (visible) {
+        SDL_HideCursor();
+    } else {
+        SDL_ShowCursor();
+    }
 }
 
 void Cursor::draw(SDL_Renderer* /*renderer*/) {
@@ -149,7 +215,7 @@ void Cursor::draw(SDL_Renderer* /*renderer*/) {
 }
 
 void Cursor::render(SDL_Renderer* renderer) {
-    if (!isVisible()) {
+    if (!isVisible() || m_systemMode) {
         return;
     }
 

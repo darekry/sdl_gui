@@ -617,7 +617,11 @@ bool StringGrid::handleEvent(const SDL_Event& e) {
     if (!m_enabled || !m_visible) {
         return false;
     }
-    
+
+    if (dispatchEventHook(e)) {
+        return true;
+    }
+
     if (m_vSlider && m_vScrollEnabled && m_vSlider->handleEvent(e)) {
         return true;
     }

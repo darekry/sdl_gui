@@ -53,7 +53,10 @@ Kompletna lista widgetów biblioteki SDL GUI. Każdy widget dziedziczy po
 | [ShaderPanel](ShaderPanel.md) | Panel z shaderem fragmentowym (wymaga GPU/Vulkan) |
 | [ContextMenu](ContextMenu.md) | Menu kontekstowe po kliknięciu prawym przyciskiem |
 | [MenuBar](MenuBar.md) | Górny pasek menu (Win32): podmenu, check/radio, skróty, mnemoniki, Alt/F10 |
+| [MenuList](MenuList.md) | (Panel) Modalna lista MenuZ: kolumny, disabled, preselekcja, timer |
+| [CustomControl](CustomControl.md) | (Panel) Kontrolka owner-draw: hooki draw/event, `notify_command` |
 
 ## Kompozyty (gotowe dialogi)
 
-[composites.md](../composites.md) — DialogBox, MessageBox, FileDialog.
+[composites.md](../composites.md) — DialogBox, MessageBox, FileDialog,
+[FormDialog](FormDialog.md).

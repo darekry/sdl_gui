@@ -17,6 +17,13 @@ void TextInput::setOnEnterPressed(const std::function<void(TextInput*)>& callbac
     m_onEnterPressed = callback;
 }
 
+void TextInput::setCursorPos(size_t char_pos) {
+    m_cursorPos = std::min(char_pos, utf8::charCount(m_text));
+    updateTextOffset();
+    resetCursorBlink();
+    markDirty();
+}
+
 void TextInput::setOnTextChanged(const std::function<void(TextInput*)>& callback) {
     m_onTextChanged = callback;
     TextEditable::setOnTextChanged([callback](TextEditable* te) {
@@ -207,6 +214,16 @@ void TextInput::renderOverlay(SDL_Renderer* renderer) {
 bool TextInput::handleEvent(const SDL_Event& e) {
     if (m_locked || !m_enabled || !m_visible) {
         return false;
+    }
+
+    if (dispatchEventHook(e)) {
+        return true;
+    }
+
+    // Key hook (dlg_city_name_edit_proc parity): fires before the default
+    // editing path; returning true consumes the key.
+    if (e.type == SDL_EVENT_KEY_DOWN && m_onKey && m_onKey(e.key)) {
+        return true;
     }
 
     // Mouse button down - start drag

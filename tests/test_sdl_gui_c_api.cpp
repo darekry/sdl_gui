@@ -1,5 +1,7 @@
 #include "../lib/catch_amalgamated.hpp"
 
+#include <cstring>
+
 #include "test_helper.hpp"
 #include "../src/gui_manager.hpp"
 #include "../src/gui_context.hpp"
@@ -2275,4 +2277,565 @@ TEST_CASE("C API - GPU context", "[c_api][gpu]") {
     sdlgui_render(gpu);
 
     sdlgui_destroy(gpu);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Parity P0/P1: geometry, ids, hooks, forms, menu list, input limits
+   ═══════════════════════════════════════════════════════════════════ */
+
+namespace {
+
+SDL_Event keyDown(SDL_Keycode key, SDL_Keymod mod = SDL_KMOD_NONE) {
+    SDL_Event event;
+    SDL_zero(event);
+    event.type = SDL_EVENT_KEY_DOWN;
+    event.key.key = key;
+    event.key.mod = mod;
+    return event;
+}
+
+SDL_Event mouseDown(Uint8 button, int x, int y) {
+    SDL_Event event;
+    SDL_zero(event);
+    event.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+    event.button.button = button;
+    event.button.x = static_cast<float>(x);
+    event.button.y = static_cast<float>(y);
+    return event;
+}
+
+SDL_Event textInput(std::string_view text) {
+    // SDL3 stores a const char* in the event; keep the storage alive.
+    static std::string storage;
+    storage.assign(text);
+    SDL_Event event;
+    SDL_zero(event);
+    event.type = SDL_EVENT_TEXT_INPUT;
+    event.text.text = storage.c_str();
+    return event;
+}
+
+}  // namespace
+
+TEST_CASE("C API - Geometry, tree, visibility, focus, control ids", "[c_api][parity]") {
+    sdlgui_t gui = sdlgui_create("Parity", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    sdlgui_element_t parent = sdlgui_panel_create(gui, nullptr, 10, 20, 200, 120);
+    sdlgui_element_t child = sdlgui_panel_create(gui, parent, 5, 7, 50, 30);
+    REQUIRE(parent != nullptr);
+    REQUIRE(child != nullptr);
+
+    SECTION("local vs absolute rect") {
+        sdlgui_rect_t rect{};
+        sdlgui_element_get_rect(child, &rect);
+        REQUIRE(rect.x == 5);
+        REQUIRE(rect.y == 7);
+        REQUIRE(rect.w == 50);
+        REQUIRE(rect.h == 30);
+
+        sdlgui_element_get_absolute_rect(child, &rect);
+        REQUIRE(rect.x == 15);
+        REQUIRE(rect.y == 27);
+    }
+
+    SECTION("visibility is effective through ancestors") {
+        sdlgui_element_set_id(child, "child");
+        REQUIRE(sdlgui_element_get_visible(child) == 1);
+        REQUIRE(sdlgui_element_is_shown(child) == 1);
+
+        sdlgui_element_set_visible(parent, 0);
+        REQUIRE(sdlgui_element_get_visible(child) == 1);
+        REQUIRE(sdlgui_element_is_shown(child) == 0);
+        sdlgui_element_set_visible(parent, 1);
+        REQUIRE(sdlgui_element_is_shown(child) == 1);
+    }
+
+    SECTION("children and DFS find") {
+        REQUIRE(sdlgui_element_get_child_count(parent) == 1);
+        REQUIRE(sdlgui_element_get_child(parent, 0) == child);
+        REQUIRE(sdlgui_element_get_child(parent, 5) == nullptr);
+        REQUIRE(std::string(sdlgui_last_error()).find("range") != std::string::npos);
+
+        sdlgui_element_set_id(child, "ok");
+        REQUIRE(sdlgui_element_find_by_id(parent, "ok") == child);
+        REQUIRE(sdlgui_element_find_by_id(parent, "missing") == nullptr);
+    }
+
+    SECTION("focus rejects hidden subtrees") {
+        sdlgui_element_t button = sdlgui_button_create(gui, parent, 0, 0, 60, 24, "OK");
+        REQUIRE(button != nullptr);
+        REQUIRE(sdlgui_element_request_focus(button) == 1);
+        REQUIRE(sdlgui_get_focused_element(gui) == button);
+
+        sdlgui_element_set_visible(parent, 0);
+        REQUIRE(sdlgui_element_request_focus(button) == 0);
+        REQUIRE(std::string(sdlgui_last_error()).find("focus") != std::string::npos);
+        sdlgui_element_set_visible(parent, 1);
+    }
+
+    SECTION("window rect") {
+        sdlgui_rect_t rect{};
+        sdlgui_get_window_rect(gui, &rect);
+        REQUIRE(rect.x == 0);
+        REQUIRE(rect.y == 0);
+        REQUIRE(rect.w == 800);
+        REQUIRE(rect.h == 600);
+    }
+
+    SECTION("control ids") {
+        REQUIRE(sdlgui_element_get_control_id(child) == -1);
+        sdlgui_element_set_control_id(child, 101);
+        REQUIRE(sdlgui_element_get_control_id(child) == 101);
+        REQUIRE(sdlgui_element_find_by_control_id(parent, 101) == child);
+        REQUIRE(sdlgui_element_find_by_control_id(parent, 999) == nullptr);
+
+        sdlgui_element_set_control_id(child, 0x1FFFF);
+        REQUIRE(sdlgui_element_get_control_id(child) == 101);
+        REQUIRE(sdlgui_last_error()[0] != '\0');
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - Text metrics (font fixture optional)", "[c_api][parity]") {
+    sdlgui_t gui = sdlgui_create("Parity", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    int w = -1, h = -1, line_h = -1;
+    const int ok = sdlgui_measure_text(gui, "", 0, &w, &h, &line_h);
+    if (ok) {
+        REQUIRE(w == 0);
+        REQUIRE(line_h > 0);
+        REQUIRE(h == line_h);
+    } else {
+        WARN("font fixture missing; measure_text semantics not exercised");
+    }
+
+    int ascent = -1, descent = -1;
+    const int metrics_ok = sdlgui_get_font_metrics(gui, 0, &line_h, &ascent, &descent);
+    if (metrics_ok) {
+        REQUIRE(line_h > 0);
+        REQUIRE(ascent >= 0);
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - MenuBar integer command ids", "[c_api][parity][menu]") {
+    sdlgui_t gui = sdlgui_create("Parity", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    sdlgui_element_t bar = sdlgui_menu_bar_create(gui, nullptr, 0, 0, 400, 0);
+    REQUIRE(bar != nullptr);
+    sdlgui_menu_item_t file = sdlgui_menu_bar_add_menu(bar, "&File");
+    REQUIRE(file != nullptr);
+    sdlgui_menu_item_t save = sdlgui_menu_item_add_item_id(file, "&Save", 42);
+    REQUIRE(save != nullptr);
+    sdlgui_menu_item_set_shortcut(save, "Ctrl+S");
+
+    sdlgui_menu_item_t submenu = sdlgui_menu_item_add_submenu(file, "Recent");
+    REQUIRE(submenu != nullptr);
+    sdlgui_menu_item_t recent = sdlgui_menu_item_add_item_id(submenu, "One", 7);
+    REQUIRE(recent != nullptr);
+
+    int fired_id = -1;
+    sdlgui_menu_bar_set_on_command_id(bar,
+        [](sdlgui_element_t, int id, void* data) { *static_cast<int*>(data) = id; },
+        &fired_id);
+
+    SDL_Event event = keyDown(SDLK_S, SDL_KMOD_CTRL);
+    sdlgui_process_event(gui, &event);
+    REQUIRE(fired_id == 42);
+
+    REQUIRE(sdlgui_menu_item_find_by_id(bar, 7) == recent);
+    REQUIRE(sdlgui_menu_item_find_by_id(bar, 12345) == nullptr);
+
+    sdlgui_menu_item_set_text(recent, "Renamed");
+    char buffer[32];
+    REQUIRE(sdlgui_menu_item_get_text_buf(recent, buffer, sizeof(buffer)) == 7);
+    REQUIRE(std::string(buffer) == "Renamed");
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - Cursor surface and system mode", "[c_api][parity][cursor]") {
+    sdlgui_t gui = sdlgui_create("Parity", 320, 240, 0);
+    REQUIRE(gui != nullptr);
+
+    sdlgui_element_t cursor = sdlgui_cursor_create(gui);
+    REQUIRE(cursor != nullptr);
+
+    SDL_Surface* surface = SDL_CreateSurface(2, 2, SDL_PIXELFORMAT_RGBA8888);
+    REQUIRE(surface != nullptr);
+    SDL_FillSurfaceRect(surface, nullptr, SDL_MapSurfaceRGBA(surface, 255, 0, 0, 255));
+    sdlgui_cursor_set_surface(cursor, SDLGUI_CURSOR_NORMAL, surface, 0, 0);
+    SDL_DestroySurface(surface);
+    REQUIRE(sdlgui_cursor_is_system(cursor) == 0);
+
+    sdlgui_cursor_set_system(cursor, SDL_SYSTEM_CURSOR_POINTER);
+    REQUIRE(sdlgui_cursor_is_system(cursor) == 1);
+
+    SDL_Surface* again = SDL_CreateSurface(2, 2, SDL_PIXELFORMAT_RGBA8888);
+    REQUIRE(again != nullptr);
+    sdlgui_cursor_set_surface(cursor, SDLGUI_CURSOR_NORMAL, again, 1, 1);
+    SDL_DestroySurface(again);
+    REQUIRE(sdlgui_cursor_is_system(cursor) == 0);
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - Draw/event hooks and CustomControl", "[c_api][parity][hooks]") {
+    sdlgui_t gui = sdlgui_create("Parity", 320, 240, 0);
+    REQUIRE(gui != nullptr);
+
+    struct HookState {
+        int paints = 0;
+        int events = 0;
+        int last_x = -1;
+        int last_y = -1;
+        int last_w = 0;
+    } state;
+
+    sdlgui_element_t control = sdlgui_custom_control_create(gui, nullptr, 10, 10, 64, 32,
+        [](sdlgui_element_t, SDL_Renderer*, const sdlgui_rect_t* rect,
+           const sdlgui_rect_t*, void* data) {
+            auto* s = static_cast<HookState*>(data);
+            ++s->paints;
+            s->last_w = rect->w;
+        },
+        [](sdlgui_element_t, const SDL_Event* event, int lx, int ly, void* data) {
+            auto* s = static_cast<HookState*>(data);
+            if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                ++s->events;
+                s->last_x = lx;
+                s->last_y = ly;
+                return 1;
+            }
+            return 0;
+        },
+        &state);
+    REQUIRE(control != nullptr);
+
+    sdlgui_render(gui);
+    REQUIRE(state.paints >= 1);
+    REQUIRE(state.last_w == 64);
+
+    SDL_Event down = mouseDown(SDL_BUTTON_LEFT, 20, 15);
+    sdlgui_process_event(gui, &down);
+    REQUIRE(state.events == 1);
+    REQUIRE(state.last_x == 10);
+    REQUIRE(state.last_y == 5);
+
+    REQUIRE(sdlgui_element_request_focus(control) == 1);
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - FormDialog items, results and notify_command", "[c_api][parity][form]") {
+    sdlgui_t gui = sdlgui_create("Parity", 640, 480, 0);
+    REQUIRE(gui != nullptr);
+
+    sdlgui_element_t form = sdlgui_form_create(gui, "Form", 20, 20, 300, 220);
+    REQUIRE(form != nullptr);
+
+    sdlgui_element_t ok = sdlgui_form_add_button(form, 1, "OK", 30, 160, 80, 28);
+    sdlgui_element_t label = sdlgui_form_add_static(form, 2, "Hello", 10, 10, 120, 24);
+    sdlgui_element_t edit = sdlgui_form_add_edit(form, 3, "abc", 10, 40, 160, 26);
+    sdlgui_element_t custom = sdlgui_form_add_custom(form, 4, 10, 80, 100, 50);
+    REQUIRE(ok != nullptr);
+    REQUIRE(label != nullptr);
+    REQUIRE(edit != nullptr);
+    REQUIRE(custom != nullptr);
+
+    REQUIRE(sdlgui_form_find_item(form, 2) == label);
+    REQUIRE(sdlgui_form_find_item(form, 99) == nullptr);
+
+    sdlgui_rect_t rect{};
+    REQUIRE(sdlgui_form_get_item_rect(form, 1, &rect) == 1);
+    REQUIRE(rect.x == 30);
+    REQUIRE(rect.y == 160);
+
+    REQUIRE(sdlgui_form_set_item_rect(form, 1, 40, 150, 90, 30) == 1);
+    REQUIRE(sdlgui_form_get_item_rect(form, 1, &rect) == 1);
+    REQUIRE(rect.x == 40);
+
+    REQUIRE(sdlgui_form_set_item_visible(form, 2, 0) == 1);
+    REQUIRE(sdlgui_element_is_shown(label) == 0);
+    REQUIRE(sdlgui_form_set_item_enabled(form, 2, 0) == 1);
+    REQUIRE(sdlgui_element_get_enabled(label) == 0);
+
+    REQUIRE(sdlgui_form_set_item_text(form, 2, "Changed") == 1);
+    REQUIRE(sdlgui_form_get_item_rect(form, 2, &rect) == 1);
+    REQUIRE(rect.w == 120);
+    REQUIRE(rect.h == 24);
+
+    int command = -1;
+    sdlgui_form_set_on_command(form,
+        [](sdlgui_element_t, int id, void* data) { *static_cast<int*>(data) = id; },
+        &command);
+    sdlgui_element_notify_command(ok, 17);
+    REQUIRE(command == 17);
+
+    sdlgui_form_end(form, 5);
+    REQUIRE(sdlgui_form_is_closed(form) == 1);
+    REQUIRE(sdlgui_form_get_result(form) == 5);
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - FormDialog create_from_items", "[c_api][parity][form]") {
+    sdlgui_t gui = sdlgui_create("Parity", 640, 480, 0);
+    REQUIRE(gui != nullptr);
+
+    sdlgui_form_item_desc_t items[] = {
+        {10, SDLGUI_FORM_ITEM_STATIC, "Name", 10, 10, 80, 24},
+        {11, SDLGUI_FORM_ITEM_EDIT, "x", 100, 10, 120, 24},
+        {12, SDLGUI_FORM_ITEM_BUTTON, "OK", 100, 60, 80, 28},
+    };
+    sdlgui_element_t form = sdlgui_form_create_from_items(
+        gui, "Items", 10, 10, 300, 160, items, 3);
+    REQUIRE(form != nullptr);
+
+    REQUIRE(sdlgui_form_find_item(form, 10) != nullptr);
+    REQUIRE(sdlgui_form_find_item(form, 11) != nullptr);
+    REQUIRE(sdlgui_form_find_item(form, 12) != nullptr);
+
+    sdlgui_rect_t rect{};
+    REQUIRE(sdlgui_form_get_item_rect(form, 11, &rect) == 1);
+    REQUIRE(rect.x == 100);
+    REQUIRE(rect.w == 120);
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - Modal runner cancel/quit/filter", "[c_api][parity][modal]") {
+    SECTION("cancel key closes with cancel_result") {
+        sdlgui_t gui = sdlgui_create("Parity", 320, 240, 0);
+        REQUIRE(gui != nullptr);
+        sdlgui_element_t form = sdlgui_form_create(gui, "", 10, 10, 200, 120);
+        REQUIRE(form != nullptr);
+
+        SDL_Event escape = keyDown(SDLK_ESCAPE);
+        SDL_PushEvent(&escape);
+        sdlgui_modal_options_t opts{};
+        opts.keep_background = 1;
+        opts.cancel_key = SDLK_ESCAPE;
+        opts.cancel_result = 7;
+        int result = 0;
+        int frames = 0;
+        opts.frame_cb = [](void* data) { ++*static_cast<int*>(data); };
+        opts.userdata = &frames;
+        REQUIRE(sdlgui_modal_run(gui, form, &opts, &result) == 7);
+        REQUIRE(result == 7);
+        REQUIRE(frames >= 1);
+
+        sdlgui_destroy(gui);
+    }
+
+    SECTION("quit event closes the dialog") {
+        sdlgui_t gui = sdlgui_create("Parity", 320, 240, 0);
+        REQUIRE(gui != nullptr);
+        sdlgui_element_t form = sdlgui_form_create(gui, "", 10, 10, 200, 120);
+        REQUIRE(form != nullptr);
+
+        SDL_Event quit;
+        SDL_zero(quit);
+        quit.type = SDL_EVENT_QUIT;
+        SDL_PushEvent(&quit);
+
+        sdlgui_modal_options_t opts{};
+        opts.keep_background = 1;
+        opts.cancel_result = -5;
+        int result = 0;
+        REQUIRE(sdlgui_modal_run(gui, form, &opts, &result) == -5);
+
+        sdlgui_destroy(gui);
+    }
+
+    SECTION("event filter can consume an event") {
+        sdlgui_t gui = sdlgui_create("Parity", 320, 240, 0);
+        REQUIRE(gui != nullptr);
+        sdlgui_element_t form = sdlgui_form_create(gui, "", 10, 10, 200, 120);
+        REQUIRE(form != nullptr);
+
+        SDL_Event first = keyDown(SDLK_ESCAPE);
+        SDL_Event second = keyDown(SDLK_ESCAPE);
+        SDL_PushEvent(&first);
+        SDL_PushEvent(&second);
+
+        struct Filter { int seen = 0; } filter;
+        sdlgui_modal_options_t opts{};
+        opts.keep_background = 1;
+        opts.cancel_key = SDLK_ESCAPE;
+        opts.cancel_result = 3;
+        opts.userdata = &filter;
+        opts.event_filter = [](const SDL_Event* event, void* data) {
+            if (event->type == SDL_EVENT_KEY_DOWN) {
+                auto* f = static_cast<Filter*>(data);
+                ++f->seen;
+                return f->seen == 1 ? 1 : 0;  /* consume the first Esc */
+            }
+            return 0;
+        };
+
+        int result = 0;
+        REQUIRE(sdlgui_modal_run(gui, form, &opts, &result) == 3);
+        REQUIRE(filter.seen == 2);
+
+        sdlgui_destroy(gui);
+    }
+}
+
+TEST_CASE("C API - MenuList navigation, disabled, timer, row callback", "[c_api][parity][menu_list]") {
+    sdlgui_t gui = sdlgui_create("Parity", 480, 320, 0);
+    REQUIRE(gui != nullptr);
+
+    const sdlgui_menu_list_item_t items[] = {
+        {"One", 1, 1}, {"Two", 2, 1}, {"Three", 3, 1}, {"Four", 4, 1}};
+    sdlgui_element_t list = sdlgui_menu_list_create(gui, nullptr, 10, 10, 200, 120,
+                                                     "Title", items, 4);
+    REQUIRE(list != nullptr);
+    REQUIRE(sdlgui_element_request_focus(list) == 1);
+
+    int selected_cb = -1;
+    sdlgui_menu_list_set_on_select(list,
+        [](sdlgui_element_t, int id, const char*, void* data) {
+            *static_cast<int*>(data) = id;
+        }, &selected_cb);
+
+    sdlgui_menu_list_set_columns(list, 2);
+    sdlgui_menu_list_set_preselect(list, 1);
+
+    SECTION("row-major down navigation") {
+        SDL_Event down = keyDown(SDLK_DOWN);
+        sdlgui_process_event(gui, &down);
+        SDL_Event enter = keyDown(SDLK_RETURN);
+        sdlgui_process_event(gui, &enter);
+        REQUIRE(sdlgui_menu_list_get_selected_id(list) == 3);
+        REQUIRE(selected_cb == 3);
+    }
+
+    SECTION("disabled rows are skipped") {
+        sdlgui_menu_list_set_columns(list, 1);
+        sdlgui_menu_list_set_disabled_mask(list, 1u << 1);
+        SDL_Event down = keyDown(SDLK_DOWN);
+        sdlgui_process_event(gui, &down);
+        SDL_Event enter = keyDown(SDLK_RETURN);
+        sdlgui_process_event(gui, &enter);
+        REQUIRE(sdlgui_menu_list_get_selected_id(list) == 3);
+    }
+
+    SECTION("navigation wraps") {
+        sdlgui_menu_list_set_preselect(list, 4);
+        SDL_Event right = keyDown(SDLK_RIGHT);
+        sdlgui_process_event(gui, &right);
+        SDL_Event enter = keyDown(SDLK_RETURN);
+        sdlgui_process_event(gui, &enter);
+        REQUIRE(sdlgui_menu_list_get_selected_id(list) == 1);
+    }
+
+    SECTION("Esc returns the cancel id") {
+        sdlgui_menu_list_set_cancel_id(list, 99);
+        SDL_Event esc = keyDown(SDLK_ESCAPE);
+        sdlgui_process_event(gui, &esc);
+        REQUIRE(sdlgui_menu_list_get_selected_id(list) == 99);
+    }
+
+    SECTION("timer fires on_tick") {
+        int ticks = 0;
+        sdlgui_menu_list_set_on_tick(list,
+            [](sdlgui_element_t, void* data) { ++*static_cast<int*>(data); }, &ticks);
+        sdlgui_menu_list_set_timer_ms(list, 1);
+        SDL_Delay(20);
+        sdlgui_update(gui);
+        REQUIRE(ticks >= 1);
+    }
+
+    SECTION("row callback gets the row rect") {
+        struct RowState { int calls = 0; int w = 0; int h = 0; } rows;
+        sdlgui_menu_list_set_row_callback(list,
+            [](sdlgui_element_t, SDL_Renderer*, const sdlgui_rect_t* rect,
+               const char*, int, int, int, void* data) {
+                auto* s = static_cast<RowState*>(data);
+                ++s->calls;
+                s->w = rect->w;
+                s->h = rect->h;
+            }, &rows);
+        sdlgui_render(gui);
+        REQUIRE(rows.calls == 4);
+        REQUIRE(rows.w > 0);
+        REQUIRE(rows.h > 0);
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("C API - TextInput max length, filter and on_key", "[c_api][parity][text_input]") {
+    sdlgui_t gui = sdlgui_create("Parity", 480, 320, 0);
+    REQUIRE(gui != nullptr);
+
+    sdlgui_element_t input = sdlgui_text_input_create(gui, nullptr, 10, 10, 200, 28);
+    REQUIRE(input != nullptr);
+    REQUIRE(sdlgui_element_request_focus(input) == 1);
+
+    SECTION("max length truncates to codepoints") {
+        sdlgui_text_input_set_max_length(input, 3);
+        SDL_Event typed = textInput("abcdef");
+        sdlgui_process_event(gui, &typed);
+        char buffer[32];
+        sdlgui_text_input_get_text_buf(input, buffer, sizeof(buffer));
+        REQUIRE(std::string(buffer) == "abc");
+    }
+
+    SECTION("char filter accepts only digits") {
+        sdlgui_text_input_set_char_filter(input,
+            [](unsigned cp, void*) { return (cp >= '0' && cp <= '9') ? 1 : 0; }, nullptr);
+        SDL_Event typed = textInput("a1b2");
+        sdlgui_process_event(gui, &typed);
+        char buffer[32];
+        sdlgui_text_input_get_text_buf(input, buffer, sizeof(buffer));
+        REQUIRE(std::string(buffer) == "12");
+    }
+
+    SECTION("on_key consumes Escape") {
+        static int keys = 0;
+        keys = 0;
+        sdlgui_text_input_set_on_key(input,
+            [](sdlgui_element_t, const SDL_KeyboardEvent* key, void*) {
+                if (key->key == SDLK_ESCAPE) {
+                    ++keys;
+                    return 1;
+                }
+                return 0;
+            }, nullptr);
+        SDL_Event esc = keyDown(SDLK_ESCAPE);
+        sdlgui_process_event(gui, &esc);
+        REQUIRE(keys == 1);
+    }
+
+    SECTION("cursor and selection setters clamp") {
+        sdlgui_text_input_set_text(input, "abc");
+        sdlgui_text_input_set_cursor_pos(input, 999);
+        sdlgui_text_input_set_selection(input, 0, 999);
+        SUCCEED("setters clamp without crashing");
+    }
+
+    sdlgui_destroy(gui);
+}
+
+TEST_CASE("Label alignment participates in the render cache key", "[c_api][parity][label]") {
+    TestHelper helper;
+    Label label(helper.getManager(), 0, 0, "text", 16);
+
+    const uint64_t left_top = label.getRenderCacheKeySuffix();
+    label.setAlignment(TextHAlign::Center, TextVAlign::Middle);
+    const uint64_t center_middle = label.getRenderCacheKeySuffix();
+    label.setHAlign(TextHAlign::Right);
+    const uint64_t right_middle = label.getRenderCacheKeySuffix();
+
+    REQUIRE(center_middle != left_top);
+    REQUIRE(right_middle != center_middle);
+    REQUIRE(label.getHAlign() == TextHAlign::Right);
+    REQUIRE(label.getVAlign() == TextVAlign::Middle);
 }

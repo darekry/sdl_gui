@@ -12,6 +12,11 @@ void ModalDialog::close() {
     markForDeletion();
 }
 
+void ModalDialog::closeWithResult(int result) {
+    m_result = result;
+    close();
+}
+
 void ModalDialog::centerInViewport() {
     int screenW = 0, screenH = 0;
     m_manager.getWindowSize(screenW, screenH);
@@ -25,6 +30,8 @@ void ModalDialog::renderOverlay(SDL_Renderer* renderer) {
 
 bool ModalDialog::handleEvent(const SDL_Event& e) {
     if (!m_isOpen || !m_visible) return false;
+
+    if (dispatchEventHook(e)) return true;
 
     // Children first (buttons, inputs) — a focused TextInput consumes Enter
     // itself, so the dialog confirm below only fires when no child took it.

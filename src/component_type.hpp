@@ -42,6 +42,9 @@ enum class ComponentType : uint8_t {
     DialogBox,
     FileDialog,
     ColorDialog,
+    FormDialog,
+    CustomControl,
+    MenuList,
     Count
 };
 
@@ -76,6 +79,9 @@ inline std::string_view componentTypeToString(ComponentType t) {
         case ComponentType::DialogBox:     return "DialogBox";
         case ComponentType::FileDialog:    return "FileDialog";
         case ComponentType::ColorDialog:   return "ColorDialog";
+        case ComponentType::FormDialog:    return "FormDialog";
+        case ComponentType::CustomControl: return "CustomControl";
+        case ComponentType::MenuList:      return "MenuList";
         default:                           return "GUIElement";
     }
 }
@@ -109,6 +115,9 @@ inline ComponentType componentTypeFromString(std::string_view s) {
     if (s == "DialogBox")     return ComponentType::DialogBox;
     if (s == "FileDialog")    return ComponentType::FileDialog;
     if (s == "ColorDialog")   return ComponentType::ColorDialog;
+    if (s == "FormDialog")    return ComponentType::FormDialog;
+    if (s == "CustomControl") return ComponentType::CustomControl;
+    if (s == "MenuList")      return ComponentType::MenuList;
     if (s == "GUIElement")    return ComponentType::GUIElement;
     return ComponentType::Unknown;
 }

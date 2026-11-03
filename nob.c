@@ -1092,6 +1092,7 @@ static const char * hpp_order[] = {
     "src/theme_presets.hpp",
     "src/label.hpp",
     "src/panel.hpp",
+    "src/custom_control.hpp",
     "src/button.hpp",
     "src/checkbox.hpp",
     "src/slider.hpp",
@@ -1110,6 +1111,7 @@ static const char * hpp_order[] = {
     "src/context_menu.hpp",
     "src/menu_item.hpp",
     "src/menu_popup.hpp",
+    "src/menu_list.hpp",
     "src/menu_bar.hpp",
     "src/string_grid.hpp",
     "src/list_view.hpp",
@@ -1126,6 +1128,7 @@ static const char * hpp_order[] = {
     "src/window_manager.hpp",
     "src/gui_context.hpp",
     "src/composite/modal_dialog.hpp",
+    "src/composite/form_dialog.hpp",
     "src/composite/dialog_box.hpp",
     "src/composite/message_box.hpp",
     "src/composite/file_dialog.hpp",
@@ -1220,9 +1223,13 @@ static const char * includes_to_remove[] = {
     "#include \"composite/file_dialog.hpp\"",
     "#include \"composite/modal_dialog.hpp\"",
     "#include \"composite/color_dialog.hpp\"",
+    "#include \"composite/form_dialog.hpp\"",
     "#include \"color_dialog.hpp\"",
     "#include \"modal_dialog.hpp\"",
     "#include \"file_dialog.hpp\"",
+    "#include \"custom_control.hpp\"",
+    "#include \"menu_list.hpp\"",
+    "#include \"../custom_control.hpp\"",
 };
 
 // Supporting files whose system includes must remain in the merged

@@ -112,6 +112,22 @@ void FontManager::getTextSize(std::string_view text, std::string_view fontPath, 
     }
 }
 
+bool FontManager::getFontMetrics(std::string_view fontPath, int fontSize,
+                                 int* line_height, int* ascent, int* descent) {
+    if (line_height) *line_height = 0;
+    if (ascent) *ascent = 0;
+    if (descent) *descent = 0;
+
+    auto font = loadFont(fontPath, fontSize);
+    if (!font) {
+        return false;
+    }
+    if (line_height) *line_height = TTF_GetFontHeight(font.get());
+    if (ascent) *ascent = TTF_GetFontAscent(font.get());
+    if (descent) *descent = TTF_GetFontDescent(font.get());
+    return true;
+}
+
 int FontManager::getTextWidth(TTF_Font* font, std::string_view text) {
     if (!font || text.empty()) return 0;
 
