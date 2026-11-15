@@ -308,6 +308,10 @@ void PreviewWindow::fillPropsFromEditor(const EditorElement& elem, WidgetProps& 
         p.fps = previewParseFloat(elem.getProperty("fps", "12"), 12.0f);
         p.loop = getBool("loop", true);
         p.autoplay = getBool("autoplay", true);
+    } else if (type == "Image") {
+        p.path = elem.getProperty("path", "");
+        p.scaleMode = elem.getProperty("scaleMode", "Fit");
+        p.nearestScaling = getBool("nearest", false);
     } else if (type == "StringGrid") {
         p.rowCount = static_cast<size_t>(getInt("rowCount", 5));
         p.colCount = static_cast<size_t>(getInt("colCount", 5));

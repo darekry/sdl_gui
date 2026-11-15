@@ -17,6 +17,7 @@
 #include "../src/text_input.hpp"
 #include "../src/arc_container.hpp"
 #include "../src/scroll_area.hpp"
+#include "../src/image.hpp"
 #include "../src/menu_bar.hpp"
 #include "../src/menu_item.hpp"
 
@@ -120,6 +121,14 @@ TEST_CASE("LayoutParser - widget types", "[layout_parser][widgets]") {
         REQUIRE(w != nullptr);
         REQUIRE(w->getContent() != nullptr);
         REQUIRE(w->getScrollOffsetY() == 0);
+    }
+
+    SECTION("image props") {
+        auto* w = dynamic_cast<Image*>(children[9].get());
+        REQUIRE(w != nullptr);
+        REQUIRE(w->getScaleMode() == Image::ScaleMode::Stretch);
+        REQUIRE(w->isNearestScaling());
+        REQUIRE_FALSE(w->hasImage());
     }
 }
 

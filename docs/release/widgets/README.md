@@ -47,6 +47,7 @@ Kompletna lista widgetów biblioteki SDL GUI. Każdy widget dziedziczy po
 | Widget | Opis |
 |--------|------|
 | [AnimatedImage](AnimatedImage.md) | Animacje z sprite sheet; play/pause/stop, skalowanie |
+| [Image](Image.md) | Statyczny obrazek z `TextureManager` (Fit/Stretch/Center/None, nearest dla pixel art) |
 | [Canvas](Canvas.md) | Rysowanie odręczne myszą (pen color, clear) |
 | [Cursor](Cursor.md) | Własny kursor myszy (statyczny/animowany, stany, hotspot) |
 | [ArcContainer](ArcContainer.md) | Układa dzieci na łuku (np. menu kołowe, radary) |

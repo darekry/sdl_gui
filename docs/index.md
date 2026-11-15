@@ -9,7 +9,7 @@ prawdy dla odbiorców biblioteki (nie mają dostępu do `src/`).
 - [Getting Started](release/getting_started.md) — instalacja SDL3, kompilacja, linkowanie, Hello World
 - [Fundamenty (core)](release/core.md) — GUIElement, GUIManager, ElementRef, cykl życia
 - [Wzorce użycia](release/patterns.md) — zalecane wzorce i typowe pułapki
-- [Widgety](release/widgets/README.md) — 26 widgetów (Button, Slider, StringGrid, TextArea, MenuBar, MenuList, FormDialog, CustomControl, ShaderPanel, ...)
+- [Widgety](release/widgets/README.md) — 28 widgetów (Button, Slider, StringGrid, TextArea, MenuBar, MenuList, FormDialog, CustomControl, Image, ShaderPanel, ...)
 - [Kompozyty](release/composites.md) — DialogBox, MessageBox, FileDialog
 - [Menedżery](release/managers.md) — FontManager, TextureManager, TimerManager, AnimationManager, ScreenManager, WindowManager
 - [Zasoby](release/resources.md) — Style/Theme, Anchor, SDLApp, GUIContext, parsery, logowanie

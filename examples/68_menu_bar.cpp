@@ -6,6 +6,11 @@
  * Enter activates, Esc closes one level. Shortcuts (Ctrl+S/Q...) fire while
  * menus are closed. The menu bar sits at (0,0); app content lives in a Panel
  * anchored below it (Anchor::pinned with topMargin = bar height).
+ *
+ * View > Menu Style switches the bar/popup Style sets at runtime: Classic
+ * (Win95), Midnight and Paper. Styles are applied locally to the MenuBar and
+ * every MenuPopup (Normal/Hover/Disabled), so the switcher also demonstrates
+ * the menu style system.
  */
 
 #include "sdl_app.hpp"
@@ -18,6 +23,117 @@
 
 #include "std.hpp"
 
+namespace {
+
+struct MenuPalette {
+    std::string_view name;
+    Style barNormal;
+    Style barHover;
+    Style barDisabled;
+    Style popupNormal;
+    Style popupHover;
+    Style popupDisabled;
+};
+
+Style makeBarStyle(SDL_Color background, SDL_Color text) {
+    Style style;
+    style.backgroundColor = background;
+    style.textColor = text;
+    style.borderWidth = 0;
+    style.borderRadius = 0;
+    return style;
+}
+
+Style makePopupStyle(SDL_Color background, SDL_Color text, SDL_Color border) {
+    Style style = makeBarStyle(background, text);
+    style.borderColor = border;
+    style.borderWidth = 1;
+    return style;
+}
+
+MenuPalette makeClassicPalette() {
+    const SDL_Color face{192, 192, 192, 255};
+    const SDL_Color black{0, 0, 0, 255};
+    const SDL_Color navy{0, 0, 128, 255};
+    const SDL_Color white{255, 255, 255, 255};
+    const SDL_Color gray{128, 128, 128, 255};
+
+    MenuPalette palette;
+    palette.name = "Classic (Win95)";
+    palette.barNormal = makeBarStyle(face, black);
+    palette.barHover = makeBarStyle(navy, white);
+    palette.barDisabled = makeBarStyle(face, gray);
+    palette.popupNormal = makePopupStyle(white, black, gray);
+    palette.popupHover = makePopupStyle(navy, white, gray);
+    palette.popupDisabled = makePopupStyle(white, gray, gray);
+    return palette;
+}
+
+MenuPalette makeMidnightPalette() {
+    const SDL_Color background{24, 28, 44, 255};
+    const SDL_Color text{222, 228, 244, 255};
+    const SDL_Color accent{72, 108, 210, 255};
+    const SDL_Color white{255, 255, 255, 255};
+    const SDL_Color disabled{112, 118, 136, 255};
+    const SDL_Color popupBackground{18, 22, 36, 255};
+
+    MenuPalette palette;
+    palette.name = "Midnight";
+    palette.barNormal = makeBarStyle(background, text);
+    palette.barHover = makeBarStyle(accent, white);
+    palette.barDisabled = makeBarStyle(background, disabled);
+    palette.popupNormal = makePopupStyle(popupBackground, text, accent);
+    palette.popupHover = makePopupStyle(accent, white, accent);
+    palette.popupDisabled = makePopupStyle(popupBackground, disabled, accent);
+    return palette;
+}
+
+MenuPalette makePaperPalette() {
+    const SDL_Color background{244, 236, 214, 255};
+    const SDL_Color text{58, 48, 38, 255};
+    const SDL_Color accent{214, 120, 40, 255};
+    const SDL_Color white{255, 255, 255, 255};
+    const SDL_Color disabled{158, 146, 128, 255};
+    const SDL_Color border{176, 150, 110, 255};
+    const SDL_Color popupBackground{252, 247, 236, 255};
+
+    MenuPalette palette;
+    palette.name = "Paper";
+    palette.barNormal = makeBarStyle(background, text);
+    palette.barHover = makeBarStyle(accent, white);
+    palette.barDisabled = makeBarStyle(background, disabled);
+    palette.popupNormal = makePopupStyle(popupBackground, text, border);
+    palette.popupHover = makePopupStyle(accent, white, border);
+    palette.popupDisabled = makePopupStyle(popupBackground, disabled, border);
+    return palette;
+}
+
+void applyMenuPalette(MenuBar& bar, const MenuPalette& palette) {
+    bar.setStyle(ElementState::Normal, palette.barNormal);
+    bar.setStyle(ElementState::Hover, palette.barHover);
+    bar.setStyle(ElementState::Disabled, palette.barDisabled);
+    bar.layoutChildren();
+
+    std::function<void(MenuItem&)> applyToNode = [&](MenuItem& node) {
+        if (node.hasSubmenu()) {
+            if (MenuPopup* popup = bar.getPopupFor(&node)) {
+                popup->setStyle(ElementState::Normal, palette.popupNormal);
+                popup->setStyle(ElementState::Hover, palette.popupHover);
+                popup->setStyle(ElementState::Disabled, palette.popupDisabled);
+                popup->refresh();
+            }
+        }
+        for (auto& child : node.submenu) {
+            applyToNode(*child);
+        }
+    };
+    for (size_t i = 0; i < bar.getMenuCount(); ++i) {
+        applyToNode(*bar.getMenu(i));
+    }
+}
+
+} // namespace
+
 int main(int, char**) {
     try {
         SDLApp app("MenuBar - Civilization style", 900, 620, true);
@@ -28,6 +144,10 @@ int main(int, char**) {
 
         GUIManager guiManager(renderer, Viewport{windowWidth, windowHeight});
         guiManager.setTheme(Theme::createDefaultTheme());
+
+        const MenuPalette classicPalette = makeClassicPalette();
+        const MenuPalette midnightPalette = makeMidnightPalette();
+        const MenuPalette paperPalette = makePaperPalette();
 
         auto bar = std::make_unique<MenuBar>(guiManager, 0, 0, windowWidth);
         bar->setAnchor(Anchor::topBar(0));
@@ -52,12 +172,19 @@ int main(int, char**) {
         contentPanel->addChild(std::move(status));
 
         auto hint = std::make_unique<Label>(guiManager, 24, 64,
-            "Alt+F opens File, F10 toggles menu mode, Ctrl+S saves, Ctrl+Q quits.", 14);
+            "Alt+F opens File, F10 toggles menu mode, Ctrl+S saves, Ctrl+Q quits. "
+            "View > Menu Style changes the bar/popup style.", 14);
         hint->setTextColor(ElementState::Normal, SDL_Color{150, 150, 150, 255});
         contentPanel->addChild(std::move(hint));
 
         auto refreshStatus = [statusLabel, &statusText]() {
             statusLabel->setText(statusText);
+        };
+
+        auto selectStyle = [&statusText, &refreshStatus, menuBar](const MenuPalette& palette) {
+            applyMenuPalette(*menuBar, palette);
+            statusText = "Menu style: " + std::string(palette.name);
+            refreshStatus();
         };
 
         MenuItem& file = menuBar->addMenu("&File");
@@ -161,6 +288,15 @@ int main(int, char**) {
             refreshStatus();
         };
 
+        MenuItem& view = menuBar->addMenu("&View");
+        MenuItem& menuStyle = view.addSubmenu("&Menu Style");
+        MenuItem& classicStyleItem = menuStyle.addItem("&Classic").setRadio(true);
+        MenuItem& midnightStyleItem = menuStyle.addItem("&Midnight").setRadio(false);
+        MenuItem& paperStyleItem = menuStyle.addItem("&Paper").setRadio(false);
+        classicStyleItem.action = [&selectStyle, &classicPalette]() { selectStyle(classicPalette); };
+        midnightStyleItem.action = [&selectStyle, &midnightPalette]() { selectStyle(midnightPalette); };
+        paperStyleItem.action = [&selectStyle, &paperPalette]() { selectStyle(paperPalette); };
+
         MenuItem& civlopedia = menuBar->addMenu("&Civlopedia");
         civlopedia.addItem("&Advances");
         civlopedia.addItem("&Units");
@@ -175,6 +311,8 @@ int main(int, char**) {
             statusText = "SDL GUI MenuBar demo - Win32-style menus.";
             refreshStatus();
         });
+
+        applyMenuPalette(*menuBar, classicPalette);
 
         bool running = true;
         SDL_Event event;

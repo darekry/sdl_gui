@@ -181,6 +181,7 @@ TEST_CASE("Lifetime - WidgetFactory single registry", "[lifetime]") {
             {"ComboBox", ComponentType::ComboBox},
             {"TabControl", ComponentType::TabControl},
             {"AnimatedImage", ComponentType::AnimatedImage},
+            {"Image", ComponentType::Image},
             {"Canvas", ComponentType::Canvas},
             {"ProgressBar", ComponentType::ProgressBar},
             {"ScrollArea", ComponentType::ScrollArea},

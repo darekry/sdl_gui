@@ -183,6 +183,15 @@ inline Theme createWindows95Theme() {
         theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
     }
 
+    // Image: draws only its texture — no chrome, no background fill.
+    {
+        Style s;
+        s.backgroundColor = SDL_Color{0, 0, 0, 0};
+        s.borderWidth = 0;
+        s.borderRadius = 0;
+        theme.setStyle(ComponentType::Image, ElementState::Normal, s);
+    }
+
     // DialogBox / FileDialog: flat window background, like Panel.
     {
         Style s;
@@ -520,6 +529,15 @@ inline Theme createLightTheme() {
         theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
     }
 
+    // Image: transparent — draws only its texture.
+    {
+        Style s;
+        s.backgroundColor = SDL_Color{0, 0, 0, 0};
+        s.borderWidth = 0;
+        s.borderRadius = 0;
+        theme.setStyle(ComponentType::Image, ElementState::Normal, s);
+    }
+
     // Canvas
     {
         Style s;
@@ -804,6 +822,15 @@ inline Theme createDarkTheme() {
         theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
     }
 
+    // Image: transparent — draws only its texture.
+    {
+        Style s;
+        s.backgroundColor = SDL_Color{0, 0, 0, 0};
+        s.borderWidth = 0;
+        s.borderRadius = 0;
+        theme.setStyle(ComponentType::Image, ElementState::Normal, s);
+    }
+
     // Canvas
     {
         Style s;
@@ -1084,6 +1111,15 @@ inline Theme createHighContrastTheme() {
         Style s;
         s.backgroundColor = kBlack;
         theme.setStyle(ComponentType::AnimatedImage, ElementState::Normal, s);
+    }
+
+    // Image: transparent — draws only its texture.
+    {
+        Style s;
+        s.backgroundColor = SDL_Color{0, 0, 0, 0};
+        s.borderWidth = 0;
+        s.borderRadius = 0;
+        theme.setStyle(ComponentType::Image, ElementState::Normal, s);
     }
 
     // Canvas

@@ -17,6 +17,7 @@
 #include "string_grid.hpp"
 #include "scroll_area.hpp"
 #include "animated_image.hpp"
+#include "image.hpp"
 #include "canvas.hpp"
 #include "arc_container.hpp"
 #include "tab_control.hpp"
@@ -1590,6 +1591,99 @@ int sdlgui_animated_image_is_playing(sdlgui_element_t e) {
 
 void sdlgui_animated_image_set_frame(sdlgui_element_t e, int frame_index) {
     static_cast<AnimatedImage*>(unwrap_elem(e))->setFrame(frame_index);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Phase 2: Image
+   ═══════════════════════════════════════════════════════════════════ */
+
+sdlgui_element_t sdlgui_image_create(sdlgui_t gui, sdlgui_element_t parent,
+                                     int x, int y, int w, int h) {
+    auto* ctx = unwrap_ctx(gui);
+    if (!ctx) {
+        set_c_error("sdlgui_image_create: null context");
+        return nullptr;
+    }
+    auto img = std::make_unique<Image>(ctx->getGUIManager(), x, y, w, h);
+    return add_element(ctx, parent, std::move(img));
+}
+
+int sdlgui_image_set_image(sdlgui_element_t e, const char* path) {
+    auto* img = checked_elem<Image>(e, ComponentType::Image, "sdlgui_image_set_image");
+    if (!img) return 0;
+    if (!path) {
+        set_c_error("sdlgui_image_set_image: null path");
+        return 0;
+    }
+    return img->setImage(path) ? 1 : 0;
+}
+
+int sdlgui_image_set_image_from_memory(sdlgui_element_t e,
+                                       const void* data, size_t size,
+                                       const char* key) {
+    auto* img = checked_elem<Image>(e, ComponentType::Image, "sdlgui_image_set_image_from_memory");
+    if (!img) return 0;
+    if (!data || size == 0 || !key) {
+        set_c_error("sdlgui_image_set_image_from_memory: null data or key");
+        return 0;
+    }
+    return img->setImageFromMemory(static_cast<const uint8_t*>(data), size, key) ? 1 : 0;
+}
+
+void sdlgui_image_clear(sdlgui_element_t e) {
+    auto* img = checked_elem<Image>(e, ComponentType::Image, "sdlgui_image_clear");
+    if (!img) return;
+    img->clearImage();
+}
+
+int sdlgui_image_has_image(sdlgui_element_t e) {
+    auto* img = checked_elem<Image>(e, ComponentType::Image, "sdlgui_image_has_image");
+    return (img && img->hasImage()) ? 1 : 0;
+}
+
+void sdlgui_image_set_scale_mode(sdlgui_element_t e, sdlgui_image_scale_mode_t mode) {
+    auto* img = checked_elem<Image>(e, ComponentType::Image, "sdlgui_image_set_scale_mode");
+    if (!img) return;
+    switch (mode) {
+        case SDLGUI_IMAGE_STRETCH: img->setScaleMode(Image::ScaleMode::Stretch); break;
+        case SDLGUI_IMAGE_CENTER:  img->setScaleMode(Image::ScaleMode::Center); break;
+        case SDLGUI_IMAGE_NONE:    img->setScaleMode(Image::ScaleMode::None); break;
+        case SDLGUI_IMAGE_FIT:
+        default:                   img->setScaleMode(Image::ScaleMode::Fit); break;
+    }
+}
+
+sdlgui_image_scale_mode_t sdlgui_image_get_scale_mode(sdlgui_element_t e) {
+    auto* img = checked_elem<Image>(e, ComponentType::Image, "sdlgui_image_get_scale_mode");
+    if (!img) return SDLGUI_IMAGE_FIT;
+    switch (img->getScaleMode()) {
+        case Image::ScaleMode::Stretch: return SDLGUI_IMAGE_STRETCH;
+        case Image::ScaleMode::Center:  return SDLGUI_IMAGE_CENTER;
+        case Image::ScaleMode::None:    return SDLGUI_IMAGE_NONE;
+        case Image::ScaleMode::Fit:
+        default:                        return SDLGUI_IMAGE_FIT;
+    }
+}
+
+void sdlgui_image_set_nearest(sdlgui_element_t e, int nearest) {
+    auto* img = checked_elem<Image>(e, ComponentType::Image, "sdlgui_image_set_nearest");
+    if (!img) return;
+    img->setNearestScaling(nearest != 0);
+}
+
+int sdlgui_image_get_image_size(sdlgui_element_t e, int* w, int* h) {
+    auto* img = checked_elem<Image>(e, ComponentType::Image, "sdlgui_image_get_image_size");
+    if (!img) return 0;
+    const auto size = img->getImageSize();
+    if (w) *w = size.first;
+    if (h) *h = size.second;
+    return img->hasImage() ? 1 : 0;
+}
+
+void sdlgui_image_size_to_image(sdlgui_element_t e) {
+    auto* img = checked_elem<Image>(e, ComponentType::Image, "sdlgui_image_size_to_image");
+    if (!img) return;
+    img->sizeToImage();
 }
 
 /* ═══════════════════════════════════════════════════════════════════

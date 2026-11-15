@@ -308,6 +308,10 @@ void LayoutParser::fillPropsFromNode(void* node, const std::string& type, Widget
         p.preserveAspect = getBool(node, "preserveAspect", true);
         p.scaleMode = getString(node, "scaleMode", "Fit");
         p.autoplay = getBool(node, "autoplay", true);
+    } else if (type == "Image") {
+        p.path = getString(node, "path", "");
+        p.scaleMode = getString(node, "scaleMode", "Fit");
+        p.nearestScaling = getBool(node, "nearest", false);
     } else if (type == "Canvas") {
         // Bez propsów.
     } else if (type == "ProgressBar") {

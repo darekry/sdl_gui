@@ -29,6 +29,7 @@ enum class ComponentType : uint8_t {
     ComboBox,
     TabControl,
     AnimatedImage,
+    Image,
     Canvas,
     ContextMenu,
     MenuBar,
@@ -66,6 +67,7 @@ inline std::string_view componentTypeToString(ComponentType t) {
         case ComponentType::ComboBox:      return "ComboBox";
         case ComponentType::TabControl:    return "TabControl";
         case ComponentType::AnimatedImage: return "AnimatedImage";
+        case ComponentType::Image:         return "Image";
         case ComponentType::Canvas:        return "Canvas";
         case ComponentType::ContextMenu:   return "ContextMenu";
         case ComponentType::MenuBar:       return "MenuBar";
@@ -102,6 +104,7 @@ inline ComponentType componentTypeFromString(std::string_view s) {
     if (s == "ComboBox")      return ComponentType::ComboBox;
     if (s == "TabControl")    return ComponentType::TabControl;
     if (s == "AnimatedImage") return ComponentType::AnimatedImage;
+    if (s == "Image")         return ComponentType::Image;
     if (s == "Canvas")        return ComponentType::Canvas;
     if (s == "ContextMenu")   return ComponentType::ContextMenu;
     if (s == "MenuBar")       return ComponentType::MenuBar;

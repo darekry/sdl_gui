@@ -348,6 +348,21 @@ typedef enum {
 | `int sdlgui_animated_image_is_playing(sdlgui_element_t e)` | Czy odtwarzane |
 | `void sdlgui_animated_image_set_frame(sdlgui_element_t e, int frame_index)` | Ręczne ustawienie klatki |
 
+### Image
+
+| Funkcja | Opis |
+|---------|------|
+| `sdlgui_element_t sdlgui_image_create(sdlgui_t gui, sdlgui_element_t parent, int x, int y, int w, int h)` | Tworzy statyczny obrazek (tło przezroczyste) |
+| `int sdlgui_image_set_image(sdlgui_element_t e, const char* path)` | Ładuje teksturę przez cache `TextureManager`; 1 = sukces, 0 = błąd (czyści obrazek) |
+| `int sdlgui_image_set_image_from_memory(sdlgui_element_t e, const void* data, size_t size, const char* key)` | Dekoduje obraz z pamięci i cache'uje pod `key` |
+| `void sdlgui_image_clear(sdlgui_element_t e)` | Usuwa obrazek |
+| `int sdlgui_image_has_image(sdlgui_element_t e)` | Czy obrazek jest ustawiony |
+| `void sdlgui_image_set_scale_mode(sdlgui_element_t e, sdlgui_image_scale_mode_t mode)` | `SDLGUI_IMAGE_FIT` (domyślny), `_STRETCH`, `_CENTER`, `_NONE` |
+| `sdlgui_image_scale_mode_t sdlgui_image_get_scale_mode(sdlgui_element_t e)` | Bieżący tryb skalowania |
+| `void sdlgui_image_set_nearest(sdlgui_element_t e, int nearest)` | Próbkowanie nearest (pixel art); dotyczy współdzielonej tekstury |
+| `int sdlgui_image_get_image_size(sdlgui_element_t e, int* w, int* h)` | Wymiary tekstury; 1 gdy obrazek jest ustawiony |
+| `void sdlgui_image_size_to_image(sdlgui_element_t e)` | Rozmiar widgetu = natywne wymiary tekstury |
+
 ### Canvas
 
 | Funkcja | Opis |

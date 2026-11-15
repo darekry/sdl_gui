@@ -647,6 +647,36 @@ int              sdlgui_animated_image_is_playing(sdlgui_element_t e);
 void             sdlgui_animated_image_set_frame(sdlgui_element_t e, int frame_index);
 
 /* ═══════════════════════════════════════════════════════════════════
+   Phase 2: Image
+   ═══════════════════════════════════════════════════════════════════ */
+
+typedef enum {
+    SDLGUI_IMAGE_FIT     = 0, /* contain, preserve aspect, centered (default) */
+    SDLGUI_IMAGE_STRETCH = 1, /* fill the element rect, aspect ignored */
+    SDLGUI_IMAGE_CENTER  = 2, /* native size, centered, clipped when larger */
+    SDLGUI_IMAGE_NONE    = 3  /* native size, top-left */
+} sdlgui_image_scale_mode_t;
+
+sdlgui_element_t sdlgui_image_create(sdlgui_t gui, sdlgui_element_t parent,
+                                     int x, int y, int w, int h);
+/* Loads through TextureManager's path cache. Returns 1 on success; 0 clears. */
+int              sdlgui_image_set_image(sdlgui_element_t e, const char* path);
+/* Decodes from memory (embedded assets); cached under `key`. */
+int              sdlgui_image_set_image_from_memory(sdlgui_element_t e,
+                                                    const void* data, size_t size,
+                                                    const char* key);
+void             sdlgui_image_clear(sdlgui_element_t e);
+int              sdlgui_image_has_image(sdlgui_element_t e);
+void             sdlgui_image_set_scale_mode(sdlgui_element_t e,
+                                             sdlgui_image_scale_mode_t mode);
+sdlgui_image_scale_mode_t sdlgui_image_get_scale_mode(sdlgui_element_t e);
+void             sdlgui_image_set_nearest(sdlgui_element_t e, int nearest);
+/* Writes native texture dimensions; returns 1 when an image is set. */
+int              sdlgui_image_get_image_size(sdlgui_element_t e, int* w, int* h);
+/* Resizes the element to the texture's native size. */
+void             sdlgui_image_size_to_image(sdlgui_element_t e);
+
+/* ═══════════════════════════════════════════════════════════════════
    Phase 2: Canvas
    ═══════════════════════════════════════════════════════════════════ */
 
@@ -969,7 +999,7 @@ int              sdlgui_element_is_alive(sdlgui_t gui, sdlgui_element_t e);
  * Generic widget creation through the shared WidgetFactory registry.
  * type is one of: Panel, Button, Label, Checkbox, RadioButton, RadioGroup,
  * Slider, RangeSlider, StringGrid, ListView, TextInput, TextArea, ComboBox,
- * TabControl, AnimatedImage, Canvas, ProgressBar, ScrollArea, ArcContainer.
+ * TabControl, AnimatedImage, Image, Canvas, ProgressBar, ScrollArea, ArcContainer.
  * Returns NULL + sdlgui_last_error() on unknown type. Widgets are created
  * with default props — configure afterwards with the type-specific API.
  */

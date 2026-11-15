@@ -15,7 +15,9 @@
       {"type": "ArcContainer", "x": 250, "y": 60, "radius": 50,
        "children": [{"type": "Button", "width": 20, "height": 20, "angle": 0, "text": "B"}]},
       {"type": "ScrollArea", "x": 250, "y": 180, "width": 200, "height": 150,
-       "contentWidth": 400, "contentHeight": 600}
+       "contentWidth": 400, "contentHeight": 600},
+      {"type": "Image", "x": 10, "y": 330, "width": 100, "height": 50,
+       "scaleMode": "Stretch", "nearest": true}
     ]
   }
 }

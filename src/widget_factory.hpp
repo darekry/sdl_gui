@@ -72,6 +72,7 @@ struct WidgetProps {
     int frames = 1, rows = 1, frameW = 0, frameH = 0;
     float fps = 12.0f, frameDuration = -1.0f;  // frameDuration >= 0 wins over fps
     bool loop = true, useCache = true, preserveAspect = true, autoplay = true;
+    bool nearestScaling = false;
     std::string scaleMode = "Fit";
 
     int contentWidth = -1, contentHeight = -1;  // <0 = keep widget default

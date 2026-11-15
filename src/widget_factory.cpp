@@ -8,6 +8,7 @@
 #include "combobox.hpp"
 #include "constants.hpp"
 #include "gui_manager.hpp"
+#include "image.hpp"
 #include "label.hpp"
 #include "list_view.hpp"
 #include "menu_bar.hpp"
@@ -42,6 +43,7 @@ std::pair<int, int> fallbackSize(ComponentType t) {
         case ComponentType::TabControl:    return {300, 200};
         case ComponentType::Panel:         return {300, 200};
         case ComponentType::AnimatedImage: return {100, 100};
+        case ComponentType::Image:         return {100, 100};
         case ComponentType::ComboBox:      return {150, 30};
         case ComponentType::Canvas:        return {200, 200};
         case ComponentType::StringGrid:    return {400, 300};
@@ -72,6 +74,7 @@ bool constructible(ComponentType t) {
         case ComponentType::ComboBox:
         case ComponentType::TabControl:
         case ComponentType::AnimatedImage:
+        case ComponentType::Image:
         case ComponentType::Canvas:
         case ComponentType::ProgressBar:
         case ComponentType::ScrollArea:
@@ -102,7 +105,7 @@ std::vector<std::string_view> WidgetFactory::knownTypes() {
     return {"Panel", "Button",     "Label",      "Checkbox",    "RadioButton",
             "RadioGroup", "Slider", "RangeSlider", "StringGrid", "ListView",
             "TextInput",  "TextArea", "ComboBox",  "TabControl", "AnimatedImage",
-            "Canvas",     "ProgressBar", "ScrollArea", "WorldView", "ArcContainer",
+            "Image",      "Canvas",   "ProgressBar", "ScrollArea", "WorldView", "ArcContainer",
             "MenuBar"};
 }
 
@@ -278,6 +281,24 @@ std::unique_ptr<GUIElement> WidgetFactory::create(GUIManager& manager,
             }
             if (p.autoplay) ai->play();
             return ai;
+        }
+        case ComponentType::Image: {
+            auto img = std::make_unique<Image>(manager, x, y,
+                                               p.w > 0 ? p.w : 100, p.h > 0 ? p.h : 100);
+            if (!p.path.empty()) {
+                img->setImage(p.path);
+            }
+            if (p.scaleMode == "Stretch") {
+                img->setScaleMode(Image::ScaleMode::Stretch);
+            } else if (p.scaleMode == "Center") {
+                img->setScaleMode(Image::ScaleMode::Center);
+            } else if (p.scaleMode == "None") {
+                img->setScaleMode(Image::ScaleMode::None);
+            } else {
+                img->setScaleMode(Image::ScaleMode::Fit);
+            }
+            img->setNearestScaling(p.nearestScaling);
+            return img;
         }
         case ComponentType::Canvas: {
             return std::make_unique<Canvas>(manager, x, y,

@@ -1460,6 +1460,51 @@ TEST_CASE("C API - AnimatedImage set_frame", "[c_api][animated_image]") {
 }
 
 /* ════════════════════════════════════════════════════
+   Phase 2: Image
+   ════════════════════════════════════════════════════ */
+
+TEST_CASE("C API - Image widget", "[c_api][image]") {
+    sdlgui_t gui = sdlgui_create("Test", 800, 600, 0);
+    REQUIRE(gui != nullptr);
+
+    sdlgui_element_t img = sdlgui_image_create(gui, nullptr, 10, 10, 120, 60);
+    REQUIRE(img != nullptr);
+    REQUIRE(std::strcmp(sdlgui_element_get_type(img), "Image") == 0);
+    REQUIRE(sdlgui_image_has_image(img) == 0);
+
+    int w = -1, h = -1;
+    REQUIRE(sdlgui_image_get_image_size(img, &w, &h) == 0);
+    REQUIRE(w == 0);
+    REQUIRE(h == 0);
+
+    REQUIRE(sdlgui_image_get_scale_mode(img) == SDLGUI_IMAGE_FIT);
+    sdlgui_image_set_scale_mode(img, SDLGUI_IMAGE_STRETCH);
+    REQUIRE(sdlgui_image_get_scale_mode(img) == SDLGUI_IMAGE_STRETCH);
+    sdlgui_image_set_scale_mode(img, SDLGUI_IMAGE_CENTER);
+    REQUIRE(sdlgui_image_get_scale_mode(img) == SDLGUI_IMAGE_CENTER);
+    sdlgui_image_set_scale_mode(img, SDLGUI_IMAGE_NONE);
+    REQUIRE(sdlgui_image_get_scale_mode(img) == SDLGUI_IMAGE_NONE);
+
+    /* Missing path: returns 0 and leaves the widget empty. */
+    REQUIRE(sdlgui_image_set_image(img, "definitely_missing_xyz.png") == 0);
+    REQUIRE(sdlgui_image_has_image(img) == 0);
+
+    /* Real asset: loaded through the same TextureManager cache. */
+    REQUIRE(sdlgui_image_set_image(img, "assets/button1.png") == 1);
+    REQUIRE(sdlgui_image_has_image(img) == 1);
+    REQUIRE(sdlgui_image_get_image_size(img, &w, &h) == 1);
+    REQUIRE(w == 100);
+    REQUIRE(h == 40);
+
+    sdlgui_image_size_to_image(img);
+    sdlgui_image_set_nearest(img, 1);
+    sdlgui_image_clear(img);
+    REQUIRE(sdlgui_image_has_image(img) == 0);
+
+    sdlgui_destroy(gui);
+}
+
+/* ════════════════════════════════════════════════════
    TimerManager
    ════════════════════════════════════════════════════ */
 
