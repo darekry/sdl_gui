@@ -27,6 +27,7 @@ public:
     bool isLocked() const override;
 
     bool handleEvent(const SDL_Event& e) override;
+    void onMouseCaptureLost() override;
     ComponentType getComponentTypeId() const override;
     void renderOverlay(SDL_Renderer* renderer) override;
 
@@ -39,7 +40,10 @@ protected:
     void markNeedsUpdate() override;
 
 private:
-    SharedTexture m_textTexture;
+    // Cached text texture lease: this widget is the holder, so the texture
+    // survives frames without re-rasterizing and releases its weak cache
+    // entry when the text/lifetime ends.
+    TextureManager::TextLease m_textLease;
     int m_text_offset_x = 0;
     
     std::function<void(TextInput*)> m_onTextChanged;

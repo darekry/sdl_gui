@@ -58,6 +58,7 @@ TEST_CASE("TextInput - Focus Behavior", "[text_input]") {
         manager.addElement(std::move(ti));
 
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 55, 55));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 55, 55));
         REQUIRE(input->hasKeyboardFocus());
 
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 300, 300));
@@ -681,12 +682,14 @@ TEST_CASE("TextInput - Multiple TextInput", "[text_input]") {
         manager.addElement(std::move(ti2));
 
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
         manager.processEvent(helper.createTextInputEvent("A"));
 
         REQUIRE(input1->getText() == "A");
         REQUIRE(input2->getText().empty());
 
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 125, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 125, 15));
         manager.processEvent(helper.createTextInputEvent("B"));
 
         REQUIRE(input1->getText() == "A");
@@ -703,10 +706,12 @@ TEST_CASE("TextInput - Multiple TextInput", "[text_input]") {
         manager.addElement(std::move(ti2));
 
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 15, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 15, 15));
         REQUIRE(input1->hasKeyboardFocus());
         REQUIRE_FALSE(input2->hasKeyboardFocus());
 
         manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 125, 15));
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 125, 15));
         REQUIRE_FALSE(input1->hasKeyboardFocus());
         REQUIRE(input2->hasKeyboardFocus());
     }
@@ -1467,4 +1472,28 @@ TEST_CASE("TextInput - Right-click context menu", "[text_input][context_menu]") 
         REQUIRE(ti->hasSelection());
         REQUIRE(ti->getSelection() == "hXYZo");
     }
+}
+
+TEST_CASE("TextInput - Mouse capture during selection drag", "[text_input][capture]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    auto input = std::make_unique<TextInput>(manager, 50, 50, 200, 30);
+    TextInput* ptr = input.get();
+    manager.addElement(std::move(input));
+    ptr->setText("hello world");
+
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 56, 60));
+    REQUIRE(ptr->hasMouseCapture());
+    REQUIRE(manager.getMouseCapture() == ptr);
+
+    // Far outside the field: the selection keeps extending to the text end.
+    manager.processEvent(helper.createMouseMotion(600, 300));
+    REQUIRE(ptr->hasMouseCapture());
+    REQUIRE(ptr->hasSelection());
+    REQUIRE(ptr->getSelection() == "hello world");
+
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 600, 300));
+    REQUIRE_FALSE(ptr->hasMouseCapture());
+    REQUIRE(manager.getMouseCapture() == nullptr);
 }

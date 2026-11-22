@@ -50,8 +50,8 @@ Kolejność jest krytyczna: `processEvent` → `update` → `cleanup` → `rende
 | Metoda | Opis |
 |--------|------|
 | `bool processEvent(const SDL_Event& e);` | Przekazuje zdarzenie SDL do elementów (hover, klik, focus, tooltipy) |
-| `void update();` | Aktualizuje timery, animacje, tooltipy i stany hover |
-| `void cleanup();` | Usuwa elementy oznaczone `markForDeletion()` |
+| `void update();` | Aktualizuje timery i animacje (cache tekstur jest weak — brak globalnego prune) |
+| `void cleanup();` | Usuwa elementy oznaczone `markForDeletion()`; early-return, gdy licznik pending == 0 (`getPendingDeletionCount()`) |
 | `void render();` | Renderuje całą hierarchię do renderera |
 
 ### Resize i rozmiar okna
@@ -89,7 +89,7 @@ Kolejność jest krytyczna: `processEvent` → `update` → `cleanup` → `rende
 
 | Metoda | Opis |
 |--------|------|
-| `void captureMouse(GUIElement* element);` | Przechwytuje wszystkie zdarzenia myszy do elementu (używane m.in. przez Slider przy drag) |
+| `void captureMouse(GUIElement* element);` | Przechwytuje wszystkie zdarzenia myszy do elementu; widgety używają helperów `captureMouse()/releaseMouse()/hasMouseCapture()`, a `processEvent` auto-zwalnia capture przy LMB up oraz gdy owner jest ukryty/disabled |
 | `void releaseMouse();` | Zwalnia przechwycenie |
 | `void setKeyboardFocus(GUIElement* element);` | Mechaniczne ustawienie fokusu (bez polityki; `nullptr` czyści) |
 | `bool requestFocus(GUIElement* element);` | Jedyna droga widgetów do brania fokusu: przyznaje tylko focusowalnemu, aktywnemu (`enabled`) i widocznemu elementowi; `nullptr` zawsze czyści; zwraca powodzenie |
@@ -171,9 +171,10 @@ bool isInitialized() const;   // czy inicjalizacja SDL_image się powiodła
 
 | Metoda | Opis |
 |--------|------|
-| `SharedTexture loadTexture(std::string_view path);` | Ładuje plik obrazu (PNG/JPG/...); cache'owana po ścieżce |
-| `SharedTexture createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color);` | Renderuje tekst do tekstury; współdzielony TextShaper — klucz (tekst, font, kolor), identyczne wywołania zwracają 1 teksturę |
-| `SharedTexture createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color);` | Jak wyżej, z cache'owaniem po (ścieżka czcionki, rozmiar) |
+| `SharedTexture loadTexture(std::string_view path);` | Ładuje plik obrazu (PNG/JPG/...); cache'owana po ścieżce (cache **strong** — assety żyją z procesem) |
+| `SharedTexture createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color);` | Renderuje tekst do **nowej** tekstury — bez wpisu w cache (ścieżka bake-time: Label/ProgressBar/...) |
+| `SharedTexture createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color);` | Jak wyżej, z jawną ścieżką czcionki i rozmiarem (otwiera font per wywołanie; bez cache) |
+| `TextLease acquireTextTexture(std::string_view text, const SharedFont& font, const SDL_Color& color);` | Cache'owany tekst dla trwałych holderów: identyczne (tekst, font, kolor) dzielą jedną teksturę; `TextLease` jest strong refem |
 | `SharedTexture loadTextureFromMemory(const uint8_t* data, size_t size, std::string_view key);` | Ładuje z pamięci (dla zasobów wkompilowanych) |
 | `SharedTexture addTexture(std::string_view key, SDL_Texture* texture);` | Rejestruje istniejącą teksturę pod kluczem (przejmuje ownership) |
 | `SharedTexture addTexture(std::string_view key, SharedTexture texture);` | Jak wyżej (wersja ze `shared_ptr`) |
@@ -182,20 +183,28 @@ bool isInitialized() const;   // czy inicjalizacja SDL_image się powiodła
 | `bool queryTexture(std::string_view key, int& width, int& height);` | Rozmiar tekstury (ładuje, jeśli nie jest załadowana); `true` gdy dostępna |
 | `void createDefaultTexture(SDL_Renderer* renderer, FontManager& fontManager, std::string_view text);` | Tworzy domyślną teksturę z tekstu |
 | `SharedTexture getDefaultTexture() const;` | Domyślna tekstura |
-| `void pruneUnused();` | Usuwa tekstury bez aktywnych referencji |
-| `void clearCache();` | Czyści cały cache |
-| `size_t getCacheSize() const;` | Liczba tekstur w cache'u |
+| `SharedTexture renderCache(uint64_t key, int, int, draw);` | Współdzielona tekstura render-cache; wpis jest **weak** — żyje tylko dopóki widget trzyma `SharedTexture` |
+| `void releaseRenderCache(uint64_t key);` | Usuwa wpis render-cache tylko gdy jego weak ref wygasł (brak innych holderów) |
+| `void clearCache();` | Czyści mapy cache (path/render/text); tekstury trzymane przez widgety pozostają żywe |
+| `size_t getCacheSize() const;` | Liczba wpisów path-cache (assety) |
 | `size_t getRenderCacheSize() const;` | Liczba wpisów render-cache |
-| `size_t getTextCacheSize() const;` | Liczba wpisów TextShapera |
-| `void setByteBudget(size_t bytes);` | Limit bajtów na wszystkie trzy cache'e (domyślnie 128 MiB); egzekwowany natychmiast — wyrzuca martwe wpisy od najstarszego użycia |
-| `size_t getByteBudget() const;` | Aktualny limit bajtów |
-| `size_t getBytesUsed() const;` | Bieżące zużycie (suma w×h×4 po wszystkich wpisach) |
+| `size_t getTextCacheSize() const;` | Liczba wpisów text-cache |
 
-Pamięć cache'y jest boundowana bajtami, nie liczbą wpisów: każde wstawienie
-księguje rozmiar tekstury i w razie przekroczenia budżetu wyrzuca martwe wpisy
-według LRU (najstarsze użycie pierwsze). Wpisy trzymane przez widgety nigdy nie
-są wyrzucane — przy samych żywych wpisach budżet może być chwilowo przekroczony.
-`GUIManager::update()` zbiera martwe wpisy, gdy zużycie przekroczy budżet.
+Cache render/text jest **słaby** (`weak_ptr`): widget jest właścicielem tekstury.
+Wpis znika, gdy ostatni holder (widget/`TextLease`) upuści referencję i wywoła
+jawne zwolnienie (render: `releaseRenderCache`; tekst: `TextLease::reset()`),
+więc nie ma okresowego prune'a ani budżetu bajtów. Cache ścieżek (assety PNG/TTF)
+pozostaje strong i bez limitu. Dzięki temu `StringGrid` + setki labeli nie
+rasteryzują tekstu od zera po przekroczeniu progu wpisów (stary globalny prune
+kasował żywe tekstury).
+
+```cpp
+// Trwały holder (np. własny widget rysujący tekst co klatkę):
+TextureManager::TextLease lease =
+    manager.getTextureManager().acquireTextTexture("Score: 42", font, color);
+SDL_Texture* tex = lease.get();
+// ... lease.reset() albo koniec życia widgetu zwalnia wpis
+```
 
 ### Zasoby wkompilowane (embedded assets)
 

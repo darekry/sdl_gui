@@ -11,7 +11,6 @@
 #include "std.hpp"
 
 static constexpr int DEFAULT_FONT_SIZE = 24;
-static constexpr size_t kRenderCachePruneThreshold = 256;
 static const SDL_Color TOOLTIP_BG_COLOR = {.r=255, .g=255, .b=225, .a=255};
 
 static bool isDescendantOf(GUIElement* descendant, GUIElement* ancestor) {
@@ -47,6 +46,12 @@ GUIManager::~GUIManager() {
     // are still alive: widget destructors stop their timers/animation entries.
     // Without this, member destruction order (services live before m_elements
     // in declaration order, so they die first) would crash such destructors.
+    // The persistent tooltip panel is NOT in m_elements and is declared before
+    // the TextureManager: reset it here too, so ~GUIElement can still release
+    // its render-cache key (2026-11-22 weak cache).
+    m_tooltipPanel.reset();
+    m_tooltipLabel = nullptr;
+    tooltipElement = nullptr;
     m_pendingElements.clear();
     m_elements.clear();
     cursor.reset();
@@ -90,6 +95,13 @@ std::unique_ptr<GUIElement> GUIManager::detachElement(GUIElement* element) {
     if (!element) return nullptr;
     for (auto it = m_elements.begin(); it != m_elements.end(); ++it) {
         if (it->get() == element) {
+            // A detached element will not be erased by cleanup(): clear its
+            // mark and stop accounting for it, otherwise the counter would
+            // stay > 0 forever and force a full recursive pass every frame.
+            if ((*it)->isMarkedForDeletion()) {
+                (*it)->m_isMarkedForDeletion = false;
+                if (m_pendingDeletionCount > 0) --m_pendingDeletionCount;
+            }
             auto detached = std::move(*it);
             m_elements.erase(it);
             m_overlayStack.markDirty();
@@ -109,6 +121,15 @@ bool GUIManager::processEvent(const SDL_Event& event) {
 
     // 1. Mouse events
     if (event.type == SDL_EVENT_MOUSE_MOTION || event.type == SDL_EVENT_MOUSE_BUTTON_DOWN || event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+        // Capture guard: a hidden/disabled owner must not keep receiving the
+        // drag. Release first (fires onMouseCaptureLost once) and fall through
+        // to normal routing. releaseMouse() is idempotent, so the auto-release
+        // on LMB up (below) can never double-fire the lost callback.
+        if (GUIElement* owner = getMouseCapture()) {
+            if (!owner->isVisible() || !owner->isEnabled()) {
+                releaseMouse();
+            }
+        }
         if (GUIElement* capture = getMouseCapture()) {
             // If an element captured the mouse, send events only to it.
             // A destroyed capture target resolves to null, so this branch
@@ -183,25 +204,31 @@ bool GUIManager::processEvent(const SDL_Event& event) {
 }
 
 void GUIManager::update() {
-    // Update timers and animations
+    // Update timers and animations. Caches are weak: expired entries are
+    // released by their holders (GUIElement/TextLease), never swept here.
     timerManager->update();
     animation_manager->update();
-
-    // Punkt 6 plaster 4: pamięć boundowana bajtami (egzekwowane na insert);
-    // update() zbiera martwe wpisy gdy budżet przekroczony. Licznik
-    // render-cache zostaje jako hygiene-backstop na liczbę wpisów.
-    if (m_textureManager.getBytesUsed() > m_textureManager.getByteBudget() ||
-        m_textureManager.getRenderCacheSize() > kRenderCachePruneThreshold) {
-        m_textureManager.pruneUnused();
-    }
 }
 
 void GUIManager::render() {
+    // Top-levels are rendered with the viewport as the parent clip through the
+    // protected two-arg path: it does NOT restore the clip after each element,
+    // so a steady-state cached frame performs zero clip toggles (and zero SDL
+    // draw-call flushes) after the last branch that actually needed one.
+    SDL_Rect viewport;
+    if (!SDL_GetRenderViewport(m_renderer, &viewport) || viewport.w <= 0 || viewport.h <= 0) {
+        viewport = SDL_Rect{0, 0, m_windowWidth, m_windowHeight};
+    }
     for (const auto& element : m_elements) {
         if (!element->isOverlay() && !element->isMarkedForDeletion()) {
-            element->render(m_renderer);
+            element->render(m_renderer, viewport);
         }
     }
+
+    // Overlays/tooltip/context menu/menu popups are separate top-levels and
+    // must not inherit the clip left by the last normal element: one reset
+    // before the overlay passes (and again before the cursor).
+    SDL_SetRenderClipRect(m_renderer, nullptr);
 
     if (tooltipElement && !tooltipElement->isMarkedForDeletion()) {
         tooltipElement->render(m_renderer);
@@ -231,6 +258,9 @@ void GUIManager::render() {
         }
     }
 
+    // Cursor is a separate top-level overlay: never inherit a clip left by the
+    // focused widget's renderOverlay (TextInput/TextArea set/release their own).
+    SDL_SetRenderClipRect(m_renderer, nullptr);
     if (cursor) {
         cursor->render(m_renderer);
     }
@@ -242,6 +272,13 @@ void GUIManager::render() {
 }
 
 void GUIManager::cleanup() {
+    // Fast path: nothing was marked since the last cleanup. Focus/capture
+    // handles are generational, so stale entries from clearChildren()/detach()
+    // resolve to null without a full-tree walk.
+    if (m_pendingDeletionCount == 0) {
+        return;
+    }
+
     auto subtreeDead = [](GUIElement* element) {
         for (GUIElement* current = element; current; current = current->getParent()) {
             if (current->isMarkedForDeletion()) return true;
@@ -308,6 +345,11 @@ void GUIManager::cleanup() {
     }
     m_contextMenuCache = static_cast<ContextMenu*>(resolve(m_contextMenuHandle));
     if (!m_contextMenuCache) m_contextMenuHandle.reset();
+
+    // Every pending mark was either erased above or belonged to a subtree
+    // destroyed earlier (clearChildren / detached element). The one full pass
+    // consumed them all, so the next frame takes the early return.
+    m_pendingDeletionCount = 0;
 }
 
 void GUIManager::showTooltip(GUIElement* target, const std::string& text) {

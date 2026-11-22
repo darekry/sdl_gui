@@ -35,6 +35,7 @@ public:
     Button* getIncrementButton();
 
     bool handleEvent(const SDL_Event& e) override;
+    void onMouseCaptureLost() override;
     ComponentType getComponentTypeId() const override;
 
 protected:

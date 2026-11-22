@@ -61,6 +61,7 @@ TEST_CASE("TextArea receives input through GUIManager dispatch", "[text_area][pi
 
     SDL_Event event = helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 200, 200);
     manager.processEvent(event);
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 200, 200));
     REQUIRE(manager.getKeyboardFocus() == area);
 
     manager.update();
@@ -2504,4 +2505,25 @@ TEST_CASE("TextArea - UTF-8 char-index model (shared with TextEditable)", "[text
         base->selectAll();
         REQUIRE(area->hasSelection());
     }
+}
+
+TEST_CASE("TextArea - Mouse capture during selection drag", "[text_area][capture]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    auto area = std::make_unique<TextArea>(manager, 50, 50, 300, 120, "assets/fonts/font.ttf", 14);
+    TextArea* ptr = area.get();
+    manager.addElement(std::move(area));
+    ptr->setText("hello world");
+
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 56, 60));
+    REQUIRE(ptr->hasMouseCapture());
+
+    manager.processEvent(helper.createMouseMotion(600, 400));
+    REQUIRE(ptr->hasMouseCapture());
+    REQUIRE(ptr->hasSelection());
+
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 600, 400));
+    REQUIRE_FALSE(ptr->hasMouseCapture());
+    REQUIRE(manager.getMouseCapture() == nullptr);
 }

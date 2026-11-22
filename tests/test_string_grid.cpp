@@ -742,3 +742,66 @@ TEST_CASE("StringGrid - Scroll State", "[string_grid]") {
         REQUIRE(grid.isHorizontalScrollEnabled());
     }
 }
+TEST_CASE("StringGrid - Mouse capture during selection", "[string_grid][capture]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    auto grid = std::make_unique<StringGrid>(manager, 10, 10, 300, 200, 5, 3);
+    StringGrid* ptr = grid.get();
+    manager.addElement(std::move(grid));
+    for (size_t r = 0; r < 5; ++r) {
+        for (size_t c = 0; c < 3; ++c) {
+            ptr->setCellText(r, c, "cell");
+        }
+    }
+
+    // Cell area starts at rowHeaderWidth (50) / headerHeight (28).
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 70, 50));
+    REQUIRE(ptr->hasMouseCapture());
+    REQUIRE(manager.getMouseCapture() == ptr);
+
+    manager.processEvent(helper.createMouseMotion(600, 400));
+    REQUIRE(ptr->hasMouseCapture());
+
+    manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 600, 400));
+    REQUIRE_FALSE(ptr->hasMouseCapture());
+    REQUIRE(manager.getMouseCapture() == nullptr);
+}
+
+TEST_CASE("StringGrid - text textures are leased across frames", "[string_grid][cache]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.handleResize(640, 480);
+
+    auto grid = std::make_unique<StringGrid>(manager, 10, 10, 300, 200, 3, 3);
+    StringGrid* ptr = grid.get();
+    ptr->setShowRowHeaders(false);
+    manager.addElement(std::move(grid));
+    for (size_t r = 0; r < 3; ++r) {
+        for (size_t c = 0; c < 3; ++c) {
+            ptr->setCellText(r, c, "cell-" + std::to_string(r * 3 + c));
+        }
+    }
+
+    auto frame = [&] {
+        manager.update();
+        manager.cleanup();
+        manager.render();
+    };
+    frame();
+    const size_t afterFirst = manager.getTextureManager().getTextCacheSize();
+    REQUIRE(afterFirst > 0);
+    for (int i = 0; i < 3; ++i) frame();
+    REQUIRE(manager.getTextureManager().getTextCacheSize() == afterFirst);
+
+    // Changing one cell releases its old lease and acquires exactly one new one.
+    ptr->setCellText(1, 1, "changed");
+    frame();
+    REQUIRE(manager.getTextureManager().getTextCacheSize() == afterFirst);
+
+    // Sorting moves rows around: all cell leases are rebuilt lazily, no growth.
+    ptr->sortByColumn(0, SortDirection::Descending);
+    frame();
+    REQUIRE(manager.getTextureManager().getTextCacheSize() == afterFirst);
+}

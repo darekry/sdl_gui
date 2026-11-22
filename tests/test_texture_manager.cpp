@@ -120,133 +120,147 @@ TEST_CASE("TextureManager TextShaper", "[texture_manager][text]") {
     const SDL_Color black{0, 0, 0, 255};
     const SDL_Color red{255, 0, 0, 255};
 
-    SECTION("identical text shares one texture") {
+    SECTION("createTextureFromText is uncached") {
         const size_t before = texManager.getTextCacheSize();
         auto t1 = texManager.createTextureFromText("shared", font16, black);
         auto t2 = texManager.createTextureFromText("shared", font16, black);
         REQUIRE(t1);
-        REQUIRE(t2.get() == t1.get());
+        REQUIRE(t2);
+        REQUIRE(t2.get() != t1.get());
+        REQUIRE(texManager.getTextCacheSize() == before);
+    }
+
+    SECTION("acquireTextTexture shares one texture between leases") {
+        const size_t before = texManager.getTextCacheSize();
+        auto l1 = texManager.acquireTextTexture("shared", font16, black);
+        auto l2 = texManager.acquireTextTexture("shared", font16, black);
+        REQUIRE(l1);
+        REQUIRE(l2);
+        REQUIRE(l1.get() == l2.get());
         REQUIRE(texManager.getTextCacheSize() == before + 1);
+    }
+
+    SECTION("releasing one lease keeps the entry, the last one removes it") {
+        const size_t before = texManager.getTextCacheSize();
+        auto l1 = texManager.acquireTextTexture("lease", font16, black);
+        auto l2 = texManager.acquireTextTexture("lease", font16, black);
+        REQUIRE(l1.get() == l2.get());
+        l1.reset();
+        REQUIRE_FALSE(l1);
+        REQUIRE(texManager.getTextCacheSize() == before + 1);
+        l2.reset();
+        REQUIRE(texManager.getTextCacheSize() == before);
     }
 
     SECTION("color is part of the key") {
-        auto t1 = texManager.createTextureFromText("colorkey", font16, black);
-        auto t2 = texManager.createTextureFromText("colorkey", font16, red);
-        REQUIRE(t1);
-        REQUIRE(t2);
-        REQUIRE(t2.get() != t1.get());
+        auto l1 = texManager.acquireTextTexture("colorkey", font16, black);
+        auto l2 = texManager.acquireTextTexture("colorkey", font16, red);
+        REQUIRE(l1);
+        REQUIRE(l2);
+        REQUIRE(l2.get() != l1.get());
     }
 
     SECTION("font is part of the key") {
-        auto t1 = texManager.createTextureFromText("fontkey", font16, black);
-        auto t2 = texManager.createTextureFromText("fontkey", font24, black);
-        REQUIRE(t1);
-        REQUIRE(t2);
-        REQUIRE(t2.get() != t1.get());
+        auto l1 = texManager.acquireTextTexture("fontkey", font16, black);
+        auto l2 = texManager.acquireTextTexture("fontkey", font24, black);
+        REQUIRE(l1);
+        REQUIRE(l2);
+        REQUIRE(l2.get() != l1.get());
     }
 
     SECTION("different texts do not collide") {
-        auto t1 = texManager.createTextureFromText("alpha", font16, black);
-        auto t2 = texManager.createTextureFromText("beta", font16, black);
-        REQUIRE(t1);
-        REQUIRE(t2);
-        REQUIRE(t2.get() != t1.get());
+        auto l1 = texManager.acquireTextTexture("alpha", font16, black);
+        auto l2 = texManager.acquireTextTexture("beta", font16, black);
+        REQUIRE(l1);
+        REQUIRE(l2);
+        REQUIRE(l2.get() != l1.get());
     }
 
-    SECTION("grid-scale sharing: N identical cells, 1 entry") {
+    SECTION("grid-scale sharing: N leases of identical cells, 1 entry") {
         const size_t before = texManager.getTextCacheSize();
+        std::vector<TextureManager::TextLease> leases;
         for (int i = 0; i < 100; ++i) {
-            auto t = texManager.createTextureFromText("cell", font16, black);
-            REQUIRE(t);
+            leases.push_back(texManager.acquireTextTexture("cell", font16, black));
+            REQUIRE(leases.back());
         }
         REQUIRE(texManager.getTextCacheSize() == before + 1);
+        leases.clear();
+        REQUIRE(texManager.getTextCacheSize() == before);
     }
 }
 
-TEST_CASE("TextureManager byte-budget LRU", "[texture_manager][lru]") {
+TEST_CASE("TextureManager render cache weak lifetime", "[texture_manager][render_cache]") {
     TestHelper helper;
     GUIManager& manager = helper.getManager();
     TextureManager& texManager = manager.getTextureManager();
 
-    // renderCache(w, h) księguje dokładnie w*h*4 bajtów — determinystyczne.
     auto noop = [](SDL_Renderer*) {};
-    constexpr uint64_t k1 = 101, k2 = 102, k3 = 103;
-    constexpr size_t kEntry = 50u * 50u * 4u; // 10000
+    constexpr uint64_t k1 = 201;
+    constexpr uint64_t k2 = 202;
 
-    SECTION("default budget and accounting") {
-        REQUIRE(texManager.getByteBudget() == TextureManager::kDefaultByteBudget);
-        REQUIRE(texManager.getBytesUsed() == 0);
+    SECTION("identical widgets share one texture and one entry") {
+        const size_t before = texManager.getRenderCacheSize();
         auto t1 = texManager.renderCache(k1, 50, 50, noop);
-        auto t2 = texManager.renderCache(k2, 25, 100, noop);
+        auto t2 = texManager.renderCache(k1, 50, 50, noop);
+        REQUIRE(t1);
+        REQUIRE(t1.get() == t2.get());
+        REQUIRE(texManager.getRenderCacheSize() == before + 1);
+    }
+
+    SECTION("one holder destroyed -> entry stays; last -> release removes it") {
+        const size_t before = texManager.getRenderCacheSize();
+        auto t1 = texManager.renderCache(k1, 50, 50, noop);
+        auto t2 = texManager.renderCache(k2, 50, 50, noop);
         REQUIRE(t1);
         REQUIRE(t2);
-        REQUIRE(texManager.getBytesUsed() == 2 * kEntry);
+        REQUIRE(texManager.getRenderCacheSize() == before + 2);
+
+        t1.reset();
+        texManager.releaseRenderCache(k1);
+        REQUIRE(texManager.getRenderCacheSize() == before + 1); // k2 still alive
+
+        t2.reset();
+        texManager.releaseRenderCache(k2);
+        REQUIRE(texManager.getRenderCacheSize() == before);
     }
 
-    SECTION("overflowing insert evicts oldest dead entry") {
-        texManager.setByteBudget(2 * kEntry + kEntry / 2); // 25000
+    SECTION("release with a live holder is a no-op") {
+        const size_t before = texManager.getRenderCacheSize();
         auto t1 = texManager.renderCache(k1, 50, 50, noop);
-        auto t2 = texManager.renderCache(k2, 50, 50, noop);
-        REQUIRE(texManager.getBytesUsed() == 2 * kEntry);
-        t1.reset(); // k1 martwe, k2 żywe
-        auto t3 = texManager.renderCache(k3, 50, 50, noop);
-        REQUIRE(t3);
-        REQUIRE(texManager.getRenderCacheSize() == 2);
-        REQUIRE(texManager.getBytesUsed() == 2 * kEntry);
-        // k1 wyrzucone: ponowne żądanie to miss (nowy wpis), k2 nietknięte.
-        REQUIRE(texManager.getRenderCacheSize() == 2);
-    }
-
-    SECTION("live entries are never evicted (budget may overshoot)") {
-        texManager.setByteBudget(2 * kEntry + kEntry / 2);
-        auto t1 = texManager.renderCache(k1, 50, 50, noop);
-        auto t2 = texManager.renderCache(k2, 50, 50, noop);
-        auto t3 = texManager.renderCache(k3, 50, 50, noop);
         REQUIRE(t1);
+        texManager.releaseRenderCache(k1);
+        REQUIRE(texManager.getRenderCacheSize() == before + 1);
+        REQUIRE(texManager.renderCache(k1, 50, 50, noop).get() == t1.get());
+    }
+
+    SECTION("expired entry re-renders on the next request") {
+        const size_t before = texManager.getRenderCacheSize();
+        auto t1 = texManager.renderCache(k1, 50, 50, noop);
+        REQUIRE(t1);
+        t1.reset();
+        texManager.releaseRenderCache(k1);
+        REQUIRE(texManager.getRenderCacheSize() == before);
+
+        bool redrawn = false;
+        auto t2 = texManager.renderCache(k1, 50, 50, [&redrawn](SDL_Renderer*) { redrawn = true; });
         REQUIRE(t2);
-        REQUIRE(t3);
-        REQUIRE(texManager.getRenderCacheSize() == 3);
-        REQUIRE(texManager.getBytesUsed() == 3 * kEntry);
+        REQUIRE(redrawn);
+        REQUIRE(texManager.getRenderCacheSize() == before + 1);
     }
 
-    SECTION("hit refreshes recency: touched dead entry survives") {
-        texManager.setByteBudget(2 * kEntry + kEntry / 2);
-        auto t1 = texManager.renderCache(k1, 50, 50, noop);
-        auto t2 = texManager.renderCache(k2, 50, 50, noop);
-        SDL_Texture* raw1 = t1.get();
-        SDL_Texture* raw2 = t2.get();
-        // Dotknij k1 (hit), potem oba martwe — k2 jest starsze.
-        REQUIRE(texManager.renderCache(k1, 50, 50, noop).get() == raw1);
-        t1.reset();
-        t2.reset();
-        auto t3 = texManager.renderCache(k3, 50, 50, noop);
-        REQUIRE(t3);
-        REQUIRE(texManager.getRenderCacheSize() == 2);
-        // k1 przeżyło (ten sam wskaźnik), k2 wyrzucone (miss → nowy obiekt).
-        REQUIRE(texManager.renderCache(k1, 50, 50, noop).get() == raw1);
-        REQUIRE(texManager.renderCache(k2, 50, 50, noop).get() != raw2);
+    SECTION("path cache stays strong: local drop still hits") {
+        auto tex = helper.makeStubTexture(32, 32);
+        texManager.addTexture("strong_key", tex);
+        tex.reset();
+        REQUIRE(texManager.hasTexture("strong_key"));
+        REQUIRE(texManager.getTexture("strong_key") != nullptr);
     }
 
-    SECTION("shrinking the budget enforces it immediately") {
-        auto t1 = texManager.renderCache(k1, 50, 50, noop);
-        auto t2 = texManager.renderCache(k2, 50, 50, noop);
-        SDL_Texture* raw2 = t2.get();
-        t1.reset();
-        t2.reset();
-        REQUIRE(texManager.getBytesUsed() == 2 * kEntry);
-        texManager.setByteBudget(kEntry);
-        REQUIRE(texManager.getBytesUsed() == kEntry);
-        REQUIRE(texManager.getRenderCacheSize() == 1);
-        // Młodsze k2 przeżyło.
-        REQUIRE(texManager.renderCache(k2, 50, 50, noop).get() == raw2);
-    }
-
-    SECTION("pruneUnused releases bytes of dead entries") {
-        auto t1 = texManager.renderCache(k1, 50, 50, noop);
-        REQUIRE(texManager.getBytesUsed() == kEntry);
-        t1.reset();
-        texManager.pruneUnused();
-        REQUIRE(texManager.getBytesUsed() == 0);
+    SECTION("clearCache drops metadata; widget-held textures survive") {
+        auto held = texManager.renderCache(k1, 50, 50, noop);
+        REQUIRE(held);
+        texManager.clearCache();
         REQUIRE(texManager.getRenderCacheSize() == 0);
+        REQUIRE(held); // strong ref still valid
     }
 }

@@ -335,3 +335,29 @@ TEST_CASE("RangeSlider - ComponentType ID", "[rangeslider]") {
         REQUIRE(slider.getComponentTypeId() == ComponentType::RangeSlider);
     }
 }
+
+TEST_CASE("RangeSlider - Mouse capture during drag", "[rangeslider][capture]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("drag continues outside the widget (behavior change)") {
+        auto slider = std::make_unique<RangeSlider>(manager, 50, 50, 200, 40, 0, 100, 20, 80, Orientation::Horizontal);
+        RangeSlider* ptr = slider.get();
+        manager.addElement(std::move(slider));
+
+        // Lower thumb at ratio 0.2 over (width - thumbSize) = 180 -> x ~ 86.
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 92, 70));
+        REQUIRE(ptr->hasMouseCapture());
+        REQUIRE(manager.getMouseCapture() == ptr);
+
+        manager.processEvent(helper.createMouseMotion(600, 70));
+        REQUIRE(ptr->getLowerValue() == 80); // clamped to the upper thumb
+
+        manager.processEvent(helper.createMouseMotion(-100, 70));
+        REQUIRE(ptr->getLowerValue() == 0);
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, -100, 70));
+        REQUIRE_FALSE(ptr->hasMouseCapture());
+        REQUIRE(manager.getMouseCapture() == nullptr);
+    }
+}

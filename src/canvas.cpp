@@ -163,7 +163,7 @@ bool Canvas::handleEvent(const SDL_Event& e) {
             SDL_SetRenderTarget(renderer, oldTarget);
 
             // Capture the mouse to keep drawing while dragging
-            m_manager.captureMouse(this);
+            captureMouse();
             return true;
         }
     } else if (e.type == SDL_EVENT_MOUSE_MOTION) {
@@ -179,13 +179,17 @@ bool Canvas::handleEvent(const SDL_Event& e) {
     } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
         if (m_drawing) {
             m_drawing = false;
-            m_manager.releaseMouse();
+            releaseMouse();
             return true;
         }
     }
 
     // For other events delegate to base logic (hover/tooltip etc.)
     return GUIElement::handleEvent(e);
+}
+
+void Canvas::onMouseCaptureLost() {
+    m_drawing = false;
 }
 
 ComponentType Canvas::getComponentTypeId() const {

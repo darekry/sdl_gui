@@ -915,3 +915,170 @@ TEST_CASE("GUIManager OverlayStack", "[gui_manager][overlay]") {
         manager.cleanup();
     }
 }
+
+// Pending-deletion counter: cleanup() early-returns when nothing was marked
+// and resets the counter after the one full recursive pass.
+TEST_CASE("GUIManager cleanup pending counter", "[gui_manager][cleanup]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("no marks -> cleanup is a no-op and the counter stays 0") {
+        auto panel = std::make_unique<Panel>(manager, 10, 10, 100, 60);
+        auto label = std::make_unique<Label>(manager, 5, 5, "keep", 14);
+        Panel* panelPtr = panel.get();
+        Label* labelPtr = label.get();
+        panel->addChild(std::move(label));
+        manager.addElement(std::move(panel));
+
+        REQUIRE(manager.getPendingDeletionCount() == 0);
+        manager.cleanup();
+        REQUIRE(manager.getPendingDeletionCount() == 0);
+        REQUIRE(manager.isElementAlive(panelPtr));
+        REQUIRE(manager.isElementAlive(labelPtr));
+    }
+
+    SECTION("markForDeletion is idempotent") {
+        auto panel = std::make_unique<Panel>(manager, 10, 10, 100, 60);
+        Panel* ptr = panel.get();
+        manager.addElement(std::move(panel));
+
+        ptr->markForDeletion();
+        ptr->markForDeletion();
+        REQUIRE(manager.getPendingDeletionCount() == 1);
+
+        manager.cleanup();
+        REQUIRE(manager.getPendingDeletionCount() == 0);
+        REQUIRE_FALSE(manager.isElementAlive(ptr));
+    }
+
+    SECTION("parent and children marked together are removed") {
+        auto panel = std::make_unique<Panel>(manager, 10, 10, 100, 60);
+        auto label = std::make_unique<Label>(manager, 5, 5, "gone", 14);
+        Panel* panelPtr = panel.get();
+        Label* labelPtr = label.get();
+        panel->addChild(std::move(label));
+        manager.addElement(std::move(panel));
+
+        labelPtr->markForDeletion();
+        panelPtr->markForDeletion();
+        REQUIRE(manager.getPendingDeletionCount() == 2);
+
+        manager.cleanup();
+        REQUIRE(manager.getPendingDeletionCount() == 0);
+        REQUIRE_FALSE(manager.isElementAlive(panelPtr));
+        REQUIRE_FALSE(manager.isElementAlive(labelPtr));
+    }
+
+    SECTION("marked child is removed, parent survives") {
+        auto panel = std::make_unique<Panel>(manager, 10, 10, 100, 60);
+        auto keep = std::make_unique<Label>(manager, 5, 5, "keep", 14);
+        auto gone = std::make_unique<Label>(manager, 5, 25, "gone", 14);
+        Panel* panelPtr = panel.get();
+        Label* keepPtr = keep.get();
+        Label* gonePtr = gone.get();
+        panel->addChild(std::move(keep));
+        panel->addChild(std::move(gone));
+        manager.addElement(std::move(panel));
+
+        gonePtr->markForDeletion();
+        manager.cleanup();
+        REQUIRE(manager.getPendingDeletionCount() == 0);
+        REQUIRE(manager.isElementAlive(panelPtr));
+        REQUIRE(manager.isElementAlive(keepPtr));
+        REQUIRE_FALSE(manager.isElementAlive(gonePtr));
+    }
+
+    SECTION("detached marked element clears its mark and the counter") {
+        auto panel = std::make_unique<Panel>(manager, 10, 10, 100, 60);
+        Panel* ptr = panel.get();
+        manager.addElement(std::move(panel));
+
+        ptr->markForDeletion();
+        REQUIRE(manager.getPendingDeletionCount() == 1);
+
+        auto detached = manager.detachElement(ptr);
+        REQUIRE(detached);
+        REQUIRE_FALSE(detached->isMarkedForDeletion());
+        REQUIRE(manager.getPendingDeletionCount() == 0);
+
+        // Re-add and cleanup: the element must survive (mark was cleared).
+        manager.addElement(std::move(detached));
+        manager.cleanup();
+        REQUIRE(manager.getPendingDeletionCount() == 0);
+        REQUIRE(manager.isElementAlive(ptr));
+    }
+}
+
+TEST_CASE("GUIManager capture guard and lost callback contract", "[gui_manager][capture]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    class CaptureProbe : public GUIElement {
+    public:
+        int gained = 0;
+        int lost = 0;
+        CaptureProbe(GUIManager& m, int x, int y, int w, int h) : GUIElement(m, x, y, w, h) {}
+        void onMouseCaptureGained() override { ++gained; }
+        void onMouseCaptureLost() override { ++lost; }
+        ComponentType getComponentTypeId() const override { return ComponentType::Unknown; }
+        void draw(SDL_Renderer*) override {}
+    };
+
+    SECTION("hidden capture owner is released on the next mouse event") {
+        auto probe = std::make_unique<CaptureProbe>(manager, 10, 10, 100, 30);
+        CaptureProbe* ptr = probe.get();
+        manager.addElement(std::move(probe));
+        manager.captureMouse(ptr);
+        REQUIRE(ptr->gained == 1);
+
+        ptr->setVisible(false);
+        manager.processEvent(helper.createMouseMotion(50, 20));
+        REQUIRE(manager.getMouseCapture() == nullptr);
+        REQUIRE(ptr->lost == 1);
+    }
+
+    SECTION("disabled capture owner is released on the next mouse event") {
+        auto probe = std::make_unique<CaptureProbe>(manager, 10, 10, 100, 30);
+        CaptureProbe* ptr = probe.get();
+        manager.addElement(std::move(probe));
+        manager.captureMouse(ptr);
+
+        ptr->setEnabled(false);
+        manager.processEvent(helper.createMouseMotion(50, 20));
+        REQUIRE(manager.getMouseCapture() == nullptr);
+        REQUIRE(ptr->lost == 1);
+    }
+
+    SECTION("auto-release on LMB up fires onMouseCaptureLost exactly once") {
+        auto probe = std::make_unique<CaptureProbe>(manager, 10, 10, 100, 30);
+        CaptureProbe* ptr = probe.get();
+        manager.addElement(std::move(probe));
+        manager.captureMouse(ptr);
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 20));
+        REQUIRE(ptr->lost == 1);
+
+        // A second up must not notify again (no dangling capture state).
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, 50, 20));
+        REQUIRE(ptr->lost == 1);
+    }
+
+    SECTION("element helper releases only its own capture") {
+        auto a = std::make_unique<CaptureProbe>(manager, 10, 10, 100, 30);
+        auto b = std::make_unique<CaptureProbe>(manager, 150, 10, 100, 30);
+        CaptureProbe* aPtr = a.get();
+        CaptureProbe* bPtr = b.get();
+        manager.addElement(std::move(a));
+        manager.addElement(std::move(b));
+
+        aPtr->captureMouse();
+        REQUIRE(aPtr->hasMouseCapture());
+        bPtr->releaseMouse(); // not the owner: must not steal/release
+        REQUIRE(aPtr->hasMouseCapture());
+        REQUIRE(aPtr->lost == 0);
+
+        aPtr->releaseMouse();
+        REQUIRE_FALSE(aPtr->hasMouseCapture());
+        REQUIRE(aPtr->lost == 1);
+    }
+}

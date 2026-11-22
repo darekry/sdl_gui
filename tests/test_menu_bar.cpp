@@ -616,3 +616,41 @@ TEST_CASE("MenuBar - command handler and render", "[menu][bar][render]") {
         REQUIRE(popupPixel[2] == 255);
     }
 }
+
+TEST_CASE("MenuBar - text textures are leased across frames", "[menu][bar][render][cache]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.handleResize(640, 480);
+
+    MenuBar* bar = makeBar(manager, 0, 640);
+    MenuItem& file = bar->addMenu("&File");
+    file.addItem("&Open").setShortcut("Ctrl+O");
+    file.addItem("&Save").setShortcut("Ctrl+S");
+    bar->addMenu("&Edit").addItem("&Undo").setShortcut("Ctrl+Z");
+
+    auto frame = [&] {
+        manager.update();
+        manager.cleanup();
+        manager.render();
+    };
+    frame();
+    const size_t barEntries = manager.getTextureManager().getTextCacheSize();
+    REQUIRE(barEntries > 0);
+    for (int i = 0; i < 3; ++i) frame();
+    REQUIRE(manager.getTextureManager().getTextCacheSize() == barEntries);
+
+    // Open a popup: its items acquire their own leases, still once.
+    bar->openMenu(0);
+    frame();
+    const size_t withPopup = manager.getTextureManager().getTextCacheSize();
+    REQUIRE(withPopup > barEntries);
+    for (int i = 0; i < 3; ++i) frame();
+    REQUIRE(manager.getTextureManager().getTextCacheSize() == withPopup);
+
+    // Closing the popup hides it; its leases stay (popup is reused on reopen,
+    // no per-frame rasterization either way).
+    bar->closeMenus();
+    frame();
+    REQUIRE(manager.getTextureManager().getTextCacheSize() == withPopup);
+}

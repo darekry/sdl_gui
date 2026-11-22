@@ -62,6 +62,9 @@ void MenuBar::clearMenus() {
     m_popups.clear();
     m_menus.clear();
     m_titleRects.clear();
+    m_titleLeases.clear();
+    m_titleLeaseColors.clear();
+    m_titleLeaseFont = nullptr;
     markDirty();
 }
 
@@ -92,6 +95,11 @@ void MenuBar::setCommandIdHandler(std::function<void(int)> handler) {
 }
 
 void MenuBar::refreshMenus() {
+    // Called after any model mutation (title text, check state, ...): title
+    // leases may describe stale text, so drop them and let draw re-acquire.
+    m_titleLeases.clear();
+    m_titleLeaseColors.clear();
+    m_titleLeaseFont = nullptr;
     measureTitles();
     for (auto& entry : m_popups) {
         MenuPopup* popup = entry.second;
@@ -180,8 +188,18 @@ MenuPopup* MenuBar::createPopup(MenuItem* owner) {
 
 void MenuBar::measureTitles() {
     m_font = menu_render::loadFont(m_manager, getComposedStyle(ElementState::Normal));
+    if (m_font.handle.get() != m_titleLeaseFont) {
+        // Theme/font switch: old leases were rasterized with another face.
+        m_titleLeases.clear();
+        m_titleLeaseColors.clear();
+        m_titleLeaseFont = m_font.handle.get();
+    }
     m_titleRects.clear();
     m_titleRects.reserve(m_menus.size());
+    if (m_titleLeases.size() < m_menus.size()) {
+        m_titleLeases.resize(m_menus.size());
+        m_titleLeaseColors.resize(m_menus.size(), SDL_Color{0, 0, 0, 0});
+    }
 
     int x = 2;
     for (const auto& menu : m_menus) {
@@ -645,6 +663,18 @@ void MenuBar::draw(SDL_Renderer* renderer) {
     const SDL_Color hoverBackground = hover.backgroundColor.value_or(constants::kWin95Navy);
 
     m_font = menu_render::loadFont(m_manager, normal);
+    if (m_font.handle.get() != m_titleLeaseFont) {
+        m_titleLeases.clear();
+        m_titleLeaseColors.clear();
+        m_titleLeaseFont = m_font.handle.get();
+    }
+    if (m_titleLeases.size() < m_menus.size()) {
+        m_titleLeases.resize(m_menus.size());
+        m_titleLeaseColors.resize(m_menus.size(), SDL_Color{0, 0, 0, 0});
+    }
+    auto sameColor = [](const SDL_Color& a, const SDL_Color& b) {
+        return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+    };
     const bool highlightActive = m_menuMode || isMenuOpen();
 
     for (size_t i = 0; i < m_titleRects.size() && i < m_menus.size(); ++i) {
@@ -656,11 +686,30 @@ void MenuBar::draw(SDL_Renderer* renderer) {
         }
 
         const std::string display = m_menus[i]->displayText();
-        const int textWidth = menu_render::textWidth(m_font, display);
+        const SDL_Color color = highlighted ? hoverText : normalText;
+        TextureManager::TextLease& lease = m_titleLeases[i];
+        if (!lease || !sameColor(m_titleLeaseColors[i], color)) {
+            lease = m_manager.getTextureManager().acquireTextTexture(display, m_font.handle, color);
+            m_titleLeaseColors[i] = color;
+        }
+        const int textWidth = lease ? TextureWidth(lease.get()) : menu_render::textWidth(m_font, display);
         const int textX = rect.x + (rect.width - textWidth) / 2;
         const int textY = (m_height - m_font.lineHeight) / 2;
-        menu_render::drawTextWithMnemonic(renderer, m_manager, m_font, m_menus[i]->text,
-                                          highlighted ? hoverText : normalText, textX, textY);
+        if (lease) {
+            RenderTexture(renderer, lease.get(),
+                          SDL_Rect{textX, textY, TextureWidth(lease.get()), TextureHeight(lease.get())});
+        }
+
+        const size_t mnemonicIndex = menu_text::mnemonicDisplayIndex(m_menus[i]->text);
+        if (mnemonicIndex != std::string::npos && mnemonicIndex < display.size()) {
+            const std::string_view displayView(display);
+            const int prefixWidth = menu_render::textWidth(m_font, displayView.substr(0, mnemonicIndex));
+            const int charWidth = std::max(1, menu_render::textWidth(m_font, displayView.substr(mnemonicIndex, 1)));
+            const int underlineY = textY + m_font.lineHeight - 1;
+            SetDrawColor(renderer, color);
+            RenderLine(renderer, textX + prefixWidth, underlineY,
+                       textX + prefixWidth + charWidth, underlineY);
+        }
     }
 }
 

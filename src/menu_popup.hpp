@@ -113,6 +113,18 @@ private:
     std::vector<int> m_rowY;   // local y of every row
     std::vector<int> m_rowH;   // local height of every row
 
+    // Per-item text/shortcut leases: popups redraw on hover/state changes and
+    // text is uncached, so the popup holds the textures between frames.
+    // Retained across refresh()/open (same model + font), invalidated by
+    // text/shortcut changes or a font switch.
+    std::vector<TextureManager::TextLease> m_textLeases;
+    std::vector<SDL_Color> m_textLeaseColors;
+    std::vector<std::string> m_textLeaseTexts;
+    std::vector<TextureManager::TextLease> m_shortcutLeases;
+    std::vector<SDL_Color> m_shortcutLeaseColors;
+    std::vector<std::string> m_shortcutLeaseTexts;
+    TTF_Font* m_leaseFont = nullptr;
+
     std::function<void(int)> m_onActivate;
     std::function<void(int)> m_onHover;
     std::function<void(int)> m_onNavigate;

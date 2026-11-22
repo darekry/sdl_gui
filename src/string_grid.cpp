@@ -18,21 +18,28 @@ StringGrid::StringGrid(GUIManager& manager, int x, int y, int width, int height,
 // Data management
 void StringGrid::setRowCount(size_t rows) {
     m_data.resize(rows);
-    for (auto& row : m_data) {
-        row.resize(m_columnWidths.size());
+    m_cellTextures.resize(rows);
+    for (size_t r = 0; r < m_data.size(); ++r) {
+        m_data[r].resize(m_columnWidths.size());
+        m_cellTextures[r].resize(m_columnWidths.size());
     }
+    m_rowHeaderTextures.resize(rows);
     updateSliderRanges();
 }
 
 void StringGrid::setColumnCount(size_t cols) {
     m_columnWidths.resize(cols, 100);
     m_columnHeaders.resize(cols);
+    m_columnHeaderTextures.resize(cols);
     for (size_t i = 0; i < cols; ++i) {
         if (m_columnHeaders[i].empty()) {
             m_columnHeaders[i] = std::to_string(i + 1);
         }
     }
     for (auto& row : m_data) {
+        row.resize(cols);
+    }
+    for (auto& row : m_cellTextures) {
         row.resize(cols);
     }
     updateSliderRanges();
@@ -49,6 +56,10 @@ size_t StringGrid::getColumnCount() const {
 void StringGrid::setCellText(size_t row, size_t col, std::string_view text) {
     if (row < m_data.size() && col < m_data[row].size()) {
         m_data[row][col] = text;
+        if (row < m_cellTextures.size() && col < m_cellTextures[row].size()) {
+            m_cellTextures[row][col].reset();
+        }
+        markDirty();
     }
 }
 
@@ -62,8 +73,43 @@ std::string_view StringGrid::getCellText(size_t row, size_t col) const {
 void StringGrid::clear() {
     m_data.clear();
     clearSelection();
-    // Tekstury komórek żyją we wspólnym TextShaperze (TextureManager) —
-    // brak lokalnego cache'a do czyszczenia.
+    resetTextTextures();
+}
+
+void StringGrid::resetTextTextures() {
+    m_cellTextures.clear();
+    m_columnHeaderTextures.clear();
+    m_rowHeaderTextures.clear();
+    m_textTextureFont = nullptr;
+    m_cellTextTextureColor = SDL_Color{0, 0, 0, 0};
+    m_headerTextTextureColor = SDL_Color{0, 0, 0, 0};
+}
+
+void StringGrid::ensureTextTextureStyle(const SharedFont& font, SDL_Color cellColor, SDL_Color headerColor) {
+    auto same = [](const SDL_Color& a, const SDL_Color& b) {
+        return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+    };
+    TTF_Font* fontPtr = font.get();
+    if (fontPtr == m_textTextureFont && same(cellColor, m_cellTextTextureColor) &&
+        same(headerColor, m_headerTextTextureColor)) {
+        return;
+    }
+    // Font/color changed (theme switch, setStyle): every cached lease belongs
+    // to the old parameters. Rebuilt lazily on the next draw.
+    resetTextTextures();
+    m_textTextureFont = fontPtr;
+    m_cellTextTextureColor = cellColor;
+    m_headerTextTextureColor = headerColor;
+}
+
+TextureManager::TextLease& StringGrid::cellLease(size_t row, size_t col) {
+    if (m_cellTextures.size() < m_data.size()) {
+        m_cellTextures.resize(m_data.size());
+    }
+    if (m_cellTextures[row].size() < m_data[row].size()) {
+        m_cellTextures[row].resize(m_data[row].size());
+    }
+    return m_cellTextures[row][col];
 }
 
 void StringGrid::sortByColumn(size_t col, SortDirection dir) {
@@ -73,7 +119,11 @@ void StringGrid::sortByColumn(size_t col, SortDirection dir) {
     
     m_sortColumn = col;
     m_sortDirection = dir;
-    
+    // Sort arrows are part of header text and cells move between rows:
+    // drop all text leases so the next draw re-acquires correct textures.
+    m_cellTextures.clear();
+    m_columnHeaderTextures.clear();
+
     if (dir == SortDirection::None) {
         return;
     }
@@ -177,6 +227,9 @@ void StringGrid::setRowHeaderWidth(int width) {
 void StringGrid::setColumnHeader(size_t col, std::string_view text) {
     if (col < m_columnHeaders.size()) {
         m_columnHeaders[col] = text;
+        if (col < m_columnHeaderTextures.size()) {
+            m_columnHeaderTextures[col].reset();
+        }
     }
 }
 
@@ -272,6 +325,10 @@ void StringGrid::stopEditing() {
             std::string newText = m_cellEditor->getText();
             if (m_editingCell.row < m_data.size() && m_editingCell.col < m_data[m_editingCell.row].size()) {
                 m_data[m_editingCell.row][m_editingCell.col] = newText;
+                if (m_editingCell.row < m_cellTextures.size() &&
+                    m_editingCell.col < m_cellTextures[m_editingCell.row].size()) {
+                    m_cellTextures[m_editingCell.row][m_editingCell.col].reset();
+                }
                 if (m_onCellEdit) {
                     m_onCellEdit(this, m_editingCell, newText);
                 }
@@ -365,6 +422,10 @@ ComponentType StringGrid::getComponentTypeId() const {
     return ComponentType::StringGrid;
 }
 
+void StringGrid::onMouseCaptureLost() {
+    m_isSelecting = false;
+}
+
 bool StringGrid::isOverlay() const {
     return m_isEditing;
 }
@@ -418,6 +479,7 @@ bool StringGrid::handleMouseButtonDown(const SDL_Event& e) {
     } else {
         setSelectedCell(cell.row, cell.col);
         m_isSelecting = true;
+        captureMouse();
     }
     
     lastClickTime = currentTime;
@@ -657,6 +719,9 @@ bool StringGrid::handleEvent(const SDL_Event& e) {
         case SDL_EVENT_MOUSE_BUTTON_UP:
             if (e.button.button == SDL_BUTTON_LEFT) {
                 m_isSelecting = false;
+                // The manager also auto-releases on LMB up; the helper only
+                // acts when this grid still owns the capture (no double notify).
+                releaseMouse();
             }
             break;
         case SDL_EVENT_MOUSE_MOTION:
@@ -702,7 +767,17 @@ void StringGrid::drawDirect(SDL_Renderer* renderer) {
     auto font = m_manager.getFontManager().loadFont(
         style.fontName.value_or(constants::kDefaultFontPath),
         DEFAULT_FONT_SIZE);
+    // Leases persist across frames; rebuild only when font/colors changed.
+    ensureTextTextureStyle(font, textColor, headerTextColor);
     
+    // Entry clip (element ∩ ancestors/viewport, set by GUIElement::render).
+    // drawDirect must leave the renderer with exactly this clip.
+    SDL_Rect savedClip{};
+    const bool hadClip = SDL_RenderClipEnabled(renderer);
+    if (hadClip) {
+        SDL_GetRenderClipRect(renderer, &savedClip);
+    }
+
     drawBackgroundAndBorder(renderer);
     
     int cellAreaX = getCellAreaX();
@@ -711,13 +786,25 @@ void StringGrid::drawDirect(SDL_Renderer* renderer) {
     int cellAreaHeight = getVisibleCellAreaHeight();
     
     SDL_Rect cellClipRect = {offsetX + cellAreaX, offsetY + cellAreaY, cellAreaWidth, cellAreaHeight};
-    SDL_SetRenderClipRect(renderer, &cellClipRect);
+    bool cellsVisible = true;
+    if (hadClip) {
+        SDL_Rect clipped;
+        if (SDL_GetRectIntersection(&cellClipRect, &savedClip, &clipped)) {
+            cellClipRect = clipped;
+        } else {
+            cellsVisible = false;
+        }
+    }
+    if (cellsVisible) {
+        // One clip for the whole cell area (drawCell no longer toggles it).
+        SDL_SetRenderClipRect(renderer, &cellClipRect);
+        VisibleRange range = calculateVisibleRange();
+        drawCells(renderer, offsetX, offsetY, cellBackgroundColor, textColor, range, font);
+        drawSelection(renderer, offsetX, offsetY);
+    }
     
-    VisibleRange range = calculateVisibleRange();
-    drawCells(renderer, offsetX, offsetY, cellBackgroundColor, textColor, range, font);
-    drawSelection(renderer, offsetX, offsetY);
-    
-    SDL_SetRenderClipRect(renderer, nullptr);
+    // Headers/lines are NOT clipped to the cell area, only to the entry clip.
+    SDL_SetRenderClipRect(renderer, hadClip ? &savedClip : nullptr);
     
     if (m_showColumnHeaders) {
         drawColumnHeaders(renderer, offsetX, offsetY, headerBackgroundColor, headerTextColor, gridLineColor, font);
@@ -974,22 +1061,29 @@ void StringGrid::drawCell(SDL_Renderer* renderer, size_t row, size_t col,
     if (row < m_data.size() && col < m_data[row].size() && !m_data[row][col].empty()) {
         if (!font) return;
 
-        auto texture = m_manager.getTextureManager().createTextureFromText(m_data[row][col], font, textColor);
-        if (!texture) return;
+        // Lease per cell: acquired on first draw, reused across frames.
+        TextureManager::TextLease& lease = cellLease(row, col);
+        if (!lease) {
+            lease = m_manager.getTextureManager().acquireTextTexture(
+                m_data[row][col], font, textColor);
+        }
+        if (!lease) return;
         
-        int textWidth, textHeight;
-        { textWidth = TextureWidth(texture.get()); textHeight = TextureHeight(texture.get()); }
+        int textWidth = TextureWidth(lease.get());
+        int textHeight = TextureHeight(lease.get());
         
         int textX = screenX + 4;
         int textY = screenY + (height - textHeight) / 2;
         
-        SDL_Rect textClip = {screenX + 2, screenY, width - 4, height};
-        SDL_SetRenderClipRect(renderer, &textClip);
-        
+        // No per-cell SDL_SetRenderClipRect (drawDirect set the cell-area clip
+        // once). Crop the source rect instead, exactly like the cached blit.
         SDL_Rect destRect = {textX, textY, textWidth, textHeight};
-        RenderTexture(renderer, texture.get(), destRect);
-        
-        SDL_SetRenderClipRect(renderer, nullptr);
+        SDL_Rect textClip = {screenX + 2, screenY, width - 4, height};
+        SDL_Rect visible;
+        if (SDL_GetRectIntersection(&destRect, &textClip, &visible)) {
+            SDL_Rect srcRect = {visible.x - textX, visible.y - textY, visible.w, visible.h};
+            RenderTexture(renderer, lease.get(), &srcRect, &visible);
+        }
     }
 }
 
@@ -1034,10 +1128,16 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
                     headerText += (m_sortDirection == SortDirection::Ascending) ? " \u2191" : " \u2193";
                 }
                 
-                auto texture = m_manager.getTextureManager().createTextureFromText(headerText, font, headerTextColor);
-                if (texture) {
+                if (col >= m_columnHeaderTextures.size()) {
+                    m_columnHeaderTextures.resize(m_columnHeaders.size());
+                }
+                TextureManager::TextLease& lease = m_columnHeaderTextures[col];
+                if (!lease) {
+                    lease = m_manager.getTextureManager().acquireTextTexture(headerText, font, headerTextColor);
+                }
+                if (lease) {
                     int textWidth, textHeight;
-                    { textWidth = TextureWidth(texture.get()); textHeight = TextureHeight(texture.get()); }
+                    { textWidth = TextureWidth(lease.get()); textHeight = TextureHeight(lease.get()); }
                     
                     if (textWidth > colWidth - 8) {
                         textWidth = colWidth - 8;
@@ -1047,7 +1147,7 @@ void StringGrid::drawColumnHeaders(SDL_Renderer* renderer, int offsetX, int offs
                     int textY = offsetY + (m_headerHeight - textHeight) / 2;
                     
                     SDL_Rect destRect = {textX, textY, textWidth, textHeight};
-                    RenderTexture(renderer, texture.get(), destRect);
+                    RenderTexture(renderer, lease.get(), destRect);
                 }
             }
             
@@ -1083,16 +1183,22 @@ void StringGrid::drawRowHeaders(SDL_Renderer* renderer, int offsetX, int offsetY
             
             if (font) {
                 std::string rowLabel = std::to_string(row + 1);
-                auto texture = m_manager.getTextureManager().createTextureFromText(rowLabel, font, headerTextColor);
-                if (texture) {
+                if (row >= m_rowHeaderTextures.size()) {
+                    m_rowHeaderTextures.resize(m_data.size());
+                }
+                TextureManager::TextLease& lease = m_rowHeaderTextures[row];
+                if (!lease) {
+                    lease = m_manager.getTextureManager().acquireTextTexture(rowLabel, font, headerTextColor);
+                }
+                if (lease) {
                     int textWidth, textHeight;
-                    { textWidth = TextureWidth(texture.get()); textHeight = TextureHeight(texture.get()); }
+                    { textWidth = TextureWidth(lease.get()); textHeight = TextureHeight(lease.get()); }
                     
                     int textX = offsetX + (m_rowHeaderWidth - textWidth) / 2;
                     int textY = offsetY + y + (m_rowHeight - textHeight) / 2;
                     
                     SDL_Rect destRect = {textX, textY, textWidth, textHeight};
-                    RenderTexture(renderer, texture.get(), destRect);
+                    RenderTexture(renderer, lease.get(), destRect);
                 }
             }
             

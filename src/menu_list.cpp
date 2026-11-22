@@ -27,7 +27,16 @@ void MenuList::setItems(std::vector<Item> items) {
     m_hovered = -1;
     m_pressed = -1;
     m_selectedId = -1;
+    resetTextLeases();
     markDirty();
+}
+
+void MenuList::resetTextLeases() {
+    m_titleLease.reset();
+    m_titleLeaseColor = SDL_Color{0, 0, 0, 0};
+    m_itemLeases.clear();
+    m_itemLeaseColors.clear();
+    m_leaseFont = nullptr;
 }
 
 void MenuList::addItem(std::string_view text, int id, bool enabled) {
@@ -35,6 +44,7 @@ void MenuList::addItem(std::string_view text, int id, bool enabled) {
     if (m_selected < 0) {
         m_selected = firstSelectable();
     }
+    resetTextLeases();
     markDirty();
 }
 
@@ -287,6 +297,10 @@ void MenuList::drawDirect(SDL_Renderer* renderer) {
                        chrome, supportsBevel());
 
     const menu_render::Font font = rowFont();
+    if (font.handle.get() != m_leaseFont) {
+        resetTextLeases();
+        m_leaseFont = font.handle.get();
+    }
     const int rowHeight = std::max(20, font.lineHeight + 8);
     const Style normal = getComposedStyle(ElementState::Normal);
     const SDL_Color textColor = normal.textColor.value_or(constants::kDefaultTextColor);
@@ -295,11 +309,28 @@ void MenuList::drawDirect(SDL_Renderer* renderer) {
     const SDL_Color selectedText = hover.textColor.value_or(SDL_Color{255, 255, 255, 255});
     const SDL_Color disabledText = SDL_Color{128, 128, 128, 255};
 
+    auto sameColor = [](const SDL_Color& a, const SDL_Color& b) {
+        return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+    };
+
     if (!m_title.empty()) {
-        const int titleWidth = menu_render::textWidth(font, m_title);
+        if (!m_titleLease || !sameColor(m_titleLeaseColor, textColor)) {
+            m_titleLease = m_manager.getTextureManager().acquireTextTexture(m_title, font.handle, textColor);
+            m_titleLeaseColor = textColor;
+        }
+        const int titleWidth = m_titleLease ? TextureWidth(m_titleLease.get()) : 0;
         const int x = abs.x + std::max(8, (m_width - std::max(titleWidth, m_titleWidth)) / 2);
-        menu_render::drawText(renderer, m_manager, font, m_title, textColor, x,
-                              abs.y + (rowHeight - font.lineHeight) / 2);
+        if (m_titleLease) {
+            RenderTexture(renderer, m_titleLease.get(),
+                          SDL_Rect{x, abs.y + (rowHeight - font.lineHeight) / 2,
+                                   TextureWidth(m_titleLease.get()),
+                                   TextureHeight(m_titleLease.get())});
+        }
+    }
+
+    if (m_itemLeases.size() < m_items.size()) {
+        m_itemLeases.resize(m_items.size());
+        m_itemLeaseColors.resize(m_items.size(), SDL_Color{0, 0, 0, 0});
     }
 
     for (size_t i = 0; i < m_items.size(); ++i) {
@@ -322,7 +353,18 @@ void MenuList::drawDirect(SDL_Renderer* renderer) {
         }
 
         const SDL_Color color = !enabled ? disabledText : (selected ? selectedText : textColor);
-        menu_render::drawText(renderer, m_manager, font, m_items[i].text, color,
-                              rect.x + 8, rect.y + (rowHeight - font.lineHeight) / 2);
+        if (m_items[i].text.empty()) {
+            continue;
+        }
+        TextureManager::TextLease& lease = m_itemLeases[i];
+        if (!lease || !sameColor(m_itemLeaseColors[i], color)) {
+            lease = m_manager.getTextureManager().acquireTextTexture(m_items[i].text, font.handle, color);
+            m_itemLeaseColors[i] = color;
+        }
+        if (lease) {
+            RenderTexture(renderer, lease.get(),
+                          SDL_Rect{rect.x + 8, rect.y + (rowHeight - font.lineHeight) / 2,
+                                   TextureWidth(lease.get()), TextureHeight(lease.get())});
+        }
     }
 }

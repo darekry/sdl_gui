@@ -251,6 +251,9 @@ GUIElement::GUIElement(GUIManager& manager, int x, int y, int width, int height)
 }
 
 GUIElement::~GUIElement() {
+    // Drop the cache ref while the manager's TextureManager is still alive
+    // (GUIManager::~GUIManager clears m_elements in its body for this reason).
+    releaseCachedRenderTexture();
     m_manager.unregisterElement(this);
     if (tooltipTimerId != 0) {
         stopTimer(tooltipTimerId);
@@ -620,11 +623,25 @@ void GUIElement::render(SDL_Renderer* renderer) {
     SDL_Rect viewport;
     SDL_GetRenderViewport(renderer, &viewport);
     render(renderer, viewport);
+    // Public contract: a standalone subtree render leaves the renderer clipped
+    // to the viewport (never to the last leaf's rect). GUIManager::render()
+    // calls the two-arg path directly and does a single reset per frame.
+    SDL_SetRenderClipRect(renderer, &viewport);
 }
 
 void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect) {
     if (!m_visible) {
         return;
+    }
+
+    // Entry clip state: any branch that changes the clip restores EXACTLY this
+    // (not parent_clip_rect — a cached ancestor never sets the renderer clip,
+    // so its rect may differ from the active state). This is what makes the
+    // trailing unconditional restore unnecessary.
+    const bool entryClipEnabled = SDL_RenderClipEnabled(renderer);
+    SDL_Rect entryClip{};
+    if (entryClipEnabled) {
+        SDL_GetRenderClipRect(renderer, &entryClip);
     }
 
     auto abs_pos = getAbsolutePosition();
@@ -706,11 +723,11 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                 RenderTexture(renderer, target, dst);
                 SDL_DestroyTexture(target);
             }
-            SDL_SetRenderClipRect(renderer, &parent_clip_rect);
+            SDL_SetRenderClipRect(renderer, entryClipEnabled ? &entryClip : nullptr);
         } else {
             SDL_SetRenderClipRect(renderer, &clipped_rect);
             drawDirect(renderer);
-            SDL_SetRenderClipRect(renderer, &parent_clip_rect);
+            SDL_SetRenderClipRect(renderer, entryClipEnabled ? &entryClip : nullptr);
         }
         // Bez czyszczenia m_isDirty: direct-widget przerysowuje się co klatkę
         // z natury, flaga nie znaczy tu "cache aktualny".
@@ -746,7 +763,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                     SDL_RenderTextureRotated(renderer, m_focusTexture.get(), nullptr, &dst_rect,
                                      m_rotation, &center, SDL_FLIP_NONE);
                 }
-                SDL_SetRenderClipRect(renderer, &parent_clip_rect);
+                SDL_SetRenderClipRect(renderer, entryClipEnabled ? &entryClip : nullptr);
             } else {
                 SDL_Rect src_rect;
                 src_rect.x = clipped_rect.x - abs_pos.x;
@@ -763,7 +780,7 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
                     // wystaje poza viewport rodzica (ScrollArea/WorldView).
                     SDL_SetRenderClipRect(renderer, &clipped_rect);
                     renderFocusOverlay(renderer);
-                    SDL_SetRenderClipRect(renderer, &parent_clip_rect);
+                    SDL_SetRenderClipRect(renderer, entryClipEnabled ? &entryClip : nullptr);
                 }
             }
         }
@@ -788,12 +805,12 @@ void GUIElement::render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect
         }
     }
 
-    // Niezmiennik clipa: wyjście z clipem rodzica. Bez tego fokus (jedyna
-    // ścieżka ustawiająca clip w liściu cached) zostawiał clipped_rect
-    // ostatniego dziecka i obcinał całe rodzeństwo w kolejnych elementach
-    // top-level ("klik gasi panele" — top/side/world czarne po focusie
-    // buttona w bottom barze). Przywrócenie jest tanie (sam stan, bez draw).
-    SDL_SetRenderClipRect(renderer, &parent_clip_rect);
+    // Niezmiennik clipa: każda gałąź, która zmienia clip (direct/hooki,
+    // rotowany blit, obrys fokusu), przywraca clip wejściowy u siebie.
+    // Dlatego render() NIE robi tu bezwarunkowego restore — w steady state
+    // (cached blit) nie dotykamy clipa wcale, co eliminuje flush draw-callów
+    // SDL per element. Publiczny render(renderer) przywraca viewport dla
+    // zewnętrznych wywołań, a GUIManager::render() resetuje clip raz na klatkę.
 }
 
 void GUIElement::renderOverlay(SDL_Renderer* renderer) {
@@ -853,10 +870,20 @@ void GUIElement::rebuildFocusTexture(SDL_Renderer* renderer) {
     m_focusTexture = std::move(focusTex);
 }
 
+void GUIElement::releaseCachedRenderTexture() {
+    m_cachedTexture.reset();
+    if (m_cacheKey == 0) {
+        return; // private texture or no cache: nothing to release in the map
+    }
+    const uint64_t old = m_cacheKey;
+    m_cacheKey = 0;
+    // Weak-entry release: erases the entry only when no other widget holds it.
+    m_manager.getTextureManager().releaseRenderCache(old);
+}
+
 void GUIElement::renderToCache() {
     if (!m_visible || m_width <= 0 || m_height <= 0) {
-        m_cachedTexture.reset();
-        m_cacheKey = 0;
+        releaseCachedRenderTexture();
         return;
     }
 
@@ -865,16 +892,30 @@ void GUIElement::renderToCache() {
     if (canShareRenderCache() && m_rotation == 0.0) {
         const uint64_t key = buildRenderCacheKey();
         if (key != m_cacheKey || !m_cachedTexture) {
-            m_cachedTexture = m_manager.getTextureManager().renderCache(
+            // Acquire the new texture BEFORE dropping the old ref/key: another
+            // widget may share either one, and release only erases expired
+            // entries. Order matters — drop strong ref, then release key.
+            SharedTexture fresh = m_manager.getTextureManager().renderCache(
                 key, m_width, m_height, [this](SDL_Renderer* r) { draw(r); });
-            m_cacheKey = key;
+            if (m_cacheKey != 0) {
+                const uint64_t old = m_cacheKey;
+                m_cachedTexture.reset();
+                m_cacheKey = 0;
+                m_manager.getTextureManager().releaseRenderCache(old);
+            } else {
+                m_cachedTexture.reset();
+            }
+            m_cachedTexture = std::move(fresh);
+            m_cacheKey = m_cachedTexture ? key : 0;
         }
         m_focusTexture.reset(); // nierotowany: obrys idzie bezpośrednio
         m_isDirty = false;
         return;
     }
 
-    m_cacheKey = 0;
+    // Shared -> private transition: release the shared entry before creating
+    // the private texture (m_cacheKey doubles as the private/shared marker).
+    releaseCachedRenderTexture();
     SharedTexture tex(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
                                         SDL_TEXTUREACCESS_TARGET, m_width, m_height),
                       SDLTextureDeleter());
@@ -953,7 +994,11 @@ void GUIElement::markDirtyRecursively() {
 
 
 void GUIElement::markForDeletion() {
+    if (m_isMarkedForDeletion) {
+        return; // idempotent: count each element once
+    }
     m_isMarkedForDeletion = true;
+    m_manager.notifyDeletionPending();
 }
 
 bool GUIElement::isMarkedForDeletion() const {
@@ -1360,6 +1405,20 @@ void GUIElement::setCanGetKeyboardFocus(bool canFocus) {
 
 bool GUIElement::hasKeyboardFocus() const {
     return m_manager.getKeyboardFocus() == this;
+}
+
+void GUIElement::captureMouse() {
+    m_manager.captureMouse(this);
+}
+
+void GUIElement::releaseMouse() {
+    if (m_manager.getMouseCapture() == this) {
+        m_manager.releaseMouse();
+    }
+}
+
+bool GUIElement::hasMouseCapture() const {
+    return m_manager.getMouseCapture() == this;
 }
 
 void GUIElement::onFocusGained() {

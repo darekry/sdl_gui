@@ -235,6 +235,17 @@ public:
     void setCanGetKeyboardFocus(bool canFocus);
     [[nodiscard]] bool hasKeyboardFocus() const;
 
+    // === Mouse capture contract ===
+    // LMB down that starts a drag: captureMouse(). LMB up: handle the release
+    // and releaseMouse() (GUIManager also auto-releases on LMB up). While
+    // captured, mouse events go only to the owner; onMouseCaptureLost() must
+    // reset the drag state (m_isDragging/m_activeThumb/...). Hover returns
+    // with the next real motion event (no synthetic events).
+    void captureMouse();
+    // Releases only when this element is the current capture owner.
+    void releaseMouse();
+    [[nodiscard]] bool hasMouseCapture() const;
+
     // === Custom draw / event hooks ===
     // Install/replace one phase hook. Installing any hook forces direct
     // rendering (no cache). Pass a null callback to remove that phase.
@@ -254,7 +265,13 @@ protected:
     // Every handleEvent() override must call this first so hooks work on
     // TextInput/TextArea/StringGrid/ListView/ModalDialog too.
     bool dispatchEventHook(const SDL_Event& e);
+    // Render this element (and children) with the parent's clip. Does NOT
+    // restore the clip at the end: every branch that changes it restores the
+    // entry clip itself. GUIManager uses this directly for top-levels so a
+    // steady-state frame performs no clip toggling at all; standalone callers
+    // should use the public render(SDL_Renderer*), which restores the viewport.
     void render(SDL_Renderer* renderer, const SDL_Rect& parent_clip_rect);
+    friend class GUIManager;
 
     // Obrys fokusu klawiatury dla elementów nierotowanych (direct draw,
     // poza cache'em). Rotowane używają m_focusTexture (patrz render).
@@ -303,6 +320,10 @@ protected:
     virtual uint64_t getRenderCacheKeySuffix() const { return 0; }
     uint64_t buildRenderCacheKey() const;
     void renderToCache();
+    // Drops the widget's strong ref and releases the render-cache key when it
+    // points at a shared texture. No-op when m_cacheKey == 0 (private texture
+    // or no cache): the own ref is still dropped.
+    void releaseCachedRenderTexture();
 
     // Extension: direct drawing (without caching).
     // By default elements don't use drawDirect — they return false in wantsDirectRender().

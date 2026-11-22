@@ -13,6 +13,7 @@ public:
     void setOnChange(OnChangeCallback callback);
 
     bool handleSelf(const SDL_Event& e) override;
+    void onMouseCaptureLost() override;
     ComponentType getComponentTypeId() const override;
 
 public:

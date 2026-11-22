@@ -6,6 +6,8 @@
 #include "panel.hpp"
 #include "button.hpp"
 #include "checkbox.hpp"
+#include "string_grid.hpp"
+#include "scroll_area.hpp"
 #include "constants.hpp"
 
 // Regression: widgets must actually render pixels (ScopedRenderTarget clip restore
@@ -320,5 +322,119 @@ TEST_CASE("Focused button does not clip siblings", "[render][pixel][focus]") {
     REQUIRE(sideAfter[2] == 48);
 
     // Clip nie wycieka z passa renderu.
+    REQUIRE_FALSE(SDL_RenderClipEnabled(helper.getRenderer()));
+}
+
+// --- Clip dedupe (2026-11-22) ---------------------------------------------
+// Removing the per-element trailing clip restore must not let any branch leak
+// a clip into siblings/overlays, and direct-render widgets must crop their
+// text via src_rect instead of per-cell clip toggles.
+
+namespace {
+
+std::array<Uint8, 4> readPixelAt(SDL_Renderer* renderer, int x, int y) {
+    SDL_Rect r{x, y, 1, 1};
+    SDL_Surface* surf = SDL_RenderReadPixels(renderer, &r);
+    REQUIRE(surf != nullptr);
+    auto px = readbackPixel(surf);
+    SDL_DestroySurface(surf);
+    return px;
+}
+
+void renderFrames(GUIManager& manager, SDL_Renderer* renderer, int count = 3) {
+    for (int i = 0; i < count; ++i) {
+        manager.update();
+        manager.cleanup();
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+        manager.render();
+        SDL_RenderPresent(renderer);
+    }
+}
+
+} // namespace
+
+TEST_CASE("StringGrid text is cropped to its cell", "[render][pixel][string_grid]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.handleResize(800, 600);
+
+    auto grid = std::make_unique<StringGrid>(manager, 10, 10, 300, 200, 2, 2);
+    grid->setBackgroundColor(ElementState::Normal, SDL_Color{255, 255, 255, 255});
+    grid->setTextColor(ElementState::Normal, SDL_Color{0, 0, 0, 255});
+    grid->setCellText(0, 0, "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+    grid->setCellText(0, 1, "");
+    manager.addElement(std::move(grid));
+
+    renderFrames(manager, helper.getRenderer());
+
+    // Column 1 starts at 10+50+100 = 160; the long text of column 0 must not
+    // bleed into its (white, empty) neighbour.
+    auto neighbour = readPixelAt(helper.getRenderer(), 210, 50);
+    REQUIRE(neighbour[0] >= 200);
+    REQUIRE(neighbour[1] >= 200);
+    REQUIRE(neighbour[2] >= 200);
+
+    // Header row (above the cell area) still draws text.
+    bool headerHasText = false;
+    for (int x = 60; x < 260; ++x) {
+        auto px = readPixelAt(helper.getRenderer(), x, 24);
+        if (px[0] < 100 && px[1] < 100 && px[2] < 100) {
+            headerHasText = true;
+            break;
+        }
+    }
+    REQUIRE(headerHasText);
+}
+
+TEST_CASE("StringGrid respects the ScrollArea viewport", "[render][pixel][string_grid][scroll]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.handleResize(800, 600);
+
+    auto scroll = std::make_unique<ScrollArea>(manager, 10, 10, 200, 100);
+    scroll->setScrollEnabled(false, false);
+    auto grid = std::make_unique<StringGrid>(manager, 0, 0, 400, 400, 20, 4);
+    grid->setBackgroundColor(ElementState::Normal, SDL_Color{255, 255, 255, 255});
+    grid->setTextColor(ElementState::Normal, SDL_Color{0, 0, 0, 255});
+    scroll->setContent(std::move(grid));
+    manager.addElement(std::move(scroll));
+
+    renderFrames(manager, helper.getRenderer());
+
+    auto inside = readPixelAt(helper.getRenderer(), 100, 60);
+    REQUIRE(inside[0] >= 200); // grid cell area, visible
+
+    auto outside = readPixelAt(helper.getRenderer(), 100, 150);
+    REQUIRE(outside[0] == 0);  // below the 100px viewport: not painted by the grid
+    REQUIRE(outside[1] == 0);
+    REQUIRE(outside[2] == 0);
+}
+
+TEST_CASE("Tooltip renders after the top-level pass without a stale clip", "[render][pixel][overlay]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+    manager.setTheme(Theme::createDefaultTheme());
+    manager.handleResize(800, 600);
+
+    auto top = std::make_unique<Panel>(manager, 0, 0, 800, 100);
+    top->setBackgroundColor(ElementState::Normal, SDL_Color{40, 40, 48, 255});
+    manager.addElement(std::move(top));
+
+    auto button = std::make_unique<Button>(manager, 10, 10, 100, 40, "Tip");
+    Button* btn = button.get();
+    manager.addElement(std::move(button));
+    manager.showTooltip(btn, "Tooltip text");
+
+    renderFrames(manager, helper.getRenderer());
+
+    // Tooltip panel is positioned directly below the button and is a separate
+    // top-level: no ancestor/previous-element clip may cut it.
+    auto tip = readPixelAt(helper.getRenderer(), 15, 55);
+    REQUIRE(tip[0] == 255);
+    REQUIRE(tip[1] == 255);
+    REQUIRE(tip[2] == 225);
     REQUIRE_FALSE(SDL_RenderClipEnabled(helper.getRenderer()));
 }

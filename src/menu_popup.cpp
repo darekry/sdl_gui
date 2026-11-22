@@ -85,6 +85,10 @@ void MenuPopup::detachItems() {
 }
 
 void MenuPopup::refresh() {
+    // NOTE: text leases are intentionally NOT cleared here. refresh() also
+    // runs on every open (positionTopPopup); the model usually did not change,
+    // so keeping the leases avoids re-rasterizing the menu each time. Stale
+    // text/font/color are detected per item in draw().
     if (!m_items) {
         setSize(1, 1);
         return;
@@ -417,13 +421,70 @@ void MenuPopup::draw(SDL_Renderer* renderer) {
 
         const int textX = m_leftPad + m_checkGutter;
         const int textY = rowY + (m_rowHeight - m_font.lineHeight) / 2;
-        menu_render::drawTextWithMnemonic(renderer, m_manager, m_font, item->text, textColor, textX, textY);
+
+        if (m_font.handle.get() != m_leaseFont) {
+            m_textLeases.clear();
+            m_textLeaseColors.clear();
+            m_textLeaseTexts.clear();
+            m_shortcutLeases.clear();
+            m_shortcutLeaseColors.clear();
+            m_shortcutLeaseTexts.clear();
+            m_leaseFont = m_font.handle.get();
+        }
+        if (m_textLeases.size() != m_items->size()) {
+            m_textLeases.resize(m_items->size());
+            m_textLeaseColors.resize(m_items->size(), SDL_Color{0, 0, 0, 0});
+            m_textLeaseTexts.resize(m_items->size());
+            m_shortcutLeases.resize(m_items->size());
+            m_shortcutLeaseColors.resize(m_items->size(), SDL_Color{0, 0, 0, 0});
+            m_shortcutLeaseTexts.resize(m_items->size());
+        }
+
+        auto sameColor = [](const SDL_Color& a, const SDL_Color& b) {
+            return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+        };
+
+        const std::string display = item->displayText();
+        if (!display.empty()) {
+            TextureManager::TextLease& lease = m_textLeases[i];
+            if (!lease || m_textLeaseTexts[i] != display || !sameColor(m_textLeaseColors[i], textColor)) {
+                lease = m_manager.getTextureManager().acquireTextTexture(display, m_font.handle, textColor);
+                m_textLeaseColors[i] = textColor;
+                m_textLeaseTexts[i] = display;
+            }
+            if (lease) {
+                RenderTexture(renderer, lease.get(),
+                              SDL_Rect{textX, textY, TextureWidth(lease.get()), TextureHeight(lease.get())});
+            }
+
+            // Mnemonic underline: measured from the font, drawn over the
+            // already-blitted texture (no extra rasterization).
+            const size_t mnemonicIndex = menu_text::mnemonicDisplayIndex(item->text);
+            if (mnemonicIndex != std::string::npos && mnemonicIndex < display.size()) {
+                const std::string_view displayView(display);
+                const int prefixWidth = menu_render::textWidth(m_font, displayView.substr(0, mnemonicIndex));
+                const int charWidth = std::max(1, menu_render::textWidth(m_font, displayView.substr(mnemonicIndex, 1)));
+                const int underlineY = textY + m_font.lineHeight - 1;
+                SetDrawColor(renderer, textColor);
+                RenderLine(renderer, textX + prefixWidth, underlineY,
+                           textX + prefixWidth + charWidth, underlineY);
+            }
+        }
 
         if (!item->shortcut.empty()) {
             const int shortcutWidth = menu_render::textWidth(m_font, item->shortcut);
             const int shortcutX = m_width - m_rightPad - m_arrowWidth - shortcutWidth;
-            menu_render::drawText(renderer, m_manager, m_font, item->shortcut, textColor,
-                                  shortcutX, textY);
+            TextureManager::TextLease& lease = m_shortcutLeases[i];
+            if (!lease || m_shortcutLeaseTexts[i] != item->shortcut ||
+                !sameColor(m_shortcutLeaseColors[i], textColor)) {
+                lease = m_manager.getTextureManager().acquireTextTexture(item->shortcut, m_font.handle, textColor);
+                m_shortcutLeaseColors[i] = textColor;
+                m_shortcutLeaseTexts[i] = item->shortcut;
+            }
+            if (lease) {
+                RenderTexture(renderer, lease.get(),
+                              SDL_Rect{shortcutX, textY, TextureWidth(lease.get()), TextureHeight(lease.get())});
+            }
         }
 
         const int checkCenterX = m_leftPad + m_checkGutter / 2;

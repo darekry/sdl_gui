@@ -13,6 +13,10 @@ ComponentType TextInput::getComponentTypeId() const {
     return ComponentType::TextInput;
 }
 
+void TextInput::onMouseCaptureLost() {
+    m_isDragging = false;
+}
+
 void TextInput::setOnEnterPressed(const std::function<void(TextInput*)>& callback) {
     m_onEnterPressed = callback;
 }
@@ -82,7 +86,7 @@ void TextInput::updateTextOffset() {
 }
 
 void TextInput::refreshTextTexture() {
-    m_textTexture.reset();
+    m_textLease.reset();
 
     if (m_text.empty()) return;
 
@@ -94,7 +98,7 @@ void TextInput::refreshTextTexture() {
         style.fontSize.value_or(16));
     if (!font) return;
 
-    m_textTexture = m_manager.getTextureManager().createTextureFromText(m_text, font, *style.textColor);
+    m_textLease = m_manager.getTextureManager().acquireTextTexture(m_text, font, *style.textColor);
 }
 
 void TextInput::markNeedsUpdate() {
@@ -104,15 +108,15 @@ void TextInput::markNeedsUpdate() {
 void TextInput::draw(SDL_Renderer* renderer) {
     drawBackgroundAndBorder(renderer);
     
-    if (!m_text.empty() && m_textTexture) {
-        int textWidth = TextureWidth(m_textTexture.get());
-        int textHeight = TextureHeight(m_textTexture.get());
+    if (!m_text.empty() && m_textLease) {
+        int textWidth = TextureWidth(m_textLease.get());
+        int textHeight = TextureHeight(m_textLease.get());
         
         SDL_Rect clip_rect = {5, 0, getWidth() - 10, getHeight()};
         SDL_SetRenderClipRect(renderer, &clip_rect);
         
         SDL_Rect renderQuad = {5 + m_text_offset_x, (getHeight() - textHeight) / 2, textWidth, textHeight};
-        RenderTexture(renderer, m_textTexture.get(), renderQuad);
+        RenderTexture(renderer, m_textLease.get(), renderQuad);
         
         SDL_SetRenderClipRect(renderer, nullptr);
     }
@@ -215,7 +219,6 @@ bool TextInput::handleEvent(const SDL_Event& e) {
     if (m_locked || !m_enabled || !m_visible) {
         return false;
     }
-
     if (dispatchEventHook(e)) {
         return true;
     }
@@ -250,6 +253,8 @@ bool TextInput::handleEvent(const SDL_Event& e) {
             m_dragStartPos = click_pos;
             m_cursorPos = click_pos;
             clearSelection();
+            // Selecting with the mouse continues outside the field.
+            captureMouse();
             
             updateTextOffset();
             resetCursorBlink();
@@ -282,6 +287,7 @@ bool TextInput::handleEvent(const SDL_Event& e) {
     // Mouse button up - end drag
     if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && m_isDragging) {
         m_isDragging = false;
+        releaseMouse();
         return true;
     }
 

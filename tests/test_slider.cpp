@@ -496,3 +496,34 @@ TEST_CASE("Slider - ComponentType ID", "[slider]") {
         REQUIRE(slider.getComponentTypeId() == ComponentType::Slider);
     }
 }
+TEST_CASE("Slider - Mouse capture during drag", "[slider][capture]") {
+    TestHelper helper;
+    GUIManager& manager = helper.getManager();
+
+    SECTION("drag outside the widget keeps updating and clamps") {
+        auto slider = std::make_unique<Slider>(manager, 50, 50, 200, 40, 0, 100, 50, Orientation::Horizontal);
+        Slider* ptr = slider.get();
+        manager.addElement(std::move(slider));
+
+        // Track starts after the 40px decrement button: x = 50+40 .. 50+160.
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_BUTTON_LEFT, 150, 70));
+        REQUIRE(ptr->hasMouseCapture());
+        REQUIRE(manager.getMouseCapture() == ptr);
+
+        // Far right, well outside the slider.
+        manager.processEvent(helper.createMouseMotion(600, -50));
+        REQUIRE(ptr->getValue() == 100);
+
+        // Far left, outside: clamps to min.
+        manager.processEvent(helper.createMouseMotion(-100, 400));
+        REQUIRE(ptr->getValue() == 0);
+
+        manager.processEvent(helper.createMouseButton(SDL_EVENT_MOUSE_BUTTON_UP, SDL_BUTTON_LEFT, -100, 400));
+        REQUIRE_FALSE(ptr->hasMouseCapture());
+        REQUIRE(manager.getMouseCapture() == nullptr);
+
+        const int afterUp = ptr->getValue();
+        manager.processEvent(helper.createMouseMotion(500, 70));
+        REQUIRE(ptr->getValue() == afterUp); // drag ended
+    }
+}

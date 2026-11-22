@@ -112,6 +112,11 @@ private:
     std::vector<TitleRect> m_titleRects;
 
     menu_render::Font m_font;
+    // Per-title text leases (MenuBar draws itself, text is uncached).
+    // Rebuilt when the title list or the resolved font changes.
+    std::vector<TextureManager::TextLease> m_titleLeases;
+    std::vector<SDL_Color> m_titleLeaseColors;
+    TTF_Font* m_titleLeaseFont = nullptr;
     int m_activeMenu = -1;   // highlighted/open top-level index
     int m_hoveredTitle = -1;
     int m_titlePadding = 10; // horizontal padding per side of a title

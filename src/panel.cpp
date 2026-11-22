@@ -28,7 +28,7 @@ bool Panel::handleSelf(const SDL_Event& event) {
             auto absPos = getAbsolutePosition();
             m_drag_offset.x = static_cast<int>(event.button.x) - absPos.x;
             m_drag_offset.y = static_cast<int>(event.button.y) - absPos.y;
-            m_manager.captureMouse(this);
+            captureMouse();
             return true;
         }
     }
@@ -43,7 +43,7 @@ bool Panel::handleSelf(const SDL_Event& event) {
 
     if (m_is_dragging && event.type == SDL_EVENT_MOUSE_BUTTON_UP && event.button.button == SDL_BUTTON_LEFT) {
         m_is_dragging = false;
-        m_manager.releaseMouse();
+        releaseMouse();
         return true;
     }
 

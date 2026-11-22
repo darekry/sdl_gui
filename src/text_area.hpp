@@ -30,6 +30,7 @@ public:
     bool isLocked() const override;
 
     bool handleEvent(const SDL_Event& e) override;
+    void onMouseCaptureLost() override;
     void renderOverlay(SDL_Renderer* renderer) override;
     [[nodiscard]] ComponentType getComponentTypeId() const override;
 
@@ -58,7 +59,7 @@ private:
     std::string m_font_path;
     int m_font_size;
 
-    std::vector<std::shared_ptr<SDL_Texture>> m_line_textures;
+    std::vector<TextureManager::TextLease> m_line_textures;
     bool m_needs_texture_update = true;
     int m_scroll_offset_y = 0;
     int m_text_offset_x = 0;

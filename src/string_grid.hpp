@@ -59,8 +59,8 @@ public:
         // Clear pointers to children before Panel destroys them
         m_vSlider = nullptr;
         m_hSlider = nullptr;
-        // Cell textures live in the shared TextShaper (TextureManager) —
-        // pruned globally, nothing local to clear.
+        // Cell/header text leases release their cache entries in the vector
+        // destructor; the shared TextureManager is still alive here.
     }
     
     // Data management
@@ -141,6 +141,7 @@ public:
     
     // GUIElement overrides
     bool handleEvent(const SDL_Event& e) override;
+    void onMouseCaptureLost() override;
     [[nodiscard]] ComponentType getComponentTypeId() const override;
     
     // Overlay for the cell editor
@@ -184,7 +185,13 @@ private:
     void drawCells(SDL_Renderer* renderer, int offsetX, int offsetY, 
                    SDL_Color cellBackgroundColor, SDL_Color textColor,
                    const VisibleRange& range, const SharedFont& font);
-    
+
+    // Per-cell/header text leases (widget is the texture holder). Mirrors
+    // m_data; acquired lazily on first draw and reset on data/style changes.
+    void resetTextTextures();
+    void ensureTextTextureStyle(const SharedFont& font, SDL_Color cellColor, SDL_Color headerColor);
+    [[nodiscard]] TextureManager::TextLease& cellLease(size_t row, size_t col);
+
     // Helper methods for event handling
     bool handleMouseButtonDown(const SDL_Event& e);
     bool handleMouseMotion(const SDL_Event& e);
@@ -197,6 +204,15 @@ private:
     std::vector<std::vector<std::string>> m_data;
     std::vector<int> m_columnWidths;
     std::vector<std::string> m_columnHeaders;
+
+    // Text texture leases (mirror m_data / headers). Cleared whenever the
+    // backing text or the visual text parameters change.
+    std::vector<std::vector<TextureManager::TextLease>> m_cellTextures;
+    std::vector<TextureManager::TextLease> m_columnHeaderTextures;
+    std::vector<TextureManager::TextLease> m_rowHeaderTextures;
+    TTF_Font* m_textTextureFont = nullptr;   // identity of the cached leases
+    SDL_Color m_cellTextTextureColor{0, 0, 0, 0};
+    SDL_Color m_headerTextTextureColor{0, 0, 0, 0};
     
     // Geometry
     int m_rowHeight = 24;

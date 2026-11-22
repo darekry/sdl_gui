@@ -21,6 +21,7 @@ public:
     
     // Overridden methods
     bool handleSelf(const SDL_Event& e) override;
+    void onMouseCaptureLost() override;
     ComponentType getComponentTypeId() const override;
 
 protected:

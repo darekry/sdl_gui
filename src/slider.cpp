@@ -118,12 +118,15 @@ bool Slider::handleEvent(const SDL_Event& e) {
         SDL_Point mousePoint = {static_cast<int>(e.button.x), static_cast<int>(e.button.y)};
         if (SDL_PointInRect(&mousePoint, &trackArea)) {
             m_isDragging = true;
+            // Motion outside the slider keeps updating the value (clamped).
+            captureMouse();
             updateValueFromMouse(static_cast<int>(e.button.x), static_cast<int>(e.button.y));
             return true;
         }
     } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
         if (m_isDragging) {
             m_isDragging = false;
+            releaseMouse();
             return true;
         }
     } else if (e.type == SDL_EVENT_MOUSE_MOTION) {
@@ -144,6 +147,10 @@ bool Slider::handleEvent(const SDL_Event& e) {
 
 ComponentType Slider::getComponentTypeId() const {
     return ComponentType::Slider;
+}
+
+void Slider::onMouseCaptureLost() {
+    m_isDragging = false;
 }
 
 void Slider::setValue(int value) {

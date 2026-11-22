@@ -173,6 +173,10 @@ public:
     void registerElement(GUIElement* element);
     void unregisterElement(GUIElement* element);
 
+    // Diagnostic: number of markForDeletion() calls not yet consumed by
+    // cleanup(). 0 means the next cleanup() can skip the recursive pass.
+    [[nodiscard]] size_t getPendingDeletionCount() const { return m_pendingDeletionCount; }
+
     // O(1) handle API — the preferred way to hold elements across frames.
     [[nodiscard]] ElementHandle getHandle(const GUIElement* element) const;
     [[nodiscard]] GUIElement* resolve(ElementHandle handle) const;
@@ -182,6 +186,13 @@ public:
     ElementRef<T> makeRef(T* element);
 
 private:
+    // GUIElement::markForDeletion() bumps the counter; cleanup() early-returns
+    // when it is 0 (the common per-frame case). An element destroyed inside a
+    // marked subtree, or detached after being marked, may leave the counter
+    // over-counted until the next real cleanup — cleanup() resets it to 0.
+    friend class GUIElement;
+    void notifyDeletionPending() { ++m_pendingDeletionCount; }
+
     // One slot per registered element. Generation bumps on unregister;
     // resolve() requires generation match + alive + ptr set.
     struct LifetimeSlot {
@@ -204,6 +215,8 @@ private:
     int m_eventDepth = 0;
     std::vector<std::unique_ptr<GUIElement>> m_pendingElements;
     void drainPendingElements();
+
+    size_t m_pendingDeletionCount = 0;
 
     // RAII event scope: tracks nesting and drains pending elements when the
     // outermost processEvent() returns (including early returns).

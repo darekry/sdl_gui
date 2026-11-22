@@ -11,6 +11,7 @@ public:
     void setPenColor(SDL_Color color);
 
     bool handleEvent(const SDL_Event& e) override;
+    void onMouseCaptureLost() override;
     ComponentType getComponentTypeId() const override;
 
 protected:

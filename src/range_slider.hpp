@@ -25,6 +25,7 @@ public:
     int getWheelStep() const { return m_wheelStep; }
 
     bool handleEvent(const SDL_Event& e) override;
+    void onMouseCaptureLost() override;
     ComponentType getComponentTypeId() const override;
 
 protected:

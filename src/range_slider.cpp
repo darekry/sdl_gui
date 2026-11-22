@@ -65,11 +65,8 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
         int thumbSize = (m_orientation == Orientation::Horizontal) ? std::min(getHeight(), 20) : std::min(getWidth(), 20);
 
         if (m_activeThumb != ActiveThumb::None) {
-            if (!contains(static_cast<int>(e.motion.x), static_cast<int>(e.motion.y))) {
-                m_activeThumb = ActiveThumb::None;
-                m_hoveredThumb = ActiveThumb::None;
-                return false;
-            }
+            // Drag continues outside the widget: the thumb keeps following
+            // the mouse (ratio is clamped in updateValueFromMouse).
             updateValueFromMouse(static_cast<int>(e.motion.x), static_cast<int>(e.motion.y));
             return true;
         }
@@ -116,10 +113,12 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
             if (SDL_PointInRect(&mousePoint, &lowerRect)) {
                 m_activeThumb = ActiveThumb::Lower;
                 m_hoveredThumb = ActiveThumb::Lower;
+                captureMouse();
                 return true;
             } else if (SDL_PointInRect(&mousePoint, &upperRect)) {
                 m_activeThumb = ActiveThumb::Upper;
                 m_hoveredThumb = ActiveThumb::Upper;
+                captureMouse();
                 return true;
             } else if (contains(mousePoint.x, mousePoint.y)) {
                 float ratio = std::clamp(static_cast<float>(mousePoint.x - absPos.x) / static_cast<float>(getWidth()), 0.0f, 1.0f);
@@ -133,6 +132,7 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
                     m_hoveredThumb = ActiveThumb::Upper;
                     setUpperValue(clickValue);
                 }
+                captureMouse();
                 return true;
             }
         } else {
@@ -146,10 +146,12 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
             if (SDL_PointInRect(&mousePoint, &lowerRect)) {
                 m_activeThumb = ActiveThumb::Lower;
                 m_hoveredThumb = ActiveThumb::Lower;
+                captureMouse();
                 return true;
             } else if (SDL_PointInRect(&mousePoint, &upperRect)) {
                 m_activeThumb = ActiveThumb::Upper;
                 m_hoveredThumb = ActiveThumb::Upper;
+                captureMouse();
                 return true;
             } else if (contains(mousePoint.x, mousePoint.y)) {
                 float ratio = std::clamp(static_cast<float>(mousePoint.y - absPos.y) / static_cast<float>(getHeight()), 0.0f, 1.0f);
@@ -163,12 +165,14 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
                     m_hoveredThumb = ActiveThumb::Upper;
                     setUpperValue(clickValue);
                 }
+                captureMouse();
                 return true;
             }
         }
     } else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
         if (m_activeThumb != ActiveThumb::None) {
             m_activeThumb = ActiveThumb::None;
+            releaseMouse();
             return true;
         }
     } else if (e.type == SDL_EVENT_MOUSE_WHEEL && m_isHovered) {
@@ -187,6 +191,11 @@ bool RangeSlider::handleEvent(const SDL_Event& e) {
 
 ComponentType RangeSlider::getComponentTypeId() const {
     return ComponentType::RangeSlider;
+}
+
+void RangeSlider::onMouseCaptureLost() {
+    m_activeThumb = ActiveThumb::None;
+    m_hoveredThumb = ActiveThumb::None;
 }
 
 void RangeSlider::setLowerValue(int value) {

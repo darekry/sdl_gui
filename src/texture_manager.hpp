@@ -17,18 +17,83 @@ using SharedTexture = std::shared_ptr<SDL_Texture>;
 
 /**
  * @brief Manages texture loading and caching for the GUI.
- * 
+ *
  * @warning This class is NOT thread-safe. All methods must be called from the same thread
  *          that owns the GUIManager and SDL renderer. Concurrent calls from different threads
  *          may cause data races in the texture cache and SDL texture operations.
  *          If multi-threaded texture loading is needed, use external synchronization (e.g., std::mutex).
+ *
+ * Ownership model (2026-11-22):
+ *  - assets path cache (`m_textureCache`) is STRONG: PNG/TTF assets are static,
+ *    few and cheap to keep for the process lifetime;
+ *  - render/text caches are WEAK: the widget is the holder. An entry lives
+ *    only while some widget still references the texture; `releaseRenderCache`
+ *    /`releaseTextCache` erase the (now expired) metadata when the last holder
+ *    drops its ref. No periodic prune, no byte budget, no global GC.
  */
 class TextureManager {
 public:
-    // Punkt 6 plaster 4 (byte-budget LRU): domyślny limit pamięci cache'y.
-    // Wystarcza na setki pełnoekranowych tekstur 800x600x4; testy i aplikacje
-    // VRAM-świadome mogą go ścisnąć setByteBudget().
-    static constexpr size_t kDefaultByteBudget = 128u * 1024u * 1024u;
+    /**
+     * @brief Move-only strong lease of a cached text texture.
+     *
+     * A widget that keeps a text texture between frames (TextInput, TextArea,
+     * StringGrid, menus) owns one lease per texture. The lease keeps both the
+     * `SharedTexture` and the cache key: on destruction it drops the texture
+     * first and only then erases the cache entry if the weak ref expired, so
+     * sharing between widgets is preserved.
+     */
+    class TextLease {
+    public:
+        TextLease() = default;
+        TextLease(TextLease&& other) noexcept
+            : m_owner(other.m_owner), m_key(other.m_key), m_texture(std::move(other.m_texture)) {
+            other.m_owner = nullptr;
+            other.m_key = 0;
+        }
+        TextLease& operator=(TextLease&& other) noexcept {
+            if (this != &other) {
+                reset();
+                m_owner = other.m_owner;
+                m_key = other.m_key;
+                m_texture = std::move(other.m_texture);
+                other.m_owner = nullptr;
+                other.m_key = 0;
+            }
+            return *this;
+        }
+        TextLease(const TextLease&) = delete;
+        TextLease& operator=(const TextLease&) = delete;
+        ~TextLease() { reset(); }
+
+        // Drops the strong ref first, then releases the cache entry (no-op
+        // when another holder still keeps the texture alive).
+        void reset() {
+            if (!m_owner) {
+                m_texture.reset();
+                return;
+            }
+            m_texture.reset();
+            TextureManager* owner = m_owner;
+            const uint64_t key = m_key;
+            m_owner = nullptr;
+            m_key = 0;
+            owner->releaseTextCache(key);
+        }
+
+        [[nodiscard]] SDL_Texture* get() const { return m_texture.get(); }
+        [[nodiscard]] const SharedTexture& shared() const { return m_texture; }
+        [[nodiscard]] uint64_t key() const { return m_key; }
+        explicit operator bool() const { return static_cast<bool>(m_texture); }
+
+    private:
+        friend class TextureManager;
+        TextLease(TextureManager* owner, uint64_t key, SharedTexture texture)
+            : m_owner(owner), m_key(key), m_texture(std::move(texture)) {}
+
+        TextureManager* m_owner = nullptr;
+        uint64_t m_key = 0;
+        SharedTexture m_texture;
+    };
 
     explicit TextureManager(SDL_Renderer* renderer);
 
@@ -42,23 +107,35 @@ public:
 
     // Loads a texture. Returns SharedTexture.
     // If a texture at the given path is already loaded, returns the existing SharedTexture.
+    // Path cache is strong (assets are static and few); no prune/budget.
     SharedTexture loadTexture(std::string_view path);
 
+    // Uncached: always rasterizes a fresh texture and stores no cache entry.
+    // Use acquireTextTexture() when the texture must survive between frames.
     SharedTexture createTextureFromText(std::string_view text, const SharedFont& font, const SDL_Color& color);
 
-    // Creates a text texture with a stable cache key (font_path + font_size).
+    // Uncached variant with an explicit font file + size (opens the font per
+    // call). Kept for callers that store the result in a Style/Image; does not
+    // populate the text cache.
     SharedTexture createTextureFromText(std::string_view text, std::string_view fontPath, int fontSize, const SDL_Color& color);
+
+    // Cached acquire: weak lock or rasterize + weak entry. The returned lease
+    // is the strong ref; identical text/font/color shares one texture.
+    TextLease acquireTextTexture(std::string_view text, const SharedFont& font, const SDL_Color& color);
     
     // Loads a texture from memory (for embedded assets)
     SharedTexture loadTextureFromMemory(const uint8_t* data, size_t size, std::string_view key);
 
     // Renders an element into a shared, immutable cache texture.
-    // If a texture with the given key already exists, returns it WITHOUT re-rendering.
-    // The entry is immutable - never overwritten, removed by pruneUnused()
-    // when it stops being used. The key must uniquely describe all draw()
-    // inputs (type, size, state, style, widget internal state).
+    // A live weak entry (another widget holds the texture) is returned WITHOUT
+    // re-rendering; an expired entry is overwritten by the freshly rendered
+    // texture. The returned ref belongs to the caller (the widget).
     SharedTexture renderCache(uint64_t key, int width, int height,
                               const std::function<void(SDL_Renderer*)>& draw);
+
+    // Erases the render-cache entry only when its weak ref expired (no other
+    // holder). Safe to call with a key that was already released.
+    void releaseRenderCache(uint64_t key);
 
     // Adds an existing texture and takes ownership of it
     SharedTexture addTexture(std::string_view key, SDL_Texture* texture);
@@ -77,55 +154,32 @@ public:
     SharedTexture getDefaultTexture() const;
 
     // Cleanup methods
-    void pruneUnused();
+    //
+    // clearCache() drops the maps (including the strong path cache). Textures
+    // still held by widgets stay alive through their SharedTexture/TextLease;
+    // subsequent lookups may rasterize duplicates — call it only on teardown
+    // or explicit "forget everything" transitions.
     void clearCache();
     [[nodiscard]] size_t getCacheSize() const;
     [[nodiscard]] size_t getRenderCacheSize() const;
     [[nodiscard]] size_t getTextCacheSize() const;
 
-    // Punkt 6 plaster 4: limit bajtów na wszystkie trzy cache'e łącznie.
-    // setByteBudget() egzekwuje nowy limit natychmiast (wyrzuca martwe wpisy
-    // od najstarszego użycia). Wpisy trzymane przez widgety (use_count > 1)
-    // nigdy nie są wyrzucane — przy samych żywych wpisach budżet może być
-    // chwilowo przekroczony.
-    void setByteBudget(size_t bytes);
-    [[nodiscard]] size_t getByteBudget() const { return m_byteBudget; }
-    [[nodiscard]] size_t getBytesUsed() const { return m_bytesUsed; }
-
 private:
-    // Jeden wpis cache'a: współdzielona tekstura + szacunek GPU-bajtów
-    // (w*h*4) + recency LRU. lastUse jest mutable, żeby const getTexture()
-    // mógł odświeżać kolejność bez zmiany sygnatury API.
-    struct CacheEntry {
-        SharedTexture texture;
-        size_t bytes = 0;
-        mutable uint64_t lastUse = 0;
-    };
     // TextShaper key (punkt 6): FNV-1a over text bytes mixed with font
-    // identity + color. No std::string allocation on the hot path (the old
-    // key built text+"|"+ptr+"|"+rgba per call, i.e. per frame for
-    // non-shared widgets like ComboBox/ProgressBar/StringGrid).
+    // identity + color. No std::string allocation on the hot path.
     static uint64_t textCacheKey(std::string_view text, uint64_t fontId, const SDL_Color& color);
 
-    // Szacunek GPU-bajtów tekstury (w*h*4); 0 gdy rozmiaru nie da się odczytać.
-    static size_t textureBytes(SDL_Texture* tex);
-    // Odświeża recency wpisu (const, żeby działało też z getTexture()).
-    void touch(const CacheEntry& entry) const;
-    // Wstawia wpis, księguje bajty i egzekwuje budżet. Wołane PO sprawdzeniu
-    // hita przez callerów (wszystkie ścieżki wstawiania w .cpp).
-    template <typename Map, typename Key>
-    SharedTexture insertEntry(Map& map, Key&& key, SharedTexture tex, size_t bytes);
-    // Wyrzuca martwe wpisy (use_count == 1) od najstarszego użycia,
-    // aż m_bytesUsed <= m_byteBudget albo zabraknie martwych wpisów.
-    void enforceByteBudget();
+    // Rasterizes without touching the caches (shared by uncached create and
+    // acquireTextTexture).
+    SharedTexture rasterizeTextTexture(std::string_view text, const SharedFont& font, const SDL_Color& color);
+
+    // Text-cache counterpart of releaseRenderCache (used by TextLease).
+    void releaseTextCache(uint64_t key);
 
     SDL_Renderer* m_renderer;
-    std::unordered_map<std::string, CacheEntry, StringHash, std::equal_to<>> m_textureCache;
-    std::unordered_map<uint64_t, CacheEntry> m_renderCache;
-    std::unordered_map<uint64_t, CacheEntry> m_textCache;
+    std::unordered_map<std::string, SharedTexture, StringHash, std::equal_to<>> m_textureCache;
+    std::unordered_map<uint64_t, std::weak_ptr<SDL_Texture>> m_renderCache;
+    std::unordered_map<uint64_t, std::weak_ptr<SDL_Texture>> m_textCache;
     SharedTexture m_defaultTexture;
     bool m_initialized = false; // SDL_image initialization status
-    size_t m_bytesUsed = 0;
-    size_t m_byteBudget = kDefaultByteBudget;
-    mutable uint64_t m_lruClock = 0;
 };

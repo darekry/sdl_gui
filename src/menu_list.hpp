@@ -109,4 +109,13 @@ private:
     SelectCallback m_onSelect;
     TickCallback m_onTick;
     RowCallback m_rowCallback;
+
+    // Direct-render text leases: MenuList redraws every frame, so the text
+    // textures must be held by the widget (createTextureFromText is uncached).
+    TextureManager::TextLease m_titleLease;
+    SDL_Color m_titleLeaseColor{0, 0, 0, 0};
+    std::vector<TextureManager::TextLease> m_itemLeases;
+    std::vector<SDL_Color> m_itemLeaseColors;  // color used by each lease
+    TTF_Font* m_leaseFont = nullptr;           // font identity of the leases
+    void resetTextLeases();
 };

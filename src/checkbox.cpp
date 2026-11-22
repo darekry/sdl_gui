@@ -31,14 +31,14 @@ bool Checkbox::handleSelf(const SDL_Event& e) {
 
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT && contains(e.button.x, e.button.y)) {
         setState(ElementState::Pressed);
-        m_manager.captureMouse(this);
+        captureMouse();
         m_manager.requestFocus(this);
         return true;
     }
 
     if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && e.button.button == SDL_BUTTON_LEFT) {
         if (m_state == ElementState::Pressed) {
-            m_manager.releaseMouse();
+            releaseMouse();
             setState(ElementState::Hover);
             if (contains(e.button.x, e.button.y)) {
                 setChecked(!m_isChecked);
@@ -72,6 +72,12 @@ bool Checkbox::handleSelf(const SDL_Event& e) {
     processButtonEvent(e);
     
     return false;
+}
+
+void Checkbox::onMouseCaptureLost() {
+    if (m_state == ElementState::Pressed) {
+        setState(ElementState::Normal);
+    }
 }
 
 ComponentType Checkbox::getComponentTypeId() const {

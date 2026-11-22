@@ -3,6 +3,7 @@
 #include "../checkbox.hpp"
 #include "../combobox.hpp"
 #include "../constants.hpp"
+#include "../gui_manager.hpp"
 #include "../label.hpp"
 #include "../progress_bar.hpp"
 #include "../radio_button.hpp"
@@ -406,6 +407,10 @@ CanvasPanel::CanvasPanel(GUIManager& manager, int x, int y, int width, int heigh
     setBorder(ElementState::Normal, SDL_Color{200, 200, 200, 255}, 1);
 }
 
+void CanvasPanel::onMouseCaptureLost() {
+    m_isDragging = false;
+}
+
 ComponentType CanvasPanel::getComponentTypeId() const {
     return ComponentType::Panel;
 }
@@ -557,7 +562,7 @@ void CanvasPanel::startDrag(float mouseX, float mouseY) {
     m_dragStartX = elem->x;
     m_dragStartY = elem->y;
     
-    m_manager.captureMouse(this);
+    captureMouse();
 }
 
 void CanvasPanel::updateDrag(float mouseX, float mouseY) {
@@ -593,5 +598,5 @@ void CanvasPanel::updateDrag(float mouseX, float mouseY) {
 
 void CanvasPanel::endDrag() {
     m_isDragging = false;
-    m_manager.releaseMouse();
+    releaseMouse();
 }

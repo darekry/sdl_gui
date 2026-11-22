@@ -245,6 +245,8 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             m_isDragging = true;
             m_dragStartPos = m_cursorPos;
             clearSelection();
+            // Selection continues outside the area while the button is down.
+            captureMouse();
 
             updateTextOffset();
             markDirty();
@@ -261,7 +263,10 @@ bool TextArea::handleEvent(const SDL_Event& e) {
             markDirty();
         }
         m_isHovered = false;
-        m_isDragging = false;
+        if (m_isDragging) {
+            m_isDragging = false;
+            releaseMouse();
+        }
     }
 
     // Mouse motion - extend selection during drag (focus-based, works outside bounds)
@@ -296,6 +301,7 @@ bool TextArea::handleEvent(const SDL_Event& e) {
     // Mouse button up - end drag
     if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && m_isDragging) {
         m_isDragging = false;
+        releaseMouse();
         return true;
     }
 
@@ -778,13 +784,17 @@ void TextArea::refreshTextures() {
 
     for (const auto& line : m_lines) {
         if (line.empty()) {
-            m_line_textures.push_back(nullptr);
+            m_line_textures.emplace_back();
         } else {
-            m_line_textures.push_back(m_manager.getTextureManager().createTextureFromText(line, font, color));
+            m_line_textures.push_back(m_manager.getTextureManager().acquireTextTexture(line, font, color));
         }
     }
 }
 
 ComponentType TextArea::getComponentTypeId() const {
     return ComponentType::TextArea;
+}
+
+void TextArea::onMouseCaptureLost() {
+    m_isDragging = false;
 }
